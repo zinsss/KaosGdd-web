@@ -10,7 +10,14 @@ class ReminderService:
         self.reminder_repo = reminder_repo
         self.task_repo = task_repo
 
-    def create_task_reminder(self, *, task_item_id: str, remind_at: str, title: str | None = None, alert_policy: str | None = None):
+    def create_task_reminder(
+        self,
+        *,
+        task_item_id: str,
+        remind_at: str,
+        title: str | None = None,
+        alert_policy: str | None = None,
+    ):
         task = self.task_repo.get_task_detail(task_item_id)
         if task is None:
             return False, "not found", None
@@ -74,7 +81,11 @@ class ReminderService:
         if detail is None:
             return False, "not found"
         self.reminder_repo.mark_acked(reminder_item_id)
-        self.reminder_repo.create_event(reminder_item_id=reminder_item_id, event_type="acked", payload={})
+        self.reminder_repo.create_event(
+            reminder_item_id=reminder_item_id,
+            event_type="acked",
+            payload={},
+        )
         return True, "acked"
 
     def snooze_reminder(self, reminder_item_id: str, *, minutes: int = 10):
@@ -85,6 +96,7 @@ class ReminderService:
         now_dt = datetime.now(timezone.utc)
         snoozed_until_dt = now_dt + timedelta(minutes=minutes)
         snoozed_until = snoozed_until_dt.isoformat(timespec="seconds")
+
         self.reminder_repo.mark_snoozed(reminder_item_id, snoozed_until=snoozed_until)
         self.reminder_repo.create_event(
             reminder_item_id=reminder_item_id,
@@ -98,5 +110,9 @@ class ReminderService:
         if detail is None:
             return False, "not found"
         self.reminder_repo.mark_cancelled(reminder_item_id)
-        self.reminder_repo.create_event(reminder_item_id=reminder_item_id, event_type="cancelled", payload={})
+        self.reminder_repo.create_event(
+            reminder_item_id=reminder_item_id,
+            event_type="cancelled",
+            payload={},
+        )
         return True, "cancelled"

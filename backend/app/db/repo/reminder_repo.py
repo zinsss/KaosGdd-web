@@ -10,7 +10,14 @@ class ReminderRepo:
     def __init__(self, engine) -> None:
         self.engine = engine
 
-    def create_reminder_item(self, *, title: str, remind_at: str, parent_item_id: str, alert_policy: str | None = None) -> str:
+    def create_reminder_item(
+        self,
+        *,
+        title: str,
+        remind_at: str,
+        parent_item_id: str,
+        alert_policy: str | None = None,
+    ) -> str:
         reminder_item_id = new_id()
         now = now_iso()
 
@@ -161,7 +168,10 @@ class ReminderRepo:
                 ),
                 {"item_id": reminder_item_id, "now": now},
             )
-            conn.execute(text("UPDATE items SET updated_at = :now WHERE id = :item_id"), {"item_id": reminder_item_id, "now": now})
+            conn.execute(
+                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                {"item_id": reminder_item_id, "now": now},
+            )
 
     def mark_acked(self, reminder_item_id: str) -> None:
         now = now_iso()
@@ -178,13 +188,22 @@ class ReminderRepo:
                 ),
                 {"item_id": reminder_item_id, "now": now},
             )
-            conn.execute(text("UPDATE items SET updated_at = :now WHERE id = :item_id"), {"item_id": reminder_item_id, "now": now})
+            conn.execute(
+                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                {"item_id": reminder_item_id, "now": now},
+            )
 
     def mark_missed(self, reminder_item_id: str) -> None:
         now = now_iso()
         with self.engine.begin() as conn:
-            conn.execute(text("UPDATE reminder_items SET state = 'missed' WHERE item_id = :item_id"), {"item_id": reminder_item_id})
-            conn.execute(text("UPDATE items SET updated_at = :now WHERE id = :item_id"), {"item_id": reminder_item_id, "now": now})
+            conn.execute(
+                text("UPDATE reminder_items SET state = 'missed' WHERE item_id = :item_id"),
+                {"item_id": reminder_item_id},
+            )
+            conn.execute(
+                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                {"item_id": reminder_item_id, "now": now},
+            )
 
     def mark_snoozed(self, reminder_item_id: str, *, snoozed_until: str) -> None:
         now = now_iso()
@@ -200,13 +219,29 @@ class ReminderRepo:
                 ),
                 {"item_id": reminder_item_id, "snoozed_until": snoozed_until},
             )
-            conn.execute(text("UPDATE items SET updated_at = :now WHERE id = :item_id"), {"item_id": reminder_item_id, "now": now})
+            conn.execute(
+                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                {"item_id": reminder_item_id, "now": now},
+            )
 
     def mark_cancelled(self, reminder_item_id: str) -> None:
         now = now_iso()
         with self.engine.begin() as conn:
-            conn.execute(text("UPDATE reminder_items SET state = 'cancelled', snoozed_until = NULL WHERE item_id = :item_id"), {"item_id": reminder_item_id})
-            conn.execute(text("UPDATE items SET updated_at = :now WHERE id = :item_id"), {"item_id": reminder_item_id, "now": now})
+            conn.execute(
+                text(
+                    """
+                    UPDATE reminder_items
+                    SET state = 'cancelled',
+                        snoozed_until = NULL
+                    WHERE item_id = :item_id
+                    """
+                ),
+                {"item_id": reminder_item_id},
+            )
+            conn.execute(
+                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                {"item_id": reminder_item_id, "now": now},
+            )
 
     def create_event(self, *, reminder_item_id: str, event_type: str, payload: dict | None = None) -> str:
         event_id = new_id()
