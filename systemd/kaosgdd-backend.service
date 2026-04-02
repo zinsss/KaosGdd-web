@@ -1,0 +1,17 @@
+[Unit]
+Description=KaosGdd Web Backend
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/srv/KaosGdd-web/backend
+Environment=APP_NAME=KaosGdd Web
+Environment=APP_ENV=prod
+Environment=DATABASE_URL=sqlite:////srv/KaosGdd-web/data/kaosgdd.db
+ExecStart=/srv/KaosGdd-web/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
