@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { UI_STRINGS } from "../lib/strings";
 
 export default function AddReminderForm({ taskId }) {
   const [remindAt, setRemindAt] = useState("");
@@ -39,7 +40,7 @@ export default function AddReminderForm({ taskId }) {
 
   return (
     <form onSubmit={onSubmit} className="panel">
-      <div className="sectionTitle">Add reminder</div>
+      <div className="sectionTitle">{UI_STRINGS.ADD_REMINDER}</div>
       <div className="formRow">
         <input
           className="textInput"
@@ -50,7 +51,7 @@ export default function AddReminderForm({ taskId }) {
           disabled={isSubmitting}
         />
         <button className="button" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Adding..." : "Add"}
+          {isSubmitting ? UI_STRINGS.ADDING : UI_STRINGS.ADD}
         </button>
       </div>
       {error ? <div className="errorText">{error}</div> : null}

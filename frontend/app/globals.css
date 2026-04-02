@@ -199,6 +199,12 @@ textarea.textInput:focus {
   margin-top: 14px;
 }
 
+.actionRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 @media (max-width: 640px) {
   html, body {
     font-size: 14px;

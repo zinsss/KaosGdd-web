@@ -93,6 +93,46 @@ class ReminderRepo:
             ).mappings().first()
         return dict(row) if row else None
 
+    def list_linked_reminders(self, parent_item_id: str):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT
+                        i.id,
+                        i.title,
+                        i.status,
+                        r.remind_at,
+                        r.state,
+                        r.alert_policy,
+                        r.last_fired_at,
+                        r.acked_at,
+                        r.snoozed_until,
+                        ir.item_id AS parent_item_id
+                    FROM item_reminders ir
+                    JOIN items i ON i.id = ir.reminder_item_id
+                    JOIN reminder_items r ON r.item_id = ir.reminder_item_id
+                    WHERE ir.item_id = :parent_item_id
+                      AND i.item_type = 'reminder'
+                      AND i.status = 'active'
+                    ORDER BY
+                        CASE r.state
+                            WHEN 'fired' THEN 1
+                            WHEN 'missed' THEN 2
+                            WHEN 'snoozed' THEN 3
+                            WHEN 'scheduled' THEN 4
+                            WHEN 'acked' THEN 5
+                            WHEN 'cancelled' THEN 6
+                            ELSE 7
+                        END ASC,
+                        COALESCE(r.snoozed_until, r.remind_at) ASC,
+                        i.created_at ASC
+                    """
+                ),
+                {"parent_item_id": parent_item_id},
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
     def list_due_reminders(self, *, now_iso_value: str):
         with self.engine.begin() as conn:
             rows = conn.execute(

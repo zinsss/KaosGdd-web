@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
+from app.config import SETTINGS
 from app.core.db import engine
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
@@ -11,14 +12,15 @@ from app.db.schema_v0 import init_schema_v0
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
 from app.schemas.reminders import normalize_minutes
+from app.strings import ApiText
 
 
-APP_NAME = os.getenv("APP_NAME", "KaosGdd Web")
+APP_NAME = os.getenv("APP_NAME", SETTINGS.APP_NAME)
 
 items_repo = ItemsRepo(engine)
 task_repo = TaskRepo(engine)
 reminder_repo = ReminderRepo(engine)
-task_service = TaskService(items_repo, task_repo)
+task_service = TaskService(items_repo, task_repo, reminder_repo)
 reminder_service = ReminderService(reminder_repo, task_repo)
 
 
@@ -33,7 +35,12 @@ app = FastAPI(title=APP_NAME, lifespan=lifespan)
 
 @app.get("/health")
 def health():
-    return {"ok": True, "app": APP_NAME, "mode": "frozen-v0-step4"}
+    return {
+        "ok": True,
+        "app": APP_NAME,
+        "mode": "frozen-v0-step5",
+        "timezone": SETTINGS.APP_TIMEZONE,
+    }
 
 
 @app.get("/tasks")
@@ -45,7 +52,7 @@ def list_tasks():
 def create_task(payload: dict):
     title = (payload.get("title") or "").strip()
     if not title:
-        return {"ok": False, "error": "title is required"}
+        return {"ok": False, "error": ApiText.TITLE_REQUIRED}
 
     item_id = task_service.create_task(
         title=title,
@@ -59,7 +66,7 @@ def create_task(payload: dict):
 def get_task(task_id: str):
     item = task_service.get_task(task_id)
     if item is None:
-        return {"ok": False, "error": "not found"}
+        return {"ok": False, "error": ApiText.NOT_FOUND}
     return {"ok": True, "item": item}
 
 
@@ -73,7 +80,7 @@ def update_task(task_id: str, payload: dict):
         is_done=payload.get("is_done"),
     )
     if not ok:
-        return {"ok": False, "error": "not found"}
+        return {"ok": False, "error": ApiText.NOT_FOUND}
     return {"ok": True}
 
 
@@ -81,7 +88,7 @@ def update_task(task_id: str, payload: dict):
 def toggle_task(task_id: str):
     result = task_service.toggle_task(task_id)
     if result is None:
-        return {"ok": False, "error": "not found"}
+        return {"ok": False, "error": ApiText.NOT_FOUND}
     return {"ok": True, "is_done": result}
 
 
@@ -89,7 +96,7 @@ def toggle_task(task_id: str):
 def create_task_reminder(task_id: str, payload: dict):
     remind_at = (payload.get("remind_at") or "").strip()
     if not remind_at:
-        return {"ok": False, "error": "remind_at is required"}
+        return {"ok": False, "error": ApiText.REMIND_AT_REQUIRED}
 
     ok, status, reminder_id = reminder_service.create_task_reminder(
         task_item_id=task_id,
@@ -112,7 +119,7 @@ def ack_reminder(reminder_id: str):
 
 @app.post("/reminders/{reminder_id}/snooze")
 def snooze_reminder(reminder_id: str, payload: dict):
-    minutes = normalize_minutes(payload.get("minutes"), default=10)
+    minutes = normalize_minutes(payload.get("minutes"), default=SETTINGS.DEFAULT_SNOOZE_MINUTES)
     ok, status, snoozed_until = reminder_service.snooze_reminder(reminder_id, minutes=minutes)
     if not ok:
         return {"ok": False, "error": status}

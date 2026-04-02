@@ -1,11 +1,19 @@
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
+from app.db.repo.reminder_repo import ReminderRepo
+from app.utils.timefmt import format_dt_for_ui
 
 
 class TaskService:
-    def __init__(self, items_repo: ItemsRepo, task_repo: TaskRepo) -> None:
+    def __init__(
+        self,
+        items_repo: ItemsRepo,
+        task_repo: TaskRepo,
+        reminder_repo: ReminderRepo | None = None,
+    ) -> None:
         self.items_repo = items_repo
         self.task_repo = task_repo
+        self.reminder_repo = reminder_repo
 
     def create_task(self, title: str, due_at: str | None = None, memo: str | None = None) -> str:
         item_id = self.items_repo.create_item("task", title)
@@ -13,10 +21,14 @@ class TaskService:
         return item_id
 
     def list_tasks(self) -> list[dict]:
-        return self.task_repo.list_active_tasks()
+        rows = self.task_repo.list_active_tasks()
+        return [self._decorate_task(row, include_reminders=False) for row in rows]
 
     def get_task(self, item_id: str) -> dict | None:
-        return self.task_repo.get_task_detail(item_id)
+        detail = self.task_repo.get_task_detail(item_id)
+        if detail is None:
+            return None
+        return self._decorate_task(detail, include_reminders=True)
 
     def update_task(
         self,
@@ -49,3 +61,22 @@ class TaskService:
 
     def toggle_task(self, item_id: str):
         return self.task_repo.toggle_done(item_id)
+
+    def _decorate_task(self, task: dict, *, include_reminders: bool) -> dict:
+        item = dict(task)
+        item["due_at_display"] = format_dt_for_ui(item.get("due_at"))
+        item["created_at_display"] = format_dt_for_ui(item.get("created_at"))
+        item["updated_at_display"] = format_dt_for_ui(item.get("updated_at"))
+
+        if include_reminders and self.reminder_repo is not None:
+            reminders = self.reminder_repo.list_linked_reminders(item["id"])
+            for reminder in reminders:
+                reminder["remind_at_display"] = format_dt_for_ui(reminder.get("remind_at"))
+                reminder["last_fired_at_display"] = format_dt_for_ui(reminder.get("last_fired_at"))
+                reminder["acked_at_display"] = format_dt_for_ui(reminder.get("acked_at"))
+                reminder["snoozed_until_display"] = format_dt_for_ui(reminder.get("snoozed_until"))
+            item["reminders"] = reminders
+        else:
+            item["reminders"] = []
+
+        return item
