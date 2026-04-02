@@ -1,13 +1,47 @@
+@font-face {
+  font-family: "Sarasa Gothic Mono";
+  src: url("/fonts/sarasa-mono-k-regular-nerd-font.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sarasa Gothic Mono";
+  src: url("/fonts/sarasa-mono-k-bold-nerd-font.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
 html, body {
   margin: 0;
   padding: 0;
   background: #111;
   color: #eaeaea;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;
+  line-height: 1.45;
+  font-size: 15px;
 }
 
 * {
   box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
 .page {
@@ -26,11 +60,13 @@ html, body {
 .line {
   font-size: 20px;
   font-weight: 700;
+  letter-spacing: 0;
 }
 
 .subline {
   margin-top: 6px;
   color: #aaa;
+  font-size: 14px;
 }
 
 .sectionTitle {
@@ -67,13 +103,22 @@ html, body {
   gap: 10px;
 }
 
-.textInput {
+.textInput,
+textarea.textInput {
   flex: 1;
+  width: 100%;
   background: #101010;
   color: #eaeaea;
   border: 1px solid #333;
   padding: 10px 12px;
   font: inherit;
+  border-radius: 0;
+  outline: none;
+}
+
+.textInput:focus,
+textarea.textInput:focus {
+  border-color: #666;
 }
 
 .button {
@@ -83,6 +128,12 @@ html, body {
   padding: 10px 14px;
   font: inherit;
   cursor: pointer;
+  border-radius: 0;
+  white-space: nowrap;
+}
+
+.button:hover {
+  background: #2a2a2a;
 }
 
 .button:disabled {
@@ -97,6 +148,7 @@ html, body {
 
 .taskItemBlock {
   display: block;
+  padding: 10px 0;
 }
 
 .taskMainRow {
@@ -110,6 +162,13 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-width: 0;
+}
+
+.taskTitleWrap span:last-child,
+.taskLink {
+  min-width: 0;
+  word-break: break-word;
 }
 
 .taskLink {
@@ -138,4 +197,35 @@ html, body {
 
 .topGap {
   margin-top: 14px;
+}
+
+@media (max-width: 640px) {
+  html, body {
+    font-size: 14px;
+  }
+
+  .page {
+    padding: 12px;
+  }
+
+  .panel {
+    padding: 12px;
+  }
+
+  .formRow {
+    flex-direction: column;
+  }
+
+  .taskMainRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .taskTitleWrap {
+    align-items: flex-start;
+  }
+
+  .button {
+    width: 100%;
+  }
 }
