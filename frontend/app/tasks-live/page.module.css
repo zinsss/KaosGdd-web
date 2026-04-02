@@ -1,0 +1,55 @@
+.taskItemBlock {
+  display: block;
+  padding: 10px 0;
+  border-bottom: 1px dotted #2d2d2d;
+}
+
+.taskMainRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.taskTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.taskLink {
+  color: #eaeaea;
+  text-decoration: none;
+}
+
+.taskLink:hover {
+  text-decoration: underline;
+}
+
+.formRow {
+  display: flex;
+  gap: 10px;
+}
+
+.textInput {
+  flex: 1;
+  background: #101010;
+  color: #eaeaea;
+  border: 1px solid #333;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.button {
+  background: #222;
+  color: #eaeaea;
+  border: 1px solid #444;
+  padding: 10px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
