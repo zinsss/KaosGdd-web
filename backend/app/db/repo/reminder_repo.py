@@ -1,0 +1,232 @@
+import json
+
+from sqlalchemy import text
+
+from app.utils.clock import now_iso
+from app.utils.ids import new_id
+
+
+class ReminderRepo:
+    def __init__(self, engine) -> None:
+        self.engine = engine
+
+    def create_reminder_item(self, *, title: str, remind_at: str, parent_item_id: str, alert_policy: str | None = None) -> str:
+        reminder_item_id = new_id()
+        now = now_iso()
+
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO items(id, item_type, title, status, created_at, updated_at)
+                    VALUES (:id, 'reminder', :title, 'active', :created_at, :updated_at)
+                    """
+                ),
+                {
+                    "id": reminder_item_id,
+                    "title": title,
+                    "created_at": now,
+                    "updated_at": now,
+                },
+            )
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO reminder_items(item_id, remind_at, state, alert_policy, last_fired_at, acked_at, snoozed_until)
+                    VALUES (:item_id, :remind_at, 'scheduled', :alert_policy, NULL, NULL, NULL)
+                    """
+                ),
+                {
+                    "item_id": reminder_item_id,
+                    "remind_at": remind_at,
+                    "alert_policy": alert_policy,
+                },
+            )
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO item_reminders(item_id, reminder_item_id, created_at)
+                    VALUES (:item_id, :reminder_item_id, :created_at)
+                    """
+                ),
+                {
+                    "item_id": parent_item_id,
+                    "reminder_item_id": reminder_item_id,
+                    "created_at": now,
+                },
+            )
+
+        return reminder_item_id
+
+    def get_reminder_detail(self, reminder_item_id: str):
+        with self.engine.begin() as conn:
+            row = conn.execute(
+                text(
+                    """
+                    SELECT
+                        i.id,
+                        i.title,
+                        i.status,
+                        r.remind_at,
+                        r.state,
+                        r.alert_policy,
+                        r.last_fired_at,
+                        r.acked_at,
+                        r.snoozed_until,
+                        ir.item_id AS parent_item_id
+                    FROM items i
+                    JOIN reminder_items r ON i.id = r.item_id
+                    LEFT JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
+                    WHERE i.id = :id
+                      AND i.item_type = 'reminder'
+                    LIMIT 1
+                    """
+                ),
+                {"id": reminder_item_id},
+            ).mappings().first()
+        return dict(row) if row else None
+
+    def list_due_reminders(self, *, now_iso_value: str):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT
+                        i.id,
+                        i.title,
+                        i.status,
+                        r.remind_at,
+                        r.state,
+                        r.alert_policy,
+                        r.last_fired_at,
+                        r.acked_at,
+                        r.snoozed_until,
+                        ir.item_id AS parent_item_id
+                    FROM items i
+                    JOIN reminder_items r ON i.id = r.item_id
+                    LEFT JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
+                    WHERE i.item_type = 'reminder'
+                      AND i.status = 'active'
+                      AND (r.state = 'scheduled' OR r.state = 'snoozed')
+                      AND COALESCE(r.snoozed_until, r.remind_at) <= :now_iso_value
+                    ORDER BY COALESCE(r.snoozed_until, r.remind_at) ASC, i.created_at ASC
+                    """
+                ),
+                {"now_iso_value": now_iso_value},
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
+    def list_missed_candidates(self, *, cutoff_iso_value: str):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT
+                        i.id,
+                        i.title,
+                        i.status,
+                        r.remind_at,
+                        r.state,
+                        r.alert_policy,
+                        r.last_fired_at,
+                        r.acked_at,
+                        r.snoozed_until,
+                        ir.item_id AS parent_item_id
+                    FROM items i
+                    JOIN reminder_items r ON i.id = r.item_id
+                    JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
+                    WHERE i.item_type = 'reminder'
+                      AND i.status = 'active'
+                      AND r.state = 'fired'
+                      AND r.last_fired_at IS NOT NULL
+                      AND r.last_fired_at <= :cutoff_iso_value
+                    ORDER BY r.last_fired_at ASC, i.created_at ASC
+                    """
+                ),
+                {"cutoff_iso_value": cutoff_iso_value},
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
+    def mark_fired(self, reminder_item_id: str) -> None:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    UPDATE reminder_items
+                    SET state = 'fired',
+                        last_fired_at = :now
+                    WHERE item_id = :item_id
+                    """
+                ),
+                {"item_id": reminder_item_id, "now": now},
+            )
+            conn.execute(text("UPDATE items SET updated_at = :now WHERE id = :item_id"), {"item_id": reminder_item_id, "now": now})
+
+    def mark_acked(self, reminder_item_id: str) -> None:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    UPDATE reminder_items
+                    SET state = 'acked',
+                        acked_at = :now,
+                        snoozed_until = NULL
+                    WHERE item_id = :item_id
+                    """
+                ),
+                {"item_id": reminder_item_id, "now": now},
+            )
+            conn.execute(text("UPDATE items SET updated_at = :now WHERE id = :item_id"), {"item_id": reminder_item_id, "now": now})
+
+    def mark_missed(self, reminder_item_id: str) -> None:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(text("UPDATE reminder_items SET state = 'missed' WHERE item_id = :item_id"), {"item_id": reminder_item_id})
+            conn.execute(text("UPDATE items SET updated_at = :now WHERE id = :item_id"), {"item_id": reminder_item_id, "now": now})
+
+    def mark_snoozed(self, reminder_item_id: str, *, snoozed_until: str) -> None:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    UPDATE reminder_items
+                    SET state = 'snoozed',
+                        snoozed_until = :snoozed_until
+                    WHERE item_id = :item_id
+                    """
+                ),
+                {"item_id": reminder_item_id, "snoozed_until": snoozed_until},
+            )
+            conn.execute(text("UPDATE items SET updated_at = :now WHERE id = :item_id"), {"item_id": reminder_item_id, "now": now})
+
+    def mark_cancelled(self, reminder_item_id: str) -> None:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(text("UPDATE reminder_items SET state = 'cancelled', snoozed_until = NULL WHERE item_id = :item_id"), {"item_id": reminder_item_id})
+            conn.execute(text("UPDATE items SET updated_at = :now WHERE id = :item_id"), {"item_id": reminder_item_id, "now": now})
+
+    def create_event(self, *, reminder_item_id: str, event_type: str, payload: dict | None = None) -> str:
+        event_id = new_id()
+        now = now_iso()
+        payload_json = json.dumps(payload or {}, ensure_ascii=False)
+
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO reminder_events(id, reminder_item_id, event_type, event_at, payload_json)
+                    VALUES (:id, :reminder_item_id, :event_type, :event_at, :payload_json)
+                    """
+                ),
+                {
+                    "id": event_id,
+                    "reminder_item_id": reminder_item_id,
+                    "event_type": event_type,
+                    "event_at": now,
+                    "payload_json": payload_json,
+                },
+            )
+        return event_id
