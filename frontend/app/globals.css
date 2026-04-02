@@ -205,6 +205,16 @@ textarea.textInput:focus {
   flex-wrap: wrap;
 }
 
+.compactActionRow {
+  margin-top: 10px;
+}
+
+.compactButton {
+  width: auto;
+  min-width: 84px;
+  padding: 8px 10px;
+}
+
 @media (max-width: 640px) {
   html, body {
     font-size: 14px;
@@ -233,5 +243,15 @@ textarea.textInput:focus {
 
   .button {
     width: 100%;
+  }
+
+  .compactActionRow {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .compactButton {
+    width: auto;
+    flex: 1;
   }
 }
