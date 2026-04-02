@@ -61,3 +61,81 @@ html, body {
 .empty {
   color: #999;
 }
+
+.formRow {
+  display: flex;
+  gap: 10px;
+}
+
+.textInput {
+  flex: 1;
+  background: #101010;
+  color: #eaeaea;
+  border: 1px solid #333;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.button {
+  background: #222;
+  color: #eaeaea;
+  border: 1px solid #444;
+  padding: 10px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.errorText {
+  color: #ff8c8c;
+  margin-top: 10px;
+}
+
+.taskItemBlock {
+  display: block;
+}
+
+.taskMainRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.taskTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.taskLink {
+  color: #eaeaea;
+  text-decoration: none;
+}
+
+.taskLink:hover {
+  text-decoration: underline;
+}
+
+.metaLine {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  color: #999;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.metaStack {
+  display: grid;
+  gap: 8px;
+  color: #bbb;
+}
+
+.topGap {
+  margin-top: 14px;
+}
