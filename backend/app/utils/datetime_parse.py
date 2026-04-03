@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 from app.config import SETTINGS
@@ -17,7 +17,8 @@ def parse_local_datetime_to_iso(value: str | None) -> str | None:
         try:
             dt = datetime.strptime(normalized, fmt)
             tz = ZoneInfo(SETTINGS.APP_TIMEZONE)
-            return dt.replace(tzinfo=tz).isoformat(timespec="seconds")
+            dt = dt.replace(tzinfo=tz)
+            return dt.astimezone(timezone.utc).isoformat(timespec="seconds")
         except ValueError:
             continue
 
@@ -28,7 +29,5 @@ def parse_local_datetime_to_iso(value: str | None) -> str | None:
 
     if dt.tzinfo is None:
         dt = dt.replace(tzinfo=ZoneInfo(SETTINGS.APP_TIMEZONE))
-    else:
-        dt = dt.astimezone(ZoneInfo(SETTINGS.APP_TIMEZONE))
 
-    return dt.isoformat(timespec="seconds")
+    return dt.astimezone(timezone.utc).isoformat(timespec="seconds")
