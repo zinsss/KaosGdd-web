@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import re
 
+from app.utils.datetime_parse import parse_local_datetime_to_iso
+
 REPEAT_TAG_PREFIX = "repeat:"
 
 
@@ -53,10 +55,12 @@ def export_task_raw(
 
     due_at = str(task.get("due_at") or "").strip()
     if due_at:
-        lines.append(f"d:{due_at}")
+        due_display = due_at[:16].replace("T", " ")
+        lines.append(f"d:{due_display}")
 
     if remind_at:
-        lines.append(f"r:{remind_at}")
+        remind_display = str(remind_at).strip()[:16].replace("T", " ")
+        lines.append(f"r:{remind_display}")
 
     if repeat_rule:
         lines.append(f"R:{repeat_rule}")
@@ -112,10 +116,10 @@ def parse_task_raw(raw_text: str) -> dict:
         cleaned, meta = _extract_meta_from_line(original_line)
 
         if meta["due_at"] is not None:
-            due_at = meta["due_at"]
+            due_at = parse_local_datetime_to_iso(meta["due_at"])
 
         if meta["remind_at"] is not None:
-            remind_at = meta["remind_at"]
+            remind_at = parse_local_datetime_to_iso(meta["remind_at"])
 
         if meta["repeat_rule"] is not None:
             repeat_rule = meta["repeat_rule"]
