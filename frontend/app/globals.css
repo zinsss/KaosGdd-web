@@ -58,15 +58,28 @@ body {
 }
 
 .line {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   letter-spacing: 0;
 }
 
-.subline {
+.lineSuffix {
+  color: #8f8f8f;
+  font-size: 15px;
+  font-weight: 400;
+}
+
+.backRow {
   margin-top: 6px;
-  color: #aaa;
-  font-size: 14px;
+}
+
+.backLink {
+  color: #a8a8a8;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  text-decoration: underline;
 }
 
 .sectionTitle {
@@ -74,19 +87,24 @@ body {
   margin-bottom: 10px;
 }
 
-.toggleHeaderRow {
+.detailTitleRow {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: baseline;
   gap: 12px;
 }
 
-.toggleTitle {
+.detailMainTitle {
   margin-bottom: 0;
+  min-width: 0;
+  word-break: break-word;
 }
 
-.toggleBody {
-  margin-top: 12px;
+.detailStateText {
+  color: #999;
+  font-size: 13px;
+  text-align: right;
+  white-space: nowrap;
 }
 
 .row {
@@ -174,6 +192,11 @@ textarea.textInput:focus {
   cursor: default;
 }
 
+.buttonActive {
+  border-color: #777;
+  background: #2a2a2a;
+}
+
 .errorText {
   color: #ff8c8c;
   margin-top: 10px;
@@ -250,6 +273,10 @@ textarea.textInput:focus {
   flex-wrap: wrap;
 }
 
+.detailActionRow {
+  flex-wrap: nowrap;
+}
+
 .compactActionRow {
   margin-top: 10px;
 }
@@ -258,6 +285,19 @@ textarea.textInput:focus {
   width: auto;
   min-width: 84px;
   padding: 8px 10px;
+}
+
+.moreMetaBox {
+  border-top: 1px dotted #2d2d2d;
+  padding-top: 12px;
+}
+
+.copyRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .reminderCompactList {
@@ -321,26 +361,21 @@ textarea.textInput:focus {
     flex-direction: column;
   }
 
-  .taskMainRow {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .taskTitleWrap {
-    align-items: flex-start;
-  }
-
   .button {
     width: 100%;
-  }
-
-  .compactActionRow {
-    flex-direction: row;
-    align-items: stretch;
   }
 
   .compactButton {
     width: auto;
     flex: 1;
+  }
+
+  .detailActionRow {
+    flex-wrap: wrap;
+  }
+
+  .copyRow {
+    flex-direction: column;
+    align-items: stretch;
   }
 }
