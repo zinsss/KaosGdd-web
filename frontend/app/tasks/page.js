@@ -35,7 +35,10 @@ export default async function TasksPage() {
                 <div className="taskMainRow">
                   <div className="taskTitleWrap">
                     <span>{task.is_done ? "" : ""}</span>
-                    <a className="taskLink" href={"/tasks/" + task.id}>
+                    <a
+                      className={"taskLink" + (task.is_done ? " taskLinkDone taskLinkDoneList" : "")}
+                      href={"/tasks/" + task.id}
+                    >
                       {task.title}
                     </a>
                   </div>

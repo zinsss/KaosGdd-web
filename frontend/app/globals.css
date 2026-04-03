@@ -103,6 +103,17 @@ body {
   gap: 10px;
 }
 
+.fieldBlock {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.fieldLabel {
+  color: #aaa;
+  font-size: 13px;
+}
+
 .textInput,
 textarea.textInput {
   flex: 1;
@@ -119,6 +130,12 @@ textarea.textInput {
 .textInput:focus,
 textarea.textInput:focus {
   border-color: #666;
+}
+
+.autoTextarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 44px;
 }
 
 .button {
@@ -178,6 +195,18 @@ textarea.textInput:focus {
 
 .taskLink:hover {
   text-decoration: underline;
+}
+
+.taskLinkDone {
+  text-decoration: line-through;
+}
+
+.taskLinkDoneList {
+  opacity: 0.68;
+}
+
+.taskLinkDoneDetail {
+  opacity: 0.78;
 }
 
 .metaLine {

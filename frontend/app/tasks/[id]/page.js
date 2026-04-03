@@ -1,5 +1,6 @@
 import AddReminderForm from "../../../components/AddReminderForm";
 import ReminderActions from "../../../components/ReminderActions";
+import TaskEditForm from "../../../components/TaskEditForm";
 import { UI_STRINGS } from "../../../lib/strings";
 
 async function getTask(id) {
@@ -48,7 +49,9 @@ export default async function TaskDetailPage({ params }) {
       ) : (
         <>
           <section className="panel">
-            <div className="sectionTitle">{result.item.title}</div>
+            <div className={"sectionTitle" + (result.item.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
+              {result.item.title}
+            </div>
             <div className="metaLine">
               <span>{result.item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}</span>
             </div>
@@ -62,6 +65,8 @@ export default async function TaskDetailPage({ params }) {
               <a className="taskLink" href="/tasks">{UI_STRINGS.BACK_TO_TASKS}</a>
             </div>
           </section>
+
+          <TaskEditForm task={result.item} />
 
           <section className="panel">
             <div className="sectionTitle">{UI_STRINGS.REMINDER_LIST}</div>

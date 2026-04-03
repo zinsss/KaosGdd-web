@@ -8,6 +8,8 @@ export const UI_STRINGS = {
   ADD_REMINDER: "Add reminder",
   ADD: "Add",
   ADDING: "Adding...",
+  SAVE: "Save",
+  SAVING: "Saving...",
   DONE: "Done",
   UNDO: "Undo",
   BACK_TO_TASKS: "← back to tasks",
@@ -26,4 +28,6 @@ export const UI_STRINGS = {
   UPDATED: "updated",
   STATE: "state",
   REMIND_AT: "remind_at",
+  EDIT_TASK: "Edit task",
+  TITLE: "title",
 };
