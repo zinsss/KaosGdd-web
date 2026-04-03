@@ -47,7 +47,7 @@ export default function AddReminderForm({ taskId }) {
           type="text"
           value={remindAt}
           onChange={(event) => setRemindAt(event.target.value)}
-          placeholder="2026-04-02T21:30:00+09:00"
+          placeholder="yyyy-mm-dd HH:MM (KST)"
           disabled={isSubmitting}
         />
         <button className="button" type="submit" disabled={isSubmitting}>

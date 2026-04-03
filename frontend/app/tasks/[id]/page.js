@@ -12,6 +12,25 @@ async function getTask(id) {
   }
 }
 
+function reminderPriority(state) {
+  switch (state) {
+    case "fired":
+      return 1;
+    case "missed":
+      return 2;
+    case "scheduled":
+      return 3;
+    case "snoozed":
+      return 4;
+    case "acked":
+      return 5;
+    case "cancelled":
+      return 6;
+    default:
+      return 9;
+  }
+}
+
 export default async function TaskDetailPage({ params }) {
   const result = await getTask(params.id);
 
@@ -48,22 +67,24 @@ export default async function TaskDetailPage({ params }) {
             <div className="sectionTitle">{UI_STRINGS.REMINDER_LIST}</div>
             {result.item.reminders && result.item.reminders.length > 0 ? (
               <ul className="taskList">
-                {result.item.reminders.map((reminder) => (
-                  <li key={reminder.id} className="taskItem taskItemBlock">
-                    <div className="taskMainRow">
-                      <div className="taskTitleWrap">
-                        <span>{reminder.title}</span>
+                {[...result.item.reminders]
+                  .sort((a, b) => reminderPriority(a.state) - reminderPriority(b.state))
+                  .map((reminder) => (
+                    <li key={reminder.id} className="taskItem taskItemBlock">
+                      <div className="taskMainRow">
+                        <div className="taskTitleWrap">
+                          <span>{reminder.title}</span>
+                        </div>
                       </div>
-                    </div>
-                    <div className="metaStack">
-                      <div>{UI_STRINGS.STATE}: {reminder.state}</div>
-                      <div>{UI_STRINGS.REMIND_AT}: {reminder.remind_at_display || "-"}</div>
-                    </div>
-                    <div className="topGap">
-                      <ReminderActions reminderId={reminder.id} />
-                    </div>
-                  </li>
-                ))}
+                      <div className="metaStack">
+                        <div>{UI_STRINGS.STATE}: {reminder.state}</div>
+                        <div>{UI_STRINGS.REMIND_AT}: {reminder.remind_at_display || "-"}</div>
+                      </div>
+                      <div className="topGap">
+                        <ReminderActions reminderId={reminder.id} state={reminder.state} />
+                      </div>
+                    </li>
+                  ))}
               </ul>
             ) : (
               <div className="empty">{UI_STRINGS.NO_REMINDERS}</div>

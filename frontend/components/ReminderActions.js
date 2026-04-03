@@ -3,9 +3,11 @@
 import { useState } from "react";
 import { UI_STRINGS } from "../lib/strings";
 
-export default function ReminderActions({ reminderId }) {
+export default function ReminderActions({ reminderId, state }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+
+  const canAct = state === "fired" || state === "missed";
 
   async function post(url, body) {
     setIsSubmitting(true);
@@ -31,6 +33,10 @@ export default function ReminderActions({ reminderId }) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (!canAct) {
+    return null;
   }
 
   return (
