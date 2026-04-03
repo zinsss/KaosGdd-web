@@ -42,6 +42,23 @@ function reminderPriority(state) {
   }
 }
 
+function reminderStateClass(state) {
+  switch (state) {
+    case "fired":
+      return " reminderStateFired";
+    case "missed":
+      return " reminderStateMissed";
+    case "acked":
+      return " reminderStateDim";
+    case "snoozed":
+      return " reminderStateDim";
+    case "cancelled":
+      return " reminderStateDimmer";
+    default:
+      return "";
+  }
+}
+
 export default async function TaskDetailPage({ params }) {
   const result = await getTask(params.id);
   const rawResult = result.ok ? await getTaskRaw(params.id) : { ok: false, raw: "" };
@@ -65,6 +82,12 @@ export default async function TaskDetailPage({ params }) {
             </div>
             <div className="metaLine">
               <span>{result.item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}</span>
+              {result.item.tags && result.item.tags.length > 0 ? (
+                <span>{result.item.tags.map((tag) => `#${tag}`).join(" ")}</span>
+              ) : null}
+              {result.item.repeat_rule ? (
+                <span>{`R:${result.item.repeat_rule}`}</span>
+              ) : null}
             </div>
             <div className="metaStack">
               <div>{UI_STRINGS.DUE}: {result.item.due_at_display || "-"}</div>
@@ -82,23 +105,18 @@ export default async function TaskDetailPage({ params }) {
           <section className="panel">
             <div className="sectionTitle">{UI_STRINGS.REMINDER_LIST}</div>
             {result.item.reminders && result.item.reminders.length > 0 ? (
-              <ul className="taskList">
+              <ul className="taskList reminderCompactList">
                 {[...result.item.reminders]
                   .sort((a, b) => reminderPriority(a.state) - reminderPriority(b.state))
                   .map((reminder) => (
-                    <li key={reminder.id} className="taskItem taskItemBlock">
-                      <div className="taskMainRow">
-                        <div className="taskTitleWrap">
-                          <span>{reminder.title}</span>
-                        </div>
+                    <li key={reminder.id} className="reminderCompactItem">
+                      <div className={"reminderCompactRow" + reminderStateClass(reminder.state)}>
+                        <span className="reminderWhen">{reminder.remind_at_display || "-"}</span>
+                        <span className="reminderState">{reminder.state}</span>
                       </div>
-                      <div className="metaStack">
-                        <div>{UI_STRINGS.STATE}: {reminder.state}</div>
-                        <div>{UI_STRINGS.REMIND_AT}: {reminder.remind_at_display || "-"}</div>
-                      </div>
-                      <div className="topGap">
+                      {(reminder.state === "fired" || reminder.state === "missed") ? (
                         <ReminderActions reminderId={reminder.id} state={reminder.state} />
-                      </div>
+                      ) : null}
                     </li>
                   ))}
               </ul>

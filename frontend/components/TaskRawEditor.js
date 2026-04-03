@@ -51,9 +51,13 @@ export default function TaskRawEditor({ taskId, initialRaw }) {
         className="textInput autoTextarea rawEditor"
         value={raw}
         onChange={(event) => setRaw(event.target.value)}
-        rows={3}
+        rows={1}
         spellCheck={false}
       />
+
+      <div className="rawHint">
+        title · d:due · r:reminder · R:repeat · #tags
+      </div>
 
       <div className="actionRow compactActionRow">
         <button className="button compactButton" type="submit" disabled={isSubmitting}>

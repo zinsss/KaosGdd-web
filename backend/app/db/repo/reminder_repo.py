@@ -119,8 +119,8 @@ class ReminderRepo:
                         CASE r.state
                             WHEN 'fired' THEN 1
                             WHEN 'missed' THEN 2
-                            WHEN 'snoozed' THEN 3
-                            WHEN 'scheduled' THEN 4
+                            WHEN 'scheduled' THEN 3
+                            WHEN 'snoozed' THEN 4
                             WHEN 'acked' THEN 5
                             WHEN 'cancelled' THEN 6
                             ELSE 7
@@ -132,6 +132,83 @@ class ReminderRepo:
                 {"parent_item_id": parent_item_id},
             ).mappings().all()
         return [dict(row) for row in rows]
+
+    def get_editable_reminder_for_parent(self, parent_item_id: str):
+        with self.engine.begin() as conn:
+            row = conn.execute(
+                text(
+                    """
+                    SELECT
+                        i.id,
+                        i.title,
+                        i.status,
+                        r.remind_at,
+                        r.state,
+                        r.alert_policy,
+                        r.last_fired_at,
+                        r.acked_at,
+                        r.snoozed_until,
+                        ir.item_id AS parent_item_id
+                    FROM item_reminders ir
+                    JOIN items i ON i.id = ir.reminder_item_id
+                    JOIN reminder_items r ON r.item_id = ir.reminder_item_id
+                    WHERE ir.item_id = :parent_item_id
+                      AND i.item_type = 'reminder'
+                      AND i.status = 'active'
+                      AND r.state IN ('scheduled', 'snoozed', 'fired', 'missed')
+                    ORDER BY
+                        CASE r.state
+                            WHEN 'fired' THEN 1
+                            WHEN 'missed' THEN 2
+                            WHEN 'scheduled' THEN 3
+                            WHEN 'snoozed' THEN 4
+                            ELSE 5
+                        END ASC,
+                        COALESCE(r.snoozed_until, r.remind_at) ASC,
+                        i.created_at ASC
+                    LIMIT 1
+                    """
+                ),
+                {"parent_item_id": parent_item_id},
+            ).mappings().first()
+        return dict(row) if row else None
+
+    def reschedule_reminder_item(
+        self,
+        reminder_item_id: str,
+        *,
+        title: str,
+        remind_at: str,
+        alert_policy: str | None = None,
+    ) -> None:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    UPDATE items
+                    SET title = :title,
+                        updated_at = :updated_at
+                    WHERE id = :item_id
+                    """
+                ),
+                {"item_id": reminder_item_id, "title": title, "updated_at": now},
+            )
+            conn.execute(
+                text(
+                    """
+                    UPDATE reminder_items
+                    SET remind_at = :remind_at,
+                        state = 'scheduled',
+                        alert_policy = :alert_policy,
+                        last_fired_at = NULL,
+                        acked_at = NULL,
+                        snoozed_until = NULL
+                    WHERE item_id = :item_id
+                    """
+                ),
+                {"item_id": reminder_item_id, "remind_at": remind_at, "alert_policy": alert_policy},
+            )
 
     def list_due_reminders(self, *, now_iso_value: str):
         with self.engine.begin() as conn:

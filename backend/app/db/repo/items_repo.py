@@ -44,3 +44,54 @@ class ItemsRepo:
                 ),
                 {"id": item_id, "title": title, "updated_at": now},
             )
+
+    def list_item_tags(self, item_id: str) -> list[str]:
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT tag
+                    FROM item_tags
+                    WHERE item_id = :item_id
+                    ORDER BY tag ASC
+                    """
+                ),
+                {"item_id": item_id},
+            ).fetchall()
+        return [row[0] for row in rows]
+
+    def replace_item_tags(self, item_id: str, tags: list[str]) -> None:
+        normalized = []
+        seen = set()
+
+        for tag in tags:
+            clean = str(tag or "").strip().lower()
+            if not clean:
+                continue
+            if clean in seen:
+                continue
+            seen.add(clean)
+            normalized.append(clean)
+
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text("DELETE FROM item_tags WHERE item_id = :item_id"),
+                {"item_id": item_id},
+            )
+
+            for tag in normalized:
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO item_tags(item_id, tag, created_at)
+                        VALUES (:item_id, :tag, :created_at)
+                        """
+                    ),
+                    {"item_id": item_id, "tag": tag, "created_at": now},
+                )
+
+            conn.execute(
+                text("UPDATE items SET updated_at = :updated_at WHERE id = :item_id"),
+                {"item_id": item_id, "updated_at": now},
+            )

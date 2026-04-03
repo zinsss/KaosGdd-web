@@ -1,7 +1,7 @@
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
-from app.utils.task_raw import export_task_raw, parse_task_raw
+from app.utils.task_raw import REPEAT_TAG_PREFIX, export_task_raw, parse_task_raw
 from app.utils.timefmt import format_dt_for_ui
 
 
@@ -67,7 +67,29 @@ class TaskService:
         detail = self.task_repo.get_task_detail(item_id)
         if detail is None:
             return None
-        return export_task_raw(detail)
+
+        tags = self.items_repo.list_item_tags(item_id)
+        repeat_rule = None
+        visible_tags = []
+
+        for tag in tags:
+            if tag.startswith(REPEAT_TAG_PREFIX):
+                repeat_rule = tag[len(REPEAT_TAG_PREFIX):]
+            else:
+                visible_tags.append(tag)
+
+        remind_at = None
+        if self.reminder_repo is not None:
+            editable = self.reminder_repo.get_editable_reminder_for_parent(item_id)
+            if editable is not None:
+                remind_at = editable.get("remind_at")
+
+        return export_task_raw(
+            detail,
+            tags=visible_tags,
+            remind_at=remind_at,
+            repeat_rule=repeat_rule,
+        )
 
     def update_task_from_raw(self, item_id: str, raw_text: str) -> tuple[bool, str | None]:
         detail = self.task_repo.get_task_detail(item_id)
@@ -88,6 +110,34 @@ class TaskService:
         if not ok:
             return False, "not found"
 
+        tags = list(parsed.get("tags") or [])
+        repeat_rule = str(parsed.get("repeat_rule") or "").strip()
+        if repeat_rule:
+            tags.append(REPEAT_TAG_PREFIX + repeat_rule)
+        self.items_repo.replace_item_tags(item_id, tags)
+
+        if self.reminder_repo is not None:
+            editable = self.reminder_repo.get_editable_reminder_for_parent(item_id)
+            remind_at = parsed.get("remind_at")
+            title = f"Reminder • {parsed.get('title')}"
+
+            if remind_at:
+                if editable is not None:
+                    self.reminder_repo.reschedule_reminder_item(
+                        editable["id"],
+                        title=title,
+                        remind_at=remind_at,
+                    )
+                else:
+                    self.reminder_repo.create_reminder_item(
+                        title=title,
+                        remind_at=remind_at,
+                        parent_item_id=item_id,
+                    )
+            else:
+                if editable is not None:
+                    self.reminder_repo.mark_cancelled(editable["id"])
+
         return True, None
 
     def _decorate_task(self, task: dict, *, include_reminders: bool) -> dict:
@@ -95,6 +145,19 @@ class TaskService:
         item["due_at_display"] = format_dt_for_ui(item.get("due_at"))
         item["created_at_display"] = format_dt_for_ui(item.get("created_at"))
         item["updated_at_display"] = format_dt_for_ui(item.get("updated_at"))
+
+        tags = self.items_repo.list_item_tags(item["id"])
+        visible_tags = []
+        repeat_rule = None
+
+        for tag in tags:
+            if tag.startswith(REPEAT_TAG_PREFIX):
+                repeat_rule = tag[len(REPEAT_TAG_PREFIX):]
+            else:
+                visible_tags.append(tag)
+
+        item["tags"] = visible_tags
+        item["repeat_rule"] = repeat_rule
 
         if include_reminders and self.reminder_repo is not None:
             reminders = self.reminder_repo.list_linked_reminders(item["id"])
