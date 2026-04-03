@@ -38,7 +38,7 @@ def health():
     return {
         "ok": True,
         "app": APP_NAME,
-        "mode": "frozen-v0-step5",
+        "mode": "frozen-v0-raw-edit",
         "timezone": SETTINGS.APP_TIMEZONE,
     }
 
@@ -81,6 +81,23 @@ def update_task(task_id: str, payload: dict):
     )
     if not ok:
         return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
+
+
+@app.get("/tasks/{task_id}/raw")
+def get_task_raw(task_id: str):
+    raw = task_service.export_task_raw(task_id)
+    if raw is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "raw": raw}
+
+
+@app.patch("/tasks/{task_id}/raw")
+def update_task_raw(task_id: str, payload: dict):
+    raw_text = str(payload.get("raw") or "")
+    ok, error = task_service.update_task_from_raw(task_id, raw_text)
+    if not ok:
+        return {"ok": False, "error": error or ApiText.INVALID_RAW_TASK}
     return {"ok": True}
 
 

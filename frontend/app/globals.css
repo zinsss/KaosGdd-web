@@ -138,6 +138,11 @@ textarea.textInput:focus {
   min-height: 44px;
 }
 
+.rawEditor {
+  min-height: 120px;
+  white-space: pre-wrap;
+}
+
 .button {
   background: #222;
   color: #eaeaea;

@@ -28,6 +28,6 @@ export const UI_STRINGS = {
   UPDATED: "updated",
   STATE: "state",
   REMIND_AT: "remind_at",
-  EDIT_TASK: "Edit task",
+  RAW_EDIT: "Raw edit",
   TITLE: "title",
 };

@@ -1,6 +1,7 @@
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
+from app.utils.task_raw import export_task_raw, parse_task_raw
 from app.utils.timefmt import format_dt_for_ui
 
 
@@ -61,6 +62,33 @@ class TaskService:
 
     def toggle_task(self, item_id: str):
         return self.task_repo.toggle_done(item_id)
+
+    def export_task_raw(self, item_id: str) -> str | None:
+        detail = self.task_repo.get_task_detail(item_id)
+        if detail is None:
+            return None
+        return export_task_raw(detail)
+
+    def update_task_from_raw(self, item_id: str, raw_text: str) -> tuple[bool, str | None]:
+        detail = self.task_repo.get_task_detail(item_id)
+        if detail is None:
+            return False, "not found"
+
+        try:
+            parsed = parse_task_raw(raw_text)
+        except ValueError as exc:
+            return False, str(exc)
+
+        ok = self.update_task(
+            item_id,
+            title=parsed.get("title"),
+            due_at=parsed.get("due_at"),
+            memo=parsed.get("memo"),
+        )
+        if not ok:
+            return False, "not found"
+
+        return True, None
 
     def _decorate_task(self, task: dict, *, include_reminders: bool) -> dict:
         item = dict(task)

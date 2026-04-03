@@ -3,6 +3,7 @@ class ApiText:
     NOT_FOUND = "not found"
     TITLE_REQUIRED = "title is required"
     REMIND_AT_REQUIRED = "remind_at is required"
+    INVALID_RAW_TASK = "invalid raw task"
 
 
 class ReminderStatusText:
@@ -22,6 +23,8 @@ class UiText:
     ADD_REMINDER = "Add reminder"
     ADD = "Add"
     ADDING = "Adding..."
+    SAVE = "Save"
+    SAVING = "Saving..."
     DONE = "Done"
     UNDO = "Undo"
     BACK_TO_TASKS = "← back to tasks"
@@ -40,5 +43,5 @@ class UiText:
     UPDATED = "updated"
     STATE = "state"
     REMIND_AT = "remind_at"
-    ID = "id"
-    TITLE = "title"
+    RAW_EDIT = "Raw edit"
+    RAW_PLACEHOLDER = "- title\nd:yyyy-mm-dd HH:MM\n\"\"\"\nmemo\n\"\"\""

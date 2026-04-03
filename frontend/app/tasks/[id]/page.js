@@ -1,6 +1,6 @@
 import AddReminderForm from "../../../components/AddReminderForm";
 import ReminderActions from "../../../components/ReminderActions";
-import TaskEditForm from "../../../components/TaskEditForm";
+import TaskRawEditor from "../../../components/TaskRawEditor";
 import { UI_STRINGS } from "../../../lib/strings";
 
 async function getTask(id) {
@@ -10,6 +10,16 @@ async function getTask(id) {
     return await res.json();
   } catch {
     return { ok: false, error: UI_STRINGS.BACKEND_UNREACHABLE };
+  }
+}
+
+async function getTaskRaw(id) {
+  const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
+  try {
+    const res = await fetch(base + "/tasks/" + id + "/raw", { cache: "no-store" });
+    return await res.json();
+  } catch {
+    return { ok: false, raw: "" };
   }
 }
 
@@ -34,6 +44,7 @@ function reminderPriority(state) {
 
 export default async function TaskDetailPage({ params }) {
   const result = await getTask(params.id);
+  const rawResult = result.ok ? await getTaskRaw(params.id) : { ok: false, raw: "" };
 
   return (
     <main className="page">
@@ -66,7 +77,7 @@ export default async function TaskDetailPage({ params }) {
             </div>
           </section>
 
-          <TaskEditForm task={result.item} />
+          <TaskRawEditor taskId={result.item.id} initialRaw={rawResult.raw || ""} />
 
           <section className="panel">
             <div className="sectionTitle">{UI_STRINGS.REMINDER_LIST}</div>
