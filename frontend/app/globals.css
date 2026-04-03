@@ -74,6 +74,21 @@ body {
   margin-bottom: 10px;
 }
 
+.toggleHeaderRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.toggleTitle {
+  margin-bottom: 0;
+}
+
+.toggleBody {
+  margin-top: 12px;
+}
+
 .row {
   display: flex;
   justify-content: space-between;
@@ -112,6 +127,7 @@ textarea.textInput {
   border: 1px solid #333;
   padding: 10px 12px;
   font: inherit;
+  font-size: 16px;
   border-radius: 0;
   outline: none;
 }
@@ -271,16 +287,16 @@ textarea.textInput:focus {
   text-align: right;
 }
 
+.reminderWasTriggered {
+  text-decoration: line-through;
+}
+
 .reminderStateDim {
   opacity: 0.62;
 }
 
 .reminderStateDimmer {
   opacity: 0.45;
-}
-
-.reminderStateFired {
-  text-decoration: line-through;
 }
 
 .reminderStateMissed .reminderState,

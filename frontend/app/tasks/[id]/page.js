@@ -1,6 +1,7 @@
 import AddReminderForm from "../../../components/AddReminderForm";
 import ReminderActions from "../../../components/ReminderActions";
 import TaskRawEditor from "../../../components/TaskRawEditor";
+import ToggleSection from "../../../components/ToggleSection";
 import { UI_STRINGS } from "../../../lib/strings";
 
 async function getTask(id) {
@@ -42,21 +43,26 @@ function reminderPriority(state) {
   }
 }
 
-function reminderStateClass(state) {
-  switch (state) {
-    case "fired":
-      return " reminderStateFired";
-    case "missed":
-      return " reminderStateMissed";
-    case "acked":
-      return " reminderStateDim";
-    case "snoozed":
-      return " reminderStateDim";
-    case "cancelled":
-      return " reminderStateDimmer";
-    default:
-      return "";
+function reminderRowClass(reminder) {
+  let cls = "";
+
+  if (reminder.state === "missed") {
+    cls += " reminderStateMissed";
   }
+
+  if (reminder.last_fired_at || reminder.state === "fired") {
+    cls += " reminderWasTriggered";
+  }
+
+  if (reminder.state === "acked" || reminder.state === "snoozed") {
+    cls += " reminderStateDim";
+  }
+
+  if (reminder.state === "cancelled") {
+    cls += " reminderStateDimmer";
+  }
+
+  return cls;
 }
 
 export default async function TaskDetailPage({ params }) {
@@ -85,9 +91,7 @@ export default async function TaskDetailPage({ params }) {
               {result.item.tags && result.item.tags.length > 0 ? (
                 <span>{result.item.tags.map((tag) => `#${tag}`).join(" ")}</span>
               ) : null}
-              {result.item.repeat_rule ? (
-                <span>{`R:${result.item.repeat_rule}`}</span>
-              ) : null}
+              {result.item.repeat_rule ? <span>{`R:${result.item.repeat_rule}`}</span> : null}
             </div>
             <div className="metaStack">
               <div>{UI_STRINGS.DUE}: {result.item.due_at_display || "-"}</div>
@@ -100,7 +104,9 @@ export default async function TaskDetailPage({ params }) {
             </div>
           </section>
 
-          <TaskRawEditor taskId={result.item.id} initialRaw={rawResult.raw || ""} />
+          <ToggleSection title={UI_STRINGS.RAW_EDIT}>
+            <TaskRawEditor taskId={result.item.id} initialRaw={rawResult.raw || ""} />
+          </ToggleSection>
 
           <section className="panel">
             <div className="sectionTitle">{UI_STRINGS.REMINDER_LIST}</div>
@@ -110,10 +116,11 @@ export default async function TaskDetailPage({ params }) {
                   .sort((a, b) => reminderPriority(a.state) - reminderPriority(b.state))
                   .map((reminder) => (
                     <li key={reminder.id} className="reminderCompactItem">
-                      <div className={"reminderCompactRow" + reminderStateClass(reminder.state)}>
+                      <div className={"reminderCompactRow" + reminderRowClass(reminder)}>
                         <span className="reminderWhen">{reminder.remind_at_display || "-"}</span>
                         <span className="reminderState">{reminder.state}</span>
                       </div>
+
                       {(reminder.state === "fired" || reminder.state === "missed") ? (
                         <ReminderActions reminderId={reminder.id} state={reminder.state} />
                       ) : null}
@@ -125,7 +132,9 @@ export default async function TaskDetailPage({ params }) {
             )}
           </section>
 
-          <AddReminderForm taskId={result.item.id} />
+          <ToggleSection title={UI_STRINGS.ADD_REMINDER}>
+            <AddReminderForm taskId={result.item.id} />
+          </ToggleSection>
         </>
       )}
     </main>

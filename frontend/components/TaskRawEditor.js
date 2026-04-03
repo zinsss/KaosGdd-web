@@ -43,9 +43,7 @@ export default function TaskRawEditor({ taskId, initialRaw }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="panel">
-      <div className="sectionTitle">{UI_STRINGS.RAW_EDIT}</div>
-
+    <form onSubmit={onSubmit}>
       <textarea
         ref={textareaRef}
         className="textInput autoTextarea rawEditor"

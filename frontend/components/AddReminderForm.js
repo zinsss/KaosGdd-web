@@ -18,17 +18,21 @@ export default function AddReminderForm({ taskId }) {
 
     setIsSubmitting(true);
     setError("");
+
     try {
       const res = await fetch("/api/tasks/" + taskId + "/reminders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ remind_at: cleanRemindAt })
+        body: JSON.stringify({ remind_at: cleanRemindAt }),
       });
-      const data = await res.json();
-      if (!res.ok || !data.ok) {
-        setError(data.error || "Failed to add reminder.");
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || (data && data.ok === false)) {
+        setError((data && data.error) || "Failed to add reminder.");
         return;
       }
+
       setRemindAt("");
       window.location.reload();
     } catch {
@@ -39,8 +43,7 @@ export default function AddReminderForm({ taskId }) {
   }
 
   return (
-    <form onSubmit={onSubmit} className="panel">
-      <div className="sectionTitle">{UI_STRINGS.ADD_REMINDER}</div>
+    <form onSubmit={onSubmit}>
       <div className="formRow">
         <input
           className="textInput"
