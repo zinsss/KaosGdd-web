@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from app.utils.datetime_parse import parse_local_datetime_to_iso
+from app.utils.timefmt import format_dt_for_ui
 
 REPEAT_TAG_PREFIX = "repeat:"
 
@@ -55,12 +56,14 @@ def export_task_raw(
 
     due_at = str(task.get("due_at") or "").strip()
     if due_at:
-        due_display = due_at[:16].replace("T", " ")
-        lines.append(f"d:{due_display}")
+        due_display = format_dt_for_ui(due_at)
+        if due_display:
+            lines.append(f"d:{due_display}")
 
     if remind_at:
-        remind_display = str(remind_at).strip()[:16].replace("T", " ")
-        lines.append(f"r:{remind_display}")
+        remind_display = format_dt_for_ui(remind_at)
+        if remind_display:
+            lines.append(f"r:{remind_display}")
 
     if repeat_rule:
         lines.append(f"R:{repeat_rule}")
