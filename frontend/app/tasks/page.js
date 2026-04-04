@@ -26,27 +26,33 @@ export default async function TasksPage() {
 
       <section className="panel">
         <div className="sectionTitle">{UI_STRINGS.TASK_LIST}</div>
+
         {tasks.items.length === 0 ? (
           <div className="empty">{UI_STRINGS.NO_TASKS}</div>
         ) : (
           <ul className="taskList">
             {tasks.items.map((task) => (
-              <li key={task.id} className="taskItem taskItemBlock">
-                <div className="taskMainRow">
-                  <div className="taskTitleWrap">
-                    <span>{task.is_done ? "" : ""}</span>
-                    <a
-                      className={"taskLink" + (task.is_done ? " taskLinkDone taskLinkDoneList" : "")}
-                      href={"/tasks/" + task.id}
-                    >
-                      {task.title}
-                    </a>
-                  </div>
-                  <TaskToggleButton taskId={task.id} isDone={task.is_done} />
-                </div>
+              <li key={task.id} className="taskListRow">
+                <div className="taskListRowMain">
+                  <div className="taskListTitleBlock">
+                    <div className="taskListTitleRow">
+                      <span className="taskListStateIcon">{task.is_done ? "◉" : "○"}</span>
+                      <a
+                        className={"taskLink taskListTitleLink" + (task.is_done ? " taskLinkDone taskLinkDoneList" : "")}
+                        href={"/tasks/" + task.id}
+                      >
+                        {task.title}
+                      </a>
+                    </div>
 
-                <div className="metaLine">
-                  <span>{task.due_at_display ? UI_STRINGS.DUE + ":" + task.due_at_display : UI_STRINGS.DUE + ":-"}</span>
+                    {task.due_at_display ? (
+                      <div className="taskListDueLine">{UI_STRINGS.DUE}:{task.due_at_display}</div>
+                    ) : null}
+                  </div>
+
+                  <div className="taskListAction">
+                    <TaskToggleButton taskId={task.id} isDone={task.is_done} compact />
+                  </div>
                 </div>
               </li>
             ))}

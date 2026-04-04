@@ -1,14 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { UI_STRINGS } from "../lib/strings";
 
-export default function TaskToggleButton(props) {
+export default function TaskToggleButton({ taskId, isDone, compact = false }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function onClick() {
+    if (isSubmitting) return;
     setIsSubmitting(true);
+
     try {
-      await fetch("/api/tasks/" + props.taskId + "/toggle", { method: "POST" });
+      await fetch("/api/tasks/" + taskId + "/toggle", {
+        method: "POST",
+      });
       window.location.reload();
     } finally {
       setIsSubmitting(false);
@@ -16,8 +21,13 @@ export default function TaskToggleButton(props) {
   }
 
   return (
-    <button className="button" onClick={onClick} disabled={isSubmitting}>
-      {isSubmitting ? "..." : props.isDone ? "Undo" : "Done"}
+    <button
+      type="button"
+      className={"button" + (compact ? " compactInlineButton" : "")}
+      onClick={onClick}
+      disabled={isSubmitting}
+    >
+      {isDone ? UI_STRINGS.UNDO : UI_STRINGS.DONE}
     </button>
   );
 }
