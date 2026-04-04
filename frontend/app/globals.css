@@ -1,3 +1,32 @@
+:root {
+  --ctp-rosewater: #f5e0dc;
+  --ctp-flamingo: #f2cdcd;
+  --ctp-pink: #f5c2e7;
+  --ctp-mauve: #cba6f7;
+  --ctp-red: #f38ba8;
+  --ctp-maroon: #eba0ac;
+  --ctp-peach: #fab387;
+  --ctp-yellow: #f9e2af;
+  --ctp-green: #a6e3a1;
+  --ctp-teal: #94e2d5;
+  --ctp-sky: #89dceb;
+  --ctp-sapphire: #74c7ec;
+  --ctp-blue: #89b4fa;
+  --ctp-lavender: #b4befe;
+  --ctp-text: #cdd6f4;
+  --ctp-subtext1: #bac2de;
+  --ctp-subtext0: #a6adc8;
+  --ctp-overlay2: #9399b2;
+  --ctp-overlay1: #7f849c;
+  --ctp-overlay0: #6c7086;
+  --ctp-surface2: #585b70;
+  --ctp-surface1: #45475a;
+  --ctp-surface0: #313244;
+  --ctp-base: #1e1e2e;
+  --ctp-mantle: #181825;
+  --ctp-crust: #11111b;
+}
+
 @font-face {
   font-family: "Sarasa Gothic Mono";
   src: url("/fonts/sarasa-mono-k-regular-nerd-font.ttf") format("truetype");
@@ -17,8 +46,8 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: #111;
-  color: #eaeaea;
+  background: var(--ctp-crust);
+  color: var(--ctp-text);
   font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;
   line-height: 1.45;
   font-size: 15px;
@@ -51,27 +80,28 @@ body {
 }
 
 .panel {
-  border: 1px solid #333;
+  border: 1px solid var(--ctp-surface0);
   padding: 14px;
   margin-bottom: 12px;
-  background: #181818;
+  background: var(--ctp-mantle);
 }
 
 .line {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 0;
+  color: var(--ctp-text);
 }
 
 .lineSuffix {
-  color: #8f8f8f;
+  color: var(--ctp-subtext0);
   font-size: 15px;
   font-weight: 400;
 }
 
 .subline {
   margin-top: 6px;
-  color: #aaa;
+  color: var(--ctp-subtext0);
   font-size: 14px;
 }
 
@@ -80,7 +110,7 @@ body {
 }
 
 .backLink {
-  color: #a8a8a8;
+  color: var(--ctp-blue);
   text-decoration: none;
 }
 
@@ -91,6 +121,7 @@ body {
 .sectionTitle {
   font-weight: 700;
   margin-bottom: 10px;
+  color: var(--ctp-text);
 }
 
 .detailTitleRow {
@@ -107,7 +138,7 @@ body {
 }
 
 .detailStateText {
-  color: #999;
+  color: var(--ctp-subtext0);
   font-size: 13px;
   text-align: right;
   white-space: nowrap;
@@ -130,13 +161,13 @@ body {
   display: flex;
   gap: 10px;
   padding: 6px 0;
-  border-bottom: 1px dotted #2d2d2d;
+  border-bottom: 1px dotted var(--ctp-surface0);
 }
 
 .taskListRow {
   list-style: none;
   padding: 10px 0;
-  border-bottom: 1px dotted #2d2d2d;
+  border-bottom: 1px dotted var(--ctp-surface0);
 }
 
 .taskListRowMain {
@@ -161,7 +192,7 @@ body {
 .taskListStateIcon {
   flex: 0 0 auto;
   line-height: 1.2;
-  color: #d7d7d7;
+  color: var(--ctp-subtext1);
 }
 
 .taskListTitleLink {
@@ -174,7 +205,7 @@ body {
 .taskListDueLine {
   margin-top: 8px;
   margin-left: 28px;
-  color: #999;
+  color: var(--ctp-subtext0);
   font-size: 13px;
 }
 
@@ -183,7 +214,7 @@ body {
 }
 
 .empty {
-  color: #999;
+  color: var(--ctp-overlay1);
 }
 
 .formRow {
@@ -195,9 +226,9 @@ body {
 textarea.textInput {
   flex: 1;
   width: 100%;
-  background: #101010;
-  color: #eaeaea;
-  border: 1px solid #333;
+  background: var(--ctp-base);
+  color: var(--ctp-text);
+  border: 1px solid var(--ctp-surface0);
   padding: 10px 12px;
   font: inherit;
   font-size: 16px;
@@ -205,9 +236,14 @@ textarea.textInput {
   outline: none;
 }
 
+.textInput::placeholder,
+textarea.textInput::placeholder {
+  color: var(--ctp-overlay0);
+}
+
 .textInput:focus,
 textarea.textInput:focus {
-  border-color: #666;
+  border-color: var(--ctp-lavender);
 }
 
 .autoTextarea {
@@ -223,14 +259,14 @@ textarea.textInput:focus {
 
 .rawHint {
   margin-top: 8px;
-  color: #888;
+  color: var(--ctp-overlay0);
   font-size: 12px;
 }
 
 .button {
-  background: #222;
-  color: #eaeaea;
-  border: 1px solid #444;
+  background: var(--ctp-surface0);
+  color: var(--ctp-text);
+  border: 1px solid var(--ctp-surface1);
   padding: 10px 14px;
   font: inherit;
   cursor: pointer;
@@ -239,7 +275,7 @@ textarea.textInput:focus {
 }
 
 .button:hover {
-  background: #2a2a2a;
+  background: var(--ctp-surface1);
 }
 
 .button:disabled {
@@ -248,8 +284,9 @@ textarea.textInput:focus {
 }
 
 .buttonActive {
-  border-color: #777;
-  background: #2a2a2a;
+  border-color: var(--ctp-blue);
+  background: rgba(137, 180, 250, 0.14);
+  color: var(--ctp-blue);
 }
 
 .compactInlineButton {
@@ -259,7 +296,7 @@ textarea.textInput:focus {
 }
 
 .errorText {
-  color: #ff8c8c;
+  color: var(--ctp-red);
   margin-top: 10px;
 }
 
@@ -289,7 +326,7 @@ textarea.textInput:focus {
 }
 
 .taskLink {
-  color: #eaeaea;
+  color: var(--ctp-text);
   text-decoration: none;
 }
 
@@ -313,7 +350,7 @@ textarea.textInput:focus {
   display: flex;
   gap: 14px;
   margin-top: 8px;
-  color: #999;
+  color: var(--ctp-subtext0);
   font-size: 13px;
   flex-wrap: wrap;
 }
@@ -321,7 +358,7 @@ textarea.textInput:focus {
 .metaStack {
   display: grid;
   gap: 8px;
-  color: #bbb;
+  color: var(--ctp-subtext1);
 }
 
 .topGap {
@@ -349,7 +386,7 @@ textarea.textInput:focus {
 }
 
 .moreMetaBox {
-  border-top: 1px dotted #2d2d2d;
+  border-top: 1px dotted var(--ctp-surface0);
   padding-top: 12px;
 }
 
@@ -368,7 +405,7 @@ textarea.textInput:focus {
 
 .reminderCompactItem {
   padding: 6px 0;
-  border-bottom: 1px dotted #2d2d2d;
+  border-bottom: 1px dotted var(--ctp-surface0);
 }
 
 .reminderCompactRow {
@@ -379,11 +416,11 @@ textarea.textInput:focus {
 }
 
 .reminderWhen {
-  color: #d7d7d7;
+  color: var(--ctp-text);
 }
 
 .reminderState {
-  color: #999;
+  color: var(--ctp-subtext0);
   font-size: 13px;
   text-align: right;
 }
@@ -402,7 +439,20 @@ textarea.textInput:focus {
 
 .reminderStateMissed .reminderState,
 .reminderStateMissed .reminderWhen {
-  color: #f0c674;
+  color: var(--ctp-yellow);
+}
+
+.errorText,
+.reminderStateCancelled {
+  color: var(--ctp-red);
+}
+
+.successText {
+  color: var(--ctp-green);
+}
+
+.infoText {
+  color: var(--ctp-blue);
 }
 
 @media (max-width: 640px) {
