@@ -25,6 +25,33 @@
   --ctp-base: #1e1e2e;
   --ctp-mantle: #181825;
   --ctp-crust: #11111b;
+
+  --ui-bg: var(--ctp-crust);
+  --ui-panel: var(--ctp-mantle);
+  --ui-input: var(--ctp-base);
+  --ui-border: var(--ctp-surface0);
+  --ui-border-strong: var(--ctp-surface1);
+
+  --ui-text: var(--ctp-text);
+  --ui-text-dim: var(--ctp-subtext0);
+  --ui-text-dimmer: var(--ctp-overlay1);
+
+  --ui-link: var(--ctp-blue);
+  --ui-link-hover: var(--ctp-lavender);
+
+  --ui-accent: var(--ctp-blue);
+  --ui-accent-soft: rgba(137, 180, 250, 0.14);
+  --ui-accent-soft-2: rgba(180, 190, 254, 0.14);
+
+  --ui-success: var(--ctp-green);
+  --ui-success-soft: rgba(166, 227, 161, 0.14);
+
+  --ui-warn: var(--ctp-yellow);
+  --ui-warn-soft: rgba(249, 226, 175, 0.14);
+  --ui-warn-strong: var(--ctp-peach);
+
+  --ui-danger: var(--ctp-red);
+  --ui-danger-soft: rgba(243, 139, 168, 0.14);
 }
 
 @font-face {
@@ -46,8 +73,8 @@
 html, body {
   margin: 0;
   padding: 0;
-  background: var(--ctp-crust);
-  color: var(--ctp-text);
+  background: var(--ui-bg);
+  color: var(--ui-text);
   font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;
   line-height: 1.45;
   font-size: 15px;
@@ -80,28 +107,28 @@ body {
 }
 
 .panel {
-  border: 1px solid var(--ctp-surface0);
+  border: 1px solid var(--ui-border);
   padding: 14px;
   margin-bottom: 12px;
-  background: var(--ctp-mantle);
+  background: var(--ui-panel);
 }
 
 .line {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 0;
-  color: var(--ctp-text);
+  color: var(--ui-text);
 }
 
 .lineSuffix {
-  color: var(--ctp-subtext0);
+  color: var(--ui-text-dim);
   font-size: 15px;
   font-weight: 400;
 }
 
 .subline {
   margin-top: 6px;
-  color: var(--ctp-subtext0);
+  color: var(--ui-text-dim);
   font-size: 14px;
 }
 
@@ -110,18 +137,19 @@ body {
 }
 
 .backLink {
-  color: var(--ctp-blue);
+  color: var(--ui-link);
   text-decoration: none;
 }
 
 .backLink:hover {
+  color: var(--ui-link-hover);
   text-decoration: underline;
 }
 
 .sectionTitle {
   font-weight: 700;
   margin-bottom: 10px;
-  color: var(--ctp-text);
+  color: var(--ui-text);
 }
 
 .detailTitleRow {
@@ -138,7 +166,7 @@ body {
 }
 
 .detailStateText {
-  color: var(--ctp-subtext0);
+  color: var(--ui-text-dim);
   font-size: 13px;
   text-align: right;
   white-space: nowrap;
@@ -161,13 +189,13 @@ body {
   display: flex;
   gap: 10px;
   padding: 6px 0;
-  border-bottom: 1px dotted var(--ctp-surface0);
+  border-bottom: 1px dotted var(--ui-border);
 }
 
 .taskListRow {
   list-style: none;
   padding: 10px 0;
-  border-bottom: 1px dotted var(--ctp-surface0);
+  border-bottom: 1px dotted var(--ui-border);
 }
 
 .taskListRowMain {
@@ -205,7 +233,7 @@ body {
 .taskListDueLine {
   margin-top: 8px;
   margin-left: 28px;
-  color: var(--ctp-subtext0);
+  color: var(--ui-text-dim);
   font-size: 13px;
 }
 
@@ -214,7 +242,7 @@ body {
 }
 
 .empty {
-  color: var(--ctp-overlay1);
+  color: var(--ui-text-dimmer);
 }
 
 .formRow {
@@ -226,9 +254,9 @@ body {
 textarea.textInput {
   flex: 1;
   width: 100%;
-  background: var(--ctp-base);
-  color: var(--ctp-text);
-  border: 1px solid var(--ctp-surface0);
+  background: var(--ui-input);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border);
   padding: 10px 12px;
   font: inherit;
   font-size: 16px;
@@ -244,6 +272,7 @@ textarea.textInput::placeholder {
 .textInput:focus,
 textarea.textInput:focus {
   border-color: var(--ctp-lavender);
+  box-shadow: 0 0 0 1px rgba(180, 190, 254, 0.12);
 }
 
 .autoTextarea {
@@ -265,8 +294,8 @@ textarea.textInput:focus {
 
 .button {
   background: var(--ctp-surface0);
-  color: var(--ctp-text);
-  border: 1px solid var(--ctp-surface1);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border-strong);
   padding: 10px 14px;
   font: inherit;
   cursor: pointer;
@@ -284,9 +313,9 @@ textarea.textInput:focus {
 }
 
 .buttonActive {
-  border-color: var(--ctp-blue);
-  background: rgba(137, 180, 250, 0.14);
-  color: var(--ctp-blue);
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent);
 }
 
 .compactInlineButton {
@@ -296,8 +325,16 @@ textarea.textInput:focus {
 }
 
 .errorText {
-  color: var(--ctp-red);
+  color: var(--ui-danger);
   margin-top: 10px;
+}
+
+.successText {
+  color: var(--ui-success);
+}
+
+.infoText {
+  color: var(--ui-accent);
 }
 
 .taskItemBlock {
@@ -326,11 +363,12 @@ textarea.textInput:focus {
 }
 
 .taskLink {
-  color: var(--ctp-text);
+  color: var(--ui-text);
   text-decoration: none;
 }
 
 .taskLink:hover {
+  color: var(--ui-link-hover);
   text-decoration: underline;
 }
 
@@ -350,7 +388,7 @@ textarea.textInput:focus {
   display: flex;
   gap: 14px;
   margin-top: 8px;
-  color: var(--ctp-subtext0);
+  color: var(--ui-text-dim);
   font-size: 13px;
   flex-wrap: wrap;
 }
@@ -386,7 +424,7 @@ textarea.textInput:focus {
 }
 
 .moreMetaBox {
-  border-top: 1px dotted var(--ctp-surface0);
+  border-top: 1px dotted var(--ui-border);
   padding-top: 12px;
 }
 
@@ -405,7 +443,7 @@ textarea.textInput:focus {
 
 .reminderCompactItem {
   padding: 6px 0;
-  border-bottom: 1px dotted var(--ctp-surface0);
+  border-bottom: 1px dotted var(--ui-border);
 }
 
 .reminderCompactRow {
@@ -416,11 +454,11 @@ textarea.textInput:focus {
 }
 
 .reminderWhen {
-  color: var(--ctp-text);
+  color: var(--ui-text);
 }
 
 .reminderState {
-  color: var(--ctp-subtext0);
+  color: var(--ui-text-dim);
   font-size: 13px;
   text-align: right;
 }
@@ -437,22 +475,54 @@ textarea.textInput:focus {
   opacity: 0.45;
 }
 
+.reminderStateMissed {
+  background: linear-gradient(90deg, var(--ui-warn-soft), transparent 60%);
+  padding: 2px 4px;
+  margin: 0 -4px;
+}
+
 .reminderStateMissed .reminderState,
 .reminderStateMissed .reminderWhen {
-  color: var(--ctp-yellow);
+  color: var(--ui-warn-strong);
 }
 
-.errorText,
-.reminderStateCancelled {
-  color: var(--ctp-red);
+.reminderNextLine {
+  margin-top: 6px;
+  margin-left: 18px;
+  color: var(--ui-accent);
+  font-size: 13px;
 }
 
-.successText {
-  color: var(--ctp-green);
+.stateScheduled {
+  color: var(--ui-text-dim);
 }
 
-.infoText {
-  color: var(--ctp-blue);
+.stateFired {
+  color: var(--ui-danger);
+}
+
+.stateAcked {
+  color: var(--ui-success);
+}
+
+.stateSnoozed {
+  color: var(--ui-accent);
+}
+
+.stateCancelled {
+  color: var(--ui-danger);
+}
+
+.copySuccess {
+  color: var(--ui-success);
+}
+
+.saveSuccess {
+  color: var(--ui-success);
+}
+
+.warningText {
+  color: var(--ui-warn-strong);
 }
 
 @media (max-width: 640px) {
