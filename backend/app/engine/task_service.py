@@ -81,12 +81,14 @@ class TaskService:
         remind_ats: list[str] = []
         if self.reminder_repo is not None:
             reminders = self.reminder_repo.list_linked_reminders(item_id)
+            editable_states = {"scheduled", "snoozed", "fired", "missed"}
             for reminder in reminders:
-                if reminder.get("state") in {"scheduled", "snoozed", "fired", "missed"}:
-                    if reminder.get("state") == "snoozed" and reminder.get("snoozed_until"):
-                        remind_ats.append(reminder["snoozed_until"])
-                    elif reminder.get("remind_at"):
-                        remind_ats.append(reminder["remind_at"])
+                if reminder.get("state") not in editable_states:
+                    continue
+                if reminder.get("state") == "snoozed" and reminder.get("snoozed_until"):
+                    remind_ats.append(reminder["snoozed_until"])
+                elif reminder.get("remind_at"):
+                    remind_ats.append(reminder["remind_at"])
 
         return export_task_raw(
             detail,
@@ -122,8 +124,10 @@ class TaskService:
 
         if self.reminder_repo is not None:
             reminders = self.reminder_repo.list_linked_reminders(item_id)
+            editable_states = {"scheduled", "snoozed", "fired", "missed"}
+
             for reminder in reminders:
-                if reminder.get("state") in {"scheduled", "snoozed", "fired", "missed"}:
+                if reminder.get("state") in editable_states:
                     self.reminder_repo.mark_cancelled(reminder["id"])
 
             reminder_title = f"Reminder • {parsed.get('title')}"
