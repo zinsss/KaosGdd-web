@@ -12,7 +12,7 @@ def _extract_meta_from_line(line: str) -> tuple[str, dict]:
     working = str(line or "")
     meta = {
         "due_at": None,
-        "remind_at": None,
+        "remind_ats": [],
         "repeat_rule": None,
         "tags": [],
     }
@@ -22,10 +22,10 @@ def _extract_meta_from_line(line: str) -> tuple[str, dict]:
         meta["due_at"] = due_match.group(1).strip()
         working = working.replace(due_match.group(0), " ")
 
-    remind_match = re.search(r"(?:(?<=^)|(?<=\s))r:(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})", working)
-    if remind_match:
-        meta["remind_at"] = remind_match.group(1).strip()
-        working = working.replace(remind_match.group(0), " ")
+    remind_matches = re.findall(r"(?:(?<=^)|(?<=\s))r:(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})", working)
+    if remind_matches:
+        meta["remind_ats"] = [value.strip() for value in remind_matches]
+        working = re.sub(r"(?:(?<=^)|(?<=\s))r:(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})", " ", working)
 
     repeat_match = re.search(r"(?:(?<=^)|(?<=\s))R:([^\s]+)", working)
     if repeat_match:
@@ -45,7 +45,7 @@ def export_task_raw(
     task: dict,
     *,
     tags: list[str] | None = None,
-    remind_at: str | None = None,
+    remind_ats: list[str] | None = None,
     repeat_rule: str | None = None,
 ) -> str:
     lines: list[str] = []
@@ -60,7 +60,7 @@ def export_task_raw(
         if due_display:
             lines.append(f"d:{due_display}")
 
-    if remind_at:
+    for remind_at in remind_ats or []:
         remind_display = format_dt_for_ui(remind_at)
         if remind_display:
             lines.append(f"r:{remind_display}")
@@ -91,7 +91,7 @@ def parse_task_raw(raw_text: str) -> dict:
 
     title = None
     due_at = None
-    remind_at = None
+    remind_ats: list[str] = []
     repeat_rule = None
     tags: list[str] = []
     extra_lines: list[str] = []
@@ -121,8 +121,10 @@ def parse_task_raw(raw_text: str) -> dict:
         if meta["due_at"] is not None:
             due_at = parse_local_datetime_to_iso(meta["due_at"])
 
-        if meta["remind_at"] is not None:
-            remind_at = parse_local_datetime_to_iso(meta["remind_at"])
+        for remind_at in meta["remind_ats"]:
+            normalized = parse_local_datetime_to_iso(remind_at)
+            if normalized not in remind_ats:
+                remind_ats.append(normalized)
 
         if meta["repeat_rule"] is not None:
             repeat_rule = meta["repeat_rule"]
@@ -143,7 +145,7 @@ def parse_task_raw(raw_text: str) -> dict:
             extra_lines.append(cleaned.strip())
 
     if in_memo:
-        raise ValueError('unclosed memo block')
+        raise ValueError("unclosed memo block")
 
     if not title:
         raise ValueError("title is required")
@@ -161,7 +163,7 @@ def parse_task_raw(raw_text: str) -> dict:
     return {
         "title": title,
         "due_at": due_at,
-        "remind_at": remind_at,
+        "remind_ats": remind_ats,
         "repeat_rule": repeat_rule,
         "tags": tags,
         "memo": memo,

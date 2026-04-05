@@ -78,16 +78,20 @@ class TaskService:
             else:
                 visible_tags.append(tag)
 
-        remind_at = None
+        remind_ats: list[str] = []
         if self.reminder_repo is not None:
-            editable = self.reminder_repo.get_editable_reminder_for_parent(item_id)
-            if editable is not None:
-                remind_at = editable.get("remind_at")
+            reminders = self.reminder_repo.list_linked_reminders(item_id)
+            for reminder in reminders:
+                if reminder.get("state") in {"scheduled", "snoozed", "fired", "missed"}:
+                    if reminder.get("state") == "snoozed" and reminder.get("snoozed_until"):
+                        remind_ats.append(reminder["snoozed_until"])
+                    elif reminder.get("remind_at"):
+                        remind_ats.append(reminder["remind_at"])
 
         return export_task_raw(
             detail,
             tags=visible_tags,
-            remind_at=remind_at,
+            remind_ats=remind_ats,
             repeat_rule=repeat_rule,
         )
 
@@ -117,26 +121,18 @@ class TaskService:
         self.items_repo.replace_item_tags(item_id, tags)
 
         if self.reminder_repo is not None:
-            editable = self.reminder_repo.get_editable_reminder_for_parent(item_id)
-            remind_at = parsed.get("remind_at")
-            title = f"Reminder • {parsed.get('title')}"
+            reminders = self.reminder_repo.list_linked_reminders(item_id)
+            for reminder in reminders:
+                if reminder.get("state") in {"scheduled", "snoozed", "fired", "missed"}:
+                    self.reminder_repo.mark_cancelled(reminder["id"])
 
-            if remind_at:
-                if editable is not None:
-                    self.reminder_repo.reschedule_reminder_item(
-                        editable["id"],
-                        title=title,
-                        remind_at=remind_at,
-                    )
-                else:
-                    self.reminder_repo.create_reminder_item(
-                        title=title,
-                        remind_at=remind_at,
-                        parent_item_id=item_id,
-                    )
-            else:
-                if editable is not None:
-                    self.reminder_repo.mark_cancelled(editable["id"])
+            reminder_title = f"Reminder • {parsed.get('title')}"
+            for remind_at in parsed.get("remind_ats") or []:
+                self.reminder_repo.create_reminder_item(
+                    title=reminder_title,
+                    remind_at=remind_at,
+                    parent_item_id=item_id,
+                )
 
         return True, None
 
@@ -145,6 +141,7 @@ class TaskService:
         item["due_at_display"] = format_dt_for_ui(item.get("due_at"))
         item["created_at_display"] = format_dt_for_ui(item.get("created_at"))
         item["updated_at_display"] = format_dt_for_ui(item.get("updated_at"))
+        item["item_type"] = item.get("item_type") or "task"
 
         tags = self.items_repo.list_item_tags(item["id"])
         visible_tags = []
