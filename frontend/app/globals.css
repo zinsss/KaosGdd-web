@@ -45,6 +45,8 @@
   --ui-success: var(--ctp-green);
   --ui-warn: var(--ctp-peach);
   --ui-danger: var(--ctp-red);
+
+  --ui-title: var(--ctp-rosewater);
 }
 
 @font-face {
@@ -63,7 +65,8 @@
   font-display: swap;
 }
 
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   background: var(--ui-bg);
@@ -156,6 +159,7 @@ body {
   margin-bottom: 0;
   min-width: 0;
   word-break: break-word;
+  color: var(--ui-title);
 }
 
 .detailStateText {
@@ -207,6 +211,11 @@ body {
   min-width: 0;
   word-break: break-word;
   line-height: 1.3;
+  color: var(--ui-title);
+}
+
+.taskListTitleLink:hover {
+  color: var(--ctp-lavender);
 }
 
 .taskListDueLine {
@@ -441,7 +450,8 @@ textarea.textInput:focus {
 }
 
 @media (max-width: 640px) {
-  html, body {
+  html,
+  body {
     font-size: 14px;
   }
 
