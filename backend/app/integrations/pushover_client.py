@@ -1,4 +1,3 @@
-import json
 from urllib import parse, request
 
 from app.config import SETTINGS
@@ -13,9 +12,9 @@ def send_pushover(
     priority: int = 0,
 ) -> bool:
     if not SETTINGS.PUSHOVER_ENABLED:
-      return False
+        return False
     if not SETTINGS.PUSHOVER_TOKEN or not SETTINGS.PUSHOVER_USER_KEY:
-      return False
+        return False
 
     payload = {
         "token": SETTINGS.PUSHOVER_TOKEN,
