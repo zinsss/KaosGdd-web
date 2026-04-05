@@ -25,7 +25,7 @@ function reminderPriority(state) {
   }
 }
 
-function reminderRowFlags(reminder) {
+function reminderFlags(reminder) {
   return {
     missed: reminder.state === "missed",
     strikeDateOnly:
@@ -33,12 +33,12 @@ function reminderRowFlags(reminder) {
       reminder.state === "acked" ||
       reminder.state === "snoozed" ||
       reminder.state === "cancelled",
-    dim: reminder.state === "acked" || reminder.state === "snoozed",
-    dimmer: reminder.state === "cancelled",
+    dimState: reminder.state === "acked" || reminder.state === "snoozed",
+    dimmerState: reminder.state === "cancelled",
   };
 }
 
-function reminderCurrentDisplay(reminder) {
+function activeReminderDisplay(reminder) {
   if (reminder.state === "snoozed" && reminder.snoozed_until_display) {
     return reminder.snoozed_until_display;
   }
@@ -46,7 +46,7 @@ function reminderCurrentDisplay(reminder) {
 }
 
 export default function TaskDetailPanel({ item, raw }) {
-  const [openPanel, setOpenPanel] = useState(null); // "reminder" | "edit" | null
+  const [openPanel, setOpenPanel] = useState(null);
   const [showMore, setShowMore] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -55,6 +55,12 @@ export default function TaskDetailPanel({ item, raw }) {
       (a, b) => reminderPriority(a.state) - reminderPriority(b.state)
     );
   }, [item.reminders]);
+
+  const activeSummaryReminders = useMemo(() => {
+    return sortedReminders.filter(
+      (reminder) => reminder.state === "scheduled" || reminder.state === "snoozed"
+    );
+  }, [sortedReminders]);
 
   async function onCopyId() {
     try {
@@ -71,11 +77,9 @@ export default function TaskDetailPanel({ item, raw }) {
   return (
     <>
       <section className="panel">
-        <div className="headerTitleRow">
-          <div className="line">
-            {UI_STRINGS.APP_TITLE}
-            <span className="lineSuffix"> - {UI_STRINGS.TASK_DETAIL}</span>
-          </div>
+        <div className="line">
+          {UI_STRINGS.APP_TITLE}
+          <span className="lineSuffix"> - {UI_STRINGS.TASK_DETAIL}</span>
         </div>
 
         <div className="backRow">
@@ -107,11 +111,11 @@ export default function TaskDetailPanel({ item, raw }) {
         <div className="metaStack">
           {item.due_at_display ? <div>{UI_STRINGS.DUE}:{item.due_at_display}</div> : null}
 
-          {sortedReminders
-            .filter((r) => r.state === "scheduled" || r.state === "snoozed")
-            .map((reminder) => (
-              <div key={"meta-" + reminder.id}>{UI_STRINGS.REMINDER_SHORT}:{reminderCurrentDisplay(reminder)}</div>
-            ))}
+          {activeSummaryReminders.map((reminder) => (
+            <div key={"summary-" + reminder.id}>
+              {UI_STRINGS.REMINDER_SHORT}:{activeReminderDisplay(reminder)}
+            </div>
+          ))}
 
           {item.memo ? (
             <div className="memoBlock">
@@ -128,7 +132,7 @@ export default function TaskDetailPanel({ item, raw }) {
         {sortedReminders.length > 0 ? (
           <ul className="taskList reminderCompactList">
             {sortedReminders.map((reminder) => {
-              const flags = reminderRowFlags(reminder);
+              const flags = reminderFlags(reminder);
 
               return (
                 <li key={reminder.id} className="reminderCompactItem">
@@ -136,11 +140,12 @@ export default function TaskDetailPanel({ item, raw }) {
                     <span className={"reminderWhen" + (flags.strikeDateOnly ? " reminderWhenStruck" : "")}>
                       {reminder.remind_at_display || "-"}
                     </span>
+
                     <span
                       className={
                         "reminderState" +
-                        (flags.dim ? " reminderStateDim" : "") +
-                        (flags.dimmer ? " reminderStateDimmer" : "")
+                        (flags.dimState ? " reminderStateDim" : "") +
+                        (flags.dimmerState ? " reminderStateDimmer" : "")
                       }
                     >
                       {reminder.state}
