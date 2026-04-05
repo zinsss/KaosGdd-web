@@ -100,18 +100,23 @@ class ReminderService:
             if row.get("parent_item_id") and SETTINGS.WEB_BASE_URL:
                 click_url = SETTINGS.WEB_BASE_URL.rstrip("/") + "/tasks/" + row["parent_item_id"]
 
-            push_title = task["title"] if task else row["title"]
+            item_title = task["title"] if task else row["title"]
+            item_type = task.get("item_type") if task else "task"
+
             push_body = build_reminder_push_message(
+                item_type=item_type,
+                title=item_title,
                 due_at=task.get("due_at") if task else None,
                 remind_at=row.get("remind_at"),
             )
 
             send_pushover(
-                title=push_title,
-                message=push_body or "⏰ reminder",
+                title="𝕂𝕒𝕠𝕤𝔾𝕕𝕕",
+                message=push_body,
                 url=click_url,
                 url_title="Open Task" if click_url else None,
                 priority=0,
+                sound=None,
             )
 
             fired.append(row)
@@ -130,6 +135,34 @@ class ReminderService:
                 event_type="missed",
                 payload={"parent_item_id": row.get("parent_item_id")},
             )
+
+            task = None
+            if row.get("parent_item_id"):
+                task = self.task_repo.get_task_detail(row["parent_item_id"])
+
+            click_url = None
+            if row.get("parent_item_id") and SETTINGS.WEB_BASE_URL:
+                click_url = SETTINGS.WEB_BASE_URL.rstrip("/") + "/tasks/" + row["parent_item_id"]
+
+            item_title = task["title"] if task else row["title"]
+            item_type = task.get("item_type") if task else "task"
+
+            push_body = build_reminder_push_message(
+                item_type=item_type,
+                title=item_title,
+                due_at=task.get("due_at") if task else None,
+                remind_at=row.get("remind_at"),
+            )
+
+            send_pushover(
+                title="𝕂𝕒𝕠𝕤𝔾𝕕𝕕",
+                message=push_body,
+                url=click_url,
+                url_title="Open Task" if click_url else None,
+                priority=1,
+                sound="persistent",
+            )
+
             missed.append(row)
 
         return missed
