@@ -475,12 +475,6 @@ textarea.textInput:focus {
   opacity: 0.45;
 }
 
-.reminderStateMissed {
-  background: linear-gradient(90deg, var(--ui-warn-soft), transparent 60%);
-  padding: 2px 4px;
-  margin: 0 -4px;
-}
-
 .reminderStateMissed .reminderState,
 .reminderStateMissed .reminderWhen {
   color: var(--ui-warn-strong);
