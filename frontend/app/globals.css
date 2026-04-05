@@ -41,17 +41,10 @@
 
   --ui-accent: var(--ctp-blue);
   --ui-accent-soft: rgba(137, 180, 250, 0.14);
-  --ui-accent-soft-2: rgba(180, 190, 254, 0.14);
 
   --ui-success: var(--ctp-green);
-  --ui-success-soft: rgba(166, 227, 161, 0.14);
-
-  --ui-warn: var(--ctp-yellow);
-  --ui-warn-soft: rgba(249, 226, 175, 0.14);
-  --ui-warn-strong: var(--ctp-peach);
-
+  --ui-warn: var(--ctp-peach);
   --ui-danger: var(--ctp-red);
-  --ui-danger-soft: rgba(243, 139, 168, 0.14);
 }
 
 @font-face {
@@ -172,24 +165,10 @@ body {
   white-space: nowrap;
 }
 
-.row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 4px 0;
-}
-
 .taskList {
   list-style: none;
   padding: 0;
   margin: 0;
-}
-
-.taskItem {
-  display: flex;
-  gap: 10px;
-  padding: 6px 0;
-  border-bottom: 1px dotted var(--ui-border);
 }
 
 .taskListRow {
@@ -329,42 +308,11 @@ textarea.textInput:focus {
   margin-top: 10px;
 }
 
-.successText {
-  color: var(--ui-success);
-}
-
-.infoText {
-  color: var(--ui-accent);
-}
-
-.taskItemBlock {
-  display: block;
-  padding: 10px 0;
-}
-
-.taskMainRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
-}
-
-.taskTitleWrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-
-.taskTitleWrap span:last-child,
-.taskLink {
-  min-width: 0;
-  word-break: break-word;
-}
-
 .taskLink {
   color: var(--ui-text);
   text-decoration: none;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .taskLink:hover {
@@ -399,8 +347,13 @@ textarea.textInput:focus {
   color: var(--ctp-subtext1);
 }
 
-.topGap {
-  margin-top: 14px;
+.memoBlock {
+  display: grid;
+  gap: 6px;
+}
+
+.memoBody {
+  white-space: pre-wrap;
 }
 
 .actionRow {
@@ -457,14 +410,14 @@ textarea.textInput:focus {
   color: var(--ui-text);
 }
 
+.reminderWhenStruck {
+  text-decoration: line-through;
+}
+
 .reminderState {
   color: var(--ui-text-dim);
   font-size: 13px;
   text-align: right;
-}
-
-.reminderWasTriggered {
-  text-decoration: line-through;
 }
 
 .reminderStateDim {
@@ -477,7 +430,7 @@ textarea.textInput:focus {
 
 .reminderStateMissed .reminderState,
 .reminderStateMissed .reminderWhen {
-  color: var(--ui-warn-strong);
+  color: var(--ui-warn);
 }
 
 .reminderNextLine {
@@ -485,38 +438,6 @@ textarea.textInput:focus {
   margin-left: 18px;
   color: var(--ui-accent);
   font-size: 13px;
-}
-
-.stateScheduled {
-  color: var(--ui-text-dim);
-}
-
-.stateFired {
-  color: var(--ui-danger);
-}
-
-.stateAcked {
-  color: var(--ui-success);
-}
-
-.stateSnoozed {
-  color: var(--ui-accent);
-}
-
-.stateCancelled {
-  color: var(--ui-danger);
-}
-
-.copySuccess {
-  color: var(--ui-success);
-}
-
-.saveSuccess {
-  color: var(--ui-success);
-}
-
-.warningText {
-  color: var(--ui-warn-strong);
 }
 
 @media (max-width: 640px) {

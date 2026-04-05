@@ -16,6 +16,7 @@ export const UI_STRINGS = {
   TASK_NOT_FOUND: "Task not found.",
   BACKEND_UNREACHABLE: "backend unreachable",
   REMINDER_LIST: "Reminder Lists",
+  REMINDER_SHORT: "r",
   NO_REMINDERS: "No reminders.",
   ACK: "Ack",
   SNOOZE_10M: "Snooze 10m",

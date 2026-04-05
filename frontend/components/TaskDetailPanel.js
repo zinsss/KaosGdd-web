@@ -25,26 +25,24 @@ function reminderPriority(state) {
   }
 }
 
-function reminderRowClass(reminder) {
-  let cls = "";
+function reminderRowFlags(reminder) {
+  return {
+    missed: reminder.state === "missed",
+    strikeDateOnly:
+      reminder.state === "fired" ||
+      reminder.state === "acked" ||
+      reminder.state === "snoozed" ||
+      reminder.state === "cancelled",
+    dim: reminder.state === "acked" || reminder.state === "snoozed",
+    dimmer: reminder.state === "cancelled",
+  };
+}
 
-  if (reminder.state === "missed") {
-    cls += " reminderStateMissed";
+function reminderCurrentDisplay(reminder) {
+  if (reminder.state === "snoozed" && reminder.snoozed_until_display) {
+    return reminder.snoozed_until_display;
   }
-
-  if (reminder.last_fired_at || reminder.state === "fired" || reminder.state === "acked" || reminder.state === "snoozed" || reminder.state === "cancelled") {
-    cls += " reminderWasTriggered";
-  }
-
-  if (reminder.state === "acked" || reminder.state === "snoozed") {
-    cls += " reminderStateDim";
-  }
-
-  if (reminder.state === "cancelled") {
-    cls += " reminderStateDimmer";
-  }
-
-  return cls;
+  return reminder.remind_at_display || "-";
 }
 
 export default function TaskDetailPanel({ item, raw }) {
@@ -63,9 +61,7 @@ export default function TaskDetailPanel({ item, raw }) {
       await navigator.clipboard.writeText(item.id);
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1200);
-    } catch {
-      setCopied(false);
-    }
+    } catch {}
   }
 
   function togglePanel(name) {
@@ -109,8 +105,20 @@ export default function TaskDetailPanel({ item, raw }) {
         ) : null}
 
         <div className="metaStack">
-          {item.due_at_display ? <div>{UI_STRINGS.DUE}: {item.due_at_display}</div> : null}
-          {item.memo ? <div>{UI_STRINGS.MEMO}: {item.memo}</div> : null}
+          {item.due_at_display ? <div>{UI_STRINGS.DUE}:{item.due_at_display}</div> : null}
+
+          {sortedReminders
+            .filter((r) => r.state === "scheduled" || r.state === "snoozed")
+            .map((reminder) => (
+              <div key={"meta-" + reminder.id}>{UI_STRINGS.REMINDER_SHORT}:{reminderCurrentDisplay(reminder)}</div>
+            ))}
+
+          {item.memo ? (
+            <div className="memoBlock">
+              <div>{UI_STRINGS.MEMO}:</div>
+              <div className="memoBody">{item.memo}</div>
+            </div>
+          ) : null}
         </div>
       </section>
 
@@ -119,18 +127,36 @@ export default function TaskDetailPanel({ item, raw }) {
 
         {sortedReminders.length > 0 ? (
           <ul className="taskList reminderCompactList">
-            {sortedReminders.map((reminder) => (
-              <li key={reminder.id} className="reminderCompactItem">
-                <div className={"reminderCompactRow" + reminderRowClass(reminder)}>
-                  <span className="reminderWhen">{reminder.remind_at_display || "-"}</span>
-                  <span className="reminderState">{reminder.state}</span>
-                </div>
+            {sortedReminders.map((reminder) => {
+              const flags = reminderRowFlags(reminder);
 
-                {(reminder.state === "fired" || reminder.state === "missed") ? (
-                  <ReminderActions reminderId={reminder.id} state={reminder.state} />
-                ) : null}
-              </li>
-            ))}
+              return (
+                <li key={reminder.id} className="reminderCompactItem">
+                  <div className={"reminderCompactRow" + (flags.missed ? " reminderStateMissed" : "")}>
+                    <span className={"reminderWhen" + (flags.strikeDateOnly ? " reminderWhenStruck" : "")}>
+                      {reminder.remind_at_display || "-"}
+                    </span>
+                    <span
+                      className={
+                        "reminderState" +
+                        (flags.dim ? " reminderStateDim" : "") +
+                        (flags.dimmer ? " reminderStateDimmer" : "")
+                      }
+                    >
+                      {reminder.state}
+                    </span>
+                  </div>
+
+                  {reminder.state === "snoozed" && reminder.snoozed_until_display ? (
+                    <div className="reminderNextLine">{">> "}{reminder.snoozed_until_display}</div>
+                  ) : null}
+
+                  {(reminder.state === "fired" || reminder.state === "missed") ? (
+                    <ReminderActions reminderId={reminder.id} state={reminder.state} />
+                  ) : null}
+                </li>
+              );
+            })}
           </ul>
         ) : (
           <div className="empty">{UI_STRINGS.NO_REMINDERS}</div>
