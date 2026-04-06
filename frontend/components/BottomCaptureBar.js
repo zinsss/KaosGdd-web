@@ -29,7 +29,7 @@ export default function BottomCaptureBar() {
     setSuccess("");
 
     try {
-      const res = await fetch("/api/capture", {
+      const res = await fetch("/api/capture",   {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ raw: clean }),
@@ -64,16 +64,12 @@ export default function BottomCaptureBar() {
           onChange={(event) => setRaw(event.target.value)}
           rows={1}
           spellCheck={false}
-          placeholder="-- task | !! reminder | // journal | ^^ event"
+          placeholder=""
           disabled={isSubmitting}
         />
         <button className="button bottomCaptureButton" type="submit" disabled={isSubmitting}>
           {isSubmitting ? "..." : "Add"}
         </button>
-      </div>
-
-      <div className="bottomCaptureHint">
-        -- task · !! reminder · // journal · ^^ event
       </div>
 
       {error ? <div className="errorText bottomCaptureMsg">{error}</div> : null}
