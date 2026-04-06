@@ -1,4 +1,3 @@
-import AddTaskForm from "../../components/AddTaskForm";
 import TaskToggleButton from "../../components/TaskToggleButton";
 import { UI_STRINGS } from "../../lib/strings";
 
@@ -21,8 +20,6 @@ export default async function TasksPage() {
         <div className="line">{UI_STRINGS.APP_TITLE}</div>
         <div className="subline">{UI_STRINGS.TASKS}</div>
       </section>
-
-      <AddTaskForm />
 
       <section className="panel">
         <div className="sectionTitle">{UI_STRINGS.TASK_LIST}</div>

@@ -40,7 +40,7 @@
   --ui-link-hover: var(--ctp-lavender);
 
   --ui-accent: var(--ctp-blue);
-  --ui-accent-soft: rgba(137, 180, 250, 0.14);
+  --ui-accent-soft: rgba(137, 180, 250, 0.10);
 
   --ui-success: var(--ctp-green);
   --ui-warn: var(--ctp-peach);
@@ -261,7 +261,7 @@ textarea.textInput::placeholder {
 .textInput:focus,
 textarea.textInput:focus {
   border-color: var(--ctp-lavender);
-  box-shadow: 0 0 0 1px rgba(180, 190, 254, 0.12);
+  box-shadow: 0 0 0 1px rgba(180, 190, 254, 0.10);
 }
 
 .autoTextarea {
@@ -461,9 +461,9 @@ textarea.textInput:focus {
   right: 0;
   bottom: 0;
   z-index: 50;
-  border-top: 1px solid var(--ctp-blue);
-  background: rgba(24, 24, 37, 0.96);
-  box-shadow: 0 -1px 0 rgba(137, 180, 250, 0.08);
+  border-top: 1px solid rgba(137, 180, 250, 0.18);
+  background: rgba(24, 24, 37, 0.92);
+  box-shadow: 0 -1px 0 rgba(137, 180, 250, 0.04);
   padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
 }
 
@@ -477,19 +477,19 @@ textarea.textInput:focus {
 
 .bottomCaptureInput {
   min-height: 44px;
-  border-color: var(--ctp-surface1);
+  border-color: var(--ctp-surface0);
 }
 
 .bottomCaptureButton {
   width: auto;
   min-width: 84px;
-  border-color: var(--ctp-blue);
-  background: rgba(137, 180, 250, 0.12);
+  border-color: rgba(137, 180, 250, 0.22);
+  background: rgba(137, 180, 250, 0.08);
   color: var(--ctp-blue);
 }
 
 .bottomCaptureButton:hover {
-  background: rgba(137, 180, 250, 0.18);
+  background: rgba(137, 180, 250, 0.12);
 }
 
 .bottomCaptureHint,
@@ -499,7 +499,7 @@ textarea.textInput:focus {
 }
 
 .bottomCaptureHint {
-  color: var(--ctp-lavender);
+  color: var(--ctp-overlay2);
   font-size: 12px;
 }
 
