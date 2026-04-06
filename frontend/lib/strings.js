@@ -1,7 +1,9 @@
 export const UI_STRINGS = {
   APP_TITLE: "KaosGdd",
   TASKS: "Tasks",
+  REMINDERS: "Reminders",
   TASK_DETAIL: "Task Detail",
+  REMINDER_DETAIL: "Reminder Detail",
   TASK_LIST: "Task list",
   NO_TASKS: "No tasks yet.",
   ADD_TASK: "Add task",

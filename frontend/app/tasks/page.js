@@ -1,4 +1,5 @@
 import TaskToggleButton from "../../components/TaskToggleButton";
+import TopNav from "../../components/TopNav";
 import { UI_STRINGS } from "../../lib/strings";
 
 async function getTasks() {
@@ -20,6 +21,8 @@ export default async function TasksPage() {
         <div className="line">{UI_STRINGS.APP_TITLE}</div>
         <div className="subline">{UI_STRINGS.TASKS}</div>
       </section>
+
+      <TopNav />
 
       <section className="panel">
         <div className="sectionTitle">{UI_STRINGS.TASK_LIST}</div>

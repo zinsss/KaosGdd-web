@@ -15,7 +15,7 @@ class ReminderRepo:
         *,
         title: str,
         remind_at: str,
-        parent_item_id: str,
+        parent_item_id: str | None = None,
         alert_policy: str | None = None,
     ) -> str:
         reminder_item_id = new_id()
@@ -49,19 +49,21 @@ class ReminderRepo:
                     "alert_policy": alert_policy,
                 },
             )
-            conn.execute(
-                text(
-                    """
-                    INSERT INTO item_reminders(item_id, reminder_item_id, created_at)
-                    VALUES (:item_id, :reminder_item_id, :created_at)
-                    """
-                ),
-                {
-                    "item_id": parent_item_id,
-                    "reminder_item_id": reminder_item_id,
-                    "created_at": now,
-                },
-            )
+
+            if parent_item_id:
+                conn.execute(
+                    text(
+                        """
+                        INSERT INTO item_reminders(item_id, reminder_item_id, created_at)
+                        VALUES (:item_id, :reminder_item_id, :created_at)
+                        """
+                    ),
+                    {
+                        "item_id": parent_item_id,
+                        "reminder_item_id": reminder_item_id,
+                        "created_at": now,
+                    },
+                )
 
         return reminder_item_id
 
@@ -72,8 +74,11 @@ class ReminderRepo:
                     """
                     SELECT
                         i.id,
+                        i.item_type,
                         i.title,
                         i.status,
+                        i.created_at,
+                        i.updated_at,
                         r.remind_at,
                         r.state,
                         r.alert_policy,
@@ -93,6 +98,48 @@ class ReminderRepo:
             ).mappings().first()
         return dict(row) if row else None
 
+    def list_standalone_reminders(self):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT
+                        i.id,
+                        i.item_type,
+                        i.title,
+                        i.status,
+                        i.created_at,
+                        i.updated_at,
+                        r.remind_at,
+                        r.state,
+                        r.alert_policy,
+                        r.last_fired_at,
+                        r.acked_at,
+                        r.snoozed_until,
+                        ir.item_id AS parent_item_id
+                    FROM items i
+                    JOIN reminder_items r ON i.id = r.item_id
+                    LEFT JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
+                    WHERE i.item_type = 'reminder'
+                      AND i.status = 'active'
+                      AND ir.item_id IS NULL
+                    ORDER BY
+                        CASE r.state
+                            WHEN 'fired' THEN 1
+                            WHEN 'missed' THEN 2
+                            WHEN 'scheduled' THEN 3
+                            WHEN 'snoozed' THEN 4
+                            WHEN 'acked' THEN 5
+                            WHEN 'cancelled' THEN 6
+                            ELSE 7
+                        END ASC,
+                        COALESCE(r.snoozed_until, r.remind_at) ASC,
+                        i.created_at ASC
+                    """
+                )
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
     def list_linked_reminders(self, parent_item_id: str):
         with self.engine.begin() as conn:
             rows = conn.execute(
@@ -100,8 +147,11 @@ class ReminderRepo:
                     """
                     SELECT
                         i.id,
+                        i.item_type,
                         i.title,
                         i.status,
+                        i.created_at,
+                        i.updated_at,
                         r.remind_at,
                         r.state,
                         r.alert_policy,
@@ -217,8 +267,11 @@ class ReminderRepo:
                     """
                     SELECT
                         i.id,
+                        i.item_type,
                         i.title,
                         i.status,
+                        i.created_at,
+                        i.updated_at,
                         r.remind_at,
                         r.state,
                         r.alert_policy,
@@ -247,8 +300,11 @@ class ReminderRepo:
                     """
                     SELECT
                         i.id,
+                        i.item_type,
                         i.title,
                         i.status,
+                        i.created_at,
+                        i.updated_at,
                         r.remind_at,
                         r.state,
                         r.alert_policy,
@@ -258,7 +314,7 @@ class ReminderRepo:
                         ir.item_id AS parent_item_id
                     FROM items i
                     JOIN reminder_items r ON i.id = r.item_id
-                    JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
+                    LEFT JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
                     WHERE i.item_type = 'reminder'
                       AND i.status = 'active'
                       AND r.state = 'fired'

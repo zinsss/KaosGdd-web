@@ -54,6 +54,19 @@ def list_tasks():
     return {"items": task_service.list_tasks()}
 
 
+@app.get("/reminders")
+def list_reminders():
+    return {"items": reminder_service.list_standalone_reminders()}
+
+
+@app.get("/reminders/{reminder_id}")
+def get_reminder(reminder_id: str):
+    item = reminder_service.get_reminder(reminder_id)
+    if item is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "item": item}
+
+
 @app.post("/tasks")
 def create_task(payload: dict):
     title = (payload.get("title") or "").strip()
@@ -154,22 +167,30 @@ def capture_item(payload: dict):
         return {"ok": True, "kind": kind, "id": item_id}
 
     if kind == "simple_reminder":
-        return {
-            "ok": False,
-            "error": "!! standalone reminders not supported yet in this schema",
-        }
+        title = str(parsed["parsed"].get("title") or "").strip()
+        remind_ats = list(parsed["parsed"].get("remind_ats") or [])
+        if not title:
+            return {"ok": False, "error": "title is required"}
+        if not remind_ats:
+            return {"ok": False, "error": "!! requires at least one r:yyyy-mm-dd HH:MM"}
+
+        created_ids = []
+        for remind_at in remind_ats:
+            ok, status, reminder_id = reminder_service.create_standalone_reminder(
+                title=title,
+                remind_at=remind_at,
+            )
+            if not ok:
+                return {"ok": False, "error": status}
+            created_ids.append(reminder_id)
+
+        return {"ok": True, "kind": kind, "id": created_ids[0], "ids": created_ids}
 
     if kind == "journal":
-        return {
-            "ok": False,
-            "error": "// journal not supported yet in this schema",
-        }
+        return {"ok": False, "error": "// journal not supported yet in this schema"}
 
     if kind == "event":
-        return {
-            "ok": False,
-            "error": "^^ event not supported yet in this schema",
-        }
+        return {"ok": False, "error": "^^ event not supported yet in this schema"}
 
     return {"ok": False, "error": "unsupported capture kind"}
 

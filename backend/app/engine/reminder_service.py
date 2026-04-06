@@ -7,6 +7,7 @@ from app.integrations.push_format import build_reminder_push_message
 from app.integrations.pushover_client import send_pushover
 from app.strings import ReminderStatusText
 from app.utils.clock import now_iso
+from app.utils.timefmt import format_dt_for_ui
 
 
 class ReminderService:
@@ -34,6 +35,44 @@ class ReminderService:
             alert_policy=alert_policy,
         )
         return True, ReminderStatusText.SAVED, reminder_id
+
+    def create_standalone_reminder(
+        self,
+        *,
+        title: str,
+        remind_at: str,
+        alert_policy: str | None = None,
+    ) -> tuple[bool, str, str | None]:
+        clean_title = str(title or "").strip()
+        if not clean_title:
+            return False, "title is required", None
+
+        reminder_id = self.reminder_repo.create_reminder_item(
+            title=clean_title,
+            remind_at=remind_at,
+            parent_item_id=None,
+            alert_policy=alert_policy,
+        )
+        return True, ReminderStatusText.SAVED, reminder_id
+
+    def list_standalone_reminders(self) -> list[dict]:
+        rows = self.reminder_repo.list_standalone_reminders()
+        for row in rows:
+            row["remind_at_display"] = format_dt_for_ui(row.get("remind_at"))
+            row["last_fired_at_display"] = format_dt_for_ui(row.get("last_fired_at"))
+            row["acked_at_display"] = format_dt_for_ui(row.get("acked_at"))
+            row["snoozed_until_display"] = format_dt_for_ui(row.get("snoozed_until"))
+        return rows
+
+    def get_reminder(self, reminder_item_id: str) -> dict | None:
+        row = self.reminder_repo.get_reminder_detail(reminder_item_id)
+        if row is None:
+            return None
+        row["remind_at_display"] = format_dt_for_ui(row.get("remind_at"))
+        row["last_fired_at_display"] = format_dt_for_ui(row.get("last_fired_at"))
+        row["acked_at_display"] = format_dt_for_ui(row.get("acked_at"))
+        row["snoozed_until_display"] = format_dt_for_ui(row.get("snoozed_until"))
+        return row
 
     def ack_reminder(self, reminder_item_id: str) -> tuple[bool, str]:
         detail = self.reminder_repo.get_reminder_detail(reminder_item_id)
@@ -100,8 +139,11 @@ class ReminderService:
             if row.get("parent_item_id") and SETTINGS.WEB_BASE_URL:
                 click_url = SETTINGS.WEB_BASE_URL.rstrip("/") + "/tasks/" + row["parent_item_id"]
 
+            if not row.get("parent_item_id") and SETTINGS.WEB_BASE_URL:
+                click_url = SETTINGS.WEB_BASE_URL.rstrip("/") + "/reminders/" + row["id"]
+
             item_title = task["title"] if task else row["title"]
-            item_type = task.get("item_type") if task else "task"
+            item_type = task.get("item_type") if task else "reminder"
 
             push_body = build_reminder_push_message(
                 item_type=item_type,
@@ -114,7 +156,7 @@ class ReminderService:
                 title="𝕂𝕒𝕠𝕤𝔾𝕕𝕕",
                 message=push_body,
                 url=click_url,
-                url_title="Open Task" if click_url else None,
+                url_title="Open" if click_url else None,
                 priority=0,
                 sound=None,
             )
@@ -144,8 +186,11 @@ class ReminderService:
             if row.get("parent_item_id") and SETTINGS.WEB_BASE_URL:
                 click_url = SETTINGS.WEB_BASE_URL.rstrip("/") + "/tasks/" + row["parent_item_id"]
 
+            if not row.get("parent_item_id") and SETTINGS.WEB_BASE_URL:
+                click_url = SETTINGS.WEB_BASE_URL.rstrip("/") + "/reminders/" + row["id"]
+
             item_title = task["title"] if task else row["title"]
-            item_type = task.get("item_type") if task else "task"
+            item_type = task.get("item_type") if task else "reminder"
 
             push_body = build_reminder_push_message(
                 item_type=item_type,
@@ -158,7 +203,7 @@ class ReminderService:
                 title="𝕂𝕒𝕠𝕤𝔾𝕕𝕕",
                 message=push_body,
                 url=click_url,
-                url_title="Open Task" if click_url else None,
+                url_title="Open" if click_url else None,
                 priority=1,
                 sound="persistent",
             )
