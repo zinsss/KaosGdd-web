@@ -267,7 +267,7 @@ textarea.textInput:focus {
 .autoTextarea {
   resize: none;
   overflow: hidden;
-  min-height: 44px;
+  min-height: 46px;
 }
 
 .rawEditor {
@@ -476,13 +476,18 @@ textarea.textInput:focus {
 }
 
 .bottomCaptureInput {
-  min-height: 44px;
+  min-height: 46px;
+  height: 46px;
   border-color: var(--ctp-surface0);
+  padding-top: 10px;
+  padding-bottom: 10px;
 }
 
 .bottomCaptureButton {
   width: auto;
   min-width: 84px;
+  height: 46px;
+  padding: 0 14px;
   border-color: rgba(137, 180, 250, 0.18);
   background: rgba(137, 180, 250, 0.06);
   color: var(--ctp-blue);
