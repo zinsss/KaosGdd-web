@@ -94,6 +94,7 @@ select {
 body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  padding-bottom: 132px;
 }
 
 .page {
@@ -317,6 +318,11 @@ textarea.textInput:focus {
   margin-top: 10px;
 }
 
+.successText {
+  color: var(--ui-success);
+  margin-top: 10px;
+}
+
 .taskLink {
   color: var(--ui-text);
   text-decoration: none;
@@ -449,10 +455,53 @@ textarea.textInput:focus {
   font-size: 13px;
 }
 
+.bottomCaptureBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  border-top: 1px solid var(--ui-border);
+  background: var(--ui-panel);
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+}
+
+.bottomCaptureInner {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.bottomCaptureInput {
+  min-height: 44px;
+}
+
+.bottomCaptureButton {
+  width: auto;
+  min-width: 84px;
+}
+
+.bottomCaptureHint,
+.bottomCaptureMsg {
+  max-width: 760px;
+  margin: 8px auto 0;
+}
+
+.bottomCaptureHint {
+  color: var(--ui-text-dim);
+  font-size: 12px;
+}
+
 @media (max-width: 640px) {
   html,
   body {
     font-size: 14px;
+  }
+
+  body {
+    padding-bottom: 148px;
   }
 
   .page {
@@ -496,5 +545,14 @@ textarea.textInput:focus {
 
   .taskListDueLine {
     margin-left: 28px;
+  }
+
+  .bottomCaptureInner {
+    gap: 8px;
+  }
+
+  .bottomCaptureButton {
+    width: auto;
+    flex: 0 0 auto;
   }
 }

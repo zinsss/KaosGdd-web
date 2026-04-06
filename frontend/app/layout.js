@@ -1,14 +1,18 @@
 export const metadata = {
   title: "KaosGdd Web",
-  description: "Tailscale-only web UI for KaosGdd"
+  description: "Tailscale-only web UI for KaosGdd",
 };
 
 import "./globals.css";
+import BottomCaptureBar from "../components/BottomCaptureBar";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        {children}
+        <BottomCaptureBar />
+      </body>
     </html>
   );
 }

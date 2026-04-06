@@ -1,6 +1,7 @@
 import os
 
-from dotenv import load_dotenv()
+from dotenv import load_dotenv
+
 load_dotenv()
 
 from contextlib import asynccontextmanager
@@ -17,6 +18,7 @@ from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
 from app.schemas.reminders import normalize_minutes
 from app.strings import ApiText
+from app.utils.capture_parse import parse_capture_input
 
 
 APP_NAME = os.getenv("APP_NAME", SETTINGS.APP_NAME)
@@ -128,6 +130,48 @@ def create_task_reminder(task_id: str, payload: dict):
     if not ok:
         return {"ok": False, "error": status}
     return {"ok": True, "id": reminder_id, "status": status}
+
+
+@app.post("/capture")
+def capture_item(payload: dict):
+    raw_text = str(payload.get("raw") or "")
+    try:
+        parsed = parse_capture_input(raw_text)
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+
+    kind = parsed["kind"]
+
+    if kind == "task":
+        title = str(parsed["parsed"].get("title") or "").strip()
+        if not title:
+            return {"ok": False, "error": ApiText.TITLE_REQUIRED}
+
+        item_id = task_service.create_task(title=title)
+        ok, error = task_service.update_task_from_raw(item_id, parsed["raw"])
+        if not ok:
+            return {"ok": False, "error": error or ApiText.INVALID_RAW_TASK}
+        return {"ok": True, "kind": kind, "id": item_id}
+
+    if kind == "simple_reminder":
+        return {
+            "ok": False,
+            "error": "!! standalone reminders not supported yet in this schema",
+        }
+
+    if kind == "journal":
+        return {
+            "ok": False,
+            "error": "// journal not supported yet in this schema",
+        }
+
+    if kind == "event":
+        return {
+            "ok": False,
+            "error": "^^ event not supported yet in this schema",
+        }
+
+    return {"ok": False, "error": "unsupported capture kind"}
 
 
 @app.post("/reminders/{reminder_id}/ack")
