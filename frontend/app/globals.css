@@ -47,7 +47,7 @@
   --ui-danger: var(--ctp-red);
 
   --ui-title: var(--ctp-yellow);
-  --shell-top-height: 136px;
+  --shell-top-height: 180px;
 }
 
 @font-face {
@@ -650,7 +650,7 @@ textarea.textInput:focus {
 
 @media (max-width: 640px) {
   :root {
-    --shell-top-height: 132px;
+    --shell-top-height: 180px;
   }
 
   html,
