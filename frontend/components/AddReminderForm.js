@@ -11,6 +11,7 @@ export default function AddReminderForm({ taskId }) {
   async function onSubmit(event) {
     event.preventDefault();
     const cleanRemindAt = remindAt.trim();
+
     if (!cleanRemindAt) {
       setError("remind_at is required.");
       return;
@@ -52,6 +53,7 @@ export default function AddReminderForm({ taskId }) {
           onChange={(event) => setRemindAt(event.target.value)}
           placeholder="yyyy-mm-dd HH:MM (KST)"
           disabled={isSubmitting}
+          spellCheck={false}
         />
         <button className="button compactButton" type="submit" disabled={isSubmitting}>
           {isSubmitting ? UI_STRINGS.ADDING : UI_STRINGS.ADD}
