@@ -16,7 +16,7 @@ export default function RootLayout({ children }) {
             <div className="appHeaderLine">
               <span className="appHeaderTitle">KaosGdd</span>
               <span className="appHeaderDot"> • </span>
-              <span className="appHeaderSubtitle">Order for a Chaotic-Minded Gdd</span>
+              <span className="appHeaderSubtitle">Order for Chaotic-Minded Gdd</span>
             </div>
             <TopNav />
           </div>
