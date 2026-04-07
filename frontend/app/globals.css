@@ -148,7 +148,7 @@ body {
 .page {
   max-width: 760px;
   margin: 0 auto;
-  padding: 2px 16px 16px;
+  padding: 6px 16px 16px;
 }
 
 .panel {
@@ -632,7 +632,7 @@ textarea.textInput:focus {
   }
 
   .page {
-    padding: 2px 12px 12px;
+    padding: 6px 12px 12px;
   }
 
   .panel {
