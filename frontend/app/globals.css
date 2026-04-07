@@ -71,7 +71,8 @@ body {
   padding: 0;
   background: var(--ui-bg);
   color: var(--ui-text);
-  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
+    "SFMono-Regular", "Menlo", "Consolas", monospace;
   line-height: 1.45;
   font-size: 15px;
 }
@@ -208,6 +209,12 @@ body {
   border-color: var(--ui-accent);
   background: var(--ui-accent-soft);
   color: var(--ui-accent);
+}
+
+.detailPageLabel {
+  color: var(--ui-text-dim);
+  font-size: 14px;
+  margin-bottom: 10px;
 }
 
 .detailTitleRow {
@@ -427,6 +434,12 @@ textarea.textInput:focus {
   display: grid;
   gap: 8px;
   color: var(--ctp-subtext1);
+}
+
+.readMetaLine {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
 .memoBlock {

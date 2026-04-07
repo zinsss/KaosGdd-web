@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import AddReminderForm from "./AddReminderForm";
 import ReminderActions from "./ReminderActions";
 import TaskRawEditor from "./TaskRawEditor";
+import TaskToggleButton from "./TaskToggleButton";
 import { UI_STRINGS } from "../lib/strings";
 
 function reminderPriority(state) {
@@ -75,21 +76,18 @@ export default function TaskDetailPanel({ item, raw }) {
   }
 
   return (
-    <>
+    <main className="page">
       <section className="panel">
-        <div className="line">
-          {UI_STRINGS.APP_TITLE}
-          <span className="lineSuffix"> - {UI_STRINGS.TASK_DETAIL}</span>
-        </div>
-
         <div className="backRow">
           <a className="taskLink backLink" href="/tasks">
-            {UI_STRINGS.BACK_TO_TASKS}
+            {UI_STRINGS.BACK_TO_TASKS_LIST}
           </a>
         </div>
       </section>
 
       <section className="panel">
+        <div className="detailPageLabel">{UI_STRINGS.TASK_DETAIL}</div>
+
         <div className="detailTitleRow">
           <div className={"sectionTitle detailMainTitle" + (item.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
             {item.title}
@@ -104,22 +102,25 @@ export default function TaskDetailPanel({ item, raw }) {
             {item.tags && item.tags.length > 0 ? (
               <span>{item.tags.map((tag) => `#${tag}`).join(" ")}</span>
             ) : null}
-            {item.repeat_rule ? <span>{`R:${item.repeat_rule}`}</span> : null}
+            {item.repeat_rule ? <span>{`↻ ${item.repeat_rule}`}</span> : null}
           </div>
         ) : null}
 
         <div className="metaStack">
-          {item.due_at_display ? <div>{UI_STRINGS.DUE}:{item.due_at_display}</div> : null}
+          {item.due_at_display ? (
+            <div className="readMetaLine">
+              <span>📅 {item.due_at_display}</span>
+              {item.repeat_rule ? <span>↻ {item.repeat_rule}</span> : null}
+            </div>
+          ) : null}
 
           {activeSummaryReminders.map((reminder) => (
-            <div key={"summary-" + reminder.id}>
-              {UI_STRINGS.REMINDER_SHORT}:{activeReminderDisplay(reminder)}
-            </div>
+            <div key={"summary-" + reminder.id}>⏰ {activeReminderDisplay(reminder)}</div>
           ))}
 
           {item.memo ? (
             <div className="memoBlock">
-              <div>{UI_STRINGS.MEMO}:</div>
+              <div>📝</div>
               <div className="memoBody">{item.memo}</div>
             </div>
           ) : null}
@@ -170,6 +171,8 @@ export default function TaskDetailPanel({ item, raw }) {
 
       <section className="panel">
         <div className="actionRow detailActionRow">
+          <TaskToggleButton taskId={item.id} isDone={item.is_done} compact />
+
           <button
             type="button"
             className={"button compactButton" + (openPanel === "reminder" ? " buttonActive" : "")}
@@ -222,6 +225,6 @@ export default function TaskDetailPanel({ item, raw }) {
           </div>
         ) : null}
       </section>
-    </>
+    </main>
   );
 }

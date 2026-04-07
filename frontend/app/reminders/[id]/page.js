@@ -1,5 +1,4 @@
 import { UI_STRINGS } from "../../../lib/strings";
-import TopNav from "../../../components/TopNav";
 import ReminderActions from "../../../components/ReminderActions";
 
 async function getReminder(id) {
@@ -18,26 +17,29 @@ export default async function ReminderDetailPage({ params }) {
   return (
     <main className="page">
       <section className="panel">
-        <div className="line">{UI_STRINGS.APP_TITLE}</div>
-        <div className="subline">{UI_STRINGS.REMINDER_DETAIL}</div>
+        <div className="backRow">
+          <a className="taskLink backLink" href="/reminders">
+            {UI_STRINGS.BACK_TO_REMINDERS_LIST}
+          </a>
+        </div>
       </section>
-
-      <TopNav />
 
       {!result.ok ? (
         <section className="panel">
-          <div className="errorText">{result.error || UI_STRINGS.TASK_NOT_FOUND}</div>
+          <div className="errorText">{result.error || UI_STRINGS.REMINDER_NOT_FOUND}</div>
         </section>
       ) : (
         <>
           <section className="panel">
+            <div className="detailPageLabel">{UI_STRINGS.REMINDER_DETAIL}</div>
+
             <div className="detailTitleRow">
               <div className="sectionTitle detailMainTitle">{result.item.title}</div>
               <div className="detailStateText">{result.item.state}</div>
             </div>
 
             <div className="metaStack">
-              <div>r:{result.item.snoozed_until_display || result.item.remind_at_display || "-"}</div>
+              <div>⏰ {result.item.snoozed_until_display || result.item.remind_at_display || "-"}</div>
             </div>
           </section>
 
