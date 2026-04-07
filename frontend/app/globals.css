@@ -47,7 +47,7 @@
   --ui-danger: var(--ctp-red);
 
   --ui-title: var(--ctp-yellow);
-  --shell-top-height: 108px;
+  --shell-top-height: 136px;
 }
 
 @font-face {
@@ -157,7 +157,7 @@ body {
 }
 
 .shellOffsetPage {
-  padding-top: calc(var(--shell-top-height) + 20px);
+  padding-top: calc(var(--shell-top-height) + 28px);
 }
 
 .panel {
@@ -650,7 +650,7 @@ textarea.textInput:focus {
 
 @media (max-width: 640px) {
   :root {
-    --shell-top-height: 104px;
+    --shell-top-height: 132px;
   }
 
   html,
