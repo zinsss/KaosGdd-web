@@ -191,28 +191,29 @@ body {
 
 .topNavRow {
   display: inline-flex;
-  gap: 10px;
   min-width: max-content;
 }
 
-.topNavButton {
+.topNavRowFlat {
+  gap: 18px;
+}
+
+.topNavTextLink {
   display: inline-block;
-  padding: 8px 12px;
-  border: 1px solid var(--ui-border-strong);
-  background: var(--ctp-surface0);
-  color: var(--ui-text);
+  color: var(--ui-text-dim);
   text-decoration: none;
   white-space: nowrap;
+  padding: 0 0 3px;
+  border-bottom: 1px solid transparent;
 }
 
-.topNavButton:hover {
-  background: var(--ctp-surface1);
+.topNavTextLink:hover {
+  color: var(--ui-text);
 }
 
-.topNavButtonActive {
-  border-color: var(--ui-accent);
-  background: var(--ui-accent-soft);
-  color: var(--ui-accent);
+.topNavTextLinkActive {
+  color: var(--ctp-lavender);
+  border-bottom-color: var(--ctp-lavender);
 }
 
 .detailPageLabel {
@@ -632,7 +633,7 @@ textarea.textInput:focus {
   }
 
   .page {
-    padding: 6px 12px 12px;
+    padding: 2px 12px 12px;
   }
 
   .panel {
@@ -681,6 +682,10 @@ textarea.textInput:focus {
 
   .detailReadInline {
     gap: 12px;
+  }
+
+  .topNavRowFlat {
+    gap: 14px;
   }
 
   .bottomCaptureInner {

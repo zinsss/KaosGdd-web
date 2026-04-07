@@ -11,11 +11,11 @@ export default function TopNav() {
 
   return (
     <nav className="topNavScroller" aria-label="Primary">
-      <div className="topNavRow">
-        <Link className={"topNavButton" + (tasksActive ? " topNavButtonActive" : "")} href="/tasks">
+      <div className="topNavRow topNavRowFlat">
+        <Link className={"topNavTextLink" + (tasksActive ? " topNavTextLinkActive" : "")} href="/tasks">
           Tasks
         </Link>
-        <Link className={"topNavButton" + (remindersActive ? " topNavButtonActive" : "")} href="/reminders">
+        <Link className={"topNavTextLink" + (remindersActive ? " topNavTextLinkActive" : "")} href="/reminders">
           Reminders
         </Link>
       </div>
