@@ -47,4 +47,4 @@ export default async function RemindersPage() {
       </section>
     </main>
   );
-}ㅎ
+}
