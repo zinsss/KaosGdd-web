@@ -155,6 +155,16 @@ def capture_item(payload: dict):
 
     kind = parsed["kind"]
 
+    if kind == "modal":
+        modal_type = str(parsed["parsed"].get("modal_type") or "").strip()
+        title = str(parsed["parsed"].get("title") or "").strip() or None
+        return {
+            "ok": True,
+            "kind": "modal",
+            "modal_type": modal_type,
+            "title": title,
+        }
+
     if kind == "task":
         title = str(parsed["parsed"].get("title") or "").strip()
         if not title:

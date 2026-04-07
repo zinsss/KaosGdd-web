@@ -18,7 +18,6 @@ def capture(payload: CaptureRequest) -> dict:
     if not parsed.get("ok"):
         return parsed
 
-    # Replace these branches with real service-layer creation and modal logic.
     if parsed["action"] == "open_modal":
         return {
             "ok": True,

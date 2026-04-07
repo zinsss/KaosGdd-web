@@ -1,56 +1,82 @@
 from __future__ import annotations
 
-from app.utils.task_raw import parse_task_raw
+from app.parsers.capture_grammar import parse_capture
 
 
 def parse_capture_input(raw_text: str) -> dict:
-    text = str(raw_text or "").replace("\r\n", "\n").strip()
-    if not text:
-        raise ValueError("capture is empty")
+    parsed = parse_capture(raw_text)
 
-    if text.startswith("--"):
-        body = text[2:].strip()
-        if not body:
-            raise ValueError("task body is required after --")
-        parsed = parse_task_raw(body)
+    if not parsed.get("ok"):
+        raise ValueError(parsed.get("error") or "invalid capture")
+
+    action = parsed.get("action")
+    item_type = parsed.get("item_type")
+    modal_type = parsed.get("modal_type")
+
+    if action == "open_modal":
+        return {
+            "kind": "modal",
+            "raw": str(raw_text or "").replace("\r\n", "\n").strip(),
+            "parsed": {
+                "modal_type": modal_type,
+                "title": parsed.get("title"),
+            },
+        }
+
+    if action != "create_item":
+        raise ValueError("unsupported parser action")
+
+    if item_type == "task":
         return {
             "kind": "task",
-            "raw": body,
-            "parsed": parsed,
+            "raw": str(raw_text or "").replace("\r\n", "\n").strip(),
+            "parsed": {
+                "title": parsed.get("title"),
+                "due_at": parsed.get("due_at"),
+                "remind_ats": [parsed["remind_at"]] if parsed.get("remind_at") else [],
+                "repeat_rule": parsed.get("repeat_rule"),
+                "tags": list(parsed.get("tags") or []),
+                "memo": parsed.get("memo"),
+                "subtasks": list(parsed.get("subtasks") or []),
+            },
         }
 
-    if text.startswith("!!"):
-        body = text[2:].strip()
-        if not body:
-            raise ValueError("reminder body is required after !!")
-        parsed = parse_task_raw(body)
-        if not parsed.get("remind_ats"):
-            raise ValueError("!! requires at least one r:yyyy-mm-dd HH:MM")
+    if item_type == "reminder":
+        remind_at = parsed.get("remind_at")
         return {
             "kind": "simple_reminder",
-            "raw": body,
-            "parsed": parsed,
+            "raw": str(raw_text or "").replace("\r\n", "\n").strip(),
+            "parsed": {
+                "title": parsed.get("title"),
+                "remind_ats": [remind_at] if remind_at else [],
+                "tags": list(parsed.get("tags") or []),
+                "memo": parsed.get("memo"),
+            },
         }
 
-    if text.startswith("//"):
-        body = text[2:].strip()
-        if not body:
-            raise ValueError("journal body is required after //")
+    if item_type == "journal":
         return {
             "kind": "journal",
-            "raw": body,
-            "parsed": {"title": body},
+            "raw": str(raw_text or "").replace("\r\n", "\n").strip(),
+            "parsed": {
+                "title": parsed.get("title"),
+                "memo": parsed.get("memo"),
+                "tags": list(parsed.get("tags") or []),
+            },
         }
 
-    if text.startswith("^^"):
-        body = text[2:].strip()
-        if not body:
-            raise ValueError("event body is required after ^^")
-        parsed = parse_task_raw(body)
+    if item_type == "event":
         return {
             "kind": "event",
-            "raw": body,
-            "parsed": parsed,
+            "raw": str(raw_text or "").replace("\r\n", "\n").strip(),
+            "parsed": {
+                "title": parsed.get("title"),
+                "due_at": parsed.get("due_at"),
+                "remind_ats": [parsed["remind_at"]] if parsed.get("remind_at") else [],
+                "repeat_rule": parsed.get("repeat_rule"),
+                "tags": list(parsed.get("tags") or []),
+                "memo": parsed.get("memo"),
+            },
         }
 
-    raise ValueError("capture must start with --, !!, //, or ^^")
+    raise ValueError("unsupported capture kind")

@@ -6,6 +6,9 @@ from app.utils.datetime_parse import parse_local_datetime_to_iso
 from app.utils.timefmt import format_dt_for_ui
 
 REPEAT_TAG_PREFIX = "repeat:"
+TASK_PREFIX = "-- "
+SUBTASK_PREFIX = "--- "
+MEMO_DELIM = '"""'
 
 
 def _extract_meta_from_line(line: str) -> tuple[str, dict]:
@@ -52,7 +55,7 @@ def export_task_raw(
 
     title = str(task.get("title") or "").strip()
     if title:
-        lines.append(title)
+        lines.append(f"{TASK_PREFIX}{title}")
 
     due_at = str(task.get("due_at") or "").strip()
     if due_at:
@@ -75,9 +78,9 @@ def export_task_raw(
     memo = task.get("memo")
     if memo is not None and str(memo).strip():
         lines.append("")
-        lines.append('"""')
+        lines.append(MEMO_DELIM)
         lines.extend(str(memo).splitlines())
-        lines.append('"""')
+        lines.append(MEMO_DELIM)
 
     return "\n".join(lines)
 
@@ -96,14 +99,20 @@ def parse_task_raw(raw_text: str) -> dict:
     tags: list[str] = []
     extra_lines: list[str] = []
     memo_lines: list[str] = []
+    subtasks: list[str] = []
     in_memo = False
+    saw_task_prefix = False
+
+    first_content_line = next((line.strip() for line in lines if line.strip()), None)
+    if first_content_line and first_content_line.startswith(TASK_PREFIX):
+        saw_task_prefix = True
 
     for original_line in lines:
         line = original_line.rstrip("\n")
         stripped = line.strip()
 
         if in_memo:
-            if stripped == '"""':
+            if stripped == MEMO_DELIM:
                 in_memo = False
             else:
                 memo_lines.append(original_line)
@@ -112,8 +121,15 @@ def parse_task_raw(raw_text: str) -> dict:
         if not stripped:
             continue
 
-        if stripped == '"""':
+        if stripped == MEMO_DELIM:
             in_memo = True
+            continue
+
+        if stripped.startswith(SUBTASK_PREFIX):
+            subtask = stripped[len(SUBTASK_PREFIX):].strip()
+            if not subtask:
+                raise ValueError("subtask title is required")
+            subtasks.append(subtask)
             continue
 
         cleaned, meta = _extract_meta_from_line(original_line)
@@ -136,7 +152,9 @@ def parse_task_raw(raw_text: str) -> dict:
 
         if title is None:
             candidate = cleaned.strip()
-            if candidate.startswith("- "):
+            if candidate.startswith(TASK_PREFIX):
+                candidate = candidate[len(TASK_PREFIX):].strip()
+            elif candidate.startswith("- "):
                 candidate = candidate[2:].strip()
             title = candidate or None
             continue
@@ -167,4 +185,6 @@ def parse_task_raw(raw_text: str) -> dict:
         "repeat_rule": repeat_rule,
         "tags": tags,
         "memo": memo,
+        "subtasks": subtasks,
+        "uses_task_prefix": saw_task_prefix,
     }
