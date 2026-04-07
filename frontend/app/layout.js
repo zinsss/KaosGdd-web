@@ -11,22 +11,18 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        <header className="appShellHeader">
-          <div className="appShellHeaderInner">
+        <header className="appShellTop">
+          <div className="appShellTopInner">
             <div className="appHeaderLine">
               <span className="appHeaderTitle">KaosGdd</span>
               <span className="appHeaderDot"> • </span>
               <span className="appHeaderSubtitle">Order for a Chaotic-Minded Gdd</span>
             </div>
+            <TopNav />
           </div>
         </header>
 
-        <main className="appShellMain">
-          <div className="page">
-            <TopNav />
-          </div>
-          {children}
-        </main>
+        <main className="appShellMain">{children}</main>
 
         <BottomCaptureBar />
       </body>

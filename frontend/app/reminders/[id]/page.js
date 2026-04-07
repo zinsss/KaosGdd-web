@@ -15,14 +15,12 @@ export default async function ReminderDetailPage({ params }) {
   const result = await getReminder(params.id);
 
   return (
-    <main className="page">
-      <section className="panel">
-        <div className="backRow">
-          <a className="taskLink backLink" href="/reminders">
-            {UI_STRINGS.BACK_TO_REMINDERS_LIST}
-          </a>
-        </div>
-      </section>
+    <main className="page shellOffsetPage">
+      <div className="detailBackLinkRow">
+        <a className="taskLink backLink" href="/reminders">
+          {UI_STRINGS.BACK_TO_REMINDERS_LIST}
+        </a>
+      </div>
 
       {!result.ok ? (
         <section className="panel">
@@ -31,15 +29,20 @@ export default async function ReminderDetailPage({ params }) {
       ) : (
         <>
           <section className="panel">
-            <div className="detailPageLabel">{UI_STRINGS.REMINDER_DETAIL}</div>
+            <div className="detailPageLabel">• {UI_STRINGS.REMINDER_DETAIL}</div>
 
             <div className="detailTitleRow">
               <div className="sectionTitle detailMainTitle">{result.item.title}</div>
               <div className="detailStateText">{result.item.state}</div>
             </div>
 
-            <div className="metaStack">
-              <div>⏰ {result.item.snoozed_until_display || result.item.remind_at_display || "-"}</div>
+            <div className="detailReadBlock">
+              <div className="detailReadRow">
+                <div className="detailReadIcon">⏰</div>
+                <div className="detailReadContent">
+                  {result.item.snoozed_until_display || result.item.remind_at_display || "-"}
+                </div>
+              </div>
             </div>
           </section>
 

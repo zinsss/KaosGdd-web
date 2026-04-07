@@ -10,7 +10,7 @@ export default function TopNav() {
   const remindersActive = pathname.startsWith("/reminders");
 
   return (
-    <section className="panel topNavPanel">
+    <nav className="topNavScroller" aria-label="Primary">
       <div className="topNavRow">
         <Link className={"topNavButton" + (tasksActive ? " topNavButtonActive" : "")} href="/tasks">
           Tasks
@@ -19,6 +19,6 @@ export default function TopNav() {
           Reminders
         </Link>
       </div>
-    </section>
+    </nav>
   );
 }

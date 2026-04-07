@@ -47,6 +47,7 @@
   --ui-danger: var(--ctp-red);
 
   --ui-title: var(--ctp-yellow);
+  --shell-top-height: 108px;
 }
 
 @font-face {
@@ -98,19 +99,37 @@ body {
   padding-bottom: 132px;
 }
 
-.appShellHeader {
-  padding: 14px 16px 0;
+.appShellTop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background: rgba(17, 17, 27, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(137, 180, 250, 0.1);
 }
 
-.appShellHeaderInner {
+.appShellTopInner {
   max-width: 760px;
   margin: 0 auto;
+  padding: 14px 16px 12px;
 }
 
 .appHeaderLine {
   font-size: 22px;
   font-weight: 700;
   line-height: 1.25;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.appHeaderLine::-webkit-scrollbar {
+  display: none;
 }
 
 .appHeaderTitle {
@@ -135,6 +154,10 @@ body {
   max-width: 760px;
   margin: 0 auto;
   padding: 16px;
+}
+
+.shellOffsetPage {
+  padding-top: calc(var(--shell-top-height) + 20px);
 }
 
 .panel {
@@ -191,13 +214,21 @@ body {
   margin-bottom: 0;
 }
 
-.topNavPanel {
-  margin-bottom: 0;
+.topNavScroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.topNavScroller::-webkit-scrollbar {
+  display: none;
 }
 
 .topNavRow {
-  display: flex;
+  display: inline-flex;
   gap: 10px;
+  min-width: max-content;
 }
 
 .topNavButton {
@@ -207,6 +238,7 @@ body {
   background: var(--ctp-surface0);
   color: var(--ui-text);
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .topNavButton:hover {
@@ -480,15 +512,6 @@ textarea.textInput:focus {
   white-space: pre-wrap;
 }
 
-.memoBlock {
-  display: grid;
-  gap: 6px;
-}
-
-.memoBody {
-  white-space: pre-wrap;
-}
-
 .actionRow {
   display: flex;
   gap: 10px;
@@ -626,6 +649,10 @@ textarea.textInput:focus {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --shell-top-height: 104px;
+  }
+
   html,
   body {
     font-size: 14px;
@@ -635,8 +662,8 @@ textarea.textInput:focus {
     padding-bottom: 148px;
   }
 
-  .appShellHeader {
-    padding: 12px 12px 0;
+  .appShellTopInner {
+    padding: 12px 12px 10px;
   }
 
   .appHeaderLine {
@@ -688,10 +715,6 @@ textarea.textInput:focus {
 
   .taskListDueLine {
     margin-left: 28px;
-  }
-
-  .topNavRow {
-    flex-wrap: wrap;
   }
 
   .detailReadRow {

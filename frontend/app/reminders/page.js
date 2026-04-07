@@ -14,7 +14,7 @@ export default async function RemindersPage() {
   const result = await getReminders();
 
   return (
-    <main className="page">
+    <main className="page shellOffsetPage">
       <section className="panel">
         <div className="sectionTitle">{UI_STRINGS.REMINDER_LIST}</div>
 
