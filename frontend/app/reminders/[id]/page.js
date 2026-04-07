@@ -15,7 +15,7 @@ export default async function ReminderDetailPage({ params }) {
   const result = await getReminder(params.id);
 
   return (
-    <main className="page shellOffsetPage">
+    <main className="page">
       <div className="detailBackLinkRow">
         <a className="taskLink backLink" href="/reminders">
           {UI_STRINGS.BACK_TO_REMINDERS_LIST}

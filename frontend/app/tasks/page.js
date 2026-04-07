@@ -15,7 +15,7 @@ export default async function TasksPage() {
   const tasks = await getTasks();
 
   return (
-    <main className="page shellOffsetPage">
+    <main className="page">
       <section className="panel">
         <div className="sectionTitle">{UI_STRINGS.TASK_LIST}</div>
 

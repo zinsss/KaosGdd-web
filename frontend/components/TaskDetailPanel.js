@@ -63,7 +63,7 @@ export default function TaskDetailPanel({ item, raw }) {
   }
 
   return (
-    <main className="page shellOffsetPage">
+    <main className="page">
       <div className="detailBackLinkRow">
         <a className="taskLink backLink" href="/tasks">
           {UI_STRINGS.BACK_TO_TASKS_LIST}
