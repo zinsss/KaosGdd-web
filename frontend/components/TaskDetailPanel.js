@@ -91,8 +91,8 @@ export default function TaskDetailPanel({ item, raw }) {
         <div className="detailReadBlock">
           {item.due_at_display || item.repeat_rule ? (
             <div className="detailReadRow">
-              <div className="detailReadIcon">📅</div>
-              <div className="detailReadContent">
+              <div className="detailReadLabel">Due</div>
+              <div className="detailReadContent withDivider">
                 <div className="detailReadInline">
                   {item.due_at_display ? <span>{item.due_at_display}</span> : <span>-</span>}
                   {item.repeat_rule ? <span>↻ {item.repeat_rule}</span> : null}
@@ -103,8 +103,8 @@ export default function TaskDetailPanel({ item, raw }) {
 
           {item.memo ? (
             <div className="detailReadRow">
-              <div className="detailReadIcon">📝</div>
-              <div className="detailReadContent detailReadMemo">
+              <div className="detailReadLabel">Memo</div>
+              <div className="detailReadContent detailReadMemo withDivider">
                 {String(item.memo)
                   .split("\n")
                   .map((line, idx) => (
@@ -116,11 +116,9 @@ export default function TaskDetailPanel({ item, raw }) {
         </div>
       </section>
 
-      <section className="panel detailSectionLabelPanel">
-        <div className="sectionTitle sectionTitleNoMargin">⏰ {UI_STRINGS.REMINDERS}</div>
-      </section>
-
       <section className="panel">
+        <div className="sectionTitle">Reminders</div>
+
         {sortedReminders.length > 0 ? (
           <ul className="taskList reminderCompactList">
             {sortedReminders.map((reminder) => {

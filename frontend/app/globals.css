@@ -158,29 +158,6 @@ body {
   background: var(--ui-panel);
 }
 
-.line {
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0;
-  color: var(--ui-text);
-}
-
-.lineSuffix {
-  color: var(--ui-text-dim);
-  font-size: 15px;
-  font-weight: 400;
-}
-
-.subline {
-  margin-top: 6px;
-  color: var(--ui-text-dim);
-  font-size: 14px;
-}
-
-.backRow {
-  margin-top: 6px;
-}
-
 .backLink {
   color: var(--ui-link);
   text-decoration: none;
@@ -199,10 +176,6 @@ body {
   font-weight: 700;
   margin-bottom: 10px;
   color: var(--ui-text);
-}
-
-.sectionTitleNoMargin {
-  margin-bottom: 0;
 }
 
 .topNavScroller {
@@ -475,14 +448,20 @@ textarea.textInput:focus {
 
 .detailReadRow {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
+  grid-template-columns: 56px minmax(0, 1fr);
   column-gap: 12px;
   align-items: start;
 }
 
-.detailReadIcon {
-  color: var(--ui-text);
-  line-height: 1.45;
+.detailReadLabel {
+  color: var(--ui-text-dim);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.withDivider {
+  border-left: 1px solid var(--ui-border-strong);
+  padding-left: 12px;
 }
 
 .detailReadContent {
@@ -513,10 +492,6 @@ textarea.textInput:focus {
   flex-wrap: nowrap;
 }
 
-.compactActionRow {
-  margin-top: 10px;
-}
-
 .compactButton {
   width: auto;
   min-width: 84px;
@@ -534,11 +509,6 @@ textarea.textInput:focus {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-}
-
-.detailSectionLabelPanel {
-  padding-top: 12px;
-  padding-bottom: 12px;
 }
 
 .reminderCompactList {
@@ -705,7 +675,7 @@ textarea.textInput:focus {
   }
 
   .detailReadRow {
-    grid-template-columns: 22px minmax(0, 1fr);
+    grid-template-columns: 50px minmax(0, 1fr);
     column-gap: 10px;
   }
 
