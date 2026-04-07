@@ -10,7 +10,7 @@ export default function TopNav() {
   const remindersActive = pathname.startsWith("/reminders");
 
   return (
-    <section className="panel">
+    <section className="panel topNavPanel">
       <div className="topNavRow">
         <Link className={"topNavButton" + (tasksActive ? " topNavButtonActive" : "")} href="/tasks">
           Tasks
