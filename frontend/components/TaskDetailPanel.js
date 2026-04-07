@@ -39,13 +39,6 @@ function reminderFlags(reminder) {
   };
 }
 
-function activeReminderDisplay(reminder) {
-  if (reminder.state === "snoozed" && reminder.snoozed_until_display) {
-    return reminder.snoozed_until_display;
-  }
-  return reminder.remind_at_display || "-";
-}
-
 export default function TaskDetailPanel({ item, raw }) {
   const [openPanel, setOpenPanel] = useState(null);
   const [showMore, setShowMore] = useState(false);
@@ -56,12 +49,6 @@ export default function TaskDetailPanel({ item, raw }) {
       (a, b) => reminderPriority(a.state) - reminderPriority(b.state)
     );
   }, [item.reminders]);
-
-  const activeSummaryReminders = useMemo(() => {
-    return sortedReminders.filter(
-      (reminder) => reminder.state === "scheduled" || reminder.state === "snoozed"
-    );
-  }, [sortedReminders]);
 
   async function onCopyId() {
     try {
@@ -77,16 +64,14 @@ export default function TaskDetailPanel({ item, raw }) {
 
   return (
     <main className="page">
-      <section className="panel">
-        <div className="backRow">
-          <a className="taskLink backLink" href="/tasks">
-            {UI_STRINGS.BACK_TO_TASKS_LIST}
-          </a>
-        </div>
-      </section>
+      <div className="detailBackLinkRow">
+        <a className="taskLink backLink" href="/tasks">
+          {UI_STRINGS.BACK_TO_TASKS_LIST}
+        </a>
+      </div>
 
       <section className="panel">
-        <div className="detailPageLabel">{UI_STRINGS.TASK_DETAIL}</div>
+        <div className="detailPageLabel">• {UI_STRINGS.TASK_DETAIL}</div>
 
         <div className="detailTitleRow">
           <div className={"sectionTitle detailMainTitle" + (item.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
@@ -97,39 +82,45 @@ export default function TaskDetailPanel({ item, raw }) {
           </div>
         </div>
 
-        {(item.tags && item.tags.length > 0) || item.repeat_rule ? (
+        {item.tags && item.tags.length > 0 ? (
           <div className="metaLine">
-            {item.tags && item.tags.length > 0 ? (
-              <span>{item.tags.map((tag) => `#${tag}`).join(" ")}</span>
-            ) : null}
-            {item.repeat_rule ? <span>{`↻ ${item.repeat_rule}`}</span> : null}
+            <span>{item.tags.map((tag) => `#${tag}`).join(" ")}</span>
           </div>
         ) : null}
 
-        <div className="metaStack">
-          {item.due_at_display ? (
-            <div className="readMetaLine">
-              <span>📅 {item.due_at_display}</span>
-              {item.repeat_rule ? <span>↻ {item.repeat_rule}</span> : null}
+        <div className="detailReadBlock">
+          {item.due_at_display || item.repeat_rule ? (
+            <div className="detailReadRow">
+              <div className="detailReadIcon">📅</div>
+              <div className="detailReadContent">
+                <div className="detailReadInline">
+                  {item.due_at_display ? <span>{item.due_at_display}</span> : <span>-</span>}
+                  {item.repeat_rule ? <span>↻ {item.repeat_rule}</span> : null}
+                </div>
+              </div>
             </div>
           ) : null}
 
-          {activeSummaryReminders.map((reminder) => (
-            <div key={"summary-" + reminder.id}>⏰ {activeReminderDisplay(reminder)}</div>
-          ))}
-
           {item.memo ? (
-            <div className="memoBlock">
-              <div>📝</div>
-              <div className="memoBody">{item.memo}</div>
+            <div className="detailReadRow">
+              <div className="detailReadIcon">📝</div>
+              <div className="detailReadContent detailReadMemo">
+                {String(item.memo)
+                  .split("\n")
+                  .map((line, idx) => (
+                    <div key={idx}>{line || "\u00A0"}</div>
+                  ))}
+              </div>
             </div>
           ) : null}
         </div>
       </section>
 
-      <section className="panel">
-        <div className="sectionTitle">{UI_STRINGS.REMINDER_LIST}</div>
+      <section className="panel detailSectionLabelPanel">
+        <div className="sectionTitle sectionTitleNoMargin">⏰ {UI_STRINGS.REMINDERS}</div>
+      </section>
 
+      <section className="panel">
         {sortedReminders.length > 0 ? (
           <ul className="taskList reminderCompactList">
             {sortedReminders.map((reminder) => {
