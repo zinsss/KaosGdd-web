@@ -51,11 +51,11 @@ export default function TaskRawEditor({ taskId, initialRaw }) {
         onChange={(event) => setRaw(event.target.value)}
         rows={1}
         spellCheck={false}
-        placeholder={"Title\nd:2026-04-08 15:00\nr:2026-04-08 14:30\nR:weekly\n#home #errand\n\n\"\"\"\nmemo\n\"\"\""}
+        placeholder={'-- task title\nd:2026-04-08 15:00\nr:2026-04-08 14:00\nR:weekly\n#home #errand\n--- subtask\n"""\nmemo\n"""'}
       />
 
       <div className="rawHint">
-        title first · d: · r: · R: · #tags · """memo"""
+        -- task · --- subtask · ^^ event · !! reminder · // journal · :: note · == list · ++ file · fax: · mail:
       </div>
 
       <div className="actionRow compactActionRow">
