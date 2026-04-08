@@ -99,8 +99,10 @@ body {
 }
 
 .appShellTop {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 60;
   background: var(--ctp-crust);
   border-bottom: 1px solid rgba(137, 180, 250, 0.1);
@@ -143,6 +145,7 @@ body {
 
 .appShellMain {
   width: 100%;
+  padding-top: 96px;
 }
 
 .page {
@@ -630,6 +633,10 @@ textarea.textInput:focus {
 
   .appHeaderSubtitle {
     font-size: 14px;
+  }
+
+  .appShellMain {
+    padding-top: 88px;
   }
 
   .page {
