@@ -4,7 +4,8 @@ from app.parsers.capture_grammar import parse_capture
 
 
 def parse_capture_input(raw_text: str) -> dict:
-    parsed = parse_capture(raw_text)
+    normalized_raw = str(raw_text or "").replace("\r\n", "\n").strip()
+    parsed = parse_capture(normalized_raw)
 
     if not parsed.get("ok"):
         raise ValueError(parsed.get("error") or "invalid capture")
@@ -16,7 +17,7 @@ def parse_capture_input(raw_text: str) -> dict:
     if action == "open_modal":
         return {
             "kind": "modal",
-            "raw": str(raw_text or "").replace("\r\n", "\n").strip(),
+            "raw": normalized_raw,
             "parsed": {
                 "modal_type": modal_type,
                 "title": parsed.get("title"),
@@ -29,7 +30,7 @@ def parse_capture_input(raw_text: str) -> dict:
     if item_type == "task":
         return {
             "kind": "task",
-            "raw": str(raw_text or "").replace("\r\n", "\n").strip(),
+            "raw": normalized_raw,
             "parsed": {
                 "title": parsed.get("title"),
                 "due_at": parsed.get("due_at"),
@@ -45,7 +46,7 @@ def parse_capture_input(raw_text: str) -> dict:
         remind_at = parsed.get("remind_at")
         return {
             "kind": "simple_reminder",
-            "raw": str(raw_text or "").replace("\r\n", "\n").strip(),
+            "raw": normalized_raw,
             "parsed": {
                 "title": parsed.get("title"),
                 "remind_ats": [remind_at] if remind_at else [],
@@ -57,7 +58,7 @@ def parse_capture_input(raw_text: str) -> dict:
     if item_type == "journal":
         return {
             "kind": "journal",
-            "raw": str(raw_text or "").replace("\r\n", "\n").strip(),
+            "raw": normalized_raw,
             "parsed": {
                 "title": parsed.get("title"),
                 "memo": parsed.get("memo"),
@@ -68,7 +69,7 @@ def parse_capture_input(raw_text: str) -> dict:
     if item_type == "event":
         return {
             "kind": "event",
-            "raw": str(raw_text or "").replace("\r\n", "\n").strip(),
+            "raw": normalized_raw,
             "parsed": {
                 "title": parsed.get("title"),
                 "due_at": parsed.get("due_at"),
@@ -80,4 +81,3 @@ def parse_capture_input(raw_text: str) -> dict:
         }
 
     raise ValueError("unsupported capture kind")
-}
