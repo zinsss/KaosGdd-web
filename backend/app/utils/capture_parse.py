@@ -80,3 +80,4 @@ def parse_capture_input(raw_text: str) -> dict:
         }
 
     raise ValueError("unsupported capture kind")
+}
