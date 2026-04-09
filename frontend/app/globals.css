@@ -486,6 +486,43 @@ textarea.textInput:focus {
   padding: 8px 12px;
 }
 
+.taskToggleButton {
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.compactFlatButton {
+  min-width: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.2;
+  font-size: 12px;
+}
+
+.compactFlatButtonDone {
+  border: 1px solid rgba(166, 227, 161, 0.35);
+  background: rgba(166, 227, 161, 0.08);
+  color: var(--ctp-green);
+}
+
+.compactFlatButtonDone:hover {
+  border-color: rgba(166, 227, 161, 0.5);
+  background: rgba(166, 227, 161, 0.14);
+  color: var(--ctp-green);
+}
+
+.compactFlatButtonUndo {
+  border: 1px solid rgba(186, 194, 222, 0.22);
+  background: rgba(186, 194, 222, 0.05);
+  color: var(--ui-text-dim);
+}
+
+.compactFlatButtonUndo:hover {
+  border-color: rgba(186, 194, 222, 0.32);
+  background: rgba(186, 194, 222, 0.09);
+  color: var(--ui-text);
+}
+
 .errorText {
   color: var(--ui-danger);
   margin-top: 10px;
@@ -802,6 +839,11 @@ textarea.textInput:focus {
   .reminderListTopLine {
     font-size: 12px;
     gap: 8px;
+  }
+
+  .compactFlatButton {
+    padding: 2px 7px;
+    font-size: 11px;
   }
 
   .bottomCaptureInner {
