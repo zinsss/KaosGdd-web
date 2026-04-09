@@ -366,6 +366,38 @@ body {
   gap: 4px;
 }
 
+.reminderRowButton {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  box-shadow: none;
+  outline: none;
+}
+
+.reminderRowButton:hover,
+.reminderRowButton:focus,
+.reminderRowButton:active {
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+  outline: none;
+}
+
+.reminderRowButton * {
+  pointer-events: none;
+}
+
 .reminderListTopLine {
   display: flex;
   justify-content: space-between;
@@ -401,6 +433,19 @@ body {
   min-width: 0;
   word-break: break-word;
   color: var(--ui-title);
+}
+
+.reminderExpandArea {
+  margin-top: 8px;
+  padding-left: 18px;
+}
+
+.reminderExpandActions {
+  gap: 8px;
+}
+
+.reminderParentButton {
+  text-decoration: none;
 }
 
 .empty {
@@ -493,7 +538,7 @@ textarea.textInput:focus {
 
 .compactFlatButton {
   min-width: 0;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 999px;
   line-height: 1.2;
   font-size: 12px;
@@ -736,6 +781,28 @@ textarea.textInput:focus {
   background: rgba(137, 180, 250, 0.1);
 }
 
+.bottomCaptureCancelButton {
+  width: auto;
+  min-width: 72px;
+  height: 46px;
+  padding: 0 12px;
+  border-color: rgba(186, 194, 222, 0.22);
+  background: rgba(186, 194, 222, 0.05);
+  color: var(--ui-text-dim);
+}
+
+.bottomCaptureCancelButton:hover {
+  background: rgba(186, 194, 222, 0.09);
+  color: var(--ui-text);
+}
+
+.bottomCaptureModeLabel {
+  max-width: 760px;
+  margin: 8px auto 0;
+  color: var(--ui-text-dim);
+  font-size: 12px;
+}
+
 .bottomCaptureMsg {
   max-width: 760px;
   margin: 8px auto 0;
@@ -842,7 +909,7 @@ textarea.textInput:focus {
   }
 
   .compactFlatButton {
-    padding: 2px 7px;
+    padding: 3px 9px;
     font-size: 11px;
   }
 
@@ -850,7 +917,8 @@ textarea.textInput:focus {
     gap: 8px;
   }
 
-  .bottomCaptureButton {
+  .bottomCaptureButton,
+  .bottomCaptureCancelButton {
     width: auto;
     flex: 0 0 auto;
   }
