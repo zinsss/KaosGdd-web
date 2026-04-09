@@ -409,6 +409,7 @@ body {
 
 .reminderListWhen {
   white-space: nowrap;
+  color: var(--ctp-lavender);
 }
 
 .reminderListTags {
@@ -425,14 +426,14 @@ body {
 }
 
 .reminderListType {
-  color: var(--ui-text-dim);
+  color: var(--ctp-mauve);
   flex: 0 0 auto;
 }
 
 .reminderListTitleText {
   min-width: 0;
   word-break: break-word;
-  color: var(--ui-title);
+  color: var(--ui-text);
 }
 
 .reminderExpandArea {
