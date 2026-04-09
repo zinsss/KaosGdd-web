@@ -23,7 +23,11 @@ export default function TaskToggleButton({ taskId, isDone, compact = false }) {
   return (
     <button
       type="button"
-      className={"button" + (compact ? " compactInlineButton" : "")}
+      className={
+        "button taskToggleButton" +
+        (compact ? " compactInlineButton compactFlatButton" : "") +
+        (compact ? (isDone ? " compactFlatButtonUndo" : " compactFlatButtonDone") : "")
+      }
       onClick={onClick}
       disabled={isSubmitting}
     >
