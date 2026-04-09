@@ -184,6 +184,39 @@ body {
   color: var(--ui-text);
 }
 
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.sectionTitleNoMargin {
+  margin-bottom: 0;
+}
+
+.modeDots {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.modeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ui-text-dimmer);
+  opacity: 0.7;
+  text-decoration: none;
+}
+
+.modeDotActive {
+  background: var(--ctp-lavender);
+  opacity: 1;
+}
+
 .topNavScroller {
   overflow-x: auto;
   overflow-y: hidden;
@@ -280,6 +313,10 @@ body {
   min-width: 0;
 }
 
+.taskListTitleRowWithMeta {
+  align-items: baseline;
+}
+
 .taskListStateIcon {
   flex: 0 0 auto;
   line-height: 1.2;
@@ -298,6 +335,15 @@ body {
   color: var(--ctp-lavender);
 }
 
+.taskListMetaTag {
+  margin-left: auto;
+  flex: 0 0 auto;
+  color: var(--ui-text-dim);
+  font-size: 12px;
+  white-space: nowrap;
+  padding-left: 10px;
+}
+
 .taskListDueLine {
   margin-top: 8px;
   margin-left: 28px;
@@ -313,6 +359,48 @@ body {
   color: var(--ui-text-dim);
   font-size: 13px;
   white-space: nowrap;
+}
+
+.reminderListRow {
+  display: grid;
+  gap: 4px;
+}
+
+.reminderListTopLine {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  color: var(--ui-text-dim);
+  font-size: 13px;
+}
+
+.reminderListWhen {
+  white-space: nowrap;
+}
+
+.reminderListTags {
+  min-width: 0;
+  text-align: right;
+  word-break: break-word;
+}
+
+.reminderListTitleLine {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.reminderListType {
+  color: var(--ui-text-dim);
+  flex: 0 0 auto;
+}
+
+.reminderListTitleText {
+  min-width: 0;
+  word-break: break-word;
+  color: var(--ui-title);
 }
 
 .empty {
@@ -694,8 +782,26 @@ textarea.textInput:focus {
     gap: 12px;
   }
 
+  .sectionTitleRow {
+    gap: 10px;
+  }
+
+  .modeDots {
+    gap: 7px;
+  }
+
   .topNavRowFlat {
     gap: 14px;
+  }
+
+  .taskListMetaTag {
+    font-size: 11px;
+    padding-left: 8px;
+  }
+
+  .reminderListTopLine {
+    font-size: 12px;
+    gap: 8px;
   }
 
   .bottomCaptureInner {
