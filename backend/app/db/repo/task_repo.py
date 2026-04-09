@@ -28,13 +28,14 @@ class TaskRepo:
                         i.id,
                         i.title,
                         i.status,
+                        i.created_at,
+                        i.updated_at,
+                        i.archived_at,
                         i.deleted_at,
                         t.due_at,
                         t.memo,
                         t.is_done,
-                        t.done_at,
-                        i.created_at,
-                        i.updated_at
+                        t.done_at
                     FROM items i
                     JOIN task_items t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
@@ -58,13 +59,14 @@ class TaskRepo:
                         i.id,
                         i.title,
                         i.status,
+                        i.created_at,
+                        i.updated_at,
+                        i.archived_at,
                         i.deleted_at,
                         t.due_at,
                         t.memo,
                         t.is_done,
-                        t.done_at,
-                        i.created_at,
-                        i.updated_at
+                        t.done_at
                     FROM items i
                     JOIN task_items t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
@@ -88,13 +90,14 @@ class TaskRepo:
                         i.id,
                         i.title,
                         i.status,
+                        i.created_at,
+                        i.updated_at,
+                        i.archived_at,
                         i.deleted_at,
                         t.due_at,
                         t.memo,
                         t.is_done,
-                        t.done_at,
-                        i.created_at,
-                        i.updated_at
+                        t.done_at
                     FROM items i
                     JOIN task_items t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
