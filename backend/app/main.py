@@ -50,13 +50,13 @@ def health():
 
 
 @app.get("/tasks")
-def list_tasks():
-    return {"items": task_service.list_tasks()}
+def list_tasks(mode: str = "active"):
+    return {"items": task_service.list_tasks(mode=mode)}
 
 
 @app.get("/reminders")
-def list_reminders():
-    return {"items": reminder_service.list_standalone_reminders()}
+def list_reminders(mode: str = "active"):
+    return {"items": reminder_service.list_reminders(mode=mode)}
 
 
 @app.get("/reminders/{reminder_id}")
@@ -182,7 +182,7 @@ def capture_item(payload: dict):
         if not title:
             return {"ok": False, "error": "title is required"}
         if not remind_ats:
-            return {"ok": False, "error": "!! requires at least one r:yyyy-mm-dd HH:MM"}
+            return {"ok": False, "error": "!! requires at least one reminder datetime"}
 
         created_ids = []
         for remind_at in remind_ats:
