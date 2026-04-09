@@ -4,17 +4,15 @@ import { UI_STRINGS } from "../../lib/strings";
 
 const TASK_MODES = ["active", "done", "removed"];
 
-function buildTaskModeHref(mode: string) {
+function buildTaskModeHref(mode) {
   return mode === "active" ? "/tasks" : `/tasks?mode=${mode}`;
 }
 
 function getTaskMetaTag(task) {
   const parts = [];
-
   if (task.metatag_due) parts.push(task.metatag_due);
   if (task.has_reminders) parts.push("R");
   if (task.has_tags) parts.push("#");
-
   return parts.join("");
 }
 
@@ -79,7 +77,9 @@ export default async function TasksPage({ searchParams }) {
                     </div>
 
                     <div className="taskListAction">
-                      <TaskToggleButton taskId={task.id} isDone={task.is_done} compact />
+                      {mode !== "removed" ? (
+                        <TaskToggleButton taskId={task.id} isDone={task.is_done} compact />
+                      ) : null}
                     </div>
                   </div>
                 </li>
