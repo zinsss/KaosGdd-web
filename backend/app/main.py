@@ -27,7 +27,7 @@ items_repo = ItemsRepo(engine)
 task_repo = TaskRepo(engine)
 reminder_repo = ReminderRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
-reminder_service = ReminderService(reminder_repo, task_repo)
+reminder_service = ReminderService(reminder_repo, task_repo, items_repo)
 
 
 @asynccontextmanager
