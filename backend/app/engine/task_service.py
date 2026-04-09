@@ -1,3 +1,7 @@
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
+from app.config import SETTINGS
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
@@ -145,6 +149,25 @@ class TaskService:
 
         return True, None
 
+    def _due_metatag(self, due_at: str | None) -> str:
+        if not due_at:
+            return ""
+
+        try:
+            due_dt = datetime.fromisoformat(str(due_at))
+            local_tz = ZoneInfo(SETTINGS.APP_TIMEZONE)
+            due_local = due_dt.astimezone(local_tz)
+            now_local = datetime.now(local_tz)
+            delta_days = (due_local.date() - now_local.date()).days
+        except Exception:
+            return ""
+
+        if delta_days == 0:
+            return "t"
+        if delta_days > 0:
+            return f"-{delta_days}d"
+        return f"+{abs(delta_days)}d"
+
     def _decorate_task(self, task: dict, *, include_reminders: bool) -> dict:
         item = dict(task)
         item["due_at_display"] = format_dt_for_ui(item.get("due_at"))
@@ -166,15 +189,22 @@ class TaskService:
 
         item["tags"] = visible_tags
         item["repeat_rule"] = repeat_rule
+        item["has_tags"] = bool(visible_tags)
+
+        linked_reminders = []
+        if self.reminder_repo is not None:
+            linked_reminders = self.reminder_repo.list_linked_reminders(item["id"])
+
+        item["has_reminders"] = bool(linked_reminders)
+        item["metatag_due"] = self._due_metatag(item.get("due_at"))
 
         if include_reminders and self.reminder_repo is not None:
-            reminders = self.reminder_repo.list_linked_reminders(item["id"])
-            for reminder in reminders:
+            for reminder in linked_reminders:
                 reminder["remind_at_display"] = format_dt_for_ui(reminder.get("remind_at"))
                 reminder["last_fired_at_display"] = format_dt_for_ui(reminder.get("last_fired_at"))
                 reminder["acked_at_display"] = format_dt_for_ui(reminder.get("acked_at"))
                 reminder["snoozed_until_display"] = format_dt_for_ui(reminder.get("snoozed_until"))
-            item["reminders"] = reminders
+            item["reminders"] = linked_reminders
         else:
             item["reminders"] = []
 

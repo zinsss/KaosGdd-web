@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta, timezone
 
 from app.config import SETTINGS
+from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.task_repo import TaskRepo
 from app.integrations.push_format import build_reminder_push_message
@@ -11,9 +12,10 @@ from app.utils.timefmt import format_dt_for_ui
 
 
 class ReminderService:
-    def __init__(self, reminder_repo: ReminderRepo, task_repo: TaskRepo) -> None:
+    def __init__(self, reminder_repo: ReminderRepo, task_repo: TaskRepo, items_repo: ItemsRepo | None = None) -> None:
         self.reminder_repo = reminder_repo
         self.task_repo = task_repo
+        self.items_repo = items_repo
 
     def create_task_reminder(
         self,
@@ -63,33 +65,17 @@ class ReminderService:
         else:
             rows = self.reminder_repo.list_reminders_active()
 
-        for row in rows:
-            row["remind_at_display"] = format_dt_for_ui(row.get("remind_at"))
-            row["last_fired_at_display"] = format_dt_for_ui(row.get("last_fired_at"))
-            row["acked_at_display"] = format_dt_for_ui(row.get("acked_at"))
-            row["snoozed_until_display"] = format_dt_for_ui(row.get("snoozed_until"))
-            row["removed_at_display"] = format_dt_for_ui(row.get("deleted_at"))
-        return rows
+        return [self._decorate_reminder(row) for row in rows]
 
     def list_standalone_reminders(self) -> list[dict]:
         rows = self.reminder_repo.list_standalone_reminders()
-        for row in rows:
-            row["remind_at_display"] = format_dt_for_ui(row.get("remind_at"))
-            row["last_fired_at_display"] = format_dt_for_ui(row.get("last_fired_at"))
-            row["acked_at_display"] = format_dt_for_ui(row.get("acked_at"))
-            row["snoozed_until_display"] = format_dt_for_ui(row.get("snoozed_until"))
-        return rows
+        return [self._decorate_reminder(row) for row in rows]
 
     def get_reminder(self, reminder_item_id: str) -> dict | None:
         row = self.reminder_repo.get_reminder_detail(reminder_item_id)
         if row is None:
             return None
-        row["remind_at_display"] = format_dt_for_ui(row.get("remind_at"))
-        row["last_fired_at_display"] = format_dt_for_ui(row.get("last_fired_at"))
-        row["acked_at_display"] = format_dt_for_ui(row.get("acked_at"))
-        row["snoozed_until_display"] = format_dt_for_ui(row.get("snoozed_until"))
-        row["removed_at_display"] = format_dt_for_ui(row.get("deleted_at"))
-        return row
+        return self._decorate_reminder(row)
 
     def ack_reminder(self, reminder_item_id: str) -> tuple[bool, str]:
         detail = self.reminder_repo.get_reminder_detail(reminder_item_id)
@@ -228,3 +214,28 @@ class ReminderService:
             missed.append(row)
 
         return missed
+
+    def _decorate_reminder(self, row: dict) -> dict:
+        item = dict(row)
+        item["remind_at_display"] = format_dt_for_ui(item.get("remind_at"))
+        item["last_fired_at_display"] = format_dt_for_ui(item.get("last_fired_at"))
+        item["acked_at_display"] = format_dt_for_ui(item.get("acked_at"))
+        item["snoozed_until_display"] = format_dt_for_ui(item.get("snoozed_until"))
+        item["removed_at_display"] = format_dt_for_ui(item.get("deleted_at"))
+
+        parent_item_id = item.get("parent_item_id")
+        item["parent_item_title"] = None
+        item["parent_item_type"] = None
+
+        if parent_item_id and self.task_repo is not None:
+            parent = self.task_repo.get_task_detail(parent_item_id)
+            if parent is not None:
+                item["parent_item_title"] = parent.get("title")
+                item["parent_item_type"] = parent.get("item_type") or "task"
+
+        if self.items_repo is not None:
+            item["tags"] = self.items_repo.list_item_tags(item["id"])
+        else:
+            item["tags"] = []
+
+        return item
