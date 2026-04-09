@@ -143,9 +143,12 @@ body {
   font-weight: 400;
 }
 
+.appShellTopSpacer {
+  height: 122px;
+}
+
 .appShellMain {
   width: 100%;
-  padding-top: 9px;
 }
 
 .page {
@@ -635,8 +638,8 @@ textarea.textInput:focus {
     font-size: 14px;
   }
 
-  .appShellMain {
-    padding-top: 122px;
+  .appShellTopSpacer {
+    height: 92px;
   }
 
   .page {
