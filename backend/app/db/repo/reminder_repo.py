@@ -67,28 +67,34 @@ class ReminderRepo:
 
         return reminder_item_id
 
+    def _base_select(self) -> str:
+        return """
+            SELECT
+                i.id,
+                i.item_type,
+                i.title,
+                i.status,
+                i.created_at,
+                i.updated_at,
+                i.deleted_at,
+                r.remind_at,
+                r.state,
+                r.alert_policy,
+                r.last_fired_at,
+                r.acked_at,
+                r.snoozed_until,
+                ir.item_id AS parent_item_id
+            FROM items i
+            JOIN reminder_items r ON i.id = r.item_id
+            LEFT JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
+        """
+
     def get_reminder_detail(self, reminder_item_id: str):
         with self.engine.begin() as conn:
             row = conn.execute(
                 text(
-                    """
-                    SELECT
-                        i.id,
-                        i.item_type,
-                        i.title,
-                        i.status,
-                        i.created_at,
-                        i.updated_at,
-                        r.remind_at,
-                        r.state,
-                        r.alert_policy,
-                        r.last_fired_at,
-                        r.acked_at,
-                        r.snoozed_until,
-                        ir.item_id AS parent_item_id
-                    FROM items i
-                    JOIN reminder_items r ON i.id = r.item_id
-                    LEFT JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
+                    self._base_select()
+                    + """
                     WHERE i.id = :id
                       AND i.item_type = 'reminder'
                     LIMIT 1
@@ -98,37 +104,72 @@ class ReminderRepo:
             ).mappings().first()
         return dict(row) if row else None
 
+    def list_reminders_active(self):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    self._base_select()
+                    + """
+                    WHERE i.item_type = 'reminder'
+                      AND i.status = 'active'
+                      AND r.state IN ('scheduled', 'snoozed', 'missed')
+                    ORDER BY
+                        COALESCE(r.snoozed_until, r.remind_at) ASC,
+                        i.created_at ASC
+                    """
+                )
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
+    def list_reminders_fired(self):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    self._base_select()
+                    + """
+                    WHERE i.item_type = 'reminder'
+                      AND i.status = 'active'
+                      AND r.state IN ('fired', 'acked', 'cancelled')
+                    ORDER BY
+                        COALESCE(r.last_fired_at, r.acked_at, r.remind_at) DESC,
+                        i.created_at DESC
+                    """
+                )
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
+    def list_reminders_removed(self):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    self._base_select()
+                    + """
+                    WHERE i.item_type = 'reminder'
+                      AND i.status = 'deleted'
+                    ORDER BY
+                        i.deleted_at DESC,
+                        i.updated_at DESC,
+                        i.created_at DESC
+                    """
+                )
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
     def list_standalone_reminders(self):
         with self.engine.begin() as conn:
             rows = conn.execute(
                 text(
-                    """
-                    SELECT
-                        i.id,
-                        i.item_type,
-                        i.title,
-                        i.status,
-                        i.created_at,
-                        i.updated_at,
-                        r.remind_at,
-                        r.state,
-                        r.alert_policy,
-                        r.last_fired_at,
-                        r.acked_at,
-                        r.snoozed_until,
-                        ir.item_id AS parent_item_id
-                    FROM items i
-                    JOIN reminder_items r ON i.id = r.item_id
-                    LEFT JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
+                    self._base_select()
+                    + """
                     WHERE i.item_type = 'reminder'
                       AND i.status = 'active'
                       AND ir.item_id IS NULL
                     ORDER BY
                         CASE r.state
-                            WHEN 'fired' THEN 1
-                            WHEN 'missed' THEN 2
-                            WHEN 'scheduled' THEN 3
-                            WHEN 'snoozed' THEN 4
+                            WHEN 'scheduled' THEN 1
+                            WHEN 'snoozed' THEN 2
+                            WHEN 'missed' THEN 3
+                            WHEN 'fired' THEN 4
                             WHEN 'acked' THEN 5
                             WHEN 'cancelled' THEN 6
                             ELSE 7
@@ -152,6 +193,7 @@ class ReminderRepo:
                         i.status,
                         i.created_at,
                         i.updated_at,
+                        i.deleted_at,
                         r.remind_at,
                         r.state,
                         r.alert_policy,
@@ -264,24 +306,8 @@ class ReminderRepo:
         with self.engine.begin() as conn:
             rows = conn.execute(
                 text(
-                    """
-                    SELECT
-                        i.id,
-                        i.item_type,
-                        i.title,
-                        i.status,
-                        i.created_at,
-                        i.updated_at,
-                        r.remind_at,
-                        r.state,
-                        r.alert_policy,
-                        r.last_fired_at,
-                        r.acked_at,
-                        r.snoozed_until,
-                        ir.item_id AS parent_item_id
-                    FROM items i
-                    JOIN reminder_items r ON i.id = r.item_id
-                    LEFT JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
+                    self._base_select()
+                    + """
                     WHERE i.item_type = 'reminder'
                       AND i.status = 'active'
                       AND (r.state = 'scheduled' OR r.state = 'snoozed')
@@ -297,24 +323,8 @@ class ReminderRepo:
         with self.engine.begin() as conn:
             rows = conn.execute(
                 text(
-                    """
-                    SELECT
-                        i.id,
-                        i.item_type,
-                        i.title,
-                        i.status,
-                        i.created_at,
-                        i.updated_at,
-                        r.remind_at,
-                        r.state,
-                        r.alert_policy,
-                        r.last_fired_at,
-                        r.acked_at,
-                        r.snoozed_until,
-                        ir.item_id AS parent_item_id
-                    FROM items i
-                    JOIN reminder_items r ON i.id = r.item_id
-                    LEFT JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
+                    self._base_select()
+                    + """
                     WHERE i.item_type = 'reminder'
                       AND i.status = 'active'
                       AND r.state = 'fired'

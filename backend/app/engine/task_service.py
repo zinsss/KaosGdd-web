@@ -21,8 +21,13 @@ class TaskService:
         self.task_repo.create_task(item_id, due_at=due_at, memo=memo)
         return item_id
 
-    def list_tasks(self) -> list[dict]:
-        rows = self.task_repo.list_active_tasks()
+    def list_tasks(self, mode: str = "active") -> list[dict]:
+        if mode == "done":
+            rows = self.task_repo.list_tasks_done()
+        elif mode == "removed":
+            rows = self.task_repo.list_tasks_removed()
+        else:
+            rows = self.task_repo.list_tasks_active()
         return [self._decorate_task(row, include_reminders=False) for row in rows]
 
     def get_task(self, item_id: str) -> dict | None:
@@ -143,6 +148,8 @@ class TaskService:
     def _decorate_task(self, task: dict, *, include_reminders: bool) -> dict:
         item = dict(task)
         item["due_at_display"] = format_dt_for_ui(item.get("due_at"))
+        item["done_at_display"] = format_dt_for_ui(item.get("done_at"))
+        item["removed_at_display"] = format_dt_for_ui(item.get("deleted_at"))
         item["created_at_display"] = format_dt_for_ui(item.get("created_at"))
         item["updated_at_display"] = format_dt_for_ui(item.get("updated_at"))
         item["item_type"] = item.get("item_type") or "task"

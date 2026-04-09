@@ -55,6 +55,22 @@ class ReminderService:
         )
         return True, ReminderStatusText.SAVED, reminder_id
 
+    def list_reminders(self, mode: str = "active") -> list[dict]:
+        if mode == "fired":
+            rows = self.reminder_repo.list_reminders_fired()
+        elif mode == "removed":
+            rows = self.reminder_repo.list_reminders_removed()
+        else:
+            rows = self.reminder_repo.list_reminders_active()
+
+        for row in rows:
+            row["remind_at_display"] = format_dt_for_ui(row.get("remind_at"))
+            row["last_fired_at_display"] = format_dt_for_ui(row.get("last_fired_at"))
+            row["acked_at_display"] = format_dt_for_ui(row.get("acked_at"))
+            row["snoozed_until_display"] = format_dt_for_ui(row.get("snoozed_until"))
+            row["removed_at_display"] = format_dt_for_ui(row.get("deleted_at"))
+        return rows
+
     def list_standalone_reminders(self) -> list[dict]:
         rows = self.reminder_repo.list_standalone_reminders()
         for row in rows:
@@ -72,6 +88,7 @@ class ReminderService:
         row["last_fired_at_display"] = format_dt_for_ui(row.get("last_fired_at"))
         row["acked_at_display"] = format_dt_for_ui(row.get("acked_at"))
         row["snoozed_until_display"] = format_dt_for_ui(row.get("snoozed_until"))
+        row["removed_at_display"] = format_dt_for_ui(row.get("deleted_at"))
         return row
 
     def ack_reminder(self, reminder_item_id: str) -> tuple[bool, str]:

@@ -19,7 +19,7 @@ class TaskRepo:
                 {"item_id": item_id, "due_at": due_at, "memo": memo},
             )
 
-    def list_active_tasks(self):
+    def list_tasks_active(self):
         with self.engine.begin() as conn:
             rows = conn.execute(
                 text(
@@ -28,6 +28,7 @@ class TaskRepo:
                         i.id,
                         i.title,
                         i.status,
+                        i.deleted_at,
                         t.due_at,
                         t.memo,
                         t.is_done,
@@ -38,11 +39,70 @@ class TaskRepo:
                     JOIN task_items t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
                       AND i.status = 'active'
+                      AND t.is_done = 0
                     ORDER BY
-                        t.is_done ASC,
                         CASE WHEN t.due_at IS NULL THEN 1 ELSE 0 END ASC,
                         t.due_at ASC,
                         i.created_at ASC
+                    """
+                )
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
+    def list_tasks_done(self):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT
+                        i.id,
+                        i.title,
+                        i.status,
+                        i.deleted_at,
+                        t.due_at,
+                        t.memo,
+                        t.is_done,
+                        t.done_at,
+                        i.created_at,
+                        i.updated_at
+                    FROM items i
+                    JOIN task_items t ON i.id = t.item_id
+                    WHERE i.item_type = 'task'
+                      AND i.status = 'active'
+                      AND t.is_done = 1
+                    ORDER BY
+                        t.done_at DESC,
+                        i.updated_at DESC,
+                        i.created_at DESC
+                    """
+                )
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
+    def list_tasks_removed(self):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT
+                        i.id,
+                        i.title,
+                        i.status,
+                        i.deleted_at,
+                        t.due_at,
+                        t.memo,
+                        t.is_done,
+                        t.done_at,
+                        i.created_at,
+                        i.updated_at
+                    FROM items i
+                    JOIN task_items t ON i.id = t.item_id
+                    WHERE i.item_type = 'task'
+                      AND i.status = 'deleted'
+                    ORDER BY
+                        i.deleted_at DESC,
+                        i.updated_at DESC,
+                        i.created_at DESC
                     """
                 )
             ).mappings().all()
