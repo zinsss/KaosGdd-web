@@ -2,12 +2,87 @@
 
 import { useEffect, useRef, useState } from "react";
 
+function readReminderEditState() {
+  if (typeof window === "undefined") {
+    return null;
+  }
+
+  try {
+    const raw = window.sessionStorage.getItem("kaosgdd_reminder_edit");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !parsed.id || !parsed.raw) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function writeReminderEditState(value) {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  try {
+    if (!value) {
+      window.sessionStorage.removeItem("kaosgdd_reminder_edit");
+      return;
+    }
+    window.sessionStorage.setItem("kaosgdd_reminder_edit", JSON.stringify(value));
+  } catch {}
+}
+
 export default function BottomCaptureBar() {
   const [raw, setRaw] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [editState, setEditState] = useState(null);
   const textareaRef = useRef(null);
+
+  useEffect(() => {
+    const initial = readReminderEditState();
+    if (initial) {
+      setEditState(initial);
+      setRaw(initial.raw || "");
+    }
+
+    function onStartEdit(event) {
+      const detail = event.detail || {};
+      if (!detail.id || !detail.raw) return;
+
+      const next = {
+        id: detail.id,
+        raw: detail.raw,
+      };
+
+      setEditState(next);
+      setRaw(detail.raw);
+      setError("");
+      setSuccess("");
+      writeReminderEditState(next);
+
+      window.setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 0);
+    }
+
+    function onCancelEdit() {
+      setEditState(null);
+      setRaw("");
+      setError("");
+      setSuccess("");
+      writeReminderEditState(null);
+    }
+
+    window.addEventListener("kaosgdd:start-reminder-edit", onStartEdit);
+    window.addEventListener("kaosgdd:cancel-reminder-edit", onCancelEdit);
+
+    return () => {
+      window.removeEventListener("kaosgdd:start-reminder-edit", onStartEdit);
+      window.removeEventListener("kaosgdd:cancel-reminder-edit", onCancelEdit);
+    };
+  }, []);
 
   useEffect(() => {
     if (!textareaRef.current) return;
@@ -15,11 +90,19 @@ export default function BottomCaptureBar() {
     textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
   }, [raw]);
 
+  function cancelEdit() {
+    setEditState(null);
+    setRaw("");
+    setError("");
+    setSuccess("");
+    writeReminderEditState(null);
+  }
+
   async function onSubmit(event) {
     event.preventDefault();
     const clean = raw.trim();
     if (!clean) {
-      setError("capture is empty");
+      setError(editState ? "reminder is empty" : "capture is empty");
       setSuccess("");
       return;
     }
@@ -29,7 +112,29 @@ export default function BottomCaptureBar() {
     setSuccess("");
 
     try {
-      const res = await fetch("/api/capture",   {
+      if (editState?.id) {
+        const res = await fetch("/api/reminders/" + editState.id, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw: clean }),
+        });
+
+        const data = await res.json().catch(() => null);
+
+        if (!res.ok || !data?.ok) {
+          setError((data && data.error) || "Reminder save failed.");
+          return;
+        }
+
+        cancelEdit();
+        setSuccess("Saved.");
+        window.setTimeout(() => {
+          window.location.reload();
+        }, 250);
+        return;
+      }
+
+      const res = await fetch("/api/capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ raw: clean }),
@@ -48,7 +153,7 @@ export default function BottomCaptureBar() {
         window.location.reload();
       }, 250);
     } catch {
-      setError("Capture failed.");
+      setError(editState ? "Reminder save failed." : "Capture failed.");
     } finally {
       setIsSubmitting(false);
     }
@@ -67,11 +172,24 @@ export default function BottomCaptureBar() {
           placeholder=""
           disabled={isSubmitting}
         />
+
+        {editState ? (
+          <button
+            className="button bottomCaptureCancelButton"
+            type="button"
+            onClick={cancelEdit}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </button>
+        ) : null}
+
         <button className="button bottomCaptureButton" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "..." : "Add"}
+          {isSubmitting ? "..." : editState ? "Save" : "Add"}
         </button>
       </div>
 
+      {editState ? <div className="bottomCaptureModeLabel">Editing reminder</div> : null}
       {error ? <div className="errorText bottomCaptureMsg">{error}</div> : null}
       {!error && success ? <div className="successText bottomCaptureMsg">{success}</div> : null}
     </form>
