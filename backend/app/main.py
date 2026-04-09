@@ -67,6 +67,15 @@ def get_reminder(reminder_id: str):
     return {"ok": True, "item": item}
 
 
+@app.patch("/reminders/{reminder_id}")
+def update_reminder(reminder_id: str, payload: dict):
+    raw_text = str(payload.get("raw") or "")
+    ok, error = reminder_service.update_standalone_reminder_from_raw(reminder_id, raw_text)
+    if not ok:
+        return {"ok": False, "error": error or "invalid reminder raw"}
+    return {"ok": True}
+
+
 @app.post("/tasks")
 def create_task(payload: dict):
     title = (payload.get("title") or "").strip()

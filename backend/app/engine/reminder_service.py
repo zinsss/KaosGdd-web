@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import re
 
 from app.config import SETTINGS
 from app.db.repo.items_repo import ItemsRepo
@@ -8,11 +9,17 @@ from app.integrations.push_format import build_reminder_push_message
 from app.integrations.pushover_client import send_pushover
 from app.strings import ReminderStatusText
 from app.utils.clock import now_iso
+from app.utils.datetime_parse import parse_local_datetime_to_iso
 from app.utils.timefmt import format_dt_for_ui
 
 
 class ReminderService:
-    def __init__(self, reminder_repo: ReminderRepo, task_repo: TaskRepo, items_repo: ItemsRepo | None = None) -> None:
+    def __init__(
+        self,
+        reminder_repo: ReminderRepo,
+        task_repo: TaskRepo,
+        items_repo: ItemsRepo | None = None,
+    ) -> None:
         self.reminder_repo = reminder_repo
         self.task_repo = task_repo
         self.items_repo = items_repo
@@ -76,6 +83,93 @@ class ReminderService:
         if row is None:
             return None
         return self._decorate_reminder(row)
+
+    def parse_standalone_reminder_raw(self, raw_text: str) -> dict:
+        text = str(raw_text or "").replace("\r\n", "\n").strip()
+        if not text:
+            raise ValueError("reminder is empty")
+
+        if not text.startswith("!!"):
+            raise ValueError("standalone reminder edit must start with !!")
+
+        body = text[2:].strip()
+        if not body:
+            raise ValueError("reminder body is required after !!")
+
+        lines = [line.strip() for line in body.split("\n") if line.strip()]
+        if not lines:
+            raise ValueError("reminder body is required after !!")
+
+        tags: list[str] = []
+
+        def strip_tags(value: str) -> tuple[str, list[str]]:
+            found = re.findall(r"(?:(?<=^)|(?<=\s))#([^\s#]+)", value)
+            cleaned = re.sub(r"(?:(?<=^)|(?<=\s))#([^\s#]+)", " ", value)
+            cleaned = " ".join(cleaned.split())
+            return cleaned, [tag.strip().lower() for tag in found if tag.strip()]
+
+        first = lines[0]
+        first_clean, first_tags = strip_tags(first)
+        tags.extend(first_tags)
+
+        match = re.match(r"^(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})(?:\s+(.*))?$", first_clean)
+        if not match:
+            raise ValueError("first reminder line must start with yyyy-mm-dd HH:MM")
+
+        remind_at_local = match.group(1).strip()
+        title_from_first = (match.group(2) or "").strip()
+
+        title_parts: list[str] = []
+        if title_from_first:
+            title_parts.append(title_from_first)
+
+        for line in lines[1:]:
+            clean_line, line_tags = strip_tags(line)
+            tags.extend(line_tags)
+            if clean_line:
+                title_parts.append(clean_line)
+
+        title = " ".join(part for part in title_parts if part).strip()
+        if not title:
+            raise ValueError("reminder title is required")
+
+        seen = set()
+        deduped = []
+        for tag in tags:
+            if tag not in seen:
+                seen.add(tag)
+                deduped.append(tag)
+
+        return {
+            "title": title,
+            "remind_at": parse_local_datetime_to_iso(remind_at_local),
+            "tags": deduped,
+        }
+
+    def update_standalone_reminder_from_raw(self, reminder_item_id: str, raw_text: str) -> tuple[bool, str | None]:
+        detail = self.reminder_repo.get_reminder_detail(reminder_item_id)
+        if detail is None:
+            return False, "not found"
+
+        if detail.get("parent_item_id"):
+            return False, "linked reminders must be edited on parent item page"
+
+        try:
+            parsed = self.parse_standalone_reminder_raw(raw_text)
+        except ValueError as exc:
+            return False, str(exc)
+
+        self.reminder_repo.reschedule_reminder_item(
+            reminder_item_id,
+            title=parsed["title"],
+            remind_at=parsed["remind_at"],
+            alert_policy=detail.get("alert_policy"),
+        )
+
+        if self.items_repo is not None:
+            self.items_repo.replace_item_tags(reminder_item_id, parsed["tags"])
+
+        return True, None
 
     def ack_reminder(self, reminder_item_id: str) -> tuple[bool, str]:
         detail = self.reminder_repo.get_reminder_detail(reminder_item_id)
