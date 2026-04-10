@@ -53,6 +53,7 @@ export default function TaskDetailPanel({ item, raw }) {
       (a, b) => reminderPriority(a.state) - reminderPriority(b.state)
     );
   }, [item.reminders]);
+  const isRemoved = item.status === "deleted";
 
   async function onCopyId() {
     try {
@@ -114,9 +115,7 @@ export default function TaskDetailPanel({ item, raw }) {
           >
             {item.title}
           </div>
-          <div className="detailStateText">
-            {item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}
-          </div>
+          <div className="detailStateText">{isRemoved ? "removed" : item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}</div>
         </div>
 
         {item.tags && item.tags.length > 0 ? (
@@ -183,7 +182,7 @@ export default function TaskDetailPanel({ item, raw }) {
                     <div className="reminderNextLine">{">> "}{reminder.snoozed_until_display}</div>
                   ) : null}
 
-                  {(reminder.state === "fired" || reminder.state === "missed") ? (
+                  {!isRemoved && (reminder.state === "fired" || reminder.state === "missed") ? (
                     <ReminderActions reminderId={reminder.id} state={reminder.state} />
                   ) : null}
                 </li>
@@ -196,33 +195,37 @@ export default function TaskDetailPanel({ item, raw }) {
       </section>
 
       <section className="panel">
-        <div className="actionRow detailActionRow">
-          <TaskToggleButton taskId={item.id} isDone={item.is_done} />
+        {!isRemoved ? (
+          <div className="actionRow detailActionRow">
+            <TaskToggleButton taskId={item.id} isDone={item.is_done} />
 
-          <button
-            type="button"
-            className={"button compactButton" + (openPanel === "reminder" ? " buttonActive" : "")}
-            onClick={() => togglePanel("reminder")}
-          >
-            Reminder
-          </button>
+            <button
+              type="button"
+              className={"button" + (openPanel === "reminder" ? " buttonActive" : "")}
+              onClick={() => togglePanel("reminder")}
+            >
+              Reminder
+            </button>
 
-          <button
-            type="button"
-            className={"button compactButton" + (openPanel === "edit" ? " buttonActive" : "")}
-            onClick={() => togglePanel("edit")}
-          >
-            Edit
-          </button>
+            <button
+              type="button"
+              className={"button" + (openPanel === "edit" ? " buttonActive" : "")}
+              onClick={() => togglePanel("edit")}
+            >
+              Edit
+            </button>
 
-          <button
-            type="button"
-            className={"button compactButton" + (showMore ? " buttonActive" : "")}
-            onClick={() => setShowMore((v) => !v)}
-          >
-            More
-          </button>
-        </div>
+            <button
+              type="button"
+              className={"button" + (showMore ? " buttonActive" : "")}
+              onClick={() => setShowMore((v) => !v)}
+            >
+              More
+            </button>
+          </div>
+        ) : (
+          <div className="empty">Removed task is read-only.</div>
+        )}
 
         {openPanel === "reminder" ? (
           <div className="toggleBody">
@@ -244,7 +247,7 @@ export default function TaskDetailPanel({ item, raw }) {
 
               <div className="copyRow">
                 <span>{UI_STRINGS.ID}: {item.id}</span>
-                <button type="button" className="button compactButton" onClick={onCopyId}>
+                <button type="button" className="button" onClick={onCopyId}>
                   {copied ? UI_STRINGS.COPIED : UI_STRINGS.COPY_ID}
                 </button>
               </div>
@@ -253,7 +256,7 @@ export default function TaskDetailPanel({ item, raw }) {
             <div className="actionRow" style={{ marginTop: 12 }}>
               <button
                 type="button"
-                className="button compactButton"
+                className="button"
                 onClick={onRemoveTask}
                 disabled={isRemoving}
               >

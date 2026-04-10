@@ -66,7 +66,8 @@ class ReminderService:
 
     def list_reminders(self, mode: str = "active") -> list[dict]:
         if mode == "fired":
-            rows = self.reminder_repo.list_reminders_fired()
+            fired_cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat(timespec="seconds")
+            rows = self.reminder_repo.list_reminders_fired(fired_cutoff_iso=fired_cutoff)
         elif mode == "removed":
             rows = self.reminder_repo.list_reminders_removed()
         else:
@@ -185,7 +186,25 @@ class ReminderService:
             return False
         if self.items_repo is None:
             return False
-        return self.items_repo.restore_item(reminder_item_id)
+        restored = self.items_repo.restore_item(reminder_item_id)
+        if not restored:
+            return False
+        self.reminder_repo.reset_to_scheduled(reminder_item_id)
+        return True
+
+    def cleanup_removed_items(self) -> dict:
+        if self.items_repo is None:
+            return {"tasks_deleted": 0, "reminders_deleted": 0}
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat(timespec="seconds")
+        tasks_deleted = self.items_repo.hard_delete_deleted_older_than(item_type="task", cutoff_iso=cutoff)
+        reminders_deleted = self.items_repo.hard_delete_deleted_older_than(
+            item_type="reminder",
+            cutoff_iso=cutoff,
+        )
+        return {
+            "tasks_deleted": tasks_deleted,
+            "reminders_deleted": reminders_deleted,
+        }
 
     def ack_reminder(self, reminder_item_id: str) -> tuple[bool, str]:
         detail = self.reminder_repo.get_reminder_detail(reminder_item_id)

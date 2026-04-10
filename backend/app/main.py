@@ -281,3 +281,16 @@ def fire_due_reminders():
 def scan_missed_reminders():
     rows = reminder_service.scan_missed_reminders()
     return {"ok": True, "count": len(rows), "items": rows}
+
+
+@app.post("/internal/lifecycle/maintain")
+def run_lifecycle_maintenance():
+    archived_tasks = task_service.archive_old_done_tasks()
+    cleanup = reminder_service.cleanup_removed_items()
+    return {
+        "ok": True,
+        "archived_tasks": archived_tasks,
+        "hard_deleted_tasks": cleanup["tasks_deleted"],
+        "hard_deleted_reminders": cleanup["reminders_deleted"],
+        "fired_retention_days": 30,
+    }

@@ -53,6 +53,7 @@ class ItemsRepo:
                     """
                     UPDATE items
                     SET status = 'deleted',
+                        archived_at = NULL,
                         deleted_at = :deleted_at,
                         updated_at = :updated_at
                     WHERE id = :id
@@ -71,6 +72,7 @@ class ItemsRepo:
                     """
                     UPDATE items
                     SET status = 'active',
+                        archived_at = NULL,
                         deleted_at = NULL,
                         updated_at = :updated_at
                     WHERE id = :id
@@ -80,6 +82,41 @@ class ItemsRepo:
                 {"id": item_id, "updated_at": now},
             )
         return bool(result.rowcount)
+
+    def archive_item(self, item_id: str) -> bool:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            result = conn.execute(
+                text(
+                    """
+                    UPDATE items
+                    SET status = 'archived',
+                        archived_at = :archived_at,
+                        deleted_at = NULL,
+                        updated_at = :updated_at
+                    WHERE id = :id
+                      AND status = 'active'
+                    """
+                ),
+                {"id": item_id, "archived_at": now, "updated_at": now},
+            )
+        return bool(result.rowcount)
+
+    def hard_delete_deleted_older_than(self, *, item_type: str, cutoff_iso: str) -> int:
+        with self.engine.begin() as conn:
+            result = conn.execute(
+                text(
+                    """
+                    DELETE FROM items
+                    WHERE item_type = :item_type
+                      AND status = 'deleted'
+                      AND deleted_at IS NOT NULL
+                      AND deleted_at < :cutoff_iso
+                    """
+                ),
+                {"item_type": item_type, "cutoff_iso": cutoff_iso},
+            )
+        return int(result.rowcount or 0)
 
     def list_item_tags(self, item_id: str) -> list[str]:
         with self.engine.begin() as conn:
