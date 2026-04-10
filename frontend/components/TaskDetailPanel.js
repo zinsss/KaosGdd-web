@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import AddReminderForm from "./AddReminderForm";
 import ReminderActions from "./ReminderActions";
 import TaskRawEditor from "./TaskRawEditor";
@@ -40,9 +41,12 @@ function reminderFlags(reminder) {
 }
 
 export default function TaskDetailPanel({ item, raw }) {
+  const router = useRouter();
   const [openPanel, setOpenPanel] = useState(null);
   const [showMore, setShowMore] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [removeError, setRemoveError] = useState("");
+  const [isRemoving, setIsRemoving] = useState(false);
 
   const sortedReminders = useMemo(() => {
     return [...(item.reminders || [])].sort(
@@ -62,6 +66,34 @@ export default function TaskDetailPanel({ item, raw }) {
     setOpenPanel((current) => (current === name ? null : name));
   }
 
+  async function onRemoveTask() {
+    const ok = window.confirm("Move this task to Removed?");
+    if (!ok || isRemoving) return;
+
+    setIsRemoving(true);
+    setRemoveError("");
+
+    try {
+      const res = await fetch(`/api/tasks/${item.id}`, {
+        method: "DELETE",
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok || !data?.ok) {
+        setRemoveError((data && data.error) || "Task remove failed.");
+        return;
+      }
+
+      router.push("/tasks?mode=removed");
+      router.refresh();
+    } catch {
+      setRemoveError("Task remove failed.");
+    } finally {
+      setIsRemoving(false);
+    }
+  }
+
   return (
     <main className="page">
       <div className="detailBackLinkRow">
@@ -74,7 +106,12 @@ export default function TaskDetailPanel({ item, raw }) {
         <div className="detailPageLabel">• {UI_STRINGS.TASK_DETAIL}</div>
 
         <div className="detailTitleRow">
-          <div className={"sectionTitle detailMainTitle" + (item.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
+          <div
+            className={
+              "sectionTitle detailMainTitle" +
+              (item.is_done ? " taskLinkDone taskLinkDoneDetail" : "")
+            }
+          >
             {item.title}
           </div>
           <div className="detailStateText">
@@ -160,14 +197,14 @@ export default function TaskDetailPanel({ item, raw }) {
 
       <section className="panel">
         <div className="actionRow detailActionRow">
-          <TaskToggleButton taskId={item.id} isDone={item.is_done} compact />
+          <TaskToggleButton taskId={item.id} isDone={item.is_done} />
 
           <button
             type="button"
             className={"button compactButton" + (openPanel === "reminder" ? " buttonActive" : "")}
             onClick={() => togglePanel("reminder")}
           >
-            {UI_STRINGS.ADD_REMINDER}
+            Reminder
           </button>
 
           <button
@@ -175,7 +212,7 @@ export default function TaskDetailPanel({ item, raw }) {
             className={"button compactButton" + (openPanel === "edit" ? " buttonActive" : "")}
             onClick={() => togglePanel("edit")}
           >
-            {UI_STRINGS.EDIT_TASK}
+            Edit
           </button>
 
           <button
@@ -183,7 +220,7 @@ export default function TaskDetailPanel({ item, raw }) {
             className={"button compactButton" + (showMore ? " buttonActive" : "")}
             onClick={() => setShowMore((v) => !v)}
           >
-            {UI_STRINGS.MORE}
+            More
           </button>
         </div>
 
@@ -204,6 +241,7 @@ export default function TaskDetailPanel({ item, raw }) {
             <div className="metaStack">
               <div>{UI_STRINGS.CREATED}: {item.created_at_display || "-"}</div>
               <div>{UI_STRINGS.UPDATED}: {item.updated_at_display || "-"}</div>
+
               <div className="copyRow">
                 <span>{UI_STRINGS.ID}: {item.id}</span>
                 <button type="button" className="button compactButton" onClick={onCopyId}>
@@ -211,6 +249,19 @@ export default function TaskDetailPanel({ item, raw }) {
                 </button>
               </div>
             </div>
+
+            <div className="actionRow" style={{ marginTop: 12 }}>
+              <button
+                type="button"
+                className="button compactButton"
+                onClick={onRemoveTask}
+                disabled={isRemoving}
+              >
+                {isRemoving ? "..." : "Remove"}
+              </button>
+            </div>
+
+            {removeError ? <div className="errorText">{removeError}</div> : null}
           </div>
         ) : null}
       </section>
