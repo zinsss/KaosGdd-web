@@ -45,6 +45,42 @@ class ItemsRepo:
                 {"id": item_id, "title": title, "updated_at": now},
             )
 
+    def soft_delete_item(self, item_id: str) -> bool:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            result = conn.execute(
+                text(
+                    """
+                    UPDATE items
+                    SET status = 'deleted',
+                        deleted_at = :deleted_at,
+                        updated_at = :updated_at
+                    WHERE id = :id
+                      AND status != 'deleted'
+                    """
+                ),
+                {"id": item_id, "deleted_at": now, "updated_at": now},
+            )
+        return bool(result.rowcount)
+
+    def restore_item(self, item_id: str) -> bool:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            result = conn.execute(
+                text(
+                    """
+                    UPDATE items
+                    SET status = 'active',
+                        deleted_at = NULL,
+                        updated_at = :updated_at
+                    WHERE id = :id
+                      AND status = 'deleted'
+                    """
+                ),
+                {"id": item_id, "updated_at": now},
+            )
+        return bool(result.rowcount)
+
     def list_item_tags(self, item_id: str) -> list[str]:
         with self.engine.begin() as conn:
             rows = conn.execute(

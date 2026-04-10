@@ -114,6 +114,7 @@ function ReminderRow({ reminder, expanded, onToggle }) {
                   >
                     Ack
                   </button>
+
                   <button
                     type="button"
                     className="button compactButton"
@@ -129,7 +130,9 @@ function ReminderRow({ reminder, expanded, onToggle }) {
                 </>
               ) : null}
 
-              {reminder.state !== "removed" && reminder.state !== "acked" && reminder.state !== "cancelled" ? (
+              {reminder.state !== "removed" &&
+              reminder.state !== "acked" &&
+              reminder.state !== "cancelled" ? (
                 <button
                   type="button"
                   className="button compactButton"
@@ -140,22 +143,31 @@ function ReminderRow({ reminder, expanded, onToggle }) {
                 </button>
               ) : null}
 
-              {reminder.state !== "cancelled" ? (
-                <button
-                  type="button"
-                  className="button compactButton"
-                  disabled={isSubmitting}
-                  onClick={() =>
-                    runAction(() => postReminderAction(`/api/reminders/${reminder.id}/cancel`))
-                  }
-                >
-                  Delete
-                </button>
-              ) : null}
+              <button
+                type="button"
+                className="button compactButton"
+                disabled={isSubmitting}
+                onClick={() =>
+                  runAction(async () => {
+                    const res = await fetch(`/api/reminders/${reminder.id}`, {
+                      method: "DELETE",
+                    });
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data?.ok) {
+                      throw new Error((data && data.error) || "Reminder remove failed.");
+                    }
+                  })
+                }
+              >
+                Delete
+              </button>
             </div>
           ) : (
             <div className="actionRow reminderExpandActions">
-              <Link className="button compactButton reminderParentButton" href={`/tasks/${reminder.parent_item_id}`}>
+              <Link
+                className="button compactButton reminderParentButton"
+                href={`/tasks/${reminder.parent_item_id}`}
+              >
                 Go to Parent
               </Link>
             </div>
@@ -217,11 +229,14 @@ export default function RemindersPageClient({ initialMode, items }) {
     }
   }
 
+  const modeTitle =
+    mode === "fired" ? "Reminders • Fired" : mode === "removed" ? "Reminders • Removed" : "Reminders • Active";
+
   return (
     <main className="page">
       <section className="panel" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className="sectionTitleRow">
-          <div className="sectionTitle sectionTitleNoMargin">{UI_STRINGS.REMINDER_LIST}</div>
+          <div className="sectionTitle sectionTitleNoMargin">{modeTitle}</div>
           <div className="modeDots" aria-label="Reminder list mode">
             {modeLinks.map((entry) => (
               <Link

@@ -69,6 +69,18 @@ class TaskService:
         )
         return True
 
+    def remove_task(self, item_id: str) -> bool:
+        detail = self.task_repo.get_task_detail(item_id)
+        if detail is None:
+            return False
+        return self.items_repo.soft_delete_item(item_id)
+
+    def restore_task(self, item_id: str) -> bool:
+        detail = self.task_repo.get_task_detail(item_id)
+        if detail is None:
+            return False
+        return self.items_repo.restore_item(item_id)
+
     def toggle_task(self, item_id: str):
         return self.task_repo.toggle_done(item_id)
 

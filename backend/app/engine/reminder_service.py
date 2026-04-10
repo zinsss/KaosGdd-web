@@ -171,6 +171,22 @@ class ReminderService:
 
         return True, None
 
+    def remove_reminder(self, reminder_item_id: str) -> bool:
+        detail = self.reminder_repo.get_reminder_detail(reminder_item_id)
+        if detail is None:
+            return False
+        if self.items_repo is None:
+            return False
+        return self.items_repo.soft_delete_item(reminder_item_id)
+
+    def restore_reminder(self, reminder_item_id: str) -> bool:
+        detail = self.reminder_repo.get_reminder_detail(reminder_item_id)
+        if detail is None:
+            return False
+        if self.items_repo is None:
+            return False
+        return self.items_repo.restore_item(reminder_item_id)
+
     def ack_reminder(self, reminder_item_id: str) -> tuple[bool, str]:
         detail = self.reminder_repo.get_reminder_detail(reminder_item_id)
         if detail is None:
