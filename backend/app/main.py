@@ -84,6 +84,14 @@ def remove_reminder(reminder_id: str):
     return {"ok": True}
 
 
+@app.post("/reminders/{reminder_id}/restore")
+def restore_reminder(reminder_id: str):
+    ok = reminder_service.restore_reminder(reminder_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
+
+
 @app.post("/tasks")
 def create_task(payload: dict):
     title = (payload.get("title") or "").strip()
@@ -123,6 +131,14 @@ def update_task(task_id: str, payload: dict):
 @app.delete("/tasks/{task_id}")
 def remove_task(task_id: str):
     ok = task_service.remove_task(task_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
+
+
+@app.post("/tasks/{task_id}/restore")
+def restore_task(task_id: str):
+    ok = task_service.restore_task(task_id)
     if not ok:
         return {"ok": False, "error": ApiText.NOT_FOUND}
     return {"ok": True}

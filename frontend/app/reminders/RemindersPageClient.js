@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import ReminderRestoreButton from "../../components/ReminderRestoreButton";
 import { UI_STRINGS } from "../../lib/strings";
 
 const REMINDER_MODES = ["active", "fired", "removed"];
@@ -51,7 +52,7 @@ async function postReminderAction(path, payload) {
   }
 }
 
-function ReminderRow({ reminder, expanded, onToggle }) {
+function ReminderRow({ reminder, expanded, onToggle, mode }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState("");
 
@@ -100,7 +101,11 @@ function ReminderRow({ reminder, expanded, onToggle }) {
 
       {expanded ? (
         <div className="reminderExpandArea">
-          {isStandalone ? (
+          {mode === "removed" ? (
+            <div className="actionRow reminderExpandActions">
+              <ReminderRestoreButton reminderId={reminder.id} />
+            </div>
+          ) : isStandalone ? (
             <div className="actionRow reminderExpandActions">
               {(reminder.state === "fired" || reminder.state === "missed") ? (
                 <>
@@ -121,7 +126,7 @@ function ReminderRow({ reminder, expanded, onToggle }) {
                     disabled={isSubmitting}
                     onClick={() =>
                       runAction(() =>
-                        postReminderAction(`/api/reminders/${reminder.id}/snooze`, { minutes: 10 }),
+                        postReminderAction(`/api/reminders/${reminder.id}/snooze`, { minutes: 10 })
                       )
                     }
                   >
@@ -230,7 +235,11 @@ export default function RemindersPageClient({ initialMode, items }) {
   }
 
   const modeTitle =
-    mode === "fired" ? "Reminders • Fired" : mode === "removed" ? "Reminders • Removed" : "Reminders • Active";
+    mode === "fired"
+      ? "Reminders • Fired"
+      : mode === "removed"
+      ? "Reminders • Removed"
+      : "Reminders • Active";
 
   return (
     <main className="page">
@@ -259,6 +268,7 @@ export default function RemindersPageClient({ initialMode, items }) {
                 reminder={reminder}
                 expanded={expandedId === reminder.id}
                 onToggle={() => setExpandedId(expandedId === reminder.id ? null : reminder.id)}
+                mode={mode}
               />
             ))}
           </ul>

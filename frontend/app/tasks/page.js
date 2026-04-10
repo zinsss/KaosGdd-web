@@ -1,5 +1,6 @@
 import Link from "next/link";
 import TaskToggleButton from "../../components/TaskToggleButton";
+import TaskRestoreButton from "../../components/TaskRestoreButton";
 import { UI_STRINGS } from "../../lib/strings";
 
 const TASK_MODES = ["active", "done", "removed"];
@@ -31,11 +32,18 @@ export default async function TasksPage({ searchParams }) {
   const mode = TASK_MODES.includes(searchParams?.mode) ? searchParams.mode : "active";
   const tasks = await getTasks(mode);
 
+  const modeTitle =
+    mode === "done"
+      ? "Tasks • Done"
+      : mode === "removed"
+      ? "Tasks • Removed"
+      : "Tasks • Active";
+
   return (
     <main className="page">
       <section className="panel">
         <div className="sectionTitleRow">
-          <div className="sectionTitle sectionTitleNoMargin">{UI_STRINGS.TASK_LIST}</div>
+          <div className="sectionTitle sectionTitleNoMargin">{modeTitle}</div>
           <div className="modeDots" aria-label="Task list mode">
             {TASK_MODES.map((dotMode) => (
               <Link
@@ -77,9 +85,11 @@ export default async function TasksPage({ searchParams }) {
                     </div>
 
                     <div className="taskListAction">
-                      {mode !== "removed" ? (
+                      {mode === "removed" ? (
+                        <TaskRestoreButton taskId={task.id} />
+                      ) : (
                         <TaskToggleButton taskId={task.id} isDone={task.is_done} compact />
-                      ) : null}
+                      )}
                     </div>
                   </div>
                 </li>
