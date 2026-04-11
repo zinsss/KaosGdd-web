@@ -874,7 +874,16 @@ textarea.textInput:focus {
   }
 
   .detailActionRow {
-    flex-wrap: wrap;
+    display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .detailActionRow .button,
+  .detailActionRow .taskToggleButton {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 0;
   }
 
   .copyRow {
