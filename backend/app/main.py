@@ -72,7 +72,7 @@ def update_reminder(reminder_id: str, payload: dict):
     raw_text = str(payload.get("raw") or "")
     ok, error = reminder_service.update_standalone_reminder_from_raw(reminder_id, raw_text)
     if not ok:
-        return {"ok": False, "error": error or "invalid reminder raw"}
+        return {"ok": False, "error": error or ApiText.INVALID_REMINDER_RAW}
     return {"ok": True}
 
 
@@ -221,9 +221,9 @@ def capture_item(payload: dict):
         title = str(parsed["parsed"].get("title") or "").strip()
         remind_ats = list(parsed["parsed"].get("remind_ats") or [])
         if not title:
-            return {"ok": False, "error": "title is required"}
+            return {"ok": False, "error": ApiText.TITLE_REQUIRED}
         if not remind_ats:
-            return {"ok": False, "error": "!! requires at least one reminder datetime"}
+            return {"ok": False, "error": ApiText.REMINDER_REQUIRES_DATETIME}
 
         created_ids = []
         for remind_at in remind_ats:
@@ -238,12 +238,12 @@ def capture_item(payload: dict):
         return {"ok": True, "kind": kind, "id": created_ids[0], "ids": created_ids}
 
     if kind == "journal":
-        return {"ok": False, "error": "// journal not supported yet in this schema"}
+        return {"ok": False, "error": ApiText.JOURNAL_NOT_SUPPORTED}
 
     if kind == "event":
-        return {"ok": False, "error": "^^ event not supported yet in this schema"}
+        return {"ok": False, "error": ApiText.EVENT_NOT_SUPPORTED}
 
-    return {"ok": False, "error": "unsupported capture kind"}
+    return {"ok": False, "error": ApiText.UNSUPPORTED_CAPTURE_KIND}
 
 
 @app.post("/reminders/{reminder_id}/ack")

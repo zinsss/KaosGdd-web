@@ -2,6 +2,7 @@ import json
 
 from sqlalchemy import text
 
+from app.config import DbTables
 from app.utils.clock import now_iso
 from app.utils.ids import new_id
 
@@ -25,9 +26,10 @@ class ReminderRepo:
             conn.execute(
                 text(
                     """
-                    INSERT INTO items(id, item_type, title, status, created_at, updated_at)
+                    INSERT INTO {items}(id, item_type, title, status, created_at, updated_at)
                     VALUES (:id, 'reminder', :title, 'active', :created_at, :updated_at)
                     """
+                    .format(items=DbTables.ITEMS)
                 ),
                 {
                     "id": reminder_item_id,
@@ -39,9 +41,10 @@ class ReminderRepo:
             conn.execute(
                 text(
                     """
-                    INSERT INTO reminder_items(item_id, remind_at, state, alert_policy, last_fired_at, acked_at, snoozed_until)
+                    INSERT INTO {reminder_items}(item_id, remind_at, state, alert_policy, last_fired_at, acked_at, snoozed_until)
                     VALUES (:item_id, :remind_at, 'scheduled', :alert_policy, NULL, NULL, NULL)
                     """
+                    .format(reminder_items=DbTables.REMINDER_ITEMS)
                 ),
                 {
                     "item_id": reminder_item_id,
@@ -54,9 +57,10 @@ class ReminderRepo:
                 conn.execute(
                     text(
                         """
-                        INSERT INTO item_reminders(item_id, reminder_item_id, created_at)
+                        INSERT INTO {item_reminders}(item_id, reminder_item_id, created_at)
                         VALUES (:item_id, :reminder_item_id, :created_at)
                         """
+                        .format(item_reminders=DbTables.ITEM_REMINDERS)
                     ),
                     {
                         "item_id": parent_item_id,
@@ -85,10 +89,14 @@ class ReminderRepo:
                 r.acked_at,
                 r.snoozed_until,
                 ir.item_id AS parent_item_id
-            FROM items i
-            JOIN reminder_items r ON i.id = r.item_id
-            LEFT JOIN item_reminders ir ON ir.reminder_item_id = r.item_id
-        """
+            FROM {items} i
+            JOIN {reminder_items} r ON i.id = r.item_id
+            LEFT JOIN {item_reminders} ir ON ir.reminder_item_id = r.item_id
+        """.format(
+            items=DbTables.ITEMS,
+            reminder_items=DbTables.REMINDER_ITEMS,
+            item_reminders=DbTables.ITEM_REMINDERS,
+        )
 
     def get_reminder_detail(self, reminder_item_id: str):
         with self.engine.begin() as conn:
@@ -206,9 +214,9 @@ class ReminderRepo:
                         r.acked_at,
                         r.snoozed_until,
                         ir.item_id AS parent_item_id
-                    FROM item_reminders ir
-                    JOIN items i ON i.id = ir.reminder_item_id
-                    JOIN reminder_items r ON r.item_id = ir.reminder_item_id
+                    FROM {item_reminders} ir
+                    JOIN {items} i ON i.id = ir.reminder_item_id
+                    JOIN {reminder_items} r ON r.item_id = ir.reminder_item_id
                     WHERE ir.item_id = :parent_item_id
                       AND i.item_type = 'reminder'
                       AND i.status = 'active'
@@ -225,6 +233,11 @@ class ReminderRepo:
                         COALESCE(r.snoozed_until, r.remind_at) ASC,
                         i.created_at ASC
                     """
+                    .format(
+                        item_reminders=DbTables.ITEM_REMINDERS,
+                        items=DbTables.ITEMS,
+                        reminder_items=DbTables.REMINDER_ITEMS,
+                    )
                 ),
                 {"parent_item_id": parent_item_id},
             ).mappings().all()
@@ -246,9 +259,9 @@ class ReminderRepo:
                         r.acked_at,
                         r.snoozed_until,
                         ir.item_id AS parent_item_id
-                    FROM item_reminders ir
-                    JOIN items i ON i.id = ir.reminder_item_id
-                    JOIN reminder_items r ON r.item_id = ir.reminder_item_id
+                    FROM {item_reminders} ir
+                    JOIN {items} i ON i.id = ir.reminder_item_id
+                    JOIN {reminder_items} r ON r.item_id = ir.reminder_item_id
                     WHERE ir.item_id = :parent_item_id
                       AND i.item_type = 'reminder'
                       AND i.status = 'active'
@@ -265,6 +278,11 @@ class ReminderRepo:
                         i.created_at ASC
                     LIMIT 1
                     """
+                    .format(
+                        item_reminders=DbTables.ITEM_REMINDERS,
+                        items=DbTables.ITEMS,
+                        reminder_items=DbTables.REMINDER_ITEMS,
+                    )
                 ),
                 {"parent_item_id": parent_item_id},
             ).mappings().first()
@@ -283,18 +301,19 @@ class ReminderRepo:
             conn.execute(
                 text(
                     """
-                    UPDATE items
+                    UPDATE {items}
                     SET title = :title,
                         updated_at = :updated_at
                     WHERE id = :item_id
                     """
+                    .format(items=DbTables.ITEMS)
                 ),
                 {"item_id": reminder_item_id, "title": title, "updated_at": now},
             )
             conn.execute(
                 text(
                     """
-                    UPDATE reminder_items
+                    UPDATE {reminder_items}
                     SET remind_at = :remind_at,
                         state = 'scheduled',
                         alert_policy = :alert_policy,
@@ -303,6 +322,7 @@ class ReminderRepo:
                         snoozed_until = NULL
                     WHERE item_id = :item_id
                     """
+                    .format(reminder_items=DbTables.REMINDER_ITEMS)
                 ),
                 {"item_id": reminder_item_id, "remind_at": remind_at, "alert_policy": alert_policy},
             )
@@ -348,16 +368,17 @@ class ReminderRepo:
             conn.execute(
                 text(
                     """
-                    UPDATE reminder_items
+                    UPDATE {reminder_items}
                     SET state = 'fired',
                         last_fired_at = :now
                     WHERE item_id = :item_id
                     """
+                    .format(reminder_items=DbTables.REMINDER_ITEMS)
                 ),
                 {"item_id": reminder_item_id, "now": now},
             )
             conn.execute(
-                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                text("UPDATE {items} SET updated_at = :now WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": reminder_item_id, "now": now},
             )
 
@@ -367,18 +388,19 @@ class ReminderRepo:
             conn.execute(
                 text(
                     """
-                    UPDATE reminder_items
+                    UPDATE {reminder_items}
                     SET state = 'scheduled',
                         last_fired_at = NULL,
                         acked_at = NULL,
                         snoozed_until = NULL
                     WHERE item_id = :item_id
                     """
+                    .format(reminder_items=DbTables.REMINDER_ITEMS)
                 ),
                 {"item_id": reminder_item_id},
             )
             conn.execute(
-                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                text("UPDATE {items} SET updated_at = :now WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": reminder_item_id, "now": now},
             )
 
@@ -388,17 +410,18 @@ class ReminderRepo:
             conn.execute(
                 text(
                     """
-                    UPDATE reminder_items
+                    UPDATE {reminder_items}
                     SET state = 'acked',
                         acked_at = :now,
                         snoozed_until = NULL
                     WHERE item_id = :item_id
                     """
+                    .format(reminder_items=DbTables.REMINDER_ITEMS)
                 ),
                 {"item_id": reminder_item_id, "now": now},
             )
             conn.execute(
-                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                text("UPDATE {items} SET updated_at = :now WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": reminder_item_id, "now": now},
             )
 
@@ -406,11 +429,15 @@ class ReminderRepo:
         now = now_iso()
         with self.engine.begin() as conn:
             conn.execute(
-                text("UPDATE reminder_items SET state = 'missed' WHERE item_id = :item_id"),
+                text(
+                    "UPDATE {reminder_items} SET state = 'missed' WHERE item_id = :item_id".format(
+                        reminder_items=DbTables.REMINDER_ITEMS
+                    )
+                ),
                 {"item_id": reminder_item_id},
             )
             conn.execute(
-                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                text("UPDATE {items} SET updated_at = :now WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": reminder_item_id, "now": now},
             )
 
@@ -420,16 +447,17 @@ class ReminderRepo:
             conn.execute(
                 text(
                     """
-                    UPDATE reminder_items
+                    UPDATE {reminder_items}
                     SET state = 'snoozed',
                         snoozed_until = :snoozed_until
                     WHERE item_id = :item_id
                     """
+                    .format(reminder_items=DbTables.REMINDER_ITEMS)
                 ),
                 {"item_id": reminder_item_id, "snoozed_until": snoozed_until},
             )
             conn.execute(
-                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                text("UPDATE {items} SET updated_at = :now WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": reminder_item_id, "now": now},
             )
 
@@ -439,16 +467,17 @@ class ReminderRepo:
             conn.execute(
                 text(
                     """
-                    UPDATE reminder_items
+                    UPDATE {reminder_items}
                     SET state = 'cancelled',
                         snoozed_until = NULL
                     WHERE item_id = :item_id
                     """
+                    .format(reminder_items=DbTables.REMINDER_ITEMS)
                 ),
                 {"item_id": reminder_item_id},
             )
             conn.execute(
-                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                text("UPDATE {items} SET updated_at = :now WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": reminder_item_id, "now": now},
             )
 
@@ -461,9 +490,10 @@ class ReminderRepo:
             conn.execute(
                 text(
                     """
-                    INSERT INTO reminder_events(id, reminder_item_id, event_type, event_at, payload_json)
+                    INSERT INTO {reminder_events}(id, reminder_item_id, event_type, event_at, payload_json)
                     VALUES (:id, :reminder_item_id, :event_type, :event_at, :payload_json)
                     """
+                    .format(reminder_events=DbTables.REMINDER_EVENTS)
                 ),
                 {
                     "id": event_id,
