@@ -1,0 +1,11 @@
+[Unit]
+Description=Run KaosGdd lifecycle maintenance daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=10m
+Unit=kaosgdd-lifecycle.service
+
+[Install]
+WantedBy=timers.target

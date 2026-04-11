@@ -355,6 +355,23 @@ body {
   flex: 0 0 auto;
 }
 
+.taskDoneGroups {
+  display: grid;
+  gap: 10px;
+}
+
+.taskDoneMonthGroup {
+  border-bottom: 1px dotted var(--ui-border);
+  padding-bottom: 2px;
+}
+
+.taskDoneMonthHeader {
+  cursor: pointer;
+  color: var(--ui-text-dim);
+  font-size: 13px;
+  padding: 4px 0;
+}
+
 .reminderListStateText {
   color: var(--ui-text-dim);
   font-size: 13px;

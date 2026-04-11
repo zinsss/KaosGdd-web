@@ -50,7 +50,7 @@ class TaskRepo:
             ).mappings().all()
         return [dict(row) for row in rows]
 
-    def list_tasks_done(self):
+    def list_tasks_done(self, *, done_cutoff_iso: str):
         with self.engine.begin() as conn:
             rows = conn.execute(
                 text(
@@ -72,8 +72,41 @@ class TaskRepo:
                     WHERE i.item_type = 'task'
                       AND i.status = 'active'
                       AND t.is_done = 1
+                      AND t.done_at IS NOT NULL
+                      AND t.done_at >= :done_cutoff_iso
                     ORDER BY
                         t.done_at DESC,
+                        i.updated_at DESC,
+                        i.created_at DESC
+                    """
+                ),
+                {"done_cutoff_iso": done_cutoff_iso},
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
+    def list_tasks_archived(self):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT
+                        i.id,
+                        i.title,
+                        i.status,
+                        i.created_at,
+                        i.updated_at,
+                        i.archived_at,
+                        i.deleted_at,
+                        t.due_at,
+                        t.memo,
+                        t.is_done,
+                        t.done_at
+                    FROM items i
+                    JOIN task_items t ON i.id = t.item_id
+                    WHERE i.item_type = 'task'
+                      AND i.status = 'archived'
+                    ORDER BY
+                        COALESCE(t.done_at, i.updated_at, i.created_at) DESC,
                         i.updated_at DESC,
                         i.created_at DESC
                     """
@@ -101,13 +134,33 @@ class TaskRepo:
                     FROM items i
                     JOIN task_items t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
-                      AND i.status = 'deleted'
+                      AND i.status = 'removed'
                     ORDER BY
                         i.deleted_at DESC,
                         i.updated_at DESC,
                         i.created_at DESC
                     """
                 )
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
+    def list_done_tasks_older_than(self, *, done_cutoff_iso: str):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT i.id
+                    FROM items i
+                    JOIN task_items t ON i.id = t.item_id
+                    WHERE i.item_type = 'task'
+                      AND i.status = 'active'
+                      AND t.is_done = 1
+                      AND t.done_at IS NOT NULL
+                      AND t.done_at < :done_cutoff_iso
+                    ORDER BY t.done_at ASC
+                    """
+                ),
+                {"done_cutoff_iso": done_cutoff_iso},
             ).mappings().all()
         return [dict(row) for row in rows]
 
@@ -161,6 +214,25 @@ class TaskRepo:
                     "is_done": 1 if is_done else 0,
                     "done_at": done_at,
                 },
+            )
+            conn.execute(
+                text("UPDATE items SET updated_at = :updated_at WHERE id = :item_id"),
+                {"item_id": item_id, "updated_at": now},
+            )
+
+    def clear_done_state(self, item_id: str) -> None:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    UPDATE task_items
+                    SET is_done = 0,
+                        done_at = NULL
+                    WHERE item_id = :item_id
+                    """
+                ),
+                {"item_id": item_id},
             )
             conn.execute(
                 text("UPDATE items SET updated_at = :updated_at WHERE id = :item_id"),

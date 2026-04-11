@@ -122,7 +122,7 @@ class ReminderRepo:
             ).mappings().all()
         return [dict(row) for row in rows]
 
-    def list_reminders_fired(self):
+    def list_reminders_fired(self, *, fired_cutoff_iso: str):
         with self.engine.begin() as conn:
             rows = conn.execute(
                 text(
@@ -130,12 +130,15 @@ class ReminderRepo:
                     + """
                     WHERE i.item_type = 'reminder'
                       AND i.status = 'active'
+                      AND ir.item_id IS NULL
                       AND r.state IN ('fired', 'acked', 'cancelled')
+                      AND COALESCE(r.last_fired_at, r.acked_at, r.remind_at) >= :fired_cutoff_iso
                     ORDER BY
                         COALESCE(r.last_fired_at, r.acked_at, r.remind_at) DESC,
                         i.created_at DESC
                     """
-                )
+                ),
+                {"fired_cutoff_iso": fired_cutoff_iso},
             ).mappings().all()
         return [dict(row) for row in rows]
 
@@ -146,7 +149,7 @@ class ReminderRepo:
                     self._base_select()
                     + """
                     WHERE i.item_type = 'reminder'
-                      AND i.status = 'deleted'
+                      AND i.status = 'removed'
                     ORDER BY
                         i.deleted_at DESC,
                         i.updated_at DESC,
@@ -352,6 +355,27 @@ class ReminderRepo:
                     """
                 ),
                 {"item_id": reminder_item_id, "now": now},
+            )
+            conn.execute(
+                text("UPDATE items SET updated_at = :now WHERE id = :item_id"),
+                {"item_id": reminder_item_id, "now": now},
+            )
+
+    def reset_to_scheduled(self, reminder_item_id: str) -> None:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    UPDATE reminder_items
+                    SET state = 'scheduled',
+                        last_fired_at = NULL,
+                        acked_at = NULL,
+                        snoozed_until = NULL
+                    WHERE item_id = :item_id
+                    """
+                ),
+                {"item_id": reminder_item_id},
             )
             conn.execute(
                 text("UPDATE items SET updated_at = :now WHERE id = :item_id"),

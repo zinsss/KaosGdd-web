@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from app.config import SETTINGS
@@ -27,7 +27,12 @@ class TaskService:
 
     def list_tasks(self, mode: str = "active") -> list[dict]:
         if mode == "done":
-            rows = self.task_repo.list_tasks_done()
+            done_cutoff = (
+                datetime.now(timezone.utc) - timedelta(days=SETTINGS.LIFECYCLE_DONE_RETENTION_DAYS)
+            ).isoformat(timespec="seconds")
+            rows = self.task_repo.list_tasks_done(done_cutoff_iso=done_cutoff)
+        elif mode == "archived":
+            rows = self.task_repo.list_tasks_archived()
         elif mode == "removed":
             rows = self.task_repo.list_tasks_removed()
         else:
@@ -51,6 +56,8 @@ class TaskService:
     ) -> bool:
         detail = self.task_repo.get_task_detail(item_id)
         if detail is None:
+            return False
+        if detail.get("status") == "removed":
             return False
 
         next_title = title if title is not None else detail["title"]
@@ -79,10 +86,30 @@ class TaskService:
         detail = self.task_repo.get_task_detail(item_id)
         if detail is None:
             return False
-        return self.items_repo.restore_item(item_id)
+        restored = self.items_repo.restore_item(item_id)
+        if not restored:
+            return False
+        self.task_repo.clear_done_state(item_id)
+        return True
 
     def toggle_task(self, item_id: str):
+        detail = self.task_repo.get_task_detail(item_id)
+        if detail is None:
+            return None
+        if detail.get("status") != "active":
+            return None
         return self.task_repo.toggle_done(item_id)
+
+    def archive_old_done_tasks(self) -> int:
+        done_cutoff = (
+            datetime.now(timezone.utc) - timedelta(days=SETTINGS.LIFECYCLE_DONE_RETENTION_DAYS)
+        ).isoformat(timespec="seconds")
+        stale = self.task_repo.list_done_tasks_older_than(done_cutoff_iso=done_cutoff)
+        count = 0
+        for row in stale:
+            if self.items_repo.archive_item(row["id"]):
+                count += 1
+        return count
 
     def export_task_raw(self, item_id: str) -> str | None:
         detail = self.task_repo.get_task_detail(item_id)
