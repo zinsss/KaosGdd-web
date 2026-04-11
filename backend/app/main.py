@@ -1,6 +1,4 @@
 import os
-import asyncio
-from datetime import datetime, timedelta, timezone
 
 from dotenv import load_dotenv
 
@@ -32,42 +30,10 @@ task_service = TaskService(items_repo, task_repo, reminder_repo)
 reminder_service = ReminderService(reminder_repo, task_repo, items_repo)
 
 
-async def _run_lifecycle_once() -> None:
-    task_service.archive_old_done_tasks()
-    reminder_service.cleanup_removed_items()
-
-
-async def _lifecycle_scheduler_loop() -> None:
-    while True:
-        now = datetime.now(timezone.utc)
-        next_run = now.replace(
-            hour=SETTINGS.LIFECYCLE_DAILY_UTC_HOUR,
-            minute=SETTINGS.LIFECYCLE_DAILY_UTC_MINUTE,
-            second=0,
-            microsecond=0,
-        )
-        if next_run <= now:
-            next_run = next_run + timedelta(days=1)
-        sleep_seconds = max(1, int((next_run - now).total_seconds()))
-        await asyncio.sleep(sleep_seconds)
-        await _run_lifecycle_once()
-
-
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_schema_v0(engine)
-    scheduler_task = None
-    if SETTINGS.LIFECYCLE_RUN_ON_STARTUP:
-        await _run_lifecycle_once()
-    if SETTINGS.LIFECYCLE_SCHEDULER_ENABLED:
-        scheduler_task = asyncio.create_task(_lifecycle_scheduler_loop())
     yield
-    if scheduler_task is not None:
-        scheduler_task.cancel()
-        try:
-            await scheduler_task
-        except asyncio.CancelledError:
-            pass
 
 
 app = FastAPI(title=APP_NAME, lifespan=lifespan)
