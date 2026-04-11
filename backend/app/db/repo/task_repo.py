@@ -1,5 +1,6 @@
 from sqlalchemy import text
 
+from app.config import DbTables
 from app.utils.clock import now_iso
 
 
@@ -12,9 +13,10 @@ class TaskRepo:
             conn.execute(
                 text(
                     """
-                    INSERT INTO task_items(item_id, due_at, memo, is_done)
+                    INSERT INTO {task_items}(item_id, due_at, memo, is_done)
                     VALUES (:item_id, :due_at, :memo, 0)
                     """
+                    .format(task_items=DbTables.TASK_ITEMS)
                 ),
                 {"item_id": item_id, "due_at": due_at, "memo": memo},
             )
@@ -36,8 +38,8 @@ class TaskRepo:
                         t.memo,
                         t.is_done,
                         t.done_at
-                    FROM items i
-                    JOIN task_items t ON i.id = t.item_id
+                    FROM {items} i
+                    JOIN {task_items} t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
                       AND i.status = 'active'
                       AND t.is_done = 0
@@ -46,6 +48,7 @@ class TaskRepo:
                         t.due_at ASC,
                         i.created_at ASC
                     """
+                    .format(items=DbTables.ITEMS, task_items=DbTables.TASK_ITEMS)
                 )
             ).mappings().all()
         return [dict(row) for row in rows]
@@ -67,8 +70,8 @@ class TaskRepo:
                         t.memo,
                         t.is_done,
                         t.done_at
-                    FROM items i
-                    JOIN task_items t ON i.id = t.item_id
+                    FROM {items} i
+                    JOIN {task_items} t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
                       AND i.status = 'active'
                       AND t.is_done = 1
@@ -79,6 +82,7 @@ class TaskRepo:
                         i.updated_at DESC,
                         i.created_at DESC
                     """
+                    .format(items=DbTables.ITEMS, task_items=DbTables.TASK_ITEMS)
                 ),
                 {"done_cutoff_iso": done_cutoff_iso},
             ).mappings().all()
@@ -101,8 +105,8 @@ class TaskRepo:
                         t.memo,
                         t.is_done,
                         t.done_at
-                    FROM items i
-                    JOIN task_items t ON i.id = t.item_id
+                    FROM {items} i
+                    JOIN {task_items} t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
                       AND i.status = 'archived'
                     ORDER BY
@@ -110,6 +114,7 @@ class TaskRepo:
                         i.updated_at DESC,
                         i.created_at DESC
                     """
+                    .format(items=DbTables.ITEMS, task_items=DbTables.TASK_ITEMS)
                 )
             ).mappings().all()
         return [dict(row) for row in rows]
@@ -131,8 +136,8 @@ class TaskRepo:
                         t.memo,
                         t.is_done,
                         t.done_at
-                    FROM items i
-                    JOIN task_items t ON i.id = t.item_id
+                    FROM {items} i
+                    JOIN {task_items} t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
                       AND i.status = 'removed'
                     ORDER BY
@@ -140,6 +145,7 @@ class TaskRepo:
                         i.updated_at DESC,
                         i.created_at DESC
                     """
+                    .format(items=DbTables.ITEMS, task_items=DbTables.TASK_ITEMS)
                 )
             ).mappings().all()
         return [dict(row) for row in rows]
@@ -150,8 +156,8 @@ class TaskRepo:
                 text(
                     """
                     SELECT i.id
-                    FROM items i
-                    JOIN task_items t ON i.id = t.item_id
+                    FROM {items} i
+                    JOIN {task_items} t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
                       AND i.status = 'active'
                       AND t.is_done = 1
@@ -159,6 +165,7 @@ class TaskRepo:
                       AND t.done_at < :done_cutoff_iso
                     ORDER BY t.done_at ASC
                     """
+                    .format(items=DbTables.ITEMS, task_items=DbTables.TASK_ITEMS)
                 ),
                 {"done_cutoff_iso": done_cutoff_iso},
             ).mappings().all()
@@ -181,12 +188,13 @@ class TaskRepo:
                         i.updated_at,
                         i.archived_at,
                         i.deleted_at
-                    FROM items i
-                    JOIN task_items t ON i.id = t.item_id
+                    FROM {items} i
+                    JOIN {task_items} t ON i.id = t.item_id
                     WHERE i.id = :item_id
                       AND i.item_type = 'task'
                     LIMIT 1
                     """
+                    .format(items=DbTables.ITEMS, task_items=DbTables.TASK_ITEMS)
                 ),
                 {"item_id": item_id},
             ).mappings().first()
@@ -199,13 +207,14 @@ class TaskRepo:
             conn.execute(
                 text(
                     """
-                    UPDATE task_items
+                    UPDATE {task_items}
                     SET due_at = :due_at,
                         memo = :memo,
                         is_done = :is_done,
                         done_at = :done_at
                     WHERE item_id = :item_id
                     """
+                    .format(task_items=DbTables.TASK_ITEMS)
                 ),
                 {
                     "item_id": item_id,
@@ -216,7 +225,7 @@ class TaskRepo:
                 },
             )
             conn.execute(
-                text("UPDATE items SET updated_at = :updated_at WHERE id = :item_id"),
+                text("UPDATE {items} SET updated_at = :updated_at WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": item_id, "updated_at": now},
             )
 
@@ -226,16 +235,17 @@ class TaskRepo:
             conn.execute(
                 text(
                     """
-                    UPDATE task_items
+                    UPDATE {task_items}
                     SET is_done = 0,
                         done_at = NULL
                     WHERE item_id = :item_id
                     """
+                    .format(task_items=DbTables.TASK_ITEMS)
                 ),
                 {"item_id": item_id},
             )
             conn.execute(
-                text("UPDATE items SET updated_at = :updated_at WHERE id = :item_id"),
+                text("UPDATE {items} SET updated_at = :updated_at WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": item_id, "updated_at": now},
             )
 
@@ -252,16 +262,17 @@ class TaskRepo:
             conn.execute(
                 text(
                     """
-                    UPDATE task_items
+                    UPDATE {task_items}
                     SET is_done = :is_done,
                         done_at = :done_at
                     WHERE item_id = :item_id
                     """
+                    .format(task_items=DbTables.TASK_ITEMS)
                 ),
                 {"item_id": item_id, "is_done": new_value, "done_at": done_at},
             )
             conn.execute(
-                text("UPDATE items SET updated_at = :updated_at WHERE id = :item_id"),
+                text("UPDATE {items} SET updated_at = :updated_at WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": item_id, "updated_at": now},
             )
 

@@ -1,5 +1,6 @@
 from sqlalchemy import text
 
+from app.config import DbTables
 from app.utils.clock import now_iso
 from app.utils.ids import new_id
 
@@ -15,9 +16,10 @@ class ItemsRepo:
             conn.execute(
                 text(
                     """
-                    INSERT INTO items(id, item_type, title, status, created_at, updated_at)
+                    INSERT INTO {items}(id, item_type, title, status, created_at, updated_at)
                     VALUES (:id, :item_type, :title, :status, :created_at, :updated_at)
                     """
+                    .format(items=DbTables.ITEMS)
                 ),
                 {
                     "id": item_id,
@@ -36,11 +38,12 @@ class ItemsRepo:
             conn.execute(
                 text(
                     """
-                    UPDATE items
+                    UPDATE {items}
                     SET title = :title,
                         updated_at = :updated_at
                     WHERE id = :id
                     """
+                    .format(items=DbTables.ITEMS)
                 ),
                 {"id": item_id, "title": title, "updated_at": now},
             )
@@ -51,7 +54,7 @@ class ItemsRepo:
             result = conn.execute(
                 text(
                     """
-                    UPDATE items
+                    UPDATE {items}
                     SET status = 'removed',
                         archived_at = NULL,
                         deleted_at = :deleted_at,
@@ -59,6 +62,7 @@ class ItemsRepo:
                     WHERE id = :id
                       AND status != 'removed'
                     """
+                    .format(items=DbTables.ITEMS)
                 ),
                 {"id": item_id, "deleted_at": now, "updated_at": now},
             )
@@ -70,7 +74,7 @@ class ItemsRepo:
             result = conn.execute(
                 text(
                     """
-                    UPDATE items
+                    UPDATE {items}
                     SET status = 'active',
                         archived_at = NULL,
                         deleted_at = NULL,
@@ -78,6 +82,7 @@ class ItemsRepo:
                     WHERE id = :id
                       AND status = 'removed'
                     """
+                    .format(items=DbTables.ITEMS)
                 ),
                 {"id": item_id, "updated_at": now},
             )
@@ -89,7 +94,7 @@ class ItemsRepo:
             result = conn.execute(
                 text(
                     """
-                    UPDATE items
+                    UPDATE {items}
                     SET status = 'archived',
                         archived_at = :archived_at,
                         deleted_at = NULL,
@@ -97,6 +102,7 @@ class ItemsRepo:
                     WHERE id = :id
                       AND status = 'active'
                     """
+                    .format(items=DbTables.ITEMS)
                 ),
                 {"id": item_id, "archived_at": now, "updated_at": now},
             )
@@ -107,12 +113,13 @@ class ItemsRepo:
             result = conn.execute(
                 text(
                     """
-                    DELETE FROM items
+                    DELETE FROM {items}
                     WHERE item_type = :item_type
                       AND status = 'removed'
                       AND deleted_at IS NOT NULL
                       AND deleted_at < :cutoff_iso
                     """
+                    .format(items=DbTables.ITEMS)
                 ),
                 {"item_type": item_type, "cutoff_iso": cutoff_iso},
             )
@@ -124,10 +131,11 @@ class ItemsRepo:
                 text(
                     """
                     SELECT tag
-                    FROM item_tags
+                    FROM {item_tags}
                     WHERE item_id = :item_id
                     ORDER BY tag ASC
                     """
+                    .format(item_tags=DbTables.ITEM_TAGS)
                 ),
                 {"item_id": item_id},
             ).fetchall()
@@ -149,7 +157,7 @@ class ItemsRepo:
         now = now_iso()
         with self.engine.begin() as conn:
             conn.execute(
-                text("DELETE FROM item_tags WHERE item_id = :item_id"),
+                text("DELETE FROM {item_tags} WHERE item_id = :item_id".format(item_tags=DbTables.ITEM_TAGS)),
                 {"item_id": item_id},
             )
 
@@ -157,14 +165,15 @@ class ItemsRepo:
                 conn.execute(
                     text(
                         """
-                        INSERT INTO item_tags(item_id, tag, created_at)
+                        INSERT INTO {item_tags}(item_id, tag, created_at)
                         VALUES (:item_id, :tag, :created_at)
                         """
+                        .format(item_tags=DbTables.ITEM_TAGS)
                     ),
                     {"item_id": item_id, "tag": tag, "created_at": now},
                 )
 
             conn.execute(
-                text("UPDATE items SET updated_at = :updated_at WHERE id = :item_id"),
+                text("UPDATE {items} SET updated_at = :updated_at WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": item_id, "updated_at": now},
             )

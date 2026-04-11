@@ -16,3 +16,13 @@ class Settings:
 
 
 SETTINGS = Settings()
+
+
+class DbTables:
+    ITEMS = "items"
+    TASK_ITEMS = "task_items"
+    TASK_SUBTASKS = "task_subtasks"
+    REMINDER_ITEMS = "reminder_items"
+    REMINDER_EVENTS = "reminder_events"
+    ITEM_REMINDERS = "item_reminders"
+    ITEM_TAGS = "item_tags"
