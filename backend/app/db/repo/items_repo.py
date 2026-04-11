@@ -52,12 +52,12 @@ class ItemsRepo:
                 text(
                     """
                     UPDATE items
-                    SET status = 'deleted',
+                    SET status = 'removed',
                         archived_at = NULL,
                         deleted_at = :deleted_at,
                         updated_at = :updated_at
                     WHERE id = :id
-                      AND status != 'deleted'
+                      AND status != 'removed'
                     """
                 ),
                 {"id": item_id, "deleted_at": now, "updated_at": now},
@@ -76,7 +76,7 @@ class ItemsRepo:
                         deleted_at = NULL,
                         updated_at = :updated_at
                     WHERE id = :id
-                      AND status = 'deleted'
+                      AND status = 'removed'
                     """
                 ),
                 {"id": item_id, "updated_at": now},
@@ -109,7 +109,7 @@ class ItemsRepo:
                     """
                     DELETE FROM items
                     WHERE item_type = :item_type
-                      AND status = 'deleted'
+                      AND status = 'removed'
                       AND deleted_at IS NOT NULL
                       AND deleted_at < :cutoff_iso
                     """

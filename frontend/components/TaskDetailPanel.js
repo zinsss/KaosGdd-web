@@ -53,7 +53,7 @@ export default function TaskDetailPanel({ item, raw }) {
       (a, b) => reminderPriority(a.state) - reminderPriority(b.state)
     );
   }, [item.reminders]);
-  const isRemoved = item.status === "deleted";
+  const isRemoved = item.status === "removed";
 
   async function onCopyId() {
     try {
@@ -115,7 +115,9 @@ export default function TaskDetailPanel({ item, raw }) {
           >
             {item.title}
           </div>
-          <div className="detailStateText">{isRemoved ? "removed" : item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}</div>
+          <div className="detailStateText">
+            {isRemoved ? UI_STRINGS.REMOVED_STATE : item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}
+          </div>
         </div>
 
         {item.tags && item.tags.length > 0 ? (
@@ -204,7 +206,7 @@ export default function TaskDetailPanel({ item, raw }) {
               className={"button" + (openPanel === "reminder" ? " buttonActive" : "")}
               onClick={() => togglePanel("reminder")}
             >
-              Reminder
+              {UI_STRINGS.REMINDER_BUTTON}
             </button>
 
             <button
@@ -212,7 +214,7 @@ export default function TaskDetailPanel({ item, raw }) {
               className={"button" + (openPanel === "edit" ? " buttonActive" : "")}
               onClick={() => togglePanel("edit")}
             >
-              Edit
+              {UI_STRINGS.EDIT_BUTTON}
             </button>
 
             <button
@@ -220,11 +222,11 @@ export default function TaskDetailPanel({ item, raw }) {
               className={"button" + (showMore ? " buttonActive" : "")}
               onClick={() => setShowMore((v) => !v)}
             >
-              More
+              {UI_STRINGS.MORE_BUTTON}
             </button>
           </div>
         ) : (
-          <div className="empty">Removed task is read-only.</div>
+          <div className="empty">{UI_STRINGS.REMOVED_TASK_READONLY}</div>
         )}
 
         {openPanel === "reminder" ? (
@@ -260,7 +262,7 @@ export default function TaskDetailPanel({ item, raw }) {
                 onClick={onRemoveTask}
                 disabled={isRemoving}
               >
-                {isRemoving ? "..." : "Remove"}
+                {isRemoving ? "..." : UI_STRINGS.REMOVE_BUTTON}
               </button>
             </div>
 

@@ -66,7 +66,9 @@ class ReminderService:
 
     def list_reminders(self, mode: str = "active") -> list[dict]:
         if mode == "fired":
-            fired_cutoff = (datetime.now(timezone.utc) - timedelta(days=30)).isoformat(timespec="seconds")
+            fired_cutoff = (
+                datetime.now(timezone.utc) - timedelta(days=SETTINGS.LIFECYCLE_FIRED_RETENTION_DAYS)
+            ).isoformat(timespec="seconds")
             rows = self.reminder_repo.list_reminders_fired(fired_cutoff_iso=fired_cutoff)
         elif mode == "removed":
             rows = self.reminder_repo.list_reminders_removed()
@@ -195,7 +197,9 @@ class ReminderService:
     def cleanup_removed_items(self) -> dict:
         if self.items_repo is None:
             return {"tasks_deleted": 0, "reminders_deleted": 0}
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=90)).isoformat(timespec="seconds")
+        cutoff = (
+            datetime.now(timezone.utc) - timedelta(days=SETTINGS.LIFECYCLE_REMOVED_RETENTION_DAYS)
+        ).isoformat(timespec="seconds")
         tasks_deleted = self.items_repo.hard_delete_deleted_older_than(item_type="task", cutoff_iso=cutoff)
         reminders_deleted = self.items_repo.hard_delete_deleted_older_than(
             item_type="reminder",

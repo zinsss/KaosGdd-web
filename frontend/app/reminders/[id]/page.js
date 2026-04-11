@@ -13,7 +13,7 @@ async function getReminder(id) {
 
 export default async function ReminderDetailPage({ params }) {
   const result = await getReminder(params.id);
-  const isRemoved = result?.ok && result.item?.status === "deleted";
+  const isRemoved = result?.ok && result.item?.status === "removed";
 
   return (
     <main className="page">
@@ -34,7 +34,7 @@ export default async function ReminderDetailPage({ params }) {
 
             <div className="detailTitleRow">
               <div className="sectionTitle detailMainTitle">{result.item.title}</div>
-              <div className="detailStateText">{isRemoved ? "removed" : result.item.state}</div>
+              <div className="detailStateText">{isRemoved ? UI_STRINGS.REMOVED_STATE : result.item.state}</div>
             </div>
 
             <div className="detailReadBlock">

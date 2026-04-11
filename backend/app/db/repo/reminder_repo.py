@@ -149,7 +149,7 @@ class ReminderRepo:
                     self._base_select()
                     + """
                     WHERE i.item_type = 'reminder'
-                      AND i.status = 'deleted'
+                      AND i.status = 'removed'
                     ORDER BY
                         i.deleted_at DESC,
                         i.updated_at DESC,

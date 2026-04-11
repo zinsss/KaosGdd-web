@@ -134,7 +134,7 @@ class TaskRepo:
                     FROM items i
                     JOIN task_items t ON i.id = t.item_id
                     WHERE i.item_type = 'task'
-                      AND i.status = 'deleted'
+                      AND i.status = 'removed'
                     ORDER BY
                         i.deleted_at DESC,
                         i.updated_at DESC,

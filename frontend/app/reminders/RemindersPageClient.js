@@ -236,10 +236,10 @@ export default function RemindersPageClient({ initialMode, items }) {
 
   const modeTitle =
     mode === "fired"
-      ? "Reminders • Fired"
+      ? UI_STRINGS.REMINDERS_FIRED_TITLE
       : mode === "removed"
-      ? "Reminders • Removed"
-      : "Reminders • Active";
+      ? UI_STRINGS.REMINDERS_REMOVED_TITLE
+      : UI_STRINGS.REMINDERS_ACTIVE_TITLE;
 
   return (
     <main className="page">

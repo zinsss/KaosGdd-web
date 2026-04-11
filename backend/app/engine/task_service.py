@@ -27,7 +27,9 @@ class TaskService:
 
     def list_tasks(self, mode: str = "active") -> list[dict]:
         if mode == "done":
-            done_cutoff = (datetime.now(timezone.utc) - timedelta(days=365)).isoformat(timespec="seconds")
+            done_cutoff = (
+                datetime.now(timezone.utc) - timedelta(days=SETTINGS.LIFECYCLE_DONE_RETENTION_DAYS)
+            ).isoformat(timespec="seconds")
             rows = self.task_repo.list_tasks_done(done_cutoff_iso=done_cutoff)
         elif mode == "archived":
             rows = self.task_repo.list_tasks_archived()
@@ -55,7 +57,7 @@ class TaskService:
         detail = self.task_repo.get_task_detail(item_id)
         if detail is None:
             return False
-        if detail.get("status") == "deleted":
+        if detail.get("status") == "removed":
             return False
 
         next_title = title if title is not None else detail["title"]
@@ -99,7 +101,9 @@ class TaskService:
         return self.task_repo.toggle_done(item_id)
 
     def archive_old_done_tasks(self) -> int:
-        done_cutoff = (datetime.now(timezone.utc) - timedelta(days=365)).isoformat(timespec="seconds")
+        done_cutoff = (
+            datetime.now(timezone.utc) - timedelta(days=SETTINGS.LIFECYCLE_DONE_RETENTION_DAYS)
+        ).isoformat(timespec="seconds")
         stale = self.task_repo.list_done_tasks_older_than(done_cutoff_iso=done_cutoff)
         count = 0
         for row in stale:

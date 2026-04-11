@@ -19,7 +19,7 @@ function getTaskMetaTag(task) {
 
 function doneMonthKey(task) {
   const raw = String(task.done_at || "").trim();
-  if (!raw) return "Unknown";
+  if (!raw) return UI_STRINGS.DONE_UNKNOWN_MONTH;
   return raw.slice(0, 7);
 }
 
@@ -82,12 +82,12 @@ export default async function TasksPage({ searchParams }) {
 
   const modeTitle =
     mode === "done"
-      ? "Tasks • Done"
+      ? UI_STRINGS.TASKS_DONE_TITLE
       : mode === "removed"
-      ? "Tasks • Removed"
+      ? UI_STRINGS.TASKS_REMOVED_TITLE
       : mode === "archived"
-      ? "Tasks • Archived"
-      : "Tasks • Active";
+      ? UI_STRINGS.TASKS_ARCHIVED_TITLE
+      : UI_STRINGS.TASKS_ACTIVE_TITLE;
 
   const doneGroups = mode === "done" ? groupDoneTasksByMonth(tasks.items || []) : [];
 
