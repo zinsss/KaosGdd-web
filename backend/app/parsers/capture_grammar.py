@@ -4,8 +4,10 @@ import re
 from dataclasses import asdict, dataclass, field
 from typing import Literal
 
-TASK_PREFIX = "-- "
-SUBTASK_PREFIX = "--- "
+UNDONE_TASK_PREFIX = "-- "
+DONE_TASK_PREFIX = "-x "
+UNDONE_SUBTASK_PREFIX = "--- "
+DONE_SUBTASK_PREFIX = "--x "
 EVENT_PREFIX = "^^ "
 REMINDER_PREFIX = "!! "
 JOURNAL_PREFIX = "// "
@@ -41,7 +43,8 @@ class ParseResult:
     repeat_rule: str | None = None
     tags: list[str] = field(default_factory=list)
     memo: str | None = None
-    subtasks: list[str] = field(default_factory=list)
+    subtasks: list[dict] = field(default_factory=list)
+    is_done: bool = False
     error: str | None = None
 
     def to_dict(self) -> dict:
@@ -72,10 +75,15 @@ def parse_capture(raw: str) -> dict:
 
     item_type: ItemType | None = None
     title: str | None = None
+    is_done = False
 
-    if first.startswith(TASK_PREFIX):
+    if first.startswith(UNDONE_TASK_PREFIX):
         item_type = "task"
-        title = first[len(TASK_PREFIX) :].strip()
+        title = first[len(UNDONE_TASK_PREFIX) :].strip()
+    elif first.startswith(DONE_TASK_PREFIX):
+        item_type = "task"
+        title = first[len(DONE_TASK_PREFIX) :].strip()
+        is_done = True
     elif first.startswith(EVENT_PREFIX):
         item_type = "event"
         title = first[len(EVENT_PREFIX) :].strip()
@@ -85,6 +93,8 @@ def parse_capture(raw: str) -> dict:
     elif first.startswith(JOURNAL_PREFIX):
         item_type = "journal"
         title = first[len(JOURNAL_PREFIX) :].strip()
+    elif first.startswith(UNDONE_SUBTASK_PREFIX) or first.startswith(DONE_SUBTASK_PREFIX):
+        return ParseResult(ok=False, error="subtask line requires a parent task").to_dict()
     else:
         return ParseResult(ok=False, error="unsupported prefix").to_dict()
 
@@ -96,10 +106,12 @@ def parse_capture(raw: str) -> dict:
         action="create_item",
         item_type=item_type,
         title=title,
+        is_done=is_done,
     )
 
     in_memo = False
     memo_lines: list[str] = []
+    saw_subtask = False
 
     for original in lines[first_idx + 1 :]:
         line = original.strip()
@@ -115,17 +127,32 @@ def parse_capture(raw: str) -> dict:
             continue
 
         if line == MEMO_DELIM:
+            if saw_subtask:
+                return ParseResult(ok=False, error="subtask metadata is not allowed").to_dict()
             in_memo = True
             continue
 
-        if line.startswith(SUBTASK_PREFIX):
+        if line.startswith(UNDONE_SUBTASK_PREFIX) or line.startswith(DONE_SUBTASK_PREFIX):
             if result.item_type != "task":
                 return ParseResult(ok=False, error="subtasks only allowed under task").to_dict()
-            subtask = line[len(SUBTASK_PREFIX) :].strip()
+
+            saw_subtask = True
+            if line.startswith(DONE_SUBTASK_PREFIX):
+                subtask = line[len(DONE_SUBTASK_PREFIX) :].strip()
+                subtask_done = True
+            else:
+                subtask = line[len(UNDONE_SUBTASK_PREFIX) :].strip()
+                subtask_done = False
+
             if not subtask:
                 return ParseResult(ok=False, error="subtask title is required").to_dict()
-            result.subtasks.append(subtask)
+            if TAG_RE.search(subtask) or re.search(r"(?:^|\s)(d:|r:|R:)", subtask):
+                return ParseResult(ok=False, error="subtask metadata is not allowed").to_dict()
+            result.subtasks.append({"content": subtask, "is_done": subtask_done, "position": len(result.subtasks)})
             continue
+
+        if saw_subtask:
+            return ParseResult(ok=False, error="subtask metadata is not allowed").to_dict()
 
         if line.startswith(META_DUE):
             result.due_at = line[len(META_DUE) :].strip() or None

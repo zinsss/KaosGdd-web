@@ -37,13 +37,13 @@ class TaskService:
             rows = self.task_repo.list_tasks_removed()
         else:
             rows = self.task_repo.list_tasks_active()
-        return [self._decorate_task(row, include_reminders=False) for row in rows]
+        return [self._decorate_task(row, include_reminders=False, include_subtasks=False) for row in rows]
 
     def get_task(self, item_id: str) -> dict | None:
         detail = self.task_repo.get_task_detail(item_id)
         if detail is None:
             return None
-        return self._decorate_task(detail, include_reminders=True)
+        return self._decorate_task(detail, include_reminders=True, include_subtasks=True)
 
     def update_task(
         self,
@@ -100,6 +100,14 @@ class TaskService:
             return None
         return self.task_repo.toggle_done(item_id)
 
+    def toggle_subtask(self, task_id: str, subtask_id: str):
+        detail = self.task_repo.get_task_detail(task_id)
+        if detail is None:
+            return None
+        if detail.get("status") != "active":
+            return None
+        return self.task_repo.toggle_subtask(task_id, subtask_id)
+
     def archive_old_done_tasks(self) -> int:
         done_cutoff = (
             datetime.now(timezone.utc) - timedelta(days=SETTINGS.LIFECYCLE_DONE_RETENTION_DAYS)
@@ -138,11 +146,14 @@ class TaskService:
                 elif reminder.get("remind_at"):
                     remind_ats.append(reminder["remind_at"])
 
+        subtasks = self.task_repo.list_subtasks(item_id)
+
         return export_task_raw(
             detail,
             tags=visible_tags,
             remind_ats=remind_ats,
             repeat_rule=repeat_rule,
+            subtasks=subtasks,
         )
 
     def update_task_from_raw(self, item_id: str, raw_text: str) -> tuple[bool, str | None]:
@@ -160,9 +171,12 @@ class TaskService:
             title=parsed.get("title"),
             due_at=parsed.get("due_at"),
             memo=parsed.get("memo"),
+            is_done=parsed.get("is_done"),
         )
         if not ok:
             return False, "not found"
+
+        self.task_repo.replace_subtasks(item_id, list(parsed.get("subtasks") or []))
 
         tags = list(parsed.get("tags") or [])
         repeat_rule = str(parsed.get("repeat_rule") or "").strip()
@@ -207,7 +221,7 @@ class TaskService:
             return f"-{delta_days}d"
         return f"+{abs(delta_days)}d"
 
-    def _decorate_task(self, task: dict, *, include_reminders: bool) -> dict:
+    def _decorate_task(self, task: dict, *, include_reminders: bool, include_subtasks: bool) -> dict:
         item = dict(task)
         item["due_at_display"] = format_dt_for_ui(item.get("due_at"))
         item["done_at_display"] = format_dt_for_ui(item.get("done_at"))
@@ -215,6 +229,9 @@ class TaskService:
         item["created_at_display"] = format_dt_for_ui(item.get("created_at"))
         item["updated_at_display"] = format_dt_for_ui(item.get("updated_at"))
         item["item_type"] = item.get("item_type") or "task"
+
+        item["subtask_total"] = int(item.get("subtask_total") or 0)
+        item["subtask_done"] = int(item.get("subtask_done") or 0)
 
         tags = self.items_repo.list_item_tags(item["id"])
         visible_tags = []
@@ -236,6 +253,11 @@ class TaskService:
 
         item["has_reminders"] = bool(linked_reminders)
         item["metatag_due"] = self._due_metatag(item.get("due_at"))
+
+        if include_subtasks:
+            item["subtasks"] = self.task_repo.list_subtasks(item["id"])
+        else:
+            item["subtasks"] = []
 
         if include_reminders and self.reminder_repo is not None:
             for reminder in linked_reminders:

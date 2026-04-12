@@ -6,6 +6,7 @@ import AddReminderForm from "./AddReminderForm";
 import ReminderActions from "./ReminderActions";
 import TaskRawEditor from "./TaskRawEditor";
 import TaskToggleButton from "./TaskToggleButton";
+import SubtaskToggleButton from "./SubtaskToggleButton";
 import { UI_STRINGS } from "../lib/strings";
 
 function reminderPriority(state) {
@@ -151,6 +152,26 @@ export default function TaskDetailPanel({ item, raw }) {
               </div>
             </div>
           ) : null}
+
+        {item.subtasks && item.subtasks.length > 0 ? (
+          <div className="detailReadRow">
+            <div className="detailReadLabel">Subtasks</div>
+            <div className="detailReadContent withDivider">
+              <ul className="subtaskList">
+                {item.subtasks.map((subtask) => (
+                  <li key={subtask.id} className="subtaskRow">
+                    <div className={"subtaskText" + (subtask.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
+                      {subtask.content}
+                    </div>
+                    {!isRemoved ? (
+                      <SubtaskToggleButton taskId={item.id} subtaskId={subtask.id} isDone={Boolean(subtask.is_done)} />
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        ) : null}
         </div>
       </section>
 
