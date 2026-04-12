@@ -121,74 +121,8 @@ ON {reminder_items}(state, last_fired_at);
     item_tags=DbTables.ITEM_TAGS,
 )
 
-
-def _sqlite_items_status_contains_deleted(conn) -> bool:
-    row = conn.execute(
-        text(
-            """
-            SELECT sql
-            FROM sqlite_master
-            WHERE type = 'table'
-              AND name = :table_name
-            LIMIT 1
-            """
-        ),
-        {"table_name": DbTables.ITEMS},
-    ).fetchone()
-    if not row or not row[0]:
-        return False
-    return "'deleted'" in str(row[0]).lower()
-
-
-def _migrate_items_drop_deleted_status(conn) -> None:
-    if not _sqlite_items_status_contains_deleted(conn):
-        return
-
-    legacy_table = f"{DbTables.ITEMS}__legacy_status_v0"
-    conn.execute(text("PRAGMA foreign_keys = OFF"))
-    conn.execute(text(f"ALTER TABLE {DbTables.ITEMS} RENAME TO {legacy_table}"))
-    conn.execute(
-        text(
-            """
-            CREATE TABLE {items} (
-                id TEXT PRIMARY KEY,
-                item_type TEXT NOT NULL,
-                title TEXT NOT NULL,
-                status TEXT NOT NULL DEFAULT 'active',
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL,
-                archived_at TEXT,
-                deleted_at TEXT,
-                CHECK (item_type IN ('task', 'reminder')),
-                CHECK (status IN ('active', 'removed', 'archived'))
-            )
-            """.format(items=DbTables.ITEMS)
-        )
-    )
-    conn.execute(
-        text(
-            """
-            INSERT INTO {items}(id, item_type, title, status, created_at, updated_at, archived_at, deleted_at)
-            SELECT
-                id,
-                item_type,
-                title,
-                CASE WHEN status = 'deleted' THEN 'removed' ELSE status END,
-                created_at,
-                updated_at,
-                archived_at,
-                deleted_at
-            FROM {legacy}
-            """.format(items=DbTables.ITEMS, legacy=legacy_table)
-        )
-    )
-    conn.execute(text(f"DROP TABLE {legacy_table}"))
-    conn.execute(text("PRAGMA foreign_keys = ON"))
-
-
 def init_schema_v0(engine) -> None:
     with engine.begin() as conn:
-        _migrate_items_drop_deleted_status(conn)
         for statement in SCHEMA_SQL.split(";\n\n"):
             sql = statement.strip()
             if not sql:
