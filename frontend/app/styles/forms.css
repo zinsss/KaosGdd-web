@@ -85,69 +85,45 @@ textarea.textInput:focus {
     border-color 0.15s ease;
 }
 
-.compactFlatButton {
+.compactSymbolToggle {
   min-width: 0;
-  padding: 3px 10px;
+  width: 28px;
+  height: 28px;
+  padding: 0;
   border-radius: 999px;
   line-height: 1.2;
-  font-size: 12px;
+  font-size: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.compactFlatButtonDone {
+.compactSymbolToggleDone {
   border: 1px solid rgba(166, 227, 161, 0.35);
   background: rgba(166, 227, 161, 0.08);
   color: var(--ctp-green);
 }
 
-.compactFlatButtonDone:hover {
+.compactSymbolToggleDone:hover {
   border-color: rgba(166, 227, 161, 0.5);
   background: rgba(166, 227, 161, 0.14);
   color: var(--ctp-green);
 }
 
-.compactFlatButtonUndo {
+.compactSymbolToggleUndone {
   border: 1px solid rgba(186, 194, 222, 0.22);
   background: rgba(186, 194, 222, 0.05);
   color: var(--ui-text-dim);
 }
 
-.compactFlatButtonUndo:hover {
+.compactSymbolToggleUndone:hover {
   border-color: rgba(186, 194, 222, 0.32);
   background: rgba(186, 194, 222, 0.09);
   color: var(--ui-text);
 }
 
 .subtaskToggleButton {
-  min-width: 0;
-  width: auto;
-  padding: 3px 10px;
-  border-radius: 999px;
-  line-height: 1.2;
-  font-size: 12px;
-}
-
-.subtaskToggleButtonDone {
-  border: 1px solid rgba(166, 227, 161, 0.35);
-  background: rgba(166, 227, 161, 0.08);
-  color: var(--ctp-green);
-}
-
-.subtaskToggleButtonDone:hover {
-  border-color: rgba(166, 227, 161, 0.5);
-  background: rgba(166, 227, 161, 0.14);
-  color: var(--ctp-green);
-}
-
-.subtaskToggleButtonUndone {
-  border: 1px solid rgba(186, 194, 222, 0.22);
-  background: rgba(186, 194, 222, 0.05);
-  color: var(--ui-text-dim);
-}
-
-.subtaskToggleButtonUndone:hover {
-  border-color: rgba(186, 194, 222, 0.32);
-  background: rgba(186, 194, 222, 0.09);
-  color: var(--ui-text);
+  flex: 0 0 auto;
 }
 
 .errorText {
@@ -169,13 +145,14 @@ textarea.textInput:focus {
     width: 100%;
   }
 
-  .compactFlatButton {
-    padding: 3px 9px;
-    font-size: 11px;
+  .compactSymbolToggle {
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
   }
 
   .subtaskToggleButton {
-    padding: 3px 9px;
-    font-size: 11px;
+    width: 30px;
+    height: 30px;
   }
 }

@@ -20,17 +20,25 @@ export default function TaskToggleButton({ taskId, isDone, compact = false }) {
     }
   }
 
+  if (compact) {
+    return (
+      <button
+        type="button"
+        className={
+          "button taskToggleButton compactSymbolToggle " +
+          (isDone ? "compactSymbolToggleDone" : "compactSymbolToggleUndone")
+        }
+        onClick={onClick}
+        disabled={isSubmitting}
+        aria-label={isDone ? UI_STRINGS.UNDO : UI_STRINGS.DONE}
+      >
+        {isDone ? "✓" : "○"}
+      </button>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      className={
-        "button taskToggleButton" +
-        (compact ? " compactInlineButton compactFlatButton" : "") +
-        (compact ? (isDone ? " compactFlatButtonUndo" : " compactFlatButtonDone") : "")
-      }
-      onClick={onClick}
-      disabled={isSubmitting}
-    >
+    <button type="button" className="button taskToggleButton" onClick={onClick} disabled={isSubmitting}>
       {isDone ? UI_STRINGS.UNDO : UI_STRINGS.DONE}
     </button>
   );
