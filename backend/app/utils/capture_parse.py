@@ -73,9 +73,9 @@ def parse_capture_input(raw_text: str) -> dict:
             "raw": normalized_raw,
             "parsed": {
                 "title": parsed.get("title"),
-                "due_at": parsed.get("due_at"),
+                "start_date": parsed.get("start_date"),
+                "end_date": parsed.get("end_date"),
                 "remind_ats": [parsed["remind_at"]] if parsed.get("remind_at") else [],
-                "repeat_rule": parsed.get("repeat_rule"),
                 "tags": list(parsed.get("tags") or []),
                 "memo": parsed.get("memo"),
             },

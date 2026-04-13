@@ -7,7 +7,7 @@ class ApiText:
     INVALID_REMINDER_RAW = "invalid reminder raw"
     REMINDER_REQUIRES_DATETIME = "!! requires at least one reminder datetime"
     JOURNAL_NOT_SUPPORTED = "// journal not supported yet in this schema"
-    EVENT_NOT_SUPPORTED = "^^ event not supported yet in this schema"
+    INVALID_EVENT_RAW = "invalid event raw"
     UNSUPPORTED_CAPTURE_KIND = "unsupported capture kind"
 
 
