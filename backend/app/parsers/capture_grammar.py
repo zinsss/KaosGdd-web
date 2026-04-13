@@ -8,7 +8,7 @@ UNDONE_TASK_PREFIX = "-- "
 DONE_TASK_PREFIX = "-x "
 UNDONE_SUBTASK_PREFIX = "--- "
 DONE_SUBTASK_PREFIX = "--x "
-EVENT_PREFIX = "^^"
+EVENT_PREFIX = "^^ "
 REMINDER_PREFIX = "!! "
 JOURNAL_PREFIX = "// "
 
@@ -83,7 +83,12 @@ def parse_capture(raw: str) -> dict:
         item_type = "task"
         title = first[len(DONE_TASK_PREFIX) :].strip()
         is_done = True
-    elif first.startswith(EVENT_PREFIX):
+    elif first == "^^":
+        item_type = "event"
+        return ParseResult(ok=False, error="missing date after ^^").to_dict()
+    elif first.startswith("^^"):
+        if not first.startswith(EVENT_PREFIX):
+            return ParseResult(ok=False, error="event line must start with ^^ ").to_dict()
         item_type = "event"
         date_part = first[len(EVENT_PREFIX) :].strip()
         if not date_part:

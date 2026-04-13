@@ -5,7 +5,7 @@ from datetime import datetime, timedelta
 
 from app.utils.datetime_parse import parse_local_datetime_to_iso
 
-EVENT_PREFIX = "^^"
+EVENT_PREFIX = "^^ "
 MEMO_DELIM = '"""'
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 REL_REMIND_RE = re.compile(r"^-(\d+)d$")
@@ -51,8 +51,10 @@ def parse_event_raw(raw_text: str) -> dict:
 
     lines = text.split("\n")
     first = next((line.strip() for line in lines if line.strip()), "")
+    if first == "^^":
+        raise ValueError("missing date after ^^")
     if not first.startswith(EVENT_PREFIX):
-        raise ValueError("event line must start with ^^")
+        raise ValueError("event line must start with ^^ ")
 
     date_part = first[len(EVENT_PREFIX):].strip()
     if not date_part:
