@@ -169,6 +169,14 @@ def toggle_task(task_id: str):
     return {"ok": True, "is_done": result}
 
 
+
+@app.post("/tasks/{task_id}/subtasks/{subtask_id}/toggle")
+def toggle_subtask(task_id: str, subtask_id: str):
+    result = task_service.toggle_subtask(task_id, subtask_id)
+    if result is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "is_done": result}
+
 @app.post("/tasks/{task_id}/reminders")
 def create_task_reminder(task_id: str, payload: dict):
     remind_at = (payload.get("remind_at") or "").strip()

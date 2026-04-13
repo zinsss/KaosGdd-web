@@ -35,6 +35,7 @@ function groupDoneTasksByMonth(tasks) {
 
 function TaskRow({ task, mode }) {
   const metatag = getTaskMetaTag(task);
+  const hasSubtasks = Number(task.subtask_total || 0) > 0;
 
   return (
     <li key={task.id} className="taskListRow">
@@ -53,6 +54,9 @@ function TaskRow({ task, mode }) {
             </Link>
 
             {metatag ? <span className="taskListMetaTag">{metatag}</span> : null}
+            {hasSubtasks ? (
+              <span className="taskListSubtaskProgress">[{Number(task.subtask_done || 0)}/{Number(task.subtask_total || 0)}]</span>
+            ) : null}
           </div>
         </div>
 

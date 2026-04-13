@@ -6,9 +6,14 @@ from app.utils.datetime_parse import parse_local_datetime_to_iso
 from app.utils.timefmt import format_dt_for_ui
 
 REPEAT_TAG_PREFIX = "repeat:"
-TASK_PREFIX = "-- "
-SUBTASK_PREFIX = "--- "
+UNDONE_TASK_PREFIX = "-- "
+DONE_TASK_PREFIX = "-x "
+UNDONE_SUBTASK_PREFIX = "--- "
+DONE_SUBTASK_PREFIX = "--x "
 MEMO_DELIM = '"""'
+
+META_PATTERN = re.compile(r"(?:^|\s)(d:|r:|R:)")
+TAG_PATTERN = re.compile(r"(?:^|\s)#")
 
 
 def _extract_meta_from_line(line: str) -> tuple[str, dict]:
@@ -44,18 +49,29 @@ def _extract_meta_from_line(line: str) -> tuple[str, dict]:
     return cleaned, meta
 
 
+def _assert_no_subtask_metadata(subtask_text: str) -> None:
+    if META_PATTERN.search(subtask_text):
+        raise ValueError("subtask metadata is not allowed")
+    if TAG_PATTERN.search(subtask_text):
+        raise ValueError("subtask metadata is not allowed")
+    if MEMO_DELIM in subtask_text:
+        raise ValueError("subtask metadata is not allowed")
+
+
 def export_task_raw(
     task: dict,
     *,
     tags: list[str] | None = None,
     remind_ats: list[str] | None = None,
     repeat_rule: str | None = None,
+    subtasks: list[dict] | None = None,
 ) -> str:
     lines: list[str] = []
 
     title = str(task.get("title") or "").strip()
     if title:
-        lines.append(f"{TASK_PREFIX}{title}")
+        task_prefix = DONE_TASK_PREFIX if bool(task.get("is_done")) else UNDONE_TASK_PREFIX
+        lines.append(f"{task_prefix}{title}")
 
     due_at = str(task.get("due_at") or "").strip()
     if due_at:
@@ -82,6 +98,13 @@ def export_task_raw(
         lines.extend(str(memo).splitlines())
         lines.append(MEMO_DELIM)
 
+    for subtask in subtasks or []:
+        content = str(subtask.get("content") or "").strip()
+        if not content:
+            continue
+        prefix = DONE_SUBTASK_PREFIX if bool(subtask.get("is_done")) else UNDONE_SUBTASK_PREFIX
+        lines.append(f"{prefix}{content}")
+
     return "\n".join(lines)
 
 
@@ -99,17 +122,31 @@ def parse_task_raw(raw_text: str) -> dict:
     tags: list[str] = []
     extra_lines: list[str] = []
     memo_lines: list[str] = []
-    subtasks: list[str] = []
+    subtasks: list[dict] = []
     in_memo = False
-    saw_task_prefix = False
+    parsed_task_done = False
 
     first_content_line = next((line.strip() for line in lines if line.strip()), None)
-    if first_content_line and first_content_line.startswith(TASK_PREFIX):
-        saw_task_prefix = True
+    if not first_content_line:
+        raise ValueError("title is required")
+    if first_content_line.startswith(UNDONE_SUBTASK_PREFIX) or first_content_line.startswith(DONE_SUBTASK_PREFIX):
+        raise ValueError("subtask line requires a parent task")
+    if first_content_line.startswith(UNDONE_TASK_PREFIX):
+        title = first_content_line[len(UNDONE_TASK_PREFIX) :].strip() or None
+        parsed_task_done = False
+    elif first_content_line.startswith(DONE_TASK_PREFIX):
+        title = first_content_line[len(DONE_TASK_PREFIX) :].strip() or None
+        parsed_task_done = True
+    else:
+        raise ValueError("task line must start with -- or -x")
+
+    if not title:
+        raise ValueError("title is required")
+
+    seen_first_content = False
 
     for original_line in lines:
-        line = original_line.rstrip("\n")
-        stripped = line.strip()
+        stripped = original_line.strip()
 
         if in_memo:
             if stripped == MEMO_DELIM:
@@ -125,11 +162,22 @@ def parse_task_raw(raw_text: str) -> dict:
             in_memo = True
             continue
 
-        if stripped.startswith(SUBTASK_PREFIX):
-            subtask = stripped[len(SUBTASK_PREFIX):].strip()
-            if not subtask:
+        if not seen_first_content:
+            seen_first_content = True
+            continue
+
+        if stripped.startswith(UNDONE_SUBTASK_PREFIX) or stripped.startswith(DONE_SUBTASK_PREFIX):
+            if stripped.startswith(DONE_SUBTASK_PREFIX):
+                subtask_content = stripped[len(DONE_SUBTASK_PREFIX) :].strip()
+                subtask_done = True
+            else:
+                subtask_content = stripped[len(UNDONE_SUBTASK_PREFIX) :].strip()
+                subtask_done = False
+
+            if not subtask_content:
                 raise ValueError("subtask title is required")
-            subtasks.append(subtask)
+            _assert_no_subtask_metadata(subtask_content)
+            subtasks.append({"content": subtask_content, "is_done": subtask_done, "position": len(subtasks)})
             continue
 
         cleaned, meta = _extract_meta_from_line(original_line)
@@ -150,23 +198,11 @@ def parse_task_raw(raw_text: str) -> dict:
                 if tag not in tags:
                     tags.append(tag)
 
-        if title is None:
-            candidate = cleaned.strip()
-            if candidate.startswith(TASK_PREFIX):
-                candidate = candidate[len(TASK_PREFIX):].strip()
-            elif candidate.startswith("- "):
-                candidate = candidate[2:].strip()
-            title = candidate or None
-            continue
-
         if cleaned.strip():
             extra_lines.append(cleaned.strip())
 
     if in_memo:
         raise ValueError("unclosed memo block")
-
-    if not title:
-        raise ValueError("title is required")
 
     memo_parts: list[str] = []
     if extra_lines:
@@ -186,5 +222,6 @@ def parse_task_raw(raw_text: str) -> dict:
         "tags": tags,
         "memo": memo,
         "subtasks": subtasks,
-        "uses_task_prefix": saw_task_prefix,
+        "is_done": parsed_task_done,
+        "uses_task_prefix": True,
     }

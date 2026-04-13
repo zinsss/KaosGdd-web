@@ -950,3 +950,36 @@ textarea.textInput:focus {
     flex: 0 0 auto;
   }
 }
+.taskListSubtaskProgress {
+  flex: 0 0 auto;
+  color: var(--ui-text-dim);
+  font-size: 12px;
+  padding-left: 6px;
+}
+
+.subtaskList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.subtaskRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.subtaskText {
+  min-width: 0;
+  word-break: break-word;
+  color: var(--ui-text-dim);
+}
+
+.subtaskToggleButton {
+  min-width: 0;
+  padding: 4px 10px;
+  font-size: 12px;
+}

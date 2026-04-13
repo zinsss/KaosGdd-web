@@ -39,6 +39,7 @@ def parse_capture_input(raw_text: str) -> dict:
                 "tags": list(parsed.get("tags") or []),
                 "memo": parsed.get("memo"),
                 "subtasks": list(parsed.get("subtasks") or []),
+                "is_done": bool(parsed.get("is_done")),
             },
         }
 
