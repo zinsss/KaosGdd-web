@@ -1,0 +1,140 @@
+.formRow {
+  display: flex;
+  gap: 10px;
+}
+
+.textInput,
+textarea.textInput {
+  flex: 1;
+  width: 100%;
+  background: var(--ui-input);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border);
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 16px;
+  border-radius: 0;
+  outline: none;
+}
+
+.textInput::placeholder,
+textarea.textInput::placeholder {
+  color: transparent;
+}
+
+.textInput:focus,
+textarea.textInput:focus {
+  border-color: var(--ctp-lavender);
+  box-shadow: 0 0 0 1px rgba(180, 190, 254, 0.1);
+}
+
+.autoTextarea {
+  resize: none;
+  overflow: hidden;
+  min-height: 46px;
+}
+
+.rawEditor {
+  min-height: 44px;
+  white-space: pre-wrap;
+}
+
+.rawHint {
+  margin-top: 8px;
+  color: var(--ctp-overlay0);
+  font-size: 12px;
+}
+
+.button {
+  background: var(--ctp-surface0);
+  color: var(--ui-text);
+  border: 1px solid var(--ui-border-strong);
+  padding: 10px 14px;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 0;
+  white-space: nowrap;
+}
+
+.button:hover {
+  background: var(--ctp-surface1);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.buttonActive {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent-soft);
+  color: var(--ui-accent);
+}
+
+.compactInlineButton {
+  width: auto !important;
+  min-width: 72px;
+  padding: 8px 12px;
+}
+
+.taskToggleButton {
+  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.compactFlatButton {
+  min-width: 0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  line-height: 1.2;
+  font-size: 12px;
+}
+
+.compactFlatButtonDone {
+  border: 1px solid rgba(166, 227, 161, 0.35);
+  background: rgba(166, 227, 161, 0.08);
+  color: var(--ctp-green);
+}
+
+.compactFlatButtonDone:hover {
+  border-color: rgba(166, 227, 161, 0.5);
+  background: rgba(166, 227, 161, 0.14);
+  color: var(--ctp-green);
+}
+
+.compactFlatButtonUndo {
+  border: 1px solid rgba(186, 194, 222, 0.22);
+  background: rgba(186, 194, 222, 0.05);
+  color: var(--ui-text-dim);
+}
+
+.compactFlatButtonUndo:hover {
+  border-color: rgba(186, 194, 222, 0.32);
+  background: rgba(186, 194, 222, 0.09);
+  color: var(--ui-text);
+}
+
+.errorText {
+  color: var(--ui-danger);
+  margin-top: 10px;
+}
+
+.successText {
+  color: var(--ui-success);
+  margin-top: 10px;
+}
+
+@media (max-width: 640px) {
+  .formRow {
+    flex-direction: column;
+  }
+
+  .button {
+    width: 100%;
+  }
+
+  .compactFlatButton {
+    padding: 3px 9px;
+    font-size: 11px;
+  }
+}

@@ -1,0 +1,217 @@
+.appShellTop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background: var(--ctp-crust);
+  border-bottom: 1px solid rgba(137, 180, 250, 0.1);
+}
+
+.appShellTopInner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 14px 16px 12px;
+}
+
+.appHeaderLine {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 10px;
+  white-space: nowrap;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.appHeaderLine::-webkit-scrollbar {
+  display: none;
+}
+
+.appHeaderTitle {
+  color: var(--ui-title);
+}
+
+.appHeaderDot {
+  color: var(--ctp-blue);
+}
+
+.appHeaderSubtitle {
+  color: var(--ui-text-dim);
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.appShellTopSpacer {
+  height: 122px;
+}
+
+.appShellMain {
+  width: 100%;
+}
+
+.modeDots {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.modeDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--ui-text-dimmer);
+  opacity: 0.7;
+  text-decoration: none;
+}
+
+.modeDotActive {
+  background: var(--ctp-lavender);
+  opacity: 1;
+}
+
+.topNavScroller {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.topNavScroller::-webkit-scrollbar {
+  display: none;
+}
+
+.topNavRow {
+  display: inline-flex;
+  min-width: max-content;
+}
+
+.topNavRowFlat {
+  gap: 18px;
+}
+
+.topNavTextLink {
+  display: inline-block;
+  color: var(--ui-text-dim);
+  text-decoration: none;
+  white-space: nowrap;
+  padding: 0 0 3px;
+  border-bottom: 1px solid transparent;
+}
+
+.topNavTextLink:hover {
+  color: var(--ui-text);
+}
+
+.topNavTextLinkActive {
+  color: var(--ctp-lavender);
+  border-bottom-color: var(--ctp-lavender);
+}
+
+.bottomCaptureBar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 50;
+  border-top: 1px solid rgba(137, 180, 250, 0.12);
+  background: rgba(24, 24, 37, 0.9);
+  box-shadow: 0 -1px 0 rgba(137, 180, 250, 0.03);
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+}
+
+.bottomCaptureInner {
+  max-width: 760px;
+  margin: 0 auto;
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.bottomCaptureInput {
+  min-height: 46px;
+  height: 46px;
+  border-color: var(--ctp-surface0);
+  padding-top: 10px;
+  padding-bottom: 10px;
+}
+
+.bottomCaptureButton {
+  width: auto;
+  min-width: 84px;
+  height: 46px;
+  padding: 0 14px;
+  border-color: rgba(137, 180, 250, 0.18);
+  background: rgba(137, 180, 250, 0.06);
+  color: var(--ctp-blue);
+}
+
+.bottomCaptureButton:hover {
+  background: rgba(137, 180, 250, 0.1);
+}
+
+.bottomCaptureCancelButton {
+  width: auto;
+  min-width: 72px;
+  height: 46px;
+  padding: 0 12px;
+  border-color: rgba(186, 194, 222, 0.22);
+  background: rgba(186, 194, 222, 0.05);
+  color: var(--ui-text-dim);
+}
+
+.bottomCaptureCancelButton:hover {
+  background: rgba(186, 194, 222, 0.09);
+  color: var(--ui-text);
+}
+
+.bottomCaptureModeLabel {
+  max-width: 760px;
+  margin: 8px auto 0;
+  color: var(--ui-text-dim);
+  font-size: 12px;
+}
+
+.bottomCaptureMsg {
+  max-width: 760px;
+  margin: 8px auto 0;
+}
+
+@media (max-width: 640px) {
+  .appShellTopInner {
+    padding: 12px 12px 10px;
+  }
+
+  .appHeaderLine {
+    font-size: 20px;
+  }
+
+  .appHeaderSubtitle {
+    font-size: 14px;
+  }
+
+  .appShellTopSpacer {
+    height: 92px;
+  }
+
+
+  .modeDots {
+    gap: 7px;
+  }
+
+  .topNavRowFlat {
+    gap: 14px;
+  }
+
+  .bottomCaptureInner {
+    gap: 8px;
+  }
+
+  .bottomCaptureButton,
+  .bottomCaptureCancelButton {
+    width: auto;
+    flex: 0 0 auto;
+  }
+}
