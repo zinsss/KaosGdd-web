@@ -111,7 +111,6 @@ def parse_capture(raw: str) -> dict:
 
     in_memo = False
     memo_lines: list[str] = []
-    saw_subtask = False
 
     for original in lines[first_idx + 1 :]:
         line = original.strip()
@@ -127,8 +126,6 @@ def parse_capture(raw: str) -> dict:
             continue
 
         if line == MEMO_DELIM:
-            if saw_subtask:
-                return ParseResult(ok=False, error="subtask metadata is not allowed").to_dict()
             in_memo = True
             continue
 
@@ -136,7 +133,6 @@ def parse_capture(raw: str) -> dict:
             if result.item_type != "task":
                 return ParseResult(ok=False, error="subtasks only allowed under task").to_dict()
 
-            saw_subtask = True
             if line.startswith(DONE_SUBTASK_PREFIX):
                 subtask = line[len(DONE_SUBTASK_PREFIX) :].strip()
                 subtask_done = True
@@ -150,9 +146,6 @@ def parse_capture(raw: str) -> dict:
                 return ParseResult(ok=False, error="subtask metadata is not allowed").to_dict()
             result.subtasks.append({"content": subtask, "is_done": subtask_done, "position": len(result.subtasks)})
             continue
-
-        if saw_subtask:
-            return ParseResult(ok=False, error="subtask metadata is not allowed").to_dict()
 
         if line.startswith(META_DUE):
             result.due_at = line[len(META_DUE) :].strip() or None

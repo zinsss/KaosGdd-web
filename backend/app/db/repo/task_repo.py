@@ -283,6 +283,8 @@ class TaskRepo:
         return [dict(row) for row in rows]
 
     def replace_subtasks(self, item_id: str, subtasks: list[dict]) -> None:
+        # v0 tradeoff: raw-edit sync is implemented as replace-all to keep behavior simple and durable.
+        # This intentionally prioritizes correctness of content/order/is_done over stable subtask ids.
         now = now_iso()
         with self.engine.begin() as conn:
             conn.execute(

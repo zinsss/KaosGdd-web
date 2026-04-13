@@ -124,7 +124,6 @@ def parse_task_raw(raw_text: str) -> dict:
     memo_lines: list[str] = []
     subtasks: list[dict] = []
     in_memo = False
-    saw_subtask = False
     parsed_task_done = False
 
     first_content_line = next((line.strip() for line in lines if line.strip()), None)
@@ -160,8 +159,6 @@ def parse_task_raw(raw_text: str) -> dict:
             continue
 
         if stripped == MEMO_DELIM:
-            if saw_subtask:
-                raise ValueError("subtask metadata is not allowed")
             in_memo = True
             continue
 
@@ -170,7 +167,6 @@ def parse_task_raw(raw_text: str) -> dict:
             continue
 
         if stripped.startswith(UNDONE_SUBTASK_PREFIX) or stripped.startswith(DONE_SUBTASK_PREFIX):
-            saw_subtask = True
             if stripped.startswith(DONE_SUBTASK_PREFIX):
                 subtask_content = stripped[len(DONE_SUBTASK_PREFIX) :].strip()
                 subtask_done = True
@@ -183,9 +179,6 @@ def parse_task_raw(raw_text: str) -> dict:
             _assert_no_subtask_metadata(subtask_content)
             subtasks.append({"content": subtask_content, "is_done": subtask_done, "position": len(subtasks)})
             continue
-
-        if saw_subtask:
-            raise ValueError("subtask metadata is not allowed")
 
         cleaned, meta = _extract_meta_from_line(original_line)
 
