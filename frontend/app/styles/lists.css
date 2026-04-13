@@ -20,6 +20,38 @@
   margin-bottom: 0;
 }
 
+.sectionModuleName {
+  color: var(--ctp-blue);
+}
+
+.sectionSeparator {
+  color: var(--ui-text-dim);
+}
+
+.sectionContextActive {
+  color: var(--ctp-green);
+}
+
+.sectionContextDone {
+  color: var(--ctp-mauve);
+}
+
+.sectionContextFired {
+  color: var(--ctp-mauve);
+}
+
+.sectionContextRemoved {
+  color: var(--ctp-maroon);
+}
+
+.sectionContextArchived {
+  color: var(--ui-text-dim);
+}
+
+.sectionContextMonth {
+  color: var(--ctp-teal);
+}
+
 .taskList {
   list-style: none;
   padding: 0;
