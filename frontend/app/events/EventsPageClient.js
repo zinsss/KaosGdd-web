@@ -74,7 +74,11 @@ export default function EventsPageClient() {
     <main className="page">
       <section className="panel">
         <div className="sectionTitleRow">
-          <div className="sectionTitle sectionTitleNoMargin">Events • {month}</div>
+          <div className="sectionTitle sectionTitleNoMargin">
+            <span className="sectionModuleName">Events</span>
+            <span className="sectionSeparator"> • </span>
+            <span className="sectionContextMonth">{month}</span>
+          </div>
           <div className="actionRow compactActionRow">
             <button className="button compactButton" onClick={() => shiftMonth(-1)}>◀</button>
             <button className="button compactButton" onClick={() => shiftMonth(1)}>▶</button>

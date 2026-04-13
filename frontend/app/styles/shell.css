@@ -30,16 +30,19 @@
 }
 
 .appHeaderTitle {
-  color: var(--ui-title);
+  color: var(--ctp-yellow);
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: 0.01em;
 }
 
 .appHeaderDot {
-  color: var(--ctp-blue);
+  color: var(--ui-text-dim);
 }
 
 .appHeaderSubtitle {
-  color: var(--ui-text-dim);
-  font-size: 16px;
+  color: var(--ctp-rosewater);
+  font-size: 15px;
   font-weight: 400;
 }
 
@@ -188,8 +191,12 @@
     font-size: 20px;
   }
 
+  .appHeaderTitle {
+    font-size: 24px;
+  }
+
   .appHeaderSubtitle {
-    font-size: 14px;
+    font-size: 13px;
   }
 
   .appShellTopSpacer {

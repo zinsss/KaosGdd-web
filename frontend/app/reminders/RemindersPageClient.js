@@ -234,18 +234,27 @@ export default function RemindersPageClient({ initialMode, items }) {
     }
   }
 
-  const modeTitle =
-    mode === "fired"
-      ? UI_STRINGS.REMINDERS_FIRED_TITLE
-      : mode === "removed"
-      ? UI_STRINGS.REMINDERS_REMOVED_TITLE
-      : UI_STRINGS.REMINDERS_ACTIVE_TITLE;
+  const modeContext = mode === "fired" ? "Fired" : mode === "removed" ? "Removed" : "Active";
 
   return (
     <main className="page">
       <section className="panel" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className="sectionTitleRow">
-          <div className="sectionTitle sectionTitleNoMargin">{modeTitle}</div>
+          <div className="sectionTitle sectionTitleNoMargin">
+            <span className="sectionModuleName">{UI_STRINGS.REMINDERS}</span>
+            <span className="sectionSeparator"> • </span>
+            <span
+              className={
+                mode === "fired"
+                  ? "sectionContextFired"
+                  : mode === "removed"
+                  ? "sectionContextRemoved"
+                  : "sectionContextActive"
+              }
+            >
+              {modeContext}
+            </span>
+          </div>
           <div className="modeDots" aria-label="Reminder list mode">
             {modeLinks.map((entry) => (
               <Link
