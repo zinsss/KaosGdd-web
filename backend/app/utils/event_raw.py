@@ -94,8 +94,6 @@ def parse_event_raw(raw_text: str) -> dict:
             continue
 
         if title is None:
-            if stripped.startswith("#") or stripped.startswith("r:") or stripped == MEMO_DELIM:
-                raise ValueError("missing title")
             title = stripped
             continue
 
