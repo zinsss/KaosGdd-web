@@ -134,7 +134,7 @@ def parse_capture(raw: str) -> dict:
             continue
 
         if result.item_type == "event" and not result.title:
-            if line.startswith("#") or line.startswith(META_REMIND):
+            if line.startswith("#") or line.startswith(META_REMIND) or line == MEMO_DELIM:
                 return ParseResult(ok=False, error="missing title").to_dict()
             result.title = line
             continue
