@@ -45,6 +45,8 @@ class ParseResult:
     memo: str | None = None
     subtasks: list[dict] = field(default_factory=list)
     is_done: bool = False
+    start_date: str | None = None
+    end_date: str | None = None
     error: str | None = None
 
     def to_dict(self) -> dict:
@@ -66,16 +68,13 @@ def parse_capture(raw: str) -> dict:
     for prefix, modal_type in MODAL_PREFIXES.items():
         if first.startswith(prefix):
             rest = first[len(prefix) :].strip()
-            return ParseResult(
-                ok=True,
-                action="open_modal",
-                modal_type=modal_type,
-                title=rest or None,
-            ).to_dict()
+            return ParseResult(ok=True, action="open_modal", modal_type=modal_type, title=rest or None).to_dict()
 
     item_type: ItemType | None = None
     title: str | None = None
     is_done = False
+    start_date = None
+    end_date = None
 
     if first.startswith(UNDONE_TASK_PREFIX):
         item_type = "task"
@@ -84,9 +83,23 @@ def parse_capture(raw: str) -> dict:
         item_type = "task"
         title = first[len(DONE_TASK_PREFIX) :].strip()
         is_done = True
-    elif first.startswith(EVENT_PREFIX):
+    elif first == "^^":
         item_type = "event"
-        title = first[len(EVENT_PREFIX) :].strip()
+        return ParseResult(ok=False, error="missing date after ^^").to_dict()
+    elif first.startswith("^^"):
+        if not first.startswith(EVENT_PREFIX):
+            return ParseResult(ok=False, error="event line must start with ^^ ").to_dict()
+        item_type = "event"
+        date_part = first[len(EVENT_PREFIX) :].strip()
+        if not date_part:
+            return ParseResult(ok=False, error="missing date after ^^").to_dict()
+        if "~" in date_part:
+            parts = [part.strip() for part in date_part.split("~")]
+            if len(parts) != 2 or not parts[0] or not parts[1]:
+                return ParseResult(ok=False, error="malformed range").to_dict()
+            start_date, end_date = parts[0], parts[1]
+        else:
+            start_date = date_part
     elif first.startswith(REMINDER_PREFIX):
         item_type = "reminder"
         title = first[len(REMINDER_PREFIX) :].strip()
@@ -98,16 +111,7 @@ def parse_capture(raw: str) -> dict:
     else:
         return ParseResult(ok=False, error="unsupported prefix").to_dict()
 
-    if not title:
-        return ParseResult(ok=False, error="title is required").to_dict()
-
-    result = ParseResult(
-        ok=True,
-        action="create_item",
-        item_type=item_type,
-        title=title,
-        is_done=is_done,
-    )
+    result = ParseResult(ok=True, action="create_item", item_type=item_type, title=title, is_done=is_done, start_date=start_date, end_date=end_date)
 
     in_memo = False
     memo_lines: list[str] = []
@@ -129,6 +133,12 @@ def parse_capture(raw: str) -> dict:
             in_memo = True
             continue
 
+        if result.item_type == "event" and not result.title:
+            if line.startswith("#") or line.startswith(META_REMIND):
+                return ParseResult(ok=False, error="missing title").to_dict()
+            result.title = line
+            continue
+
         if line.startswith(UNDONE_SUBTASK_PREFIX) or line.startswith(DONE_SUBTASK_PREFIX):
             if result.item_type != "task":
                 return ParseResult(ok=False, error="subtasks only allowed under task").to_dict()
@@ -148,6 +158,8 @@ def parse_capture(raw: str) -> dict:
             continue
 
         if line.startswith(META_DUE):
+            if result.item_type == "event":
+                return ParseResult(ok=False, error="unsupported extra event grammar").to_dict()
             result.due_at = line[len(META_DUE) :].strip() or None
             continue
 
@@ -156,6 +168,8 @@ def parse_capture(raw: str) -> dict:
             continue
 
         if line.startswith(META_REPEAT):
+            if result.item_type == "event":
+                return ParseResult(ok=False, error="unsupported extra event grammar").to_dict()
             result.repeat_rule = line[len(META_REPEAT) :].strip() or None
             continue
 
@@ -167,6 +181,12 @@ def parse_capture(raw: str) -> dict:
 
     if in_memo:
         return ParseResult(ok=False, error='memo block not closed with """').to_dict()
+
+    if result.item_type != "event" and not result.title:
+        return ParseResult(ok=False, error="title is required").to_dict()
+
+    if result.item_type == "event" and not result.title:
+        return ParseResult(ok=False, error="missing title").to_dict()
 
     if memo_lines:
         result.memo = "\n".join(memo_lines).rstrip("\n")

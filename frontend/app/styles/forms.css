@@ -132,7 +132,7 @@ textarea.textInput:focus {
     flex-direction: column;
   }
 
-  .formRow .button {
+  .formRow .button:not(.bottomCaptureButton):not(.bottomCaptureCancelButton) {
     width: 100%;
   }
 

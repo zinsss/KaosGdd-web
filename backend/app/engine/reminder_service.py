@@ -196,17 +196,19 @@ class ReminderService:
 
     def cleanup_removed_items(self) -> dict:
         if self.items_repo is None:
-            return {"tasks_deleted": 0, "reminders_deleted": 0}
+            return {"tasks_deleted": 0, "events_deleted": 0, "reminders_deleted": 0}
         cutoff = (
             datetime.now(timezone.utc) - timedelta(days=SETTINGS.LIFECYCLE_REMOVED_RETENTION_DAYS)
         ).isoformat(timespec="seconds")
         tasks_deleted = self.items_repo.hard_delete_deleted_older_than(item_type="task", cutoff_iso=cutoff)
+        events_deleted = self.items_repo.hard_delete_deleted_older_than(item_type="event", cutoff_iso=cutoff)
         reminders_deleted = self.items_repo.hard_delete_deleted_older_than(
             item_type="reminder",
             cutoff_iso=cutoff,
         )
         return {
             "tasks_deleted": tasks_deleted,
+            "events_deleted": events_deleted,
             "reminders_deleted": reminders_deleted,
         }
 

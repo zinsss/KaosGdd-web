@@ -218,4 +218,13 @@
     width: auto;
     flex: 0 0 auto;
   }
+
+  .bottomCaptureInner > .bottomCaptureInput {
+    width: auto;
+  }
+
+  .bottomCaptureInner > .bottomCaptureButton,
+  .bottomCaptureInner > .bottomCaptureCancelButton {
+    min-width: 0;
+  }
 }

@@ -10,10 +10,12 @@ from fastapi import FastAPI
 
 from app.config import SETTINGS
 from app.core.db import engine
+from app.db.repo.event_repo import EventRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.schema_v0 import init_schema_v0
+from app.engine.event_service import EventService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
 from app.schemas.reminders import normalize_minutes
@@ -25,8 +27,10 @@ APP_NAME = os.getenv("APP_NAME", SETTINGS.APP_NAME)
 
 items_repo = ItemsRepo(engine)
 task_repo = TaskRepo(engine)
+event_repo = EventRepo(engine)
 reminder_repo = ReminderRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
+event_service = EventService(items_repo, event_repo, reminder_repo)
 reminder_service = ReminderService(reminder_repo, task_repo, items_repo)
 
 
@@ -52,6 +56,84 @@ def health():
 @app.get("/tasks")
 def list_tasks(mode: str = "active"):
     return {"items": task_service.list_tasks(mode=mode)}
+
+
+@app.get("/events")
+def list_events(start_date: str, end_date: str, mode: str = "active"):
+    return {"items": event_service.list_events_in_range(start_date=start_date, end_date=end_date, mode=mode)}
+
+
+@app.get("/events/{event_id}")
+def get_event(event_id: str):
+    item = event_service.get_event(event_id)
+    if item is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "item": item}
+
+
+@app.post("/events")
+def create_event(payload: dict):
+    title = (payload.get("title") or "").strip()
+    start_date = (payload.get("start_date") or "").strip()
+    if not title:
+        return {"ok": False, "error": ApiText.TITLE_REQUIRED}
+    if not start_date:
+        return {"ok": False, "error": "start_date is required"}
+
+    item_id = event_service.create_event(
+        title=title,
+        start_date=start_date,
+        end_date=payload.get("end_date"),
+        memo=payload.get("memo"),
+    )
+    return {"ok": True, "id": item_id}
+
+
+@app.patch("/events/{event_id}")
+def update_event(event_id: str, payload: dict):
+    ok = event_service.update_event(
+        event_id,
+        title=payload.get("title"),
+        start_date=payload.get("start_date"),
+        end_date=payload.get("end_date"),
+        memo=payload.get("memo"),
+    )
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
+
+
+@app.get("/events/{event_id}/raw")
+def get_event_raw(event_id: str):
+    raw = event_service.export_event_raw(event_id)
+    if raw is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "raw": raw}
+
+
+@app.patch("/events/{event_id}/raw")
+def update_event_raw(event_id: str, payload: dict):
+    raw_text = str(payload.get("raw") or "")
+    ok, error = event_service.update_event_from_raw(event_id, raw_text)
+    if not ok:
+        return {"ok": False, "error": error or ApiText.INVALID_EVENT_RAW}
+    return {"ok": True}
+
+
+@app.delete("/events/{event_id}")
+def remove_event(event_id: str):
+    ok = event_service.remove_event(event_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
+
+
+@app.post("/events/{event_id}/restore")
+def restore_event(event_id: str):
+    ok = event_service.restore_event(event_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
 
 
 @app.get("/reminders")
@@ -169,13 +251,13 @@ def toggle_task(task_id: str):
     return {"ok": True, "is_done": result}
 
 
-
 @app.post("/tasks/{task_id}/subtasks/{subtask_id}/toggle")
 def toggle_subtask(task_id: str, subtask_id: str):
     result = task_service.toggle_subtask(task_id, subtask_id)
     if result is None:
         return {"ok": False, "error": ApiText.NOT_FOUND}
     return {"ok": True, "is_done": result}
+
 
 @app.post("/tasks/{task_id}/reminders")
 def create_task_reminder(task_id: str, payload: dict):
@@ -225,6 +307,25 @@ def capture_item(payload: dict):
             return {"ok": False, "error": error or ApiText.INVALID_RAW_TASK}
         return {"ok": True, "kind": kind, "id": item_id}
 
+    if kind == "event":
+        title = str(parsed["parsed"].get("title") or "").strip()
+        start_date = str(parsed["parsed"].get("start_date") or "").strip()
+        if not title:
+            return {"ok": False, "error": ApiText.TITLE_REQUIRED}
+        if not start_date:
+            return {"ok": False, "error": "missing date after ^^"}
+
+        item_id = event_service.create_event(
+            title=title,
+            start_date=start_date,
+            end_date=parsed["parsed"].get("end_date"),
+            memo=parsed["parsed"].get("memo"),
+        )
+        ok, error = event_service.update_event_from_raw(item_id, parsed["raw"])
+        if not ok:
+            return {"ok": False, "error": error or ApiText.INVALID_EVENT_RAW}
+        return {"ok": True, "kind": kind, "id": item_id}
+
     if kind == "simple_reminder":
         title = str(parsed["parsed"].get("title") or "").strip()
         remind_ats = list(parsed["parsed"].get("remind_ats") or [])
@@ -247,9 +348,6 @@ def capture_item(payload: dict):
 
     if kind == "journal":
         return {"ok": False, "error": ApiText.JOURNAL_NOT_SUPPORTED}
-
-    if kind == "event":
-        return {"ok": False, "error": ApiText.EVENT_NOT_SUPPORTED}
 
     return {"ok": False, "error": ApiText.UNSUPPORTED_CAPTURE_KIND}
 
@@ -299,6 +397,7 @@ def run_lifecycle_maintenance():
         "ok": True,
         "archived_tasks": archived_tasks,
         "hard_deleted_tasks": cleanup["tasks_deleted"],
+        "hard_deleted_events": cleanup["events_deleted"],
         "hard_deleted_reminders": cleanup["reminders_deleted"],
         "fired_retention_days": SETTINGS.LIFECYCLE_FIRED_RETENTION_DAYS,
     }

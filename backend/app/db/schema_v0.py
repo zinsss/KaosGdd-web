@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS {items} (
     updated_at TEXT NOT NULL,
     archived_at TEXT,
     deleted_at TEXT,
-    CHECK (item_type IN ('task', 'reminder')),
+    CHECK (item_type IN ('task', 'reminder', 'event')),
     CHECK (status IN ('active', 'removed', 'archived'))
 );
 
@@ -42,6 +42,15 @@ CREATE TABLE IF NOT EXISTS {task_subtasks} (
     updated_at TEXT NOT NULL,
     FOREIGN KEY (task_item_id) REFERENCES {task_items}(item_id) ON DELETE CASCADE,
     CHECK (is_done IN (0, 1))
+);
+
+
+CREATE TABLE IF NOT EXISTS {event_items} (
+    item_id TEXT PRIMARY KEY,
+    start_date TEXT NOT NULL,
+    end_date TEXT,
+    memo TEXT,
+    FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS {reminder_items} (
@@ -109,6 +118,9 @@ ON {reminder_items}(state, remind_at, snoozed_until);
 CREATE INDEX IF NOT EXISTS idx_task_items_done_state_time
 ON {task_items}(is_done, done_at);
 
+CREATE INDEX IF NOT EXISTS idx_event_items_start_end
+ON {event_items}(start_date, end_date);
+
 CREATE INDEX IF NOT EXISTS idx_reminder_items_state_last_fired
 ON {reminder_items}(state, last_fired_at);
 """.format(
@@ -116,6 +128,7 @@ ON {reminder_items}(state, last_fired_at);
     task_items=DbTables.TASK_ITEMS,
     task_subtasks=DbTables.TASK_SUBTASKS,
     reminder_items=DbTables.REMINDER_ITEMS,
+    event_items=DbTables.EVENT_ITEMS,
     reminder_events=DbTables.REMINDER_EVENTS,
     item_reminders=DbTables.ITEM_REMINDERS,
     item_tags=DbTables.ITEM_TAGS,
