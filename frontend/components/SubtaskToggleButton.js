@@ -19,8 +19,16 @@ export default function SubtaskToggleButton({ taskId, subtaskId, isDone }) {
   }
 
   return (
-    <button type="button" className="button subtaskToggleButton" onClick={onClick} disabled={isSubmitting}>
-      {isDone ? "↺" : "✓"}
+    <button
+      type="button"
+      className={
+        "button subtaskToggleButton compactFlatButton " +
+        (isDone ? "subtaskToggleButtonDone" : "subtaskToggleButtonUndone")
+      }
+      onClick={onClick}
+      disabled={isSubmitting}
+    >
+      {isDone ? "✓" : "○"}
     </button>
   );
 }

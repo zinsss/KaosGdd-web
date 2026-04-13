@@ -42,7 +42,7 @@ function TaskRow({ task, mode }) {
       <div className="taskListRowMain">
         <div className="taskListTitleBlock">
           <div className="taskListTitleRow taskListTitleRowWithMeta">
-            <span className="taskListStateIcon">{task.is_done ? "◉" : "○"}</span>
+            <span className="taskListStateIcon">{task.is_done ? "✓" : "○"}</span>
 
             <Link
               className={
