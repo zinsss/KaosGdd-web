@@ -1,0 +1,146 @@
+.detailPageLabel {
+  color: var(--ui-text-dim);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.detailTitleRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.detailMainTitle {
+  margin-bottom: 0;
+  min-width: 0;
+  word-break: break-word;
+  color: var(--ctp-lavender);
+}
+
+.detailStateText {
+  color: var(--ui-text-dim);
+  font-size: 13px;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.metaLine {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  color: var(--ui-text-dim);
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.metaStack {
+  display: grid;
+  gap: 8px;
+  color: var(--ctp-subtext1);
+}
+
+.detailReadBlock {
+  display: grid;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.detailReadRow {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  column-gap: 12px;
+  align-items: start;
+}
+
+.detailReadLabel {
+  color: var(--ui-text-dim);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.withDivider {
+  border-left: 1px solid var(--ui-border-strong);
+  padding-left: 12px;
+}
+
+.detailReadContent {
+  min-width: 0;
+  color: var(--ui-text);
+}
+
+.detailReadInline {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.detailReadMemo {
+  display: grid;
+  gap: 2px;
+  white-space: pre-wrap;
+}
+
+.actionRow {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.detailActionRow {
+  flex-wrap: nowrap;
+}
+
+.compactButton {
+  width: auto;
+  min-width: 84px;
+  padding: 8px 10px;
+}
+
+.moreMetaBox {
+  border-top: 1px dotted var(--ui-border);
+  padding-top: 12px;
+}
+
+.copyRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .compactButton {
+    width: auto;
+    flex: 1;
+  }
+
+  .detailActionRow {
+    display: flex;
+    gap: 10px;
+    flex-wrap: nowrap;
+  }
+
+  .detailActionRow .button,
+  .detailActionRow .taskToggleButton {
+    width: auto;
+    flex: 1 1 0;
+    min-width: 0;
+  }
+
+  .copyRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .detailReadRow {
+    grid-template-columns: 50px minmax(0, 1fr);
+    column-gap: 10px;
+  }
+
+  .detailReadInline {
+    gap: 12px;
+  }
+}
