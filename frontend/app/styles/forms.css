@@ -78,7 +78,10 @@ textarea.textInput:focus {
 }
 
 .taskToggleButton {
-  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease,
+  transition:
+    opacity 0.15s ease,
+    color 0.15s ease,
+    background 0.15s ease,
     border-color 0.15s ease;
 }
 
@@ -129,7 +132,7 @@ textarea.textInput:focus {
     flex-direction: column;
   }
 
-  .button {
+  .formRow .button {
     width: 100%;
   }
 

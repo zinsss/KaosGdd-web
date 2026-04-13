@@ -196,7 +196,6 @@
     height: 92px;
   }
 
-
   .modeDots {
     gap: 7px;
   }
@@ -209,8 +208,13 @@
     gap: 8px;
   }
 
-  .bottomCaptureButton,
-  .bottomCaptureCancelButton {
+  .bottomCaptureInner > .bottomCaptureInput {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .bottomCaptureInner > .bottomCaptureButton,
+  .bottomCaptureInner > .bottomCaptureCancelButton {
     width: auto;
     flex: 0 0 auto;
   }
