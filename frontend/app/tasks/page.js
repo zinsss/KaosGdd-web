@@ -42,11 +42,7 @@ function TaskRow({ task, mode }) {
       <div className="taskListRowMain">
         <div className="taskListTitleBlock">
           <div className="taskListTitleRow taskListTitleRowWithMeta">
-            {mode === "active" ? (
-              <TaskToggleButton taskId={task.id} isDone={task.is_done} compact />
-            ) : (
-              <span className="taskListStateIcon">{task.is_done ? "✓" : "○"}</span>
-            )}
+            <span className="taskListStateIcon">{task.is_done ? "◉" : "○"}</span>
 
             <Link
               className={
@@ -66,6 +62,7 @@ function TaskRow({ task, mode }) {
 
         <div className="taskListAction">
           {mode === "removed" ? <TaskRestoreButton taskId={task.id} /> : null}
+          {mode === "active" ? <TaskToggleButton taskId={task.id} isDone={task.is_done} compact /> : null}
         </div>
       </div>
     </li>
@@ -87,8 +84,14 @@ export default async function TasksPage({ searchParams }) {
   const mode = TASK_MODES.includes(searchParams?.mode) ? searchParams.mode : "active";
   const tasks = await getTasks(mode);
 
-  const modeContext =
-    mode === "done" ? "Done" : mode === "removed" ? "Removed" : mode === "archived" ? "Archived" : "Active";
+  const modeTitle =
+    mode === "done"
+      ? UI_STRINGS.TASKS_DONE_TITLE
+      : mode === "removed"
+      ? UI_STRINGS.TASKS_REMOVED_TITLE
+      : mode === "archived"
+      ? UI_STRINGS.TASKS_ARCHIVED_TITLE
+      : UI_STRINGS.TASKS_ACTIVE_TITLE;
 
   const doneGroups = mode === "done" ? groupDoneTasksByMonth(tasks.items || []) : [];
 
@@ -96,23 +99,7 @@ export default async function TasksPage({ searchParams }) {
     <main className="page">
       <section className="panel">
         <div className="sectionTitleRow">
-          <div className="sectionTitle sectionTitleNoMargin">
-            <span className="sectionModuleName">{UI_STRINGS.TASKS}</span>
-            <span className="sectionSeparator"> • </span>
-            <span
-              className={
-                mode === "done"
-                  ? "sectionContextDone"
-                  : mode === "removed"
-                  ? "sectionContextRemoved"
-                  : mode === "archived"
-                  ? "sectionContextArchived"
-                  : "sectionContextActive"
-              }
-            >
-              {modeContext}
-            </span>
-          </div>
+          <div className="sectionTitle sectionTitleNoMargin">{modeTitle}</div>
           <div className="modeDots" aria-label="Task list mode">
             {TASK_MODES.map((dotMode) => (
               <Link
