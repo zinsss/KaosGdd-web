@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { UI_STRINGS } from "../../lib/strings";
 
 function excerpt(body) {
@@ -8,7 +8,7 @@ function excerpt(body) {
   return first || "(empty)";
 }
 
-function JournalRow({ journal, expanded, onToggle }) {
+function JournalRow({ journal, expanded, onToggle, onDeleted, onActionError }) {
   const tags = (journal.tags || []).map((tag) => `#${tag}`).join(" ");
 
   function startEdit() {
@@ -28,8 +28,11 @@ function JournalRow({ journal, expanded, onToggle }) {
   async function removeJournal() {
     const res = await fetch(`/api/journals/${journal.id}`, { method: "DELETE" });
     const data = await res.json().catch(() => null);
-    if (!res.ok || !data?.ok) return;
-    window.location.reload();
+    if (!res.ok || !data?.ok) {
+      onActionError((data && data.error) || "Journal remove failed.");
+      return;
+    }
+    onDeleted(journal.id);
   }
 
   return (
@@ -64,13 +67,45 @@ function JournalRow({ journal, expanded, onToggle }) {
   );
 }
 
-export default function JournalsPageClient({ items }) {
+export default function JournalsPageClient() {
+  const [items, setItems] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
+  const [localError, setLocalError] = useState("");
+
+  useEffect(() => {
+    setLocalError("");
+    fetch("/api/journals", { cache: "no-store" })
+      .then(async (res) => {
+        const data = await res.json().catch(() => null);
+        if (!res.ok) {
+          throw new Error(data?.error || "Failed to load journals.");
+        }
+        setItems(data?.items || []);
+      })
+      .catch((err) => {
+        setItems([]);
+        setLocalError(err?.message || "Failed to load journals.");
+      });
+  }, []);
+
+  function removeRow(id) {
+    setItems((current) => current.filter((journal) => journal.id !== id));
+    setExpandedId((current) => (current === id ? null : current));
+  }
 
   return (
     <main className="page">
       <section className="panel">
-        <div className="sectionTitle sectionTitleNoMargin">{UI_STRINGS.JOURNALS}</div>
+        <div className="sectionTitleRow">
+          <div className="sectionTitle sectionTitleNoMargin">
+            <span className="sectionModuleName">{UI_STRINGS.JOURNALS}</span>
+            <span className="sectionSeparator"> • </span>
+            <span className="sectionContextActive">Stream</span>
+          </div>
+        </div>
+
+        {localError ? <div className="errorText">{localError}</div> : null}
+
         {items.length === 0 ? (
           <div className="empty">{UI_STRINGS.NO_JOURNALS}</div>
         ) : (
@@ -81,6 +116,8 @@ export default function JournalsPageClient({ items }) {
                 journal={journal}
                 expanded={expandedId === journal.id}
                 onToggle={() => setExpandedId(expandedId === journal.id ? null : journal.id)}
+                onDeleted={removeRow}
+                onActionError={setLocalError}
               />
             ))}
           </ul>
