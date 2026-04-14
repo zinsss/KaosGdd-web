@@ -142,14 +142,17 @@ export default function TasksPageClient({ initialMode }) {
     }
   }
 
-  const modeTitle =
+  const modeContext =
+    mode === "done" ? "Done" : mode === "removed" ? "Removed" : mode === "archived" ? "Archived" : "Active";
+
+  const modeContextClass =
     mode === "done"
-      ? UI_STRINGS.TASKS_DONE_TITLE
+      ? "sectionContextDone"
       : mode === "removed"
-      ? UI_STRINGS.TASKS_REMOVED_TITLE
+      ? "sectionContextRemoved"
       : mode === "archived"
-      ? UI_STRINGS.TASKS_ARCHIVED_TITLE
-      : UI_STRINGS.TASKS_ACTIVE_TITLE;
+      ? "sectionContextArchived"
+      : "sectionContextActive";
 
   const doneGroups = useMemo(
     () => (mode === "done" ? groupDoneTasksByMonth(items || []) : []),
@@ -160,7 +163,11 @@ export default function TasksPageClient({ initialMode }) {
     <main className="page">
       <section className="panel">
         <div className="sectionTitleRow">
-          <div className="sectionTitle sectionTitleNoMargin">{modeTitle}</div>
+          <div className="sectionTitle sectionTitleNoMargin">
+            <span className="sectionModuleName">{UI_STRINGS.TASKS}</span>
+            <span className="sectionSeparator"> • </span>
+            <span className={modeContextClass}>{modeContext}</span>
+          </div>
           <div className="modeDots" aria-label="Task list mode">
             {TASK_MODES.map((dotMode) => (
               <Link
