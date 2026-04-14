@@ -185,10 +185,49 @@ def _migrate_sqlite_items_table_add_event_type(conn) -> None:
         conn.execute(text("PRAGMA foreign_keys = ON"))
 
 
+def _sqlite_table_columns(conn, table_name: str) -> set[str]:
+    rows = conn.execute(text(f"PRAGMA table_info({table_name})")).fetchall()
+    return {str(row[1]) for row in rows}
+
+
+def _sqlite_add_column_if_missing(conn, table_name: str, column_sql: str) -> None:
+    if not _sqlite_table_columns(conn, table_name):
+        return
+    column_name = column_sql.split()[0]
+    existing = _sqlite_table_columns(conn, table_name)
+    if column_name in existing:
+        return
+    conn.execute(text(f"ALTER TABLE {table_name} ADD COLUMN {column_sql}"))
+
+
+def _migrate_sqlite_legacy_task_reminder_tables(conn) -> None:
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_ITEMS, "due_at TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_ITEMS, "memo TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_ITEMS, "is_done INTEGER NOT NULL DEFAULT 0")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_ITEMS, "done_at TEXT")
+
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_SUBTASKS, "position INTEGER NOT NULL DEFAULT 0")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_SUBTASKS, "is_done INTEGER NOT NULL DEFAULT 0")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_SUBTASKS, "done_at TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_SUBTASKS, "removed_at TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_SUBTASKS, "created_at TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_SUBTASKS, "updated_at TEXT")
+
+    _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "state TEXT NOT NULL DEFAULT 'scheduled'")
+    _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "alert_policy TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "last_fired_at TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "acked_at TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "snoozed_until TEXT")
+
+    _sqlite_add_column_if_missing(conn, DbTables.ITEM_REMINDERS, "created_at TEXT")
+
+
 def init_schema_v0(engine) -> None:
     with engine.begin() as conn:
         if engine.dialect.name == "sqlite" and not _sqlite_items_table_allows_event(conn):
             _migrate_sqlite_items_table_add_event_type(conn)
+        if engine.dialect.name == "sqlite":
+            _migrate_sqlite_legacy_task_reminder_tables(conn)
         for statement in SCHEMA_SQL.split(";\n\n"):
             sql = statement.strip()
             if not sql:

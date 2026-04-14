@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import re
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
+from app.config import SETTINGS
 from app.utils.datetime_parse import parse_local_datetime_to_iso
 from app.utils.timefmt import format_dt_for_ui
 
@@ -14,6 +17,8 @@ MEMO_DELIM = '"""'
 
 META_PATTERN = re.compile(r"(?:^|\s)(d:|r:|R:)")
 TAG_PATTERN = re.compile(r"(?:^|\s)#")
+DATE_ONLY_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+RELATIVE_REMIND_PATTERN = re.compile(r"^-(\d+)([dhwm])$")
 
 
 def _extract_meta_from_line(line: str) -> tuple[str, dict]:
@@ -25,15 +30,15 @@ def _extract_meta_from_line(line: str) -> tuple[str, dict]:
         "tags": [],
     }
 
-    due_match = re.search(r"(?:(?<=^)|(?<=\s))d:(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})", working)
+    due_match = re.search(r"(?:(?<=^)|(?<=\s))d:([^\s]+(?:\s+\d{2}:\d{2})?)", working)
     if due_match:
         meta["due_at"] = due_match.group(1).strip()
         working = working.replace(due_match.group(0), " ")
 
-    remind_matches = re.findall(r"(?:(?<=^)|(?<=\s))r:(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})", working)
+    remind_matches = re.findall(r"(?:(?<=^)|(?<=\s))r:([^\s]+(?:\s+\d{2}:\d{2})?)", working)
     if remind_matches:
         meta["remind_ats"] = [value.strip() for value in remind_matches]
-        working = re.sub(r"(?:(?<=^)|(?<=\s))r:(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})", " ", working)
+        working = re.sub(r"(?:(?<=^)|(?<=\s))r:([^\s]+(?:\s+\d{2}:\d{2})?)", " ", working)
 
     repeat_match = re.search(r"(?:(?<=^)|(?<=\s))R:([^\s]+)", working)
     if repeat_match:
@@ -47,6 +52,51 @@ def _extract_meta_from_line(line: str) -> tuple[str, dict]:
 
     cleaned = " ".join(working.split())
     return cleaned, meta
+
+
+def _parse_due_value(raw_due: str) -> str:
+    candidate = str(raw_due or "").strip()
+    if not candidate:
+        return candidate
+    if DATE_ONLY_PATTERN.fullmatch(candidate):
+        return candidate
+    return parse_local_datetime_to_iso(candidate)
+
+
+def _resolve_relative_reminder(remind_raw: str, due_at: str | None) -> str:
+    clean = str(remind_raw or "").strip()
+    match = RELATIVE_REMIND_PATTERN.fullmatch(clean)
+    if not match:
+        raise ValueError("malformed r:")
+    if not due_at:
+        raise ValueError("relative r: requires d:")
+
+    amount = int(match.group(1))
+    unit = match.group(2)
+
+    if DATE_ONLY_PATTERN.fullmatch(due_at):
+        due_midnight_local = datetime.strptime(due_at, "%Y-%m-%d").replace(tzinfo=ZoneInfo(SETTINGS.APP_TIMEZONE))
+    else:
+        due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00"))
+        if due_dt.tzinfo is None:
+            due_dt = due_dt.replace(tzinfo=ZoneInfo(SETTINGS.APP_TIMEZONE))
+        due_midnight_local = due_dt.astimezone(ZoneInfo(SETTINGS.APP_TIMEZONE)).replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0,
+        )
+
+    if unit == "d":
+        return (due_midnight_local - timedelta(days=amount)).date().isoformat()
+    if unit == "w":
+        return (due_midnight_local - timedelta(weeks=amount)).date().isoformat()
+    if unit == "h":
+        return (due_midnight_local - timedelta(hours=amount)).astimezone(timezone.utc).isoformat(timespec="seconds")
+    if unit == "m":
+        return (due_midnight_local - timedelta(minutes=amount)).astimezone(timezone.utc).isoformat(timespec="seconds")
+
+    raise ValueError("malformed r:")
 
 
 def _assert_no_subtask_metadata(subtask_text: str) -> None:
@@ -75,7 +125,7 @@ def export_task_raw(
 
     due_at = str(task.get("due_at") or "").strip()
     if due_at:
-        due_display = format_dt_for_ui(due_at)
+        due_display = due_at if DATE_ONLY_PATTERN.fullmatch(due_at) else format_dt_for_ui(due_at)
         if due_display:
             lines.append(f"d:{due_display}")
 
@@ -125,6 +175,7 @@ def parse_task_raw(raw_text: str) -> dict:
     subtasks: list[dict] = []
     in_memo = False
     parsed_task_done = False
+    relative_remind_tokens: list[str] = []
 
     first_content_line = next((line.strip() for line in lines if line.strip()), None)
     if not first_content_line:
@@ -183,9 +234,15 @@ def parse_task_raw(raw_text: str) -> dict:
         cleaned, meta = _extract_meta_from_line(original_line)
 
         if meta["due_at"] is not None:
-            due_at = parse_local_datetime_to_iso(meta["due_at"])
+            try:
+                due_at = _parse_due_value(meta["due_at"])
+            except ValueError as exc:
+                raise ValueError(f"invalid due format: {meta['due_at']}") from exc
 
         for remind_at in meta["remind_ats"]:
+            if RELATIVE_REMIND_PATTERN.fullmatch(remind_at):
+                relative_remind_tokens.append(remind_at)
+                continue
             normalized = parse_local_datetime_to_iso(remind_at)
             if normalized not in remind_ats:
                 remind_ats.append(normalized)
@@ -203,6 +260,11 @@ def parse_task_raw(raw_text: str) -> dict:
 
     if in_memo:
         raise ValueError("unclosed memo block")
+
+    for relative_token in relative_remind_tokens:
+        resolved = _resolve_relative_reminder(relative_token, due_at)
+        if resolved not in remind_ats:
+            remind_ats.append(resolved)
 
     memo_parts: list[str] = []
     if extra_lines:
