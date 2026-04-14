@@ -19,3 +19,9 @@
 - reminders UI
 - notes/files/mail modules
 - smarter auth layer inside tailnet
+
+## SQLite schema evolution note
+- The backend now includes a startup migration for legacy SQLite databases whose `items.item_type` check only allowed `task` and `reminder`.
+- If you are running an older local DB and see event-creation failures, either:
+  - let the app start once so the migration can run, or
+  - reset the DB file in disposable environments.

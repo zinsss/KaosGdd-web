@@ -134,8 +134,61 @@ ON {reminder_items}(state, last_fired_at);
     item_tags=DbTables.ITEM_TAGS,
 )
 
+
+def _sqlite_items_table_allows_event(conn) -> bool:
+    row = conn.execute(
+        text("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = :name"),
+        {"name": DbTables.ITEMS},
+    ).fetchone()
+    if not row or not row[0]:
+        return True
+    ddl = str(row[0]).lower()
+    return "'event'" in ddl
+
+
+def _migrate_sqlite_items_table_add_event_type(conn) -> None:
+    conn.execute(text("PRAGMA foreign_keys = OFF"))
+    try:
+        conn.execute(text(f"ALTER TABLE {DbTables.ITEMS} RENAME TO {DbTables.ITEMS}__legacy"))
+        conn.execute(
+            text(
+                f"""
+                CREATE TABLE {DbTables.ITEMS} (
+                    id TEXT PRIMARY KEY,
+                    item_type TEXT NOT NULL,
+                    title TEXT NOT NULL,
+                    status TEXT NOT NULL DEFAULT 'active',
+                    created_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    archived_at TEXT,
+                    deleted_at TEXT,
+                    CHECK (item_type IN ('task', 'reminder', 'event')),
+                    CHECK (status IN ('active', 'removed', 'archived'))
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                f"""
+                INSERT INTO {DbTables.ITEMS} (
+                    id, item_type, title, status, created_at, updated_at, archived_at, deleted_at
+                )
+                SELECT
+                    id, item_type, title, status, created_at, updated_at, archived_at, deleted_at
+                FROM {DbTables.ITEMS}__legacy
+                """
+            )
+        )
+        conn.execute(text(f"DROP TABLE {DbTables.ITEMS}__legacy"))
+    finally:
+        conn.execute(text("PRAGMA foreign_keys = ON"))
+
+
 def init_schema_v0(engine) -> None:
     with engine.begin() as conn:
+        if engine.dialect.name == "sqlite" and not _sqlite_items_table_allows_event(conn):
+            _migrate_sqlite_items_table_add_event_type(conn)
         for statement in SCHEMA_SQL.split(";\n\n"):
             sql = statement.strip()
             if not sql:
