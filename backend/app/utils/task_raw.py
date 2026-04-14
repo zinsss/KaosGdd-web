@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from app.config import SETTINGS
 from app.utils.datetime_parse import parse_local_datetime_to_iso
+from app.utils.repeat import normalize_repeat_rule
 from app.utils.timefmt import format_dt_for_ui
 
 REPEAT_TAG_PREFIX = "repeat:"
@@ -42,7 +43,7 @@ def _extract_meta_from_line(line: str) -> tuple[str, dict]:
 
     repeat_match = re.search(r"(?:(?<=^)|(?<=\s))R:([^\s]+)", working)
     if repeat_match:
-        meta["repeat_rule"] = repeat_match.group(1).strip()
+        meta["repeat_rule"] = normalize_repeat_rule(repeat_match.group(1).strip())
         working = working.replace(repeat_match.group(0), " ")
 
     tags = re.findall(r"(?:(?<=^)|(?<=\s))#([^\s#]+)", working)
@@ -169,6 +170,7 @@ def parse_task_raw(raw_text: str) -> dict:
     due_at = None
     remind_ats: list[str] = []
     repeat_rule = None
+    repeat_rule_seen = False
     tags: list[str] = []
     extra_lines: list[str] = []
     memo_lines: list[str] = []
@@ -248,6 +250,9 @@ def parse_task_raw(raw_text: str) -> dict:
                 remind_ats.append(normalized)
 
         if meta["repeat_rule"] is not None:
+            if repeat_rule_seen:
+                raise ValueError("multiple R: lines are not allowed")
+            repeat_rule_seen = True
             repeat_rule = meta["repeat_rule"]
 
         if meta["tags"]:

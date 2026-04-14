@@ -128,14 +128,20 @@ export default function TaskDetailPanel({ item, raw }) {
         ) : null}
 
         <div className="detailReadBlock">
-          {item.due_at_display || item.repeat_rule ? (
+          {item.due_at_display ? (
             <div className="detailReadRow">
               <div className="detailReadLabel">Due</div>
               <div className="detailReadContent withDivider">
-                <div className="detailReadInline">
-                  {item.due_at_display ? <span>{item.due_at_display}</span> : <span>-</span>}
-                  {item.repeat_rule ? <span>↻ {item.repeat_rule}</span> : null}
-                </div>
+                <div className="detailReadInline">{item.due_at_display}</div>
+              </div>
+            </div>
+          ) : null}
+
+          {item.repeat_rule ? (
+            <div className="detailReadRow">
+              <div className="detailReadLabel">Repeat</div>
+              <div className="detailReadContent withDivider">
+                <div className="detailReadInline">{item.repeat_rule}</div>
               </div>
             </div>
           ) : null}

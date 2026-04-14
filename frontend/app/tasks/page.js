@@ -12,6 +12,7 @@ function buildTaskModeHref(mode) {
 function getTaskMetaTag(task) {
   const parts = [];
   if (task.metatag_due) parts.push(task.metatag_due);
+  if (task.repeat_rule) parts.push("↻");
   if (task.has_reminders) parts.push("R");
   if (task.has_tags) parts.push("#");
   return parts.join("");
