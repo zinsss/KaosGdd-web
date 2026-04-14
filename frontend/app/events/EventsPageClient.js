@@ -62,7 +62,17 @@ export default function EventsPageClient() {
     return map;
   }, [items]);
 
-  const dayEvents = mapByDate.get(selectedDate) || [];
+  const monthEvents = useMemo(() => {
+    const unique = new Map();
+    for (const event of items) {
+      unique.set(event.id, event);
+    }
+    return Array.from(unique.values()).sort((a, b) => {
+      if (a.start_date < b.start_date) return -1;
+      if (a.start_date > b.start_date) return 1;
+      return String(a.id).localeCompare(String(b.id));
+    });
+  }, [items]);
 
   function shiftMonth(delta) {
     const [y, m] = month.split("-").map(Number);
@@ -86,7 +96,14 @@ export default function EventsPageClient() {
         </div>
 
         <div className="eventCalGrid">
-          {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => <div key={d} className="eventCalHead">{d}</div>)}
+          {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d) => (
+            <div
+              key={d}
+              className={"eventCalHead" + (d === "Sat" ? " eventCalHeadSat" : "") + (d === "Sun" ? " eventCalHeadSun" : "")}
+            >
+              {d}
+            </div>
+          ))}
           {cells.map((d) => {
             const inMonth = d.startsWith(month);
             const count = (mapByDate.get(d) || []).length;
@@ -101,12 +118,12 @@ export default function EventsPageClient() {
       </section>
 
       <section className="panel">
-        <div className="sectionTitle">{selectedDate}</div>
-        {dayEvents.length === 0 ? (
+        <div className="sectionTitle">{month}</div>
+        {monthEvents.length === 0 ? (
           <div className="empty">No events.</div>
         ) : (
           <ul className="taskList">
-            {dayEvents.map((event) => (
+            {monthEvents.map((event) => (
               <li key={event.id} className="taskListRow">
                 <Link className="taskLink taskListTitleLink" href={`/events/${event.id}`}>{event.title}</Link>
                 <div className="metaLine">{event.start_date}{event.end_date ? ` ~ ${event.end_date}` : ""}</div>
