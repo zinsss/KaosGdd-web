@@ -145,7 +145,7 @@
 .taskListMetaTag {
   margin-left: auto;
   flex: 0 0 auto;
-  color: var(--ui-text-dim);
+  color: var(--ctp-rosewater);
   font-size: 12px;
   white-space: nowrap;
   padding-left: 10px;
