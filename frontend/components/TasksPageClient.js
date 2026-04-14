@@ -232,6 +232,8 @@ export default function TasksPageClient({ initialMode }) {
   }
 
   async function handleTaskTitleClick(event, task) {
+    if (mode !== "active") return;
+
     const hasSubtasks = Number(task.subtask_total || 0) > 0;
     if (!hasSubtasks) return;
 
