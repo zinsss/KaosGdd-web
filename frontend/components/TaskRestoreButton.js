@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-export default function TaskRestoreButton({ taskId }) {
+export default function TaskRestoreButton({ taskId, onResolved, onNotFound, onError }) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function onClick() {
@@ -10,17 +12,30 @@ export default function TaskRestoreButton({ taskId }) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/tasks/" + taskId + "/restore", {
+      const res = await fetch("/tasks/" + taskId + "/restore", {
         method: "POST",
       });
 
       const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) {
-        window.alert((data && data.error) || "Task restore failed.");
+      if (res.status === 404) {
+        onNotFound?.(taskId, data);
+        router.refresh();
         return;
       }
 
-      window.location.reload();
+      if (!res.ok || !data?.ok) {
+        const message = (data && data.error) || "Task restore failed.";
+        if (onError) onError(message);
+        else window.alert(message);
+        return;
+      }
+
+      onResolved?.(taskId, data);
+      router.refresh();
+    } catch {
+      const message = "Task restore failed.";
+      if (onError) onError(message);
+      else window.alert(message);
     } finally {
       setIsSubmitting(false);
     }
