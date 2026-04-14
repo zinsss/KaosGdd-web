@@ -1,18 +1,32 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function SubtaskToggleButton({ taskId, subtaskId, isDone }) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function onClick() {
     if (isSubmitting) return;
     setIsSubmitting(true);
     try {
-      await fetch(`/api/tasks/${taskId}/subtasks/${subtaskId}/toggle`, {
+      const res = await fetch(`/api/tasks/${taskId}/subtasks/${subtaskId}/toggle`, {
         method: "POST",
       });
-      window.location.reload();
+      const data = await res.json().catch(() => null);
+
+      if (res.status === 404) {
+        router.refresh();
+        return;
+      }
+
+      if (!res.ok || !data?.ok) {
+        window.alert((data && data.error) || "Subtask toggle failed.");
+        return;
+      }
+
+      router.refresh();
     } finally {
       setIsSubmitting(false);
     }
