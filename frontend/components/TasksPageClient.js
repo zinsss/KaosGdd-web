@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import TaskToggleButton from "./TaskToggleButton";
 import TaskRestoreButton from "./TaskRestoreButton";
@@ -93,10 +93,29 @@ function TaskRow({ task, mode, onToggleResolved, onTaskNotFound, onActionError }
   );
 }
 
-export default function TasksPageClient({ initialMode, initialItems }) {
+export default function TasksPageClient({ initialMode }) {
   const mode = TASK_MODES.includes(initialMode) ? initialMode : "active";
-  const [items, setItems] = useState(initialItems || []);
+
+  const [items, setItems] = useState([]);
   const [localError, setLocalError] = useState("");
+
+  useEffect(() => {
+    const suffix = mode === "active" ? "" : `?mode=${encodeURIComponent(mode)}`;
+    setLocalError("");
+
+    fetch(`/api/tasks${suffix}`)
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.error || "Failed to load tasks.");
+        }
+        setItems(data.items || []);
+      })
+      .catch((err) => {
+        setItems([]);
+        setLocalError(err?.message || "Failed to load tasks.");
+      });
+  }, [mode]);
 
   function removeRow(taskId) {
     setItems((current) => current.filter((task) => task.id !== taskId));
