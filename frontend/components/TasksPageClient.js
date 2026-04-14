@@ -37,7 +37,18 @@ function groupDoneTasksByMonth(tasks) {
   return Array.from(groups.entries()).sort((a, b) => b[0].localeCompare(a[0]));
 }
 
-function TaskRow({ task, mode, onToggleResolved, onTaskNotFound, onActionError }) {
+function TaskRow({
+  task,
+  mode,
+  isExpanded,
+  expandedSubtasks,
+  subtasksLoading,
+  subtaskLoadError,
+  onTitleClick,
+  onToggleResolved,
+  onTaskNotFound,
+  onActionError,
+}) {
   const metatag = getTaskMetaTag(task);
   const hasSubtasks = Number(task.subtask_total || 0) > 0;
   const showPrefixToggle = mode === "active";
@@ -67,6 +78,7 @@ function TaskRow({ task, mode, onToggleResolved, onTaskNotFound, onActionError }
                 "taskLink taskListTitleLink" + (task.is_done ? " taskLinkDone taskLinkDoneList" : "")
               }
               href={"/tasks/" + task.id}
+              onClick={(event) => onTitleClick(event, task)}
             >
               {task.title}
             </Link>
@@ -89,6 +101,31 @@ function TaskRow({ task, mode, onToggleResolved, onTaskNotFound, onActionError }
           </div>
         ) : null}
       </div>
+
+      {isExpanded ? (
+        <div className="taskInlineSubtasks">
+          {subtasksLoading ? (
+            <div className="taskInlineSubtasksState">{UI_STRINGS.LOADING}</div>
+          ) : subtaskLoadError ? (
+            <div className="taskInlineSubtasksState errorText">{subtaskLoadError}</div>
+          ) : expandedSubtasks.length === 0 ? (
+            <div className="taskInlineSubtasksState">{UI_STRINGS.NONE}</div>
+          ) : (
+            <ul className="subtaskList">
+              {expandedSubtasks.map((subtask) => (
+                <li key={subtask.id} className="subtaskRow">
+                  <span className={"taskListStateIcon" + (subtask.is_done ? " isDone" : " isUndone")}>
+                    {subtask.is_done ? "✓" : "○"}
+                  </span>
+                  <div className={"subtaskText" + (subtask.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
+                    {subtask.content}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
     </li>
   );
 }
@@ -98,6 +135,10 @@ export default function TasksPageClient({ initialMode }) {
 
   const [items, setItems] = useState([]);
   const [localError, setLocalError] = useState("");
+  const [expandedTaskId, setExpandedTaskId] = useState("");
+  const [subtasksByTaskId, setSubtasksByTaskId] = useState({});
+  const [loadingSubtasksTaskId, setLoadingSubtasksTaskId] = useState("");
+  const [subtaskLoadErrors, setSubtaskLoadErrors] = useState({});
 
   useEffect(() => {
     const suffix = mode === "active" ? "" : `?mode=${encodeURIComponent(mode)}`;
@@ -110,15 +151,37 @@ export default function TasksPageClient({ initialMode }) {
           throw new Error(data?.error || "Failed to load tasks.");
         }
         setItems(data.items || []);
+        setExpandedTaskId("");
+        setLoadingSubtasksTaskId("");
+        setSubtaskLoadErrors({});
       })
       .catch((err) => {
         setItems([]);
         setLocalError(err?.message || "Failed to load tasks.");
+        setExpandedTaskId("");
+        setLoadingSubtasksTaskId("");
+        setSubtaskLoadErrors({});
       });
   }, [mode]);
 
   function removeRow(taskId) {
     setItems((current) => current.filter((task) => task.id !== taskId));
+    setSubtasksByTaskId((current) => {
+      const next = { ...current };
+      delete next[taskId];
+      return next;
+    });
+    setSubtaskLoadErrors((current) => {
+      const next = { ...current };
+      delete next[taskId];
+      return next;
+    });
+    if (expandedTaskId === taskId) {
+      setExpandedTaskId("");
+    }
+    if (loadingSubtasksTaskId === taskId) {
+      setLoadingSubtasksTaskId("");
+    }
   }
 
   function handleTaskNotFound(taskId) {
@@ -140,6 +203,48 @@ export default function TasksPageClient({ initialMode }) {
     if (mode === "removed") {
       removeRow(taskId);
     }
+  }
+
+  async function ensureTaskSubtasksLoaded(taskId) {
+    if (subtasksByTaskId[taskId]) return true;
+
+    setLoadingSubtasksTaskId(taskId);
+    setSubtaskLoadErrors((current) => ({ ...current, [taskId]: "" }));
+
+    try {
+      const res = await fetch(`/api/tasks/${taskId}`);
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to load subtasks.");
+      }
+      const subtasks = Array.isArray(data?.item?.subtasks) ? data.item.subtasks : [];
+      setSubtasksByTaskId((current) => ({ ...current, [taskId]: subtasks }));
+      return true;
+    } catch (err) {
+      setSubtaskLoadErrors((current) => ({
+        ...current,
+        [taskId]: err?.message || "Failed to load subtasks.",
+      }));
+      return false;
+    } finally {
+      setLoadingSubtasksTaskId("");
+    }
+  }
+
+  async function handleTaskTitleClick(event, task) {
+    if (mode !== "active") return;
+
+    const hasSubtasks = Number(task.subtask_total || 0) > 0;
+    if (!hasSubtasks) return;
+
+    if (expandedTaskId === task.id) {
+      return;
+    }
+
+    event.preventDefault();
+    const loaded = await ensureTaskSubtasksLoaded(task.id);
+    if (!loaded) return;
+    setExpandedTaskId(task.id);
   }
 
   const modeContext =
@@ -195,6 +300,11 @@ export default function TasksPageClient({ initialMode }) {
                       key={task.id}
                       task={task}
                       mode={mode}
+                      isExpanded={expandedTaskId === task.id}
+                      expandedSubtasks={subtasksByTaskId[task.id] || []}
+                      subtasksLoading={loadingSubtasksTaskId === task.id}
+                      subtaskLoadError={subtaskLoadErrors[task.id] || ""}
+                      onTitleClick={handleTaskTitleClick}
                       onToggleResolved={handleToggleResolved}
                       onTaskNotFound={handleTaskNotFound}
                       onActionError={setLocalError}
@@ -211,6 +321,11 @@ export default function TasksPageClient({ initialMode }) {
                 key={task.id}
                 task={task}
                 mode={mode}
+                isExpanded={expandedTaskId === task.id}
+                expandedSubtasks={subtasksByTaskId[task.id] || []}
+                subtasksLoading={loadingSubtasksTaskId === task.id}
+                subtaskLoadError={subtaskLoadErrors[task.id] || ""}
+                onTitleClick={handleTaskTitleClick}
                 onToggleResolved={handleToggleResolved}
                 onTaskNotFound={handleTaskNotFound}
                 onActionError={setLocalError}

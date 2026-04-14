@@ -162,6 +162,17 @@
   flex: 0 0 auto;
 }
 
+.taskInlineSubtasks {
+  margin-top: 8px;
+  margin-left: 34px;
+  max-width: 460px;
+}
+
+.taskInlineSubtasksState {
+  color: var(--ui-text-dim);
+  font-size: 13px;
+}
+
 .taskDoneGroups {
   display: grid;
   gap: 10px;
@@ -191,6 +202,11 @@
 
   .taskListDueLine {
     margin-left: 28px;
+  }
+
+  .taskInlineSubtasks {
+    margin-left: 30px;
+    max-width: 100%;
   }
 
   .taskListMetaTag {
