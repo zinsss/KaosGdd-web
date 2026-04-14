@@ -9,7 +9,7 @@ from sqlalchemy import create_engine, text
 from app.db.schema_v0 import init_schema_v0
 
 
-def test_init_schema_migrates_items_check_to_include_event(tmp_path) -> None:
+def test_init_schema_migrates_items_check_to_include_event_and_journal(tmp_path) -> None:
     db_path = tmp_path / "legacy.db"
     conn = sqlite3.connect(db_path)
     conn.execute(
@@ -37,6 +37,7 @@ def test_init_schema_migrates_items_check_to_include_event(tmp_path) -> None:
     with engine.begin() as db:
         sql = db.execute(text("SELECT sql FROM sqlite_master WHERE type='table' AND name='items'")).scalar_one()
         assert "'event'" in sql
+        assert "'journal'" in sql
         db.execute(
             text(
                 """
@@ -61,7 +62,7 @@ def test_init_schema_migrates_legacy_task_reminder_tables_for_multiline_capture(
             updated_at TEXT NOT NULL,
             archived_at TEXT,
             deleted_at TEXT,
-            CHECK (item_type IN ('task', 'reminder', 'event')),
+            CHECK (item_type IN ('task', 'reminder', 'event', 'journal')),
             CHECK (status IN ('active', 'removed', 'archived'))
         );
 

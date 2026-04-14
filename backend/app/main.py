@@ -11,11 +11,13 @@ from fastapi import FastAPI
 from app.config import SETTINGS
 from app.core.db import engine
 from app.db.repo.event_repo import EventRepo
+from app.db.repo.journal_repo import JournalRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
+from app.engine.journal_service import JournalService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
 from app.schemas.reminders import normalize_minutes
@@ -28,9 +30,11 @@ APP_NAME = os.getenv("APP_NAME", SETTINGS.APP_NAME)
 items_repo = ItemsRepo(engine)
 task_repo = TaskRepo(engine)
 event_repo = EventRepo(engine)
+journal_repo = JournalRepo(engine)
 reminder_repo = ReminderRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
+journal_service = JournalService(items_repo, journal_repo)
 reminder_service = ReminderService(reminder_repo, task_repo, items_repo)
 
 
@@ -131,6 +135,44 @@ def remove_event(event_id: str):
 @app.post("/events/{event_id}/restore")
 def restore_event(event_id: str):
     ok = event_service.restore_event(event_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
+
+
+@app.get("/journals")
+def list_journals(mode: str = "active"):
+    return {"items": journal_service.list_journals(mode=mode)}
+
+
+@app.get("/journals/{journal_id}")
+def get_journal(journal_id: str):
+    item = journal_service.get_journal(journal_id)
+    if item is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "item": item}
+
+
+@app.get("/journals/{journal_id}/raw")
+def get_journal_raw(journal_id: str):
+    raw = journal_service.export_journal_raw(journal_id)
+    if raw is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "raw": raw}
+
+
+@app.patch("/journals/{journal_id}/raw")
+def update_journal_raw(journal_id: str, payload: dict):
+    raw_text = str(payload.get("raw") or "")
+    ok, error = journal_service.update_journal_from_raw(journal_id, raw_text)
+    if not ok:
+        return {"ok": False, "error": error or ApiText.INVALID_JOURNAL_RAW}
+    return {"ok": True}
+
+
+@app.delete("/journals/{journal_id}")
+def remove_journal(journal_id: str):
+    ok = journal_service.remove_journal(journal_id)
     if not ok:
         return {"ok": False, "error": ApiText.NOT_FOUND}
     return {"ok": True}
@@ -347,7 +389,12 @@ def capture_item(payload: dict):
         return {"ok": True, "kind": kind, "id": created_ids[0], "ids": created_ids}
 
     if kind == "journal":
-        return {"ok": False, "error": ApiText.JOURNAL_NOT_SUPPORTED}
+        title = str(parsed["parsed"].get("title") or "").strip()
+        memo = str(parsed["parsed"].get("memo") or "").strip()
+        body = title if not memo else f"{title}\n{memo}"
+        tags = list(parsed["parsed"].get("tags") or [])
+        journal_id = journal_service.create_journal(title=title, body=body, tags=tags)
+        return {"ok": True, "kind": kind, "id": journal_id}
 
     return {"ok": False, "error": ApiText.UNSUPPORTED_CAPTURE_KIND}
 
