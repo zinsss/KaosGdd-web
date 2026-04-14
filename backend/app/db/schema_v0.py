@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS {items} (
     updated_at TEXT NOT NULL,
     archived_at TEXT,
     deleted_at TEXT,
-    CHECK (item_type IN ('task', 'reminder', 'event')),
+    CHECK (item_type IN ('task', 'reminder', 'event', 'journal')),
     CHECK (status IN ('active', 'removed', 'archived'))
 );
 
@@ -50,6 +50,12 @@ CREATE TABLE IF NOT EXISTS {event_items} (
     start_date TEXT NOT NULL,
     end_date TEXT,
     memo TEXT,
+    FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS {journal_items} (
+    item_id TEXT PRIMARY KEY,
+    body TEXT NOT NULL,
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE
 );
 
@@ -121,6 +127,9 @@ ON {task_items}(is_done, done_at);
 CREATE INDEX IF NOT EXISTS idx_event_items_start_end
 ON {event_items}(start_date, end_date);
 
+CREATE INDEX IF NOT EXISTS idx_journal_items_created
+ON {items}(item_type, status, created_at);
+
 CREATE INDEX IF NOT EXISTS idx_reminder_items_state_last_fired
 ON {reminder_items}(state, last_fired_at);
 """.format(
@@ -129,13 +138,14 @@ ON {reminder_items}(state, last_fired_at);
     task_subtasks=DbTables.TASK_SUBTASKS,
     reminder_items=DbTables.REMINDER_ITEMS,
     event_items=DbTables.EVENT_ITEMS,
+    journal_items=DbTables.JOURNAL_ITEMS,
     reminder_events=DbTables.REMINDER_EVENTS,
     item_reminders=DbTables.ITEM_REMINDERS,
     item_tags=DbTables.ITEM_TAGS,
 )
 
 
-def _sqlite_items_table_allows_event(conn) -> bool:
+def _sqlite_items_table_allows_supported_types(conn) -> bool:
     row = conn.execute(
         text("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = :name"),
         {"name": DbTables.ITEMS},
@@ -143,10 +153,10 @@ def _sqlite_items_table_allows_event(conn) -> bool:
     if not row or not row[0]:
         return True
     ddl = str(row[0]).lower()
-    return "'event'" in ddl
+    return "'event'" in ddl and "'journal'" in ddl
 
 
-def _migrate_sqlite_items_table_add_event_type(conn) -> None:
+def _migrate_sqlite_items_table_add_supported_types(conn) -> None:
     conn.execute(text("PRAGMA foreign_keys = OFF"))
     try:
         conn.execute(text(f"ALTER TABLE {DbTables.ITEMS} RENAME TO {DbTables.ITEMS}__legacy"))
@@ -162,7 +172,7 @@ def _migrate_sqlite_items_table_add_event_type(conn) -> None:
                     updated_at TEXT NOT NULL,
                     archived_at TEXT,
                     deleted_at TEXT,
-                    CHECK (item_type IN ('task', 'reminder', 'event')),
+                    CHECK (item_type IN ('task', 'reminder', 'event', 'journal')),
                     CHECK (status IN ('active', 'removed', 'archived'))
                 )
                 """
@@ -224,8 +234,8 @@ def _migrate_sqlite_legacy_task_reminder_tables(conn) -> None:
 
 def init_schema_v0(engine) -> None:
     with engine.begin() as conn:
-        if engine.dialect.name == "sqlite" and not _sqlite_items_table_allows_event(conn):
-            _migrate_sqlite_items_table_add_event_type(conn)
+        if engine.dialect.name == "sqlite" and not _sqlite_items_table_allows_supported_types(conn):
+            _migrate_sqlite_items_table_add_supported_types(conn)
         if engine.dialect.name == "sqlite":
             _migrate_sqlite_legacy_task_reminder_tables(conn)
         for statement in SCHEMA_SQL.split(";\n\n"):

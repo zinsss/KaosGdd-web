@@ -149,3 +149,26 @@
     gap: 8px;
   }
 }
+
+.journalExpandArea {
+  padding-left: 0;
+}
+
+.journalMetaLine {
+  color: var(--ui-text-dim);
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.journalBody {
+  margin: 0 0 10px;
+  font: inherit;
+  white-space: pre-wrap;
+  color: var(--ui-text);
+}
+
+.journalTags {
+  color: var(--ctp-mauve);
+  font-size: 13px;
+  margin-bottom: 8px;
+}

@@ -105,6 +105,9 @@ def parse_capture(raw: str) -> dict:
     elif first.startswith(REMINDER_PREFIX):
         item_type = "reminder"
         title = first[len(REMINDER_PREFIX) :].strip()
+    elif first == "//":
+        item_type = "journal"
+        title = ""
     elif first.startswith(JOURNAL_PREFIX):
         item_type = "journal"
         title = first[len(JOURNAL_PREFIX) :].strip()
@@ -118,6 +121,7 @@ def parse_capture(raw: str) -> dict:
 
     in_memo = False
     memo_lines: list[str] = []
+    journal_lines: list[str] = []
 
     for original in lines[first_idx + 1 :]:
         line = original.strip()
@@ -133,6 +137,8 @@ def parse_capture(raw: str) -> dict:
             continue
 
         if line == MEMO_DELIM:
+            if result.item_type == "journal":
+                return ParseResult(ok=False, error="journal does not support memo blocks").to_dict()
             in_memo = True
             continue
 
@@ -140,6 +146,15 @@ def parse_capture(raw: str) -> dict:
             if line.startswith("#") or line.startswith(META_REMIND) or line == MEMO_DELIM:
                 return ParseResult(ok=False, error="missing title").to_dict()
             result.title = line
+            continue
+
+        if result.item_type == "journal":
+            if re.search(r"(?:^|\s)(d:|r:|R:)", line):
+                return ParseResult(ok=False, error="journal does not support r:, d:, or R:").to_dict()
+            if line.startswith("#"):
+                result.tags.extend(TAG_RE.findall(line))
+            else:
+                journal_lines.append(original)
             continue
 
         if line.startswith(UNDONE_SUBTASK_PREFIX) or line.startswith(DONE_SUBTASK_PREFIX):
@@ -192,7 +207,10 @@ def parse_capture(raw: str) -> dict:
     if in_memo:
         return ParseResult(ok=False, error='memo block not closed with """').to_dict()
 
-    if result.item_type != "event" and not result.title:
+    if result.item_type == "journal" and not result.title:
+        return ParseResult(ok=False, error="journal content is required").to_dict()
+
+    if result.item_type != "event" and result.item_type != "journal" and not result.title:
         return ParseResult(ok=False, error="title is required").to_dict()
 
     if result.item_type == "event" and not result.title:
@@ -200,6 +218,9 @@ def parse_capture(raw: str) -> dict:
 
     if memo_lines:
         result.memo = "\n".join(memo_lines).rstrip("\n")
+
+    if result.item_type == "journal" and journal_lines:
+        result.memo = "\n".join(journal_lines).rstrip("\n")
 
     seen: set[str] = set()
     deduped: list[str] = []
