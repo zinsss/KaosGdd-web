@@ -1,14 +1,16 @@
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
+from app.config import SETTINGS
 from app.utils.datetime_parse import parse_local_datetime_to_iso
 
 EVENT_PREFIX = "^^ "
 MEMO_DELIM = '"""'
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-REL_REMIND_RE = re.compile(r"^-(\d+)d$")
+REL_REMIND_RE = re.compile(r"^-(\d+)([dhwm])$")
 TAG_RE = re.compile(r"#([^\s#]+)")
 
 
@@ -29,10 +31,18 @@ def _resolve_reminder(remind_raw: str, start_date: str) -> str:
 
     rel_match = REL_REMIND_RE.match(clean)
     if rel_match:
-        days = int(rel_match.group(1))
-        base = datetime.strptime(start_date, "%Y-%m-%d")
-        target = base - timedelta(days=days)
-        return target.date().isoformat()
+        amount = int(rel_match.group(1))
+        unit = rel_match.group(2)
+        base_local = datetime.strptime(start_date, "%Y-%m-%d").replace(tzinfo=ZoneInfo(SETTINGS.APP_TIMEZONE))
+        if unit == "d":
+            return (base_local - timedelta(days=amount)).date().isoformat()
+        if unit == "w":
+            return (base_local - timedelta(weeks=amount)).date().isoformat()
+        if unit == "h":
+            return (base_local - timedelta(hours=amount)).astimezone(timezone.utc).isoformat(timespec="seconds")
+        if unit == "m":
+            return (base_local - timedelta(minutes=amount)).astimezone(timezone.utc).isoformat(timespec="seconds")
+        raise ValueError("malformed r:")
 
     if DATE_RE.match(clean):
         _validate_date(clean)

@@ -1,0 +1,56 @@
+from __future__ import annotations
+
+import importlib
+import os
+from pathlib import Path
+
+import pytest
+
+
+@pytest.fixture()
+def main_module(tmp_path: Path):
+    db_path = tmp_path / "capture-task-due-test.db"
+    os.environ["DATABASE_URL"] = f"sqlite:///{db_path}"
+
+    import app.core.db as db_module
+    import app.main as main_module
+
+    importlib.reload(db_module)
+    importlib.reload(main_module)
+    main_module.init_schema_v0(main_module.engine)
+    return main_module
+
+
+def test_capture_task_due_date_multiline_roundtrip(main_module) -> None:
+    raw = "-- testing due dates for tasks\nd:2026-04-30"
+
+    payload = main_module.capture_item({"raw": raw})
+
+    assert payload["ok"] is True
+    assert payload["kind"] == "task"
+    assert payload.get("id")
+
+    detail = main_module.get_task(payload["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["title"] == "testing due dates for tasks"
+    assert detail["item"]["due_at"] == "2026-04-30"
+
+    task_raw = main_module.get_task_raw(payload["id"])
+    assert task_raw["ok"] is True
+    assert task_raw["raw"] == raw
+
+
+def test_capture_task_supports_relative_reminder_days(main_module) -> None:
+    raw = "-- testing relative reminders\nd:2026-04-30\nr:-2d"
+
+    payload = main_module.capture_item({"raw": raw})
+
+    assert payload["ok"] is True
+    assert payload["kind"] == "task"
+    assert payload.get("id")
+
+    detail = main_module.get_task(payload["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["due_at"] == "2026-04-30"
+    assert len(detail["item"]["reminders"]) == 1
+    assert detail["item"]["reminders"][0]["remind_at"] == "2026-04-28"
