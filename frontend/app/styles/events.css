@@ -24,6 +24,9 @@
 }
 .eventCalCellMuted { opacity: 0.5; }
 .eventCalCellSelected { border-color: var(--ui-border-strong); background: var(--ui-panel); }
+.eventCalDayNumber { color: var(--ui-text); }
+.eventCalDaySun { color: var(--ctp-maroon); }
+.eventCalDaySat { color: var(--ctp-blue); }
 .eventCalCount {
   align-self: flex-end;
   font-size: 11px;

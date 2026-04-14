@@ -107,9 +107,11 @@ export default function EventsPageClient() {
           {cells.map((d) => {
             const inMonth = d.startsWith(month);
             const count = (mapByDate.get(d) || []).length;
+            const dayOfWeek = new Date(`${d}T00:00:00`).getDay();
+            const dayClass = dayOfWeek === 0 ? " eventCalDaySun" : dayOfWeek === 6 ? " eventCalDaySat" : "";
             return (
               <button key={d} className={"eventCalCell" + (!inMonth ? " eventCalCellMuted" : "") + (selectedDate === d ? " eventCalCellSelected" : "")} onClick={() => setSelectedDate(d)}>
-                <span>{Number(d.slice(-2))}</span>
+                <span className={"eventCalDayNumber" + dayClass}>{Number(d.slice(-2))}</span>
                 {count ? <span className="eventCalCount">{count}</span> : null}
               </button>
             );
