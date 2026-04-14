@@ -39,12 +39,12 @@
 
 .subtaskRow {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: 8px;
 }
 
 .subtaskText {
+  flex: 1;
   min-width: 0;
   word-break: break-word;
   color: var(--ui-text-dim);
