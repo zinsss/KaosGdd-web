@@ -4,6 +4,8 @@ import re
 from dataclasses import asdict, dataclass, field
 from typing import Literal
 
+from app.utils.repeat import normalize_repeat_rule
+
 UNDONE_TASK_PREFIX = "-- "
 DONE_TASK_PREFIX = "-x "
 UNDONE_SUBTASK_PREFIX = "--- "
@@ -112,6 +114,7 @@ def parse_capture(raw: str) -> dict:
         return ParseResult(ok=False, error="unsupported prefix").to_dict()
 
     result = ParseResult(ok=True, action="create_item", item_type=item_type, title=title, is_done=is_done, start_date=start_date, end_date=end_date)
+    repeat_seen = False
 
     in_memo = False
     memo_lines: list[str] = []
@@ -170,7 +173,14 @@ def parse_capture(raw: str) -> dict:
         if line.startswith(META_REPEAT):
             if result.item_type == "event":
                 return ParseResult(ok=False, error="unsupported extra event grammar").to_dict()
-            result.repeat_rule = line[len(META_REPEAT) :].strip() or None
+            if repeat_seen:
+                return ParseResult(ok=False, error="multiple R: lines are not allowed").to_dict()
+            raw_repeat = line[len(META_REPEAT) :].strip() or None
+            try:
+                result.repeat_rule = normalize_repeat_rule(raw_repeat)
+            except ValueError:
+                return ParseResult(ok=False, error=f"invalid repeat rule: {raw_repeat}").to_dict()
+            repeat_seen = True
             continue
 
         if line.startswith("#"):
