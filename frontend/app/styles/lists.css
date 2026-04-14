@@ -93,6 +93,43 @@
   color: var(--ctp-subtext1);
 }
 
+.taskListStateIcon.isUndone {
+  color: var(--ui-text-dim);
+}
+
+.taskListStateIcon.isDone {
+  color: var(--ctp-green);
+}
+
+.prefixToggleButton {
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ui-text-dim);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.prefixToggleButton.isDone {
+  color: var(--ctp-green);
+}
+
+.prefixToggleButton:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.prefixToggleButton:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .taskListTitleLink {
   display: block;
   min-width: 0;
@@ -108,7 +145,7 @@
 .taskListMetaTag {
   margin-left: auto;
   flex: 0 0 auto;
-  color: var(--ui-text-dim);
+  color: var(--ctp-rosewater);
   font-size: 12px;
   white-space: nowrap;
   padding-left: 10px;

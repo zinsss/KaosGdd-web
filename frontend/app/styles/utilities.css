@@ -12,14 +12,16 @@
 
 .taskLinkDone {
   text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  color: var(--ui-text-dim);
 }
 
 .taskLinkDoneList {
-  opacity: 0.68;
+  opacity: 0.56;
 }
 
 .taskLinkDoneDetail {
-  opacity: 0.78;
+  opacity: 0.68;
 }
 
 .taskListSubtaskProgress {
@@ -39,12 +41,12 @@
 
 .subtaskRow {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  align-items: flex-start;
   gap: 8px;
 }
 
 .subtaskText {
+  flex: 1;
   min-width: 0;
   word-break: break-word;
   color: var(--ui-text-dim);

@@ -36,13 +36,20 @@ function groupDoneTasksByMonth(tasks) {
 function TaskRow({ task, mode }) {
   const metatag = getTaskMetaTag(task);
   const hasSubtasks = Number(task.subtask_total || 0) > 0;
+  const showPrefixToggle = mode === "active";
 
   return (
     <li key={task.id} className="taskListRow">
       <div className="taskListRowMain">
         <div className="taskListTitleBlock">
           <div className="taskListTitleRow taskListTitleRowWithMeta">
-            <span className="taskListStateIcon">{task.is_done ? "◉" : "○"}</span>
+            {showPrefixToggle ? (
+              <TaskToggleButton taskId={task.id} isDone={task.is_done} prefixOnly />
+            ) : (
+              <span className={"taskListStateIcon" + (task.is_done ? " isDone" : " isUndone")}>
+                {task.is_done ? "✓" : "○"}
+              </span>
+            )}
 
             <Link
               className={
@@ -60,10 +67,11 @@ function TaskRow({ task, mode }) {
           </div>
         </div>
 
-        <div className="taskListAction">
-          {mode === "removed" ? <TaskRestoreButton taskId={task.id} /> : null}
-          {mode === "active" ? <TaskToggleButton taskId={task.id} isDone={task.is_done} compact /> : null}
-        </div>
+        {mode === "removed" ? (
+          <div className="taskListAction">
+            <TaskRestoreButton taskId={task.id} />
+          </div>
+        ) : null}
       </div>
     </li>
   );

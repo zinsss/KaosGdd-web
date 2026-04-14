@@ -32,6 +32,7 @@ function eachCalendarCell(monthValue) {
 
 export default function EventsPageClient() {
   const now = new Date();
+  const todayYmd = ymd(now);
   const [month, setMonth] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
   const [selectedDate, setSelectedDate] = useState(ymd(now));
   const [items, setItems] = useState([]);
@@ -62,16 +63,24 @@ export default function EventsPageClient() {
     return map;
   }, [items]);
 
-  const monthEvents = useMemo(() => {
+  const monthEventsByDate = useMemo(() => {
     const unique = new Map();
-    for (const event of items) {
-      unique.set(event.id, event);
-    }
-    return Array.from(unique.values()).sort((a, b) => {
-      if (a.start_date < b.start_date) return -1;
-      if (a.start_date > b.start_date) return 1;
-      return String(a.id).localeCompare(String(b.id));
+    items.forEach((event, index) => {
+      unique.set(event.id, { ...event, _index: index });
     });
+    const sorted = Array.from(unique.values()).sort((a, b) => {
+      if (a.start_date !== b.start_date) return a.start_date.localeCompare(b.start_date);
+      const aEnd = a.end_date || a.start_date;
+      const bEnd = b.end_date || b.start_date;
+      if (aEnd !== bEnd) return aEnd.localeCompare(bEnd);
+      return a._index - b._index;
+    });
+    const grouped = new Map();
+    for (const event of sorted) {
+      if (!grouped.has(event.start_date)) grouped.set(event.start_date, []);
+      grouped.get(event.start_date).push(event);
+    }
+    return Array.from(grouped.entries());
   }, [items]);
 
   function shiftMonth(delta) {
@@ -90,8 +99,8 @@ export default function EventsPageClient() {
             <span className="sectionContextMonth">{month}</span>
           </div>
           <div className="actionRow compactActionRow">
-            <button className="button compactButton" onClick={() => shiftMonth(-1)}>◀</button>
-            <button className="button compactButton" onClick={() => shiftMonth(1)}>▶</button>
+            <button className="button compactButton eventMonthNavButton" onClick={() => shiftMonth(-1)}>◀</button>
+            <button className="button compactButton eventMonthNavButton" onClick={() => shiftMonth(1)}>▶</button>
           </div>
         </div>
 
@@ -110,7 +119,16 @@ export default function EventsPageClient() {
             const dayOfWeek = new Date(`${d}T00:00:00`).getDay();
             const dayClass = dayOfWeek === 0 ? " eventCalDaySun" : dayOfWeek === 6 ? " eventCalDaySat" : "";
             return (
-              <button key={d} className={"eventCalCell" + (!inMonth ? " eventCalCellMuted" : "") + (selectedDate === d ? " eventCalCellSelected" : "")} onClick={() => setSelectedDate(d)}>
+              <button
+                key={d}
+                className={
+                  "eventCalCell" +
+                  (!inMonth ? " eventCalCellMuted" : "") +
+                  (selectedDate === d ? " eventCalCellSelected" : "") +
+                  (todayYmd === d ? " eventCalCellToday" : "")
+                }
+                onClick={() => setSelectedDate(d)}
+              >
                 <span className={"eventCalDayNumber" + dayClass}>{Number(d.slice(-2))}</span>
                 {count ? <span className="eventCalCount">{count}</span> : null}
               </button>
@@ -121,17 +139,26 @@ export default function EventsPageClient() {
 
       <section className="panel">
         <div className="sectionTitle">{month}</div>
-        {monthEvents.length === 0 ? (
+        {monthEventsByDate.length === 0 ? (
           <div className="empty">No events.</div>
         ) : (
-          <ul className="taskList">
-            {monthEvents.map((event) => (
-              <li key={event.id} className="taskListRow">
-                <Link className="taskLink taskListTitleLink" href={`/events/${event.id}`}>{event.title}</Link>
-                <div className="metaLine">{event.start_date}{event.end_date ? ` ~ ${event.end_date}` : ""}</div>
-              </li>
+          <div className="eventMonthGroups">
+            {monthEventsByDate.map(([date, dateEvents]) => (
+              <div key={date} className="eventMonthGroup">
+                <div className="eventMonthGroupHeading">{date}</div>
+                <ul className="taskList">
+                  {dateEvents.map((event) => (
+                    <li key={event.id} className="taskListRow">
+                      <Link className="taskLink taskListTitleLink" href={`/events/${event.id}`}>{event.title}</Link>
+                      {event.end_date && event.end_date !== event.start_date ? (
+                        <div className="metaLine">{event.start_date} ~ {event.end_date}</div>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             ))}
-          </ul>
+          </div>
         )}
       </section>
     </main>

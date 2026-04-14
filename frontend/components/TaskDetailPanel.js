@@ -160,12 +160,16 @@ export default function TaskDetailPanel({ item, raw }) {
               <ul className="subtaskList">
                 {item.subtasks.map((subtask) => (
                   <li key={subtask.id} className="subtaskRow">
+                    {!isRemoved ? (
+                      <SubtaskToggleButton taskId={item.id} subtaskId={subtask.id} isDone={Boolean(subtask.is_done)} />
+                    ) : (
+                      <span className={"taskListStateIcon" + (subtask.is_done ? " isDone" : " isUndone")}>
+                        {subtask.is_done ? "✓" : "○"}
+                      </span>
+                    )}
                     <div className={"subtaskText" + (subtask.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
                       {subtask.content}
                     </div>
-                    {!isRemoved ? (
-                      <SubtaskToggleButton taskId={item.id} subtaskId={subtask.id} isDone={Boolean(subtask.is_done)} />
-                    ) : null}
                   </li>
                 ))}
               </ul>

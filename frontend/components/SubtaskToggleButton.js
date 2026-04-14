@@ -19,8 +19,14 @@ export default function SubtaskToggleButton({ taskId, subtaskId, isDone }) {
   }
 
   return (
-    <button type="button" className="button subtaskToggleButton" onClick={onClick} disabled={isSubmitting}>
-      {isDone ? "↺" : "✓"}
+    <button
+      type="button"
+      className={"prefixToggleButton" + (isDone ? " isDone" : " isUndone")}
+      onClick={onClick}
+      disabled={isSubmitting}
+      aria-label={isDone ? "Mark subtask not done" : "Mark subtask done"}
+    >
+      {isDone ? "✓" : "○"}
     </button>
   );
 }

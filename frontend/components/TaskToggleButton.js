@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { UI_STRINGS } from "../lib/strings";
 
-export default function TaskToggleButton({ taskId, isDone, compact = false }) {
+export default function TaskToggleButton({ taskId, isDone, compact = false, prefixOnly = false }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function onClick() {
@@ -18,6 +18,20 @@ export default function TaskToggleButton({ taskId, isDone, compact = false }) {
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (prefixOnly) {
+    return (
+      <button
+        type="button"
+        className={"prefixToggleButton" + (isDone ? " isDone" : " isUndone")}
+        onClick={onClick}
+        disabled={isSubmitting}
+        aria-label={isDone ? UI_STRINGS.UNDO : UI_STRINGS.DONE}
+      >
+        {isDone ? "✓" : "○"}
+      </button>
+    );
   }
 
   return (
