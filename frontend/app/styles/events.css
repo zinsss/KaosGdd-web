@@ -8,6 +8,8 @@
   opacity: 0.7;
   text-align: center;
 }
+.eventCalHeadSat { color: var(--ctp-blue); opacity: 1; }
+.eventCalHeadSun { color: var(--ctp-maroon); opacity: 1; }
 .eventCalCell {
   border: 1px solid var(--ui-border);
   background: transparent;
@@ -27,5 +29,6 @@
   font-size: 11px;
   border-radius: 99px;
   background: var(--ui-panel);
+  color: var(--ctp-yellow);
   padding: 1px 6px;
 }
