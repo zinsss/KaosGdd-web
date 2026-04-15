@@ -149,6 +149,30 @@ class ReminderService:
             "tags": deduped,
         }
 
+    def export_standalone_reminder_raw(self, reminder_item_id: str) -> str | None:
+        detail = self.reminder_repo.get_reminder_detail(reminder_item_id)
+        if detail is None:
+            return None
+        if detail.get("parent_item_id"):
+            return None
+
+        when = format_dt_for_ui(detail.get("remind_at"))
+        if not when:
+            return None
+
+        title = str(detail.get("title") or "").strip()
+        if not title:
+            return None
+
+        lines = [f"!! {when}", title]
+        if self.items_repo is not None:
+            tags = self.items_repo.list_item_tags(reminder_item_id)
+        else:
+            tags = []
+        if tags:
+            lines.append(" ".join(f"#{tag}" for tag in tags))
+        return "\n".join(lines)
+
     def update_standalone_reminder_from_raw(self, reminder_item_id: str, raw_text: str) -> tuple[bool, str | None]:
         detail = self.reminder_repo.get_reminder_detail(reminder_item_id)
         if detail is None:

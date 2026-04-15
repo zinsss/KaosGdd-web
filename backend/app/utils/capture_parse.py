@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.parsers.capture_grammar import parse_capture
+from app.utils.datetime_parse import parse_local_datetime_to_iso
 
 
 def parse_capture_input(raw_text: str) -> dict:
@@ -45,12 +46,15 @@ def parse_capture_input(raw_text: str) -> dict:
 
     if item_type == "reminder":
         remind_at = parsed.get("remind_at")
+        remind_ats: list[str] = []
+        if remind_at:
+            remind_ats = [parse_local_datetime_to_iso(remind_at, allow_past=False)]
         return {
             "kind": "simple_reminder",
             "raw": normalized_raw,
             "parsed": {
                 "title": parsed.get("title"),
-                "remind_ats": [remind_at] if remind_at else [],
+                "remind_ats": remind_ats,
                 "tags": list(parsed.get("tags") or []),
                 "memo": parsed.get("memo"),
             },

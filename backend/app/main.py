@@ -200,6 +200,14 @@ def update_reminder(reminder_id: str, payload: dict):
     return {"ok": True}
 
 
+@app.get("/reminders/{reminder_id}/raw")
+def get_reminder_raw(reminder_id: str):
+    raw = reminder_service.export_standalone_reminder_raw(reminder_id)
+    if raw is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "raw": raw}
+
+
 @app.delete("/reminders/{reminder_id}")
 def remove_reminder(reminder_id: str):
     ok = reminder_service.remove_reminder(reminder_id)
@@ -379,6 +387,7 @@ def capture_item(payload: dict):
     if kind == "simple_reminder":
         title = str(parsed["parsed"].get("title") or "").strip()
         remind_ats = list(parsed["parsed"].get("remind_ats") or [])
+        tags = list(parsed["parsed"].get("tags") or [])
         if not title:
             return {"ok": False, "error": ApiText.TITLE_REQUIRED}
         if not remind_ats:
@@ -393,6 +402,7 @@ def capture_item(payload: dict):
             if not ok:
                 return {"ok": False, "error": status}
             created_ids.append(reminder_id)
+            items_repo.replace_item_tags(reminder_id, tags)
 
         return {"ok": True, "kind": kind, "id": created_ids[0], "ids": created_ids}
 
