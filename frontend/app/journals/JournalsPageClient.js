@@ -43,7 +43,6 @@ function JournalRow({ journal, expanded, onToggle, onDeleted, onActionError }) {
           <span className="reminderListTags">{journal.has_tags ? "#" : ""}</span>
         </div>
         <div className="reminderListTitleLine">
-          <span className="reminderListType">[J]</span>
           <span className="reminderListTitleText">{excerpt(journal.body)}</span>
         </div>
       </button>
