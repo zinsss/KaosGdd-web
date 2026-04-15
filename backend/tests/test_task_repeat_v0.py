@@ -106,3 +106,141 @@ def test_non_repeat_task_behavior_unchanged(main_module) -> None:
     exported = main_module.get_task_raw(payload["id"])
     assert exported["ok"] is True
     assert "R:" not in exported["raw"]
+
+
+def test_completion_non_repeating_task_does_not_create_new_task(main_module) -> None:
+    created = main_module.capture_item({"raw": "-- Plain\nd:2026-04-15 10:30"})
+    assert created["ok"] is True
+
+    toggled = main_module.toggle_task(created["id"])
+    assert toggled["ok"] is True
+    assert toggled["is_done"] is True
+
+    done_items = main_module.list_tasks(mode="done")["items"]
+    active_items = main_module.list_tasks(mode="active")["items"]
+
+    assert len(done_items) == 1
+    assert done_items[0]["id"] == created["id"]
+    assert active_items == []
+
+
+def test_completion_daily_repeating_task_creates_next_instance(main_module) -> None:
+    created = main_module.capture_item({"raw": "-- Daily standup\nd:2026-04-15T10:30:00+00:00\nR:daily"})
+    assert created["ok"] is True
+
+    toggled = main_module.toggle_task(created["id"])
+    assert toggled["ok"] is True
+    assert toggled["is_done"] is True
+
+    active_items = main_module.list_tasks(mode="active")["items"]
+    assert len(active_items) == 1
+    assert active_items[0]["title"] == "Daily standup"
+    assert active_items[0]["due_at"] == "2026-04-16T10:30:00+00:00"
+    assert active_items[0]["repeat_rule"] == "daily"
+    assert active_items[0]["is_done"] == 0
+
+
+def test_completion_weekly_repeating_task_creates_next_instance(main_module) -> None:
+    created = main_module.capture_item({"raw": "-- Weekly review\nd:2026-04-15T10:30:00+00:00\nR:weekly"})
+    assert created["ok"] is True
+
+    toggled = main_module.toggle_task(created["id"])
+    assert toggled["ok"] is True
+    assert toggled["is_done"] is True
+
+    active_items = main_module.list_tasks(mode="active")["items"]
+    assert len(active_items) == 1
+    assert active_items[0]["due_at"] == "2026-04-22T10:30:00+00:00"
+    assert active_items[0]["repeat_rule"] == "weekly"
+
+
+def test_rollover_copies_memo_tags_and_repeat_rule(main_module) -> None:
+    created = main_module.capture_item(
+        {
+            "raw": '-- Deep work\nd:2026-04-15T10:30:00+00:00\nR:monthly\n#focus #work\n"""\nno interruptions\n"""'
+        }
+    )
+    assert created["ok"] is True
+
+    toggled = main_module.toggle_task(created["id"])
+    assert toggled["ok"] is True
+
+    active_items = main_module.list_tasks(mode="active")["items"]
+    assert len(active_items) == 1
+    new_task = main_module.get_task(active_items[0]["id"])["item"]
+    assert new_task["memo"] == "no interruptions"
+    assert new_task["tags"] == ["focus", "work"]
+    assert new_task["repeat_rule"] == "monthly"
+
+
+def test_rollover_copies_subtasks_and_resets_to_undone(main_module) -> None:
+    created = main_module.capture_item(
+        {
+            "raw": "-- Parent\nd:2026-04-15T10:30:00+00:00\nR:daily\n--- first child\n--x completed child"
+        }
+    )
+    assert created["ok"] is True
+
+    toggled = main_module.toggle_task(created["id"])
+    assert toggled["ok"] is True
+
+    active_items = main_module.list_tasks(mode="active")["items"]
+    assert len(active_items) == 1
+    new_task = main_module.get_task(active_items[0]["id"])["item"]
+    assert [subtask["content"] for subtask in new_task["subtasks"]] == ["first child", "completed child"]
+    assert all(subtask["is_done"] == 0 for subtask in new_task["subtasks"])
+    assert all(subtask["done_at"] is None for subtask in new_task["subtasks"])
+
+
+def test_rollover_does_not_copy_reminder_history(main_module) -> None:
+    created = main_module.capture_item({"raw": "-- Bills\nd:2026-04-15T10:30:00+00:00\nR:daily"})
+    assert created["ok"] is True
+    task_id = created["id"]
+
+    reminder_create = main_module.create_task_reminder(task_id, {"remind_at": "2026-04-15T09:30:00+00:00"})
+    assert reminder_create["ok"] is True
+    reminder_id = reminder_create["id"]
+    main_module.reminder_repo.mark_fired(reminder_id)
+    main_module.reminder_repo.mark_acked(reminder_id)
+
+    toggled = main_module.toggle_task(task_id)
+    assert toggled["ok"] is True
+
+    active_items = main_module.list_tasks(mode="active")["items"]
+    assert len(active_items) == 1
+    new_task = main_module.get_task(active_items[0]["id"])["item"]
+    assert new_task["reminders"] == []
+
+
+def test_repeat_task_without_due_date_does_not_rollover(main_module) -> None:
+    created = main_module.capture_item({"raw": "-- No due\nR:daily"})
+    assert created["ok"] is True
+
+    toggled = main_module.toggle_task(created["id"])
+    assert toggled["ok"] is True
+
+    done_items = main_module.list_tasks(mode="done")["items"]
+    active_items = main_module.list_tasks(mode="active")["items"]
+    assert len(done_items) == 1
+    assert active_items == []
+
+
+def test_toggling_done_back_to_undone_does_not_create_another_instance(main_module) -> None:
+    created = main_module.capture_item({"raw": "-- Back and forth\nd:2026-04-15T10:30:00+00:00\nR:daily"})
+    assert created["ok"] is True
+
+    first_toggle = main_module.toggle_task(created["id"])
+    assert first_toggle["ok"] is True
+    assert first_toggle["is_done"] is True
+
+    active_after_first = main_module.list_tasks(mode="active")["items"]
+    assert len(active_after_first) == 1
+    first_new_id = active_after_first[0]["id"]
+
+    second_toggle = main_module.toggle_task(created["id"])
+    assert second_toggle["ok"] is True
+    assert second_toggle["is_done"] is False
+
+    active_after_second = main_module.list_tasks(mode="active")["items"]
+    assert len(active_after_second) == 2
+    assert [item["id"] for item in active_after_second].count(first_new_id) == 1

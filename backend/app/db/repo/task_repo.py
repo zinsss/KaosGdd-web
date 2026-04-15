@@ -448,3 +448,36 @@ class TaskRepo:
             )
 
         return bool(new_value)
+
+    def exists_active_task_occurrence(
+        self,
+        *,
+        title: str,
+        due_at: str,
+        repeat_rule: str,
+    ) -> bool:
+        repeat_tag = f"repeat:{repeat_rule}"
+        with self.engine.begin() as conn:
+            row = conn.execute(
+                text(
+                    """
+                    SELECT i.id
+                    FROM {items} i
+                    JOIN {task_items} t ON t.item_id = i.id
+                    JOIN {item_tags} it ON it.item_id = i.id
+                    WHERE i.item_type = 'task'
+                      AND i.status = 'active'
+                      AND t.is_done = 0
+                      AND i.title = :title
+                      AND t.due_at = :due_at
+                      AND it.tag = :repeat_tag
+                    LIMIT 1
+                    """.format(items=DbTables.ITEMS, task_items=DbTables.TASK_ITEMS, item_tags=DbTables.ITEM_TAGS)
+                ),
+                {
+                    "title": title,
+                    "due_at": due_at,
+                    "repeat_tag": repeat_tag,
+                },
+            ).mappings().first()
+        return row is not None

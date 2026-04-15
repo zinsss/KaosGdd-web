@@ -5,6 +5,7 @@ from app.config import SETTINGS
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
+from app.utils.repeat import compute_next_due_at
 from app.utils.task_raw import REPEAT_TAG_PREFIX, export_task_raw, parse_task_raw
 from app.utils.timefmt import format_dt_for_ui
 
@@ -98,7 +99,13 @@ class TaskService:
             return None
         if detail.get("status") != "active":
             return None
-        return self.task_repo.toggle_done(item_id)
+        was_done = bool(detail.get("is_done"))
+        toggled = self.task_repo.toggle_done(item_id)
+        if toggled is None:
+            return None
+        if (not was_done) and toggled:
+            self._rollover_repeat_task_on_completion(detail)
+        return toggled
 
     def toggle_subtask(self, task_id: str, subtask_id: str):
         detail = self.task_repo.get_task_detail(task_id)
@@ -202,6 +209,54 @@ class TaskService:
 
         return True, None
 
+    def _rollover_repeat_task_on_completion(self, completed_task_detail: dict) -> None:
+        repeat_rule, visible_tags = self._extract_repeat_and_visible_tags(completed_task_detail["id"])
+        if not repeat_rule:
+            return
+
+        due_at = completed_task_detail.get("due_at")
+        if not due_at:
+            return
+
+        try:
+            next_due_at = compute_next_due_at(due_at, repeat_rule)
+        except ValueError:
+            return
+
+        if self.task_repo.exists_active_task_occurrence(
+            title=str(completed_task_detail.get("title") or ""),
+            due_at=next_due_at,
+            repeat_rule=repeat_rule,
+        ):
+            return
+
+        new_item_id = self.items_repo.create_item("task", str(completed_task_detail.get("title") or ""))
+        self.task_repo.create_task(
+            new_item_id,
+            due_at=next_due_at,
+            memo=completed_task_detail.get("memo"),
+        )
+
+        self.items_repo.replace_item_tags(
+            new_item_id,
+            [*visible_tags, f"{REPEAT_TAG_PREFIX}{repeat_rule}"],
+        )
+
+        source_subtasks = self.task_repo.list_subtasks(completed_task_detail["id"])
+        reset_subtasks = [{"content": st.get("content"), "is_done": False} for st in source_subtasks]
+        self.task_repo.replace_subtasks(new_item_id, reset_subtasks)
+
+    def _extract_repeat_and_visible_tags(self, item_id: str) -> tuple[str | None, list[str]]:
+        tags = self.items_repo.list_item_tags(item_id)
+        repeat_rule = None
+        visible_tags: list[str] = []
+        for tag in tags:
+            if tag.startswith(REPEAT_TAG_PREFIX):
+                repeat_rule = tag[len(REPEAT_TAG_PREFIX):]
+            else:
+                visible_tags.append(tag)
+        return repeat_rule, visible_tags
+
     def _due_metatag(self, due_at: str | None) -> str:
         if not due_at:
             return ""
@@ -233,15 +288,7 @@ class TaskService:
         item["subtask_total"] = int(item.get("subtask_total") or 0)
         item["subtask_done"] = int(item.get("subtask_done") or 0)
 
-        tags = self.items_repo.list_item_tags(item["id"])
-        visible_tags = []
-        repeat_rule = None
-
-        for tag in tags:
-            if tag.startswith(REPEAT_TAG_PREFIX):
-                repeat_rule = tag[len(REPEAT_TAG_PREFIX):]
-            else:
-                visible_tags.append(tag)
+        repeat_rule, visible_tags = self._extract_repeat_and_visible_tags(item["id"])
 
         item["tags"] = visible_tags
         item["repeat_rule"] = repeat_rule
