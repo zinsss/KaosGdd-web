@@ -160,15 +160,46 @@
   margin-bottom: 8px;
 }
 
-.journalBody {
-  margin: 0 0 10px;
-  font: inherit;
-  white-space: pre-wrap;
-  color: var(--ui-text);
-}
-
 .journalTags {
   color: var(--ctp-mauve);
   font-size: 13px;
   margin-bottom: 8px;
+}
+
+.journalMonthGroups {
+  display: grid;
+  gap: 12px;
+}
+
+.journalMonthGroup {
+  border-bottom: 1px dotted var(--ui-border);
+  padding-bottom: 4px;
+}
+
+.journalMonthHeader {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  padding: 2px 0 6px;
+}
+
+.journalMonthHeaderMeta {
+  color: var(--ui-text-dim);
+  font-size: 12px;
+}
+
+.journalBodyInline {
+  white-space: pre-wrap;
+}
+
+.journalTagHint {
+  color: var(--ui-text-dim);
+  font-size: 12px;
 }
