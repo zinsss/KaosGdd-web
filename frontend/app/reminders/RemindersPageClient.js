@@ -34,9 +34,12 @@ function reminderWhen(reminder) {
 }
 
 function buildStandaloneReminderRaw(reminder) {
-  const when = reminderWhen(reminder);
+  const when = reminder.remind_at_display || reminderWhen(reminder);
   const tags = (reminder.tags || []).map((tag) => `#${tag}`).join(" ");
-  return `!! ${when}${reminder.title ? ` ${reminder.title}` : ""}${tags ? ` ${tags}` : ""}`.trim();
+  const lines = [`!! ${when}`];
+  if (reminder.title) lines.push(reminder.title);
+  if (tags) lines.push(tags);
+  return lines.join("\n").trim();
 }
 
 async function postReminderAction(path, payload) {
