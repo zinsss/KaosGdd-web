@@ -52,6 +52,11 @@
 
 .appShellMain {
   width: 100%;
+  height: calc(100dvh - 122px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 132px;
 }
 
 .modeDots {
@@ -201,6 +206,11 @@
 
   .appShellTopSpacer {
     height: 92px;
+  }
+
+  .appShellMain {
+    height: calc(100dvh - 92px);
+    padding-bottom: 148px;
   }
 
   .modeDots {
