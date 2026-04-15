@@ -54,3 +54,23 @@ def test_capture_event_rejects_metadata_as_title(main_module, raw: str) -> None:
 
     assert payload["ok"] is False
     assert payload["error"] == "missing title"
+
+
+def test_capture_event_rejects_past_resolved_reminder(main_module) -> None:
+    payload = main_module.capture_item({"raw": "^^ 2026-05-09\nEvent\nr:2020-01-01 09:00"})
+
+    assert payload["ok"] is False
+    assert payload["error"] == "malformed r:"
+
+
+def test_raw_edit_event_allows_existing_past_reminder(main_module) -> None:
+    created = main_module.capture_item({"raw": "^^ 2026-05-09\nEvent"})
+    assert created["ok"] is True
+
+    patch = main_module.update_event_raw(created["id"], {"raw": "^^ 2026-05-09\nEvent\nr:2020-01-01 09:00"})
+    assert patch["ok"] is True
+
+    detail = main_module.get_event(created["id"])
+    assert detail["ok"] is True
+    assert len(detail["item"]["reminders"]) == 1
+    assert detail["item"]["reminders"][0]["remind_at"] == "2020-01-01T00:00:00+00:00"

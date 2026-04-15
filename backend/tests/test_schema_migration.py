@@ -116,7 +116,7 @@ def test_init_schema_migrates_legacy_task_reminder_tables_for_multiline_capture(
     importlib.reload(main_module)
     main_module.init_schema_v0(main_module.engine)
 
-    raw = '-- 테스팅 테스팅\nd:2026-04-29 13:40\nr:2026-04-14 13:40\n--- something must be done\n--- 귀찮아\n"""\n아이고!!!\n"""'
+    raw = '-- 테스팅 테스팅\nd:2026-04-29 13:40\nr:2026-04-30 13:40\n--- something must be done\n--- 귀찮아\n"""\n아이고!!!\n"""'
     payload = main_module.capture_item({"raw": raw})
     assert payload["ok"] is True
     assert payload["kind"] == "task"
@@ -128,4 +128,4 @@ def test_init_schema_migrates_legacy_task_reminder_tables_for_multiline_capture(
     assert len(detail["item"]["subtasks"]) == 2
     assert {subtask["content"] for subtask in detail["item"]["subtasks"]} == {"something must be done", "귀찮아"}
     assert len(detail["item"]["reminders"]) == 1
-    assert detail["item"]["reminders"][0]["remind_at"] == "2026-04-14T04:40:00+00:00"
+    assert detail["item"]["reminders"][0]["remind_at"] == "2026-04-30T04:40:00+00:00"

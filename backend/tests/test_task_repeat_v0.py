@@ -109,7 +109,7 @@ def test_non_repeat_task_behavior_unchanged(main_module) -> None:
 
 
 def test_completion_non_repeating_task_does_not_create_new_task(main_module) -> None:
-    created = main_module.capture_item({"raw": "-- Plain\nd:2026-04-15 10:30"})
+    created = main_module.capture_item({"raw": "-- Plain\nd:2026-06-15 10:30"})
     assert created["ok"] is True
 
     toggled = main_module.toggle_task(created["id"])
@@ -125,7 +125,7 @@ def test_completion_non_repeating_task_does_not_create_new_task(main_module) -> 
 
 
 def test_completion_daily_repeating_task_creates_next_instance(main_module) -> None:
-    created = main_module.capture_item({"raw": "-- Daily standup\nd:2026-04-15T10:30:00+00:00\nR:daily"})
+    created = main_module.capture_item({"raw": "-- Daily standup\nd:2026-06-15T10:30:00+00:00\nR:daily"})
     assert created["ok"] is True
 
     toggled = main_module.toggle_task(created["id"])
@@ -135,13 +135,13 @@ def test_completion_daily_repeating_task_creates_next_instance(main_module) -> N
     active_items = main_module.list_tasks(mode="active")["items"]
     assert len(active_items) == 1
     assert active_items[0]["title"] == "Daily standup"
-    assert active_items[0]["due_at"] == "2026-04-16T10:30:00+00:00"
+    assert active_items[0]["due_at"] == "2026-06-16T10:30:00+00:00"
     assert active_items[0]["repeat_rule"] == "daily"
     assert active_items[0]["is_done"] == 0
 
 
 def test_completion_weekly_repeating_task_creates_next_instance(main_module) -> None:
-    created = main_module.capture_item({"raw": "-- Weekly review\nd:2026-04-15T10:30:00+00:00\nR:weekly"})
+    created = main_module.capture_item({"raw": "-- Weekly review\nd:2026-06-15T10:30:00+00:00\nR:weekly"})
     assert created["ok"] is True
 
     toggled = main_module.toggle_task(created["id"])
@@ -150,14 +150,14 @@ def test_completion_weekly_repeating_task_creates_next_instance(main_module) -> 
 
     active_items = main_module.list_tasks(mode="active")["items"]
     assert len(active_items) == 1
-    assert active_items[0]["due_at"] == "2026-04-22T10:30:00+00:00"
+    assert active_items[0]["due_at"] == "2026-06-22T10:30:00+00:00"
     assert active_items[0]["repeat_rule"] == "weekly"
 
 
 def test_rollover_copies_memo_tags_and_repeat_rule(main_module) -> None:
     created = main_module.capture_item(
         {
-            "raw": '-- Deep work\nd:2026-04-15T10:30:00+00:00\nR:monthly\n#focus #work\n"""\nno interruptions\n"""'
+            "raw": '-- Deep work\nd:2026-06-15T10:30:00+00:00\nR:monthly\n#focus #work\n"""\nno interruptions\n"""'
         }
     )
     assert created["ok"] is True
@@ -176,7 +176,7 @@ def test_rollover_copies_memo_tags_and_repeat_rule(main_module) -> None:
 def test_rollover_copies_subtasks_and_resets_to_undone(main_module) -> None:
     created = main_module.capture_item(
         {
-            "raw": "-- Parent\nd:2026-04-15T10:30:00+00:00\nR:daily\n--- first child\n--x completed child"
+            "raw": "-- Parent\nd:2026-06-15T10:30:00+00:00\nR:daily\n--- first child\n--x completed child"
         }
     )
     assert created["ok"] is True
@@ -193,11 +193,11 @@ def test_rollover_copies_subtasks_and_resets_to_undone(main_module) -> None:
 
 
 def test_rollover_does_not_copy_reminder_history(main_module) -> None:
-    created = main_module.capture_item({"raw": "-- Bills\nd:2026-04-15T10:30:00+00:00\nR:daily"})
+    created = main_module.capture_item({"raw": "-- Bills\nd:2026-06-15T10:30:00+00:00\nR:daily"})
     assert created["ok"] is True
     task_id = created["id"]
 
-    reminder_create = main_module.create_task_reminder(task_id, {"remind_at": "2026-04-15T09:30:00+00:00"})
+    reminder_create = main_module.create_task_reminder(task_id, {"remind_at": "2026-06-15T09:30:00+00:00"})
     assert reminder_create["ok"] is True
     reminder_id = reminder_create["id"]
     main_module.reminder_repo.mark_fired(reminder_id)
@@ -226,7 +226,7 @@ def test_repeat_task_without_due_date_does_not_rollover(main_module) -> None:
 
 
 def test_toggling_done_back_to_undone_does_not_create_another_instance(main_module) -> None:
-    created = main_module.capture_item({"raw": "-- Back and forth\nd:2026-04-15T10:30:00+00:00\nR:daily"})
+    created = main_module.capture_item({"raw": "-- Back and forth\nd:2026-06-15T10:30:00+00:00\nR:daily"})
     assert created["ok"] is True
 
     first_toggle = main_module.toggle_task(created["id"])

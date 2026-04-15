@@ -55,13 +55,19 @@ class EventService:
         self.event_repo.update_event_fields(item_id, start_date=next_start, end_date=next_end, memo=next_memo)
         return True
 
-    def update_event_from_raw(self, item_id: str, raw_text: str) -> tuple[bool, str | None]:
+    def update_event_from_raw(
+        self,
+        item_id: str,
+        raw_text: str,
+        *,
+        reject_past_datetimes: bool = False,
+    ) -> tuple[bool, str | None]:
         detail = self.event_repo.get_event_detail(item_id)
         if detail is None:
             return False, "not found"
 
         try:
-            parsed = parse_event_raw(raw_text)
+            parsed = parse_event_raw(raw_text, reject_past_datetimes=reject_past_datetimes)
         except ValueError as exc:
             return False, str(exc)
 
