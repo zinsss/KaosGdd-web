@@ -101,6 +101,9 @@ export default function BottomCaptureBar() {
     writeEditState(null);
   }
 
+  const modeText = editState ? (editState.kind === "journal" ? "Editing journal" : "Editing reminder") : "";
+  const statusText = error || success || modeText;
+
   async function onSubmit(event) {
     event.preventDefault();
     const clean = raw.trim();
@@ -177,26 +180,30 @@ export default function BottomCaptureBar() {
           placeholder=""
           disabled={isSubmitting}
         />
-
-        {editState ? (
-          <button
-            className="button bottomCaptureCancelButton"
-            type="button"
-            onClick={cancelEdit}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </button>
-        ) : null}
-
-        <button className="button bottomCaptureButton" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "..." : editState ? "Save" : "Add"}
-        </button>
       </div>
+      <div className="bottomCaptureFooter">
+        <div
+          className={`bottomCaptureStatus${error ? " errorText" : !error && success ? " successText" : " bottomCaptureModeLabel"}`}
+        >
+          {statusText}
+        </div>
+        <div className="bottomCaptureActions">
+          {editState ? (
+            <button
+              className="button bottomCaptureCancelButton"
+              type="button"
+              onClick={cancelEdit}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </button>
+          ) : null}
 
-      {editState ? <div className="bottomCaptureModeLabel">{editState.kind === "journal" ? "Editing journal" : "Editing reminder"}</div> : null}
-      {error ? <div className="errorText bottomCaptureMsg">{error}</div> : null}
-      {!error && success ? <div className="successText bottomCaptureMsg">{success}</div> : null}
+          <button className="button bottomCaptureButton" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? "..." : editState ? "Save" : "Add"}
+          </button>
+        </div>
+      </div>
     </form>
   );
 }
