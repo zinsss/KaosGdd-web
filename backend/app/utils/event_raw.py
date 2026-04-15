@@ -24,7 +24,7 @@ def _validate_date(value: str) -> str:
     return value
 
 
-def _resolve_reminder(remind_raw: str, start_date: str) -> str:
+def _resolve_reminder(remind_raw: str, start_date: str, *, reject_past_datetimes: bool = False) -> str:
     clean = str(remind_raw or "").strip()
     if not clean:
         raise ValueError("malformed r:")
@@ -49,12 +49,12 @@ def _resolve_reminder(remind_raw: str, start_date: str) -> str:
         return clean
 
     try:
-        return parse_local_datetime_to_iso(clean)
+        return parse_local_datetime_to_iso(clean, allow_past=not reject_past_datetimes)
     except ValueError as exc:
         raise ValueError("malformed r:") from exc
 
 
-def parse_event_raw(raw_text: str) -> dict:
+def parse_event_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dict:
     text = str(raw_text or "").replace("\r\n", "\n").strip()
     if not text:
         raise ValueError("missing date after ^^")
@@ -120,7 +120,11 @@ def parse_event_raw(raw_text: str) -> dict:
         if stripped.startswith("r:"):
             if remind_at is not None:
                 raise ValueError("malformed r:")
-            remind_at = _resolve_reminder(stripped[2:].strip(), start_date)
+            remind_at = _resolve_reminder(
+                stripped[2:].strip(),
+                start_date,
+                reject_past_datetimes=reject_past_datetimes,
+            )
             continue
 
         raise ValueError("unsupported extra event grammar")

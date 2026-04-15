@@ -344,7 +344,11 @@ def capture_item(payload: dict):
             return {"ok": False, "error": ApiText.TITLE_REQUIRED}
 
         item_id = task_service.create_task(title=title)
-        ok, error = task_service.update_task_from_raw(item_id, parsed["raw"])
+        ok, error = task_service.update_task_from_raw(
+            item_id,
+            parsed["raw"],
+            reject_past_datetimes=True,
+        )
         if not ok:
             return {"ok": False, "error": error or ApiText.INVALID_RAW_TASK}
         return {"ok": True, "kind": kind, "id": item_id}
@@ -363,7 +367,11 @@ def capture_item(payload: dict):
             end_date=parsed["parsed"].get("end_date"),
             memo=parsed["parsed"].get("memo"),
         )
-        ok, error = event_service.update_event_from_raw(item_id, parsed["raw"])
+        ok, error = event_service.update_event_from_raw(
+            item_id,
+            parsed["raw"],
+            reject_past_datetimes=True,
+        )
         if not ok:
             return {"ok": False, "error": error or ApiText.INVALID_EVENT_RAW}
         return {"ok": True, "kind": kind, "id": item_id}

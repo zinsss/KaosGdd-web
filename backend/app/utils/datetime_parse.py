@@ -107,7 +107,7 @@ def _parse_local_datetime(raw: str, *, tz: ZoneInfo, now_utc: datetime) -> datet
     return dt.astimezone(tz)
 
 
-def parse_local_datetime_to_iso(value: str | None) -> str | None:
+def parse_local_datetime_to_iso(value: str | None, *, allow_past: bool = True) -> str | None:
     raw = str(value or "").strip()
     if not raw:
         return None
@@ -116,6 +116,6 @@ def parse_local_datetime_to_iso(value: str | None) -> str | None:
     now_utc = _current_utc_now()
     local_dt = _parse_local_datetime(raw, tz=tz, now_utc=now_utc)
     utc_dt = local_dt.astimezone(timezone.utc)
-    if utc_dt < now_utc:
+    if not allow_past and utc_dt < now_utc:
         raise ValueError("resolved datetime is in the past")
     return utc_dt.isoformat(timespec="seconds")

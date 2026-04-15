@@ -47,7 +47,7 @@ def test_explicit_local_datetime_still_supported(monkeypatch: pytest.MonkeyPatch
 def test_past_resolved_datetime_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
     _freeze_now(monkeypatch, "2026-04-15T02:00:00+00:00")
     with pytest.raises(ValueError, match="resolved datetime is in the past"):
-        parse_local_datetime_to_iso("today")
+        parse_local_datetime_to_iso("today", allow_past=False)
 
 
 def test_unsupported_natural_language_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:

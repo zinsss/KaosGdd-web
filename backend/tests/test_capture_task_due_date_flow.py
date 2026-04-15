@@ -54,3 +54,21 @@ def test_capture_task_supports_relative_reminder_days(main_module) -> None:
     assert detail["item"]["due_at"] == "2026-04-30T01:30:00+00:00"
     assert len(detail["item"]["reminders"]) == 1
     assert detail["item"]["reminders"][0]["remind_at"] == "2026-04-28"
+
+
+def test_capture_task_rejects_past_resolved_datetime(main_module) -> None:
+    payload = main_module.capture_item({"raw": "-- old task\nd:2020-01-01"})
+    assert payload["ok"] is False
+    assert payload["error"] == "resolved datetime is in the past"
+
+
+def test_raw_edit_task_allows_existing_past_datetime(main_module) -> None:
+    created = main_module.capture_item({"raw": "-- keep overdue editable"})
+    assert created["ok"] is True
+
+    patch = main_module.update_task_raw(created["id"], {"raw": "-- keep overdue editable\nd:2020-01-01"})
+    assert patch["ok"] is True
+
+    detail = main_module.get_task(created["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["due_at"] == "2020-01-01T01:30:00+00:00"

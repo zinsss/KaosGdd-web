@@ -163,13 +163,19 @@ class TaskService:
             subtasks=subtasks,
         )
 
-    def update_task_from_raw(self, item_id: str, raw_text: str) -> tuple[bool, str | None]:
+    def update_task_from_raw(
+        self,
+        item_id: str,
+        raw_text: str,
+        *,
+        reject_past_datetimes: bool = False,
+    ) -> tuple[bool, str | None]:
         detail = self.task_repo.get_task_detail(item_id)
         if detail is None:
             return False, "not found"
 
         try:
-            parsed = parse_task_raw(raw_text)
+            parsed = parse_task_raw(raw_text, reject_past_datetimes=reject_past_datetimes)
         except ValueError as exc:
             return False, str(exc)
 
