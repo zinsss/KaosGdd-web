@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import TaskToggleButton from "./TaskToggleButton";
 import TaskRestoreButton from "./TaskRestoreButton";
 import { UI_STRINGS } from "../lib/strings";
@@ -131,7 +132,15 @@ function TaskRow({
 }
 
 export default function TasksPageClient({ initialMode }) {
+  const router = useRouter();
   const mode = TASK_MODES.includes(initialMode) ? initialMode : "active";
+  const touchStateRef = useRef({
+    tracking: false,
+    lock: "",
+    switched: false,
+    startX: 0,
+    startY: 0,
+  });
 
   const [items, setItems] = useState([]);
   const [localError, setLocalError] = useState("");
@@ -264,8 +273,68 @@ export default function TasksPageClient({ initialMode }) {
     [items, mode],
   );
 
+  function switchModeByStep(step) {
+    const currentIndex = TASK_MODES.indexOf(mode);
+    if (currentIndex < 0) return;
+    const nextIndex = currentIndex + step;
+    if (nextIndex < 0 || nextIndex >= TASK_MODES.length) return;
+    router.push(buildTaskModeHref(TASK_MODES[nextIndex]));
+  }
+
+  function handleTouchStart(event) {
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    touchStateRef.current = {
+      tracking: true,
+      lock: "",
+      switched: false,
+      startX: touch.clientX,
+      startY: touch.clientY,
+    };
+  }
+
+  function handleTouchMove(event) {
+    const state = touchStateRef.current;
+    if (!state.tracking || state.switched || event.touches.length !== 1) return;
+
+    const touch = event.touches[0];
+    const deltaX = touch.clientX - state.startX;
+    const deltaY = touch.clientY - state.startY;
+    const absX = Math.abs(deltaX);
+    const absY = Math.abs(deltaY);
+
+    if (!state.lock) {
+      if (absX < 10 && absY < 10) return;
+      if (absX > absY * 1.35 && absX > 16) {
+        state.lock = "x";
+      } else if (absY > absX) {
+        state.lock = "y";
+      } else {
+        return;
+      }
+    }
+
+    if (state.lock !== "x" || absX < 56) return;
+
+    state.switched = true;
+    state.tracking = false;
+    switchModeByStep(deltaX < 0 ? 1 : -1);
+  }
+
+  function clearTouchTracking() {
+    touchStateRef.current.tracking = false;
+    touchStateRef.current.lock = "";
+    touchStateRef.current.switched = false;
+  }
+
   return (
-    <main className="page">
+    <main
+      className="page taskModeSwipeArea"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={clearTouchTracking}
+      onTouchCancel={clearTouchTracking}
+    >
       <section className="panel">
         <div className="sectionTitleRow">
           <div className="sectionTitle sectionTitleNoMargin">

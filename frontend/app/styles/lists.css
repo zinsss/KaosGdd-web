@@ -190,6 +190,11 @@
   padding: 4px 0;
 }
 
+.taskModeSwipeArea {
+  touch-action: pan-y;
+  overscroll-behavior-x: contain;
+}
+
 @media (max-width: 640px) {
   .taskListRowMain {
     gap: 10px;

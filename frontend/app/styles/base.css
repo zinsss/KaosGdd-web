@@ -1,5 +1,6 @@
 html,
 body {
+  height: 100%;
   margin: 0;
   padding: 0;
   background: var(--ui-bg);
@@ -8,6 +9,7 @@ body {
     "SFMono-Regular", "Menlo", "Consolas", monospace;
   line-height: 1.45;
   font-size: 15px;
+  overscroll-behavior: none;
 }
 
 * {
@@ -28,13 +30,14 @@ select {
 body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  padding-bottom: 132px;
+  overflow: hidden;
 }
 
 .page {
   max-width: 760px;
   margin: 0 auto;
   padding: 12px 16px 16px;
+  overscroll-behavior: contain;
 }
 
 .panel {
@@ -65,7 +68,7 @@ body {
   }
 
   body {
-    padding-bottom: 148px;
+    overflow: hidden;
   }
 
   .page {
