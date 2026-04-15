@@ -50,9 +50,16 @@ export default function TaskDetailPanel({ item, raw }) {
   const [isRemoving, setIsRemoving] = useState(false);
 
   const sortedReminders = useMemo(() => {
-    return [...(item.reminders || [])].sort(
-      (a, b) => reminderPriority(a.state) - reminderPriority(b.state)
-    );
+    return [...(item.reminders || [])].sort((a, b) => {
+      const priorityDiff = reminderPriority(a.state) - reminderPriority(b.state);
+      if (priorityDiff !== 0) return priorityDiff;
+
+      const whenA = a.remind_at || "";
+      const whenB = b.remind_at || "";
+      if (whenA !== whenB) return whenA.localeCompare(whenB);
+
+      return String(a.id || "").localeCompare(String(b.id || ""));
+    });
   }, [item.reminders]);
   const isRemoved = item.status === "removed";
 
@@ -116,8 +123,11 @@ export default function TaskDetailPanel({ item, raw }) {
           >
             {item.title}
           </div>
-          <div className="detailStateText">
-            {isRemoved ? UI_STRINGS.REMOVED_STATE : item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}
+          <div className="detailStateBox">
+            <div className="detailStateText">
+              {isRemoved ? UI_STRINGS.REMOVED_STATE : item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}
+            </div>
+            {!isRemoved ? <TaskToggleButton taskId={item.id} isDone={item.is_done} /> : null}
           </div>
         </div>
 
@@ -159,31 +169,30 @@ export default function TaskDetailPanel({ item, raw }) {
             </div>
           ) : null}
 
-        {item.subtasks && item.subtasks.length > 0 ? (
-          <div className="detailReadRow">
-            <div className="detailReadLabel">Subtasks</div>
-            <div className="detailReadContent withDivider">
-              <ul className="subtaskList">
-                {item.subtasks.map((subtask) => (
-                  <li key={subtask.id} className="subtaskRow">
-                    {!isRemoved ? (
-                      <SubtaskToggleButton taskId={item.id} subtaskId={subtask.id} isDone={Boolean(subtask.is_done)} />
-                    ) : (
-                      <span className={"taskListStateIcon" + (subtask.is_done ? " isDone" : " isUndone")}>
-                        {subtask.is_done ? "✓" : "○"}
-                      </span>
-                    )}
-                    <div className={"subtaskText" + (subtask.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
-                      {subtask.content}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        ) : null}
         </div>
       </section>
+
+      {item.subtasks && item.subtasks.length > 0 ? (
+        <section className="panel">
+          <div className="sectionTitle">Subtasks</div>
+          <ul className="subtaskList">
+            {item.subtasks.map((subtask) => (
+              <li key={subtask.id} className="subtaskRow">
+                {!isRemoved ? (
+                  <SubtaskToggleButton taskId={item.id} subtaskId={subtask.id} isDone={Boolean(subtask.is_done)} />
+                ) : (
+                  <span className={"taskListStateIcon" + (subtask.is_done ? " isDone" : " isUndone")}>
+                    {subtask.is_done ? "✓" : "○"}
+                  </span>
+                )}
+                <div className={"subtaskText" + (subtask.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
+                  {subtask.content}
+                </div>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section className="panel">
         <div className="sectionTitle">Reminders</div>
@@ -230,11 +239,9 @@ export default function TaskDetailPanel({ item, raw }) {
       <section className="panel">
         {!isRemoved ? (
           <div className="actionRow detailActionRow">
-            <TaskToggleButton taskId={item.id} isDone={item.is_done} />
-
             <button
               type="button"
-              className={"button" + (openPanel === "reminder" ? " buttonActive" : "")}
+              className={"button compactButton" + (openPanel === "reminder" ? " buttonActive" : "")}
               onClick={() => togglePanel("reminder")}
             >
               {UI_STRINGS.REMINDER_BUTTON}
@@ -242,7 +249,7 @@ export default function TaskDetailPanel({ item, raw }) {
 
             <button
               type="button"
-              className={"button" + (openPanel === "edit" ? " buttonActive" : "")}
+              className={"button compactButton" + (openPanel === "edit" ? " buttonActive" : "")}
               onClick={() => togglePanel("edit")}
             >
               {UI_STRINGS.EDIT_BUTTON}
@@ -250,7 +257,7 @@ export default function TaskDetailPanel({ item, raw }) {
 
             <button
               type="button"
-              className={"button" + (showMore ? " buttonActive" : "")}
+              className={"button compactButton" + (showMore ? " buttonActive" : "")}
               onClick={() => setShowMore((v) => !v)}
             >
               {UI_STRINGS.MORE_BUTTON}
@@ -275,8 +282,8 @@ export default function TaskDetailPanel({ item, raw }) {
         {showMore ? (
           <div className="toggleBody moreMetaBox">
             <div className="metaStack">
-              <div>{UI_STRINGS.CREATED}: {item.created_at_display || "-"}</div>
-              <div>{UI_STRINGS.UPDATED}: {item.updated_at_display || "-"}</div>
+              {item.created_at_display ? <div>{UI_STRINGS.CREATED}: {item.created_at_display}</div> : null}
+              {item.updated_at_display ? <div>{UI_STRINGS.UPDATED}: {item.updated_at_display}</div> : null}
 
               <div className="copyRow">
                 <span>{UI_STRINGS.ID}: {item.id}</span>

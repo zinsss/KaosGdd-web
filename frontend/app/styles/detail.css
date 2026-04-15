@@ -25,6 +25,12 @@
   white-space: nowrap;
 }
 
+.detailStateBox {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+}
+
 .metaLine {
   display: flex;
   gap: 14px;
@@ -90,6 +96,7 @@
 
 .detailActionRow {
   flex-wrap: nowrap;
+  gap: 8px;
 }
 
 .compactButton {
@@ -124,7 +131,7 @@
   }
 
   .detailActionRow .button,
-  .detailActionRow .taskToggleButton {
+  .detailActionRow .compactButton {
     width: auto;
     flex: 1 1 0;
     min-width: 0;
