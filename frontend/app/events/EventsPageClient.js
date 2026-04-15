@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 function ymd(date) {
   const y = date.getFullYear();
@@ -36,6 +36,13 @@ export default function EventsPageClient() {
   const [month, setMonth] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
   const [selectedDate, setSelectedDate] = useState(ymd(now));
   const [items, setItems] = useState([]);
+  const swipeRef = useRef({
+    startX: 0,
+    startY: 0,
+    axis: null,
+    active: false,
+    handled: false,
+  });
 
   const cells = useMemo(() => eachCalendarCell(month), [month]);
 
@@ -46,6 +53,13 @@ export default function EventsPageClient() {
       .then((data) => setItems(data.items || []))
       .catch(() => setItems([]));
   }, [month]);
+
+  useEffect(() => {
+    document.body.classList.add("eventsPageActive");
+    return () => {
+      document.body.classList.remove("eventsPageActive");
+    };
+  }, []);
 
   const mapByDate = useMemo(() => {
     const map = new Map();
@@ -89,9 +103,56 @@ export default function EventsPageClient() {
     setMonth(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
   }
 
+  function resetSwipeTracking() {
+    swipeRef.current.active = false;
+    swipeRef.current.axis = null;
+    swipeRef.current.handled = false;
+  }
+
+  function handleMonthSwipeTouchStart(event) {
+    if (event.touches.length !== 1) {
+      resetSwipeTracking();
+      return;
+    }
+    const touch = event.touches[0];
+    swipeRef.current.startX = touch.clientX;
+    swipeRef.current.startY = touch.clientY;
+    swipeRef.current.axis = null;
+    swipeRef.current.active = true;
+    swipeRef.current.handled = false;
+  }
+
+  function handleMonthSwipeTouchMove(event) {
+    if (!swipeRef.current.active || swipeRef.current.handled || event.touches.length !== 1) return;
+
+    const touch = event.touches[0];
+    const dx = touch.clientX - swipeRef.current.startX;
+    const dy = touch.clientY - swipeRef.current.startY;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+
+    if (!swipeRef.current.axis && (absX >= 10 || absY >= 10)) {
+      swipeRef.current.axis = absX > absY * 1.35 ? "x" : "y";
+    }
+
+    if (swipeRef.current.axis !== "x") return;
+
+    if (absX >= 64 && absY <= 40) {
+      shiftMonth(dx < 0 ? 1 : -1);
+      swipeRef.current.handled = true;
+      swipeRef.current.active = false;
+    }
+  }
+
   return (
-    <main className="page">
-      <section className="panel">
+    <main className="page eventsPage">
+      <section
+        className="panel eventMonthSwipeSurface"
+        onTouchStart={handleMonthSwipeTouchStart}
+        onTouchMove={handleMonthSwipeTouchMove}
+        onTouchEnd={resetSwipeTracking}
+        onTouchCancel={resetSwipeTracking}
+      >
         <div className="sectionTitleRow">
           <div className="sectionTitle sectionTitleNoMargin">
             <span className="sectionModuleName">Events</span>
