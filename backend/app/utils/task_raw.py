@@ -59,8 +59,6 @@ def _parse_due_value(raw_due: str) -> str:
     candidate = str(raw_due or "").strip()
     if not candidate:
         return candidate
-    if DATE_ONLY_PATTERN.fullmatch(candidate):
-        return candidate
     return parse_local_datetime_to_iso(candidate)
 
 
@@ -239,6 +237,8 @@ def parse_task_raw(raw_text: str) -> dict:
             try:
                 due_at = _parse_due_value(meta["due_at"])
             except ValueError as exc:
+                if str(exc) == "resolved datetime is in the past":
+                    raise ValueError(str(exc)) from exc
                 raise ValueError(f"invalid due format: {meta['due_at']}") from exc
 
         for remind_at in meta["remind_ats"]:

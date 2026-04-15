@@ -33,11 +33,11 @@ def test_capture_task_due_date_multiline_roundtrip(main_module) -> None:
     detail = main_module.get_task(payload["id"])
     assert detail["ok"] is True
     assert detail["item"]["title"] == "testing due dates for tasks"
-    assert detail["item"]["due_at"] == "2026-04-30"
+    assert detail["item"]["due_at"] == "2026-04-30T01:30:00+00:00"
 
     task_raw = main_module.get_task_raw(payload["id"])
     assert task_raw["ok"] is True
-    assert task_raw["raw"] == raw
+    assert task_raw["raw"] == "-- testing due dates for tasks\nd:2026-04-30 10:30"
 
 
 def test_capture_task_supports_relative_reminder_days(main_module) -> None:
@@ -51,6 +51,6 @@ def test_capture_task_supports_relative_reminder_days(main_module) -> None:
 
     detail = main_module.get_task(payload["id"])
     assert detail["ok"] is True
-    assert detail["item"]["due_at"] == "2026-04-30"
+    assert detail["item"]["due_at"] == "2026-04-30T01:30:00+00:00"
     assert len(detail["item"]["reminders"]) == 1
     assert detail["item"]["reminders"][0]["remind_at"] == "2026-04-28"
