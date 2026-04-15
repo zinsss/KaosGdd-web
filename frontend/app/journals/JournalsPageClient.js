@@ -161,8 +161,7 @@ export default function JournalsPageClient() {
                   >
                     <span className="sectionContextMonth">{group.month}</span>
                     <span className="journalMonthHeaderMeta">
-                      {group.journals.length} {group.journals.length === 1 ? "entry" : "entries"} ·{" "}
-                      {isOpen ? "expanded" : "collapsed"}
+                      {group.journals.length} {group.journals.length === 1 ? "entry" : "entries"}
                     </span>
                   </button>
                   {isOpen ? (
