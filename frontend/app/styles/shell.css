@@ -133,17 +133,39 @@
 .bottomCaptureInner {
   max-width: 760px;
   margin: 0 auto;
-  display: flex;
-  gap: 10px;
-  align-items: flex-end;
 }
 
 .bottomCaptureInput {
+  width: 100%;
   min-height: 46px;
   height: 46px;
   border-color: var(--ctp-surface0);
   padding-top: 10px;
   padding-bottom: 10px;
+}
+
+.bottomCaptureFooter {
+  max-width: 760px;
+  margin: 8px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.bottomCaptureStatus {
+  min-height: 18px;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 12px;
+}
+
+.bottomCaptureActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: 0 0 auto;
 }
 
 .bottomCaptureButton {
@@ -176,15 +198,7 @@
 }
 
 .bottomCaptureModeLabel {
-  max-width: 760px;
-  margin: 8px auto 0;
   color: var(--ui-text-dim);
-  font-size: 12px;
-}
-
-.bottomCaptureMsg {
-  max-width: 760px;
-  margin: 8px auto 0;
 }
 
 @media (max-width: 640px) {
@@ -221,27 +235,8 @@
     gap: 14px;
   }
 
-  .bottomCaptureInner {
-    gap: 8px;
-  }
-
-  .bottomCaptureInner > .bottomCaptureInput {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-
-  .bottomCaptureInner > .bottomCaptureButton,
-  .bottomCaptureInner > .bottomCaptureCancelButton {
-    width: auto;
-    flex: 0 0 auto;
-  }
-
-  .bottomCaptureInner > .bottomCaptureInput {
-    width: auto;
-  }
-
-  .bottomCaptureInner > .bottomCaptureButton,
-  .bottomCaptureInner > .bottomCaptureCancelButton {
+  .bottomCaptureButton,
+  .bottomCaptureCancelButton {
     min-width: 0;
   }
 }
