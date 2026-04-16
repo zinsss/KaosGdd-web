@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import FileRawEditor from "./FileRawEditor";
 import LinkedItemsBlock from "./LinkedItemsBlock";
@@ -43,7 +44,7 @@ export default function FileDetailPanel({ item, raw }) {
 
   return (
     <main className="page">
-      <div className="detailBackLinkRow"><a className="taskLink backLink" href="/files">&lt; Back to Files</a></div>
+      <div className="detailBackLinkRow"><Link className="taskLink backLink" href="/files">&lt; Back to Files</Link></div>
 
       <section className="panel">
         <div className="detailPageLabel">• File Detail</div>

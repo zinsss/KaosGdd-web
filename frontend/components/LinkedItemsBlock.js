@@ -1,5 +1,11 @@
 "use client";
 
+import Link from "next/link";
+
+function isInternalHref(href) {
+  return typeof href === "string" && href.startsWith("/");
+}
+
 export default function LinkedItemsBlock({ links }) {
   if (!Array.isArray(links) || links.length === 0) return null;
 
@@ -16,9 +22,15 @@ export default function LinkedItemsBlock({ links }) {
             return (
               <li key={key} className="linkedItemRow">
                 {href ? (
-                  <a className="taskLink" href={href}>
-                    [{marker}] {label}
-                  </a>
+                  isInternalHref(href) ? (
+                    <Link className="taskLink" href={href}>
+                      [{marker}] {label}
+                    </Link>
+                  ) : (
+                    <a className="taskLink" href={href}>
+                      [{marker}] {label}
+                    </a>
+                  )
                 ) : (
                   <span>
                     [{marker}] {label}

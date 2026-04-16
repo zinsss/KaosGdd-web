@@ -1,6 +1,18 @@
 export const metadata = {
   title: "KaosGdd Web",
   description: "Tailscale-only web UI for KaosGdd",
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "KaosGdd Web",
+  },
+};
+
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
 };
 
 import "./globals.css";

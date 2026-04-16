@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { UI_STRINGS } from "../../../lib/strings";
 import ReminderActions from "../../../components/ReminderActions";
 
@@ -18,9 +19,9 @@ export default async function ReminderDetailPage({ params }) {
   return (
     <main className="page">
       <div className="detailBackLinkRow">
-        <a className="taskLink backLink" href="/reminders">
+        <Link className="taskLink backLink" href="/reminders">
           {UI_STRINGS.BACK_TO_REMINDERS_LIST}
-        </a>
+        </Link>
       </div>
 
       {!result.ok ? (
