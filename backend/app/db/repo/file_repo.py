@@ -21,8 +21,8 @@ class FileRepo:
             conn.execute(
                 text(
                     """
-                    INSERT INTO {file_items}(item_id, original_filename, stored_path, mime_type, size_bytes)
-                    VALUES (:item_id, :original_filename, :stored_path, :mime_type, :size_bytes)
+                    INSERT INTO {file_items}(item_id, original_filename, stored_path, mime_type, size_bytes, memo)
+                    VALUES (:item_id, :original_filename, :stored_path, :mime_type, :size_bytes, NULL)
                     """.format(file_items=DbTables.FILE_ITEMS)
                 ),
                 {
@@ -40,7 +40,7 @@ class FileRepo:
                 text(
                     """
                     SELECT i.id, i.item_type, i.title, i.status, i.created_at, i.updated_at, i.deleted_at,
-                           f.original_filename, f.stored_path, f.mime_type, f.size_bytes
+                           f.original_filename, f.stored_path, f.mime_type, f.size_bytes, f.memo
                     FROM {items} i
                     INNER JOIN {file_items} f ON f.item_id = i.id
                     WHERE i.item_type = 'file' AND i.status = :status
@@ -57,7 +57,7 @@ class FileRepo:
                 text(
                     """
                     SELECT i.id, i.item_type, i.title, i.status, i.created_at, i.updated_at, i.deleted_at,
-                           f.original_filename, f.stored_path, f.mime_type, f.size_bytes
+                           f.original_filename, f.stored_path, f.mime_type, f.size_bytes, f.memo
                     FROM {items} i
                     INNER JOIN {file_items} f ON f.item_id = i.id
                     WHERE i.id = :item_id AND i.item_type = 'file'
@@ -67,6 +67,19 @@ class FileRepo:
                 {"item_id": item_id},
             ).mappings().first()
         return dict(row) if row else None
+
+    def update_file_memo(self, item_id: str, memo: str | None) -> None:
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    UPDATE {file_items}
+                    SET memo = :memo
+                    WHERE item_id = :item_id
+                    """.format(file_items=DbTables.FILE_ITEMS)
+                ),
+                {"item_id": item_id, "memo": memo},
+            )
 
     def touch_file_item(self, item_id: str) -> None:
         with self.engine.begin() as conn:

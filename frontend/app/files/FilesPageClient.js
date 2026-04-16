@@ -155,10 +155,10 @@ export default function FilesPageClient() {
             {items.map((item) => (
               <li key={item.id} className="taskListRow">
                 <Link href={`/files/${item.id}`} className="taskLink taskListTitleLink">
-                  {item.original_filename || item.title}
+                  {item.title || item.original_filename}
                 </Link>
                 <div className="metaLine">
-                  {item.mime_type || "application/octet-stream"} • {formatBytes(item.size_bytes)} •{" "}
+                  {item.original_filename || "-"} • {item.mime_type || "application/octet-stream"} • {formatBytes(item.size_bytes)} •{" "}
                   {item.created_at_display || item.created_at}
                 </div>
               </li>
