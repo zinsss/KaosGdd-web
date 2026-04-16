@@ -5,6 +5,26 @@ from app.utils.event_raw import export_event_raw, parse_event_raw
 from app.utils.timefmt import format_dt_for_ui
 
 
+ITEM_TYPE_MARKERS = {
+    "task": "T",
+    "event": "E",
+    "journal": "J",
+    "file": "F",
+    "fax": "X",
+    "mail": "M",
+}
+
+
+def _item_type_path(item_type: str, item_id: str) -> str | None:
+    if item_type == "task":
+        return f"/tasks/{item_id}"
+    if item_type == "event":
+        return f"/events/{item_id}"
+    if item_type == "journal":
+        return "/journals"
+    return None
+
+
 class EventService:
     def __init__(
         self,
@@ -71,6 +91,11 @@ class EventService:
         except ValueError as exc:
             return False, str(exc)
 
+        try:
+            self.items_repo.validate_item_links(item_id, list(parsed.get("linked_item_ids") or []))
+        except ValueError as exc:
+            return False, str(exc)
+
         ok = self.update_event(
             item_id,
             title=parsed.get("title"),
@@ -82,6 +107,7 @@ class EventService:
             return False, "not found"
 
         self.items_repo.replace_item_tags(item_id, list(parsed.get("tags") or []))
+        self.items_repo.replace_item_links(item_id, list(parsed.get("linked_item_ids") or []))
 
         if self.reminder_repo is not None:
             reminders = self.reminder_repo.list_linked_reminders(item_id)
@@ -116,7 +142,12 @@ class EventService:
                 elif reminder.get("remind_at"):
                     reminder_value = reminder["remind_at"]
                 break
-        return export_event_raw(detail, tags=tags, remind_at=reminder_value)
+        return export_event_raw(
+            detail,
+            tags=tags,
+            remind_at=reminder_value,
+            linked_item_ids=self.items_repo.list_item_links(item_id),
+        )
 
     def remove_event(self, item_id: str) -> bool:
         if self.event_repo.get_event_detail(item_id) is None:
@@ -145,4 +176,22 @@ class EventService:
             item["reminders"] = reminders
         else:
             item["reminders"] = []
+
+        resolved_links = self.items_repo.list_resolved_item_links(item["id"])
+        item["links"] = []
+        for link in resolved_links:
+            target_id = str(link.get("target_item_id") or "")
+            target_type = str(link.get("target_item_type") or "").lower()
+            title = str(link.get("target_title") or "").strip()
+            marker = ITEM_TYPE_MARKERS.get(target_type, "?")
+            item["links"].append(
+                {
+                    "id": target_id,
+                    "item_type": target_type or None,
+                    "title": title or "missing item",
+                    "marker": marker,
+                    "is_missing": not bool(title),
+                    "href": _item_type_path(target_type, target_id),
+                }
+            )
         return item

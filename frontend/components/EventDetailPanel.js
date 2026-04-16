@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import EventRawEditor from "./EventRawEditor";
+import LinkedItemsBlock from "./LinkedItemsBlock";
 
 export default function EventDetailPanel({ item, raw }) {
   const router = useRouter();
@@ -57,6 +58,7 @@ export default function EventDetailPanel({ item, raw }) {
               <div className="detailReadContent withDivider">{item.reminders[0].remind_at_display || item.reminders[0].remind_at} ({item.reminders[0].state})</div>
             </div>
           ) : null}
+          <LinkedItemsBlock links={item.links} />
         </div>
       </section>
 

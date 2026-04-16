@@ -78,6 +78,11 @@ function JournalRow({ journal, expanded, onToggle, onDeleted, onActionError }) {
         <div className="reminderExpandArea journalExpandArea">
           <div className="journalMetaLine">created {journal.created_at_display || journal.created_at || "-"}</div>
           {tags ? <div className="journalTags">{tags}</div> : null}
+          {journal.links?.length ? (
+            <div className="journalMetaLine">
+              Links: {journal.links.map((link) => `[${link.marker || "?"}] ${link.title || "missing item"}`).join(", ")}
+            </div>
+          ) : null}
           <div className="actionRow reminderExpandActions">
             <button type="button" className="button compactButton" onClick={startEdit}>
               Raw edit

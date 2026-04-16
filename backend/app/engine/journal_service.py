@@ -4,6 +4,26 @@ from app.utils.journal_raw import export_journal_raw, parse_journal_raw
 from app.utils.timefmt import format_dt_for_ui
 
 
+ITEM_TYPE_MARKERS = {
+    "task": "T",
+    "event": "E",
+    "journal": "J",
+    "file": "F",
+    "fax": "X",
+    "mail": "M",
+}
+
+
+def _item_type_path(item_type: str, item_id: str) -> str | None:
+    if item_type == "task":
+        return f"/tasks/{item_id}"
+    if item_type == "event":
+        return f"/events/{item_id}"
+    if item_type == "journal":
+        return "/journals"
+    return None
+
+
 class JournalService:
     def __init__(self, items_repo: ItemsRepo, journal_repo: JournalRepo) -> None:
         self.items_repo = items_repo
@@ -35,9 +55,15 @@ class JournalService:
         except ValueError as exc:
             return False, str(exc)
 
+        try:
+            self.items_repo.validate_item_links(item_id, list(parsed.get("linked_item_ids") or []))
+        except ValueError as exc:
+            return False, str(exc)
+
         self.journal_repo.update_journal_body(item_id, body=parsed["body"])
         self.items_repo.update_item_title(item_id, parsed["title"])
         self.items_repo.replace_item_tags(item_id, list(parsed.get("tags") or []))
+        self.items_repo.replace_item_links(item_id, list(parsed.get("linked_item_ids") or []))
         return True, None
 
     def export_journal_raw(self, item_id: str) -> str | None:
@@ -45,7 +71,7 @@ class JournalService:
         if detail is None:
             return None
         tags = self.items_repo.list_item_tags(item_id)
-        return export_journal_raw(detail, tags=tags)
+        return export_journal_raw(detail, tags=tags, linked_item_ids=self.items_repo.list_item_links(item_id))
 
     def remove_journal(self, item_id: str) -> bool:
         if self.journal_repo.get_journal_detail(item_id) is None:
@@ -59,4 +85,22 @@ class JournalService:
         item["removed_at_display"] = format_dt_for_ui(item.get("deleted_at"))
         item["tags"] = self.items_repo.list_item_tags(item["id"])
         item["has_tags"] = bool(item["tags"])
+
+        resolved_links = self.items_repo.list_resolved_item_links(item["id"])
+        item["links"] = []
+        for link in resolved_links:
+            target_id = str(link.get("target_item_id") or "")
+            target_type = str(link.get("target_item_type") or "").lower()
+            title = str(link.get("target_title") or "").strip()
+            marker = ITEM_TYPE_MARKERS.get(target_type, "?")
+            item["links"].append(
+                {
+                    "id": target_id,
+                    "item_type": target_type or None,
+                    "title": title or "missing item",
+                    "marker": marker,
+                    "is_missing": not bool(title),
+                    "href": _item_type_path(target_type, target_id),
+                }
+            )
         return item

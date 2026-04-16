@@ -28,3 +28,4 @@ class DbTables:
     REMINDER_EVENTS = "reminder_events"
     ITEM_REMINDERS = "item_reminders"
     ITEM_TAGS = "item_tags"
+    ITEM_LINKS = "item_links"

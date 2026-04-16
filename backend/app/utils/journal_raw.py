@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import re
 
+from app.utils.item_links import dedupe_links, parse_link_value
+
 JOURNAL_PREFIX = "// "
 TAG_RE = re.compile(r"#([^\s#]+)")
 META_RE = re.compile(r"(?:^|\s)(r:|d:|R:)")
@@ -36,6 +38,7 @@ def parse_journal_raw(raw_text: str) -> dict:
 
     tags: list[str] = []
     seen: set[str] = set()
+    linked_item_ids: list[str] = []
 
     for line in lines[first_idx + 1:]:
         stripped = line.strip()
@@ -44,6 +47,10 @@ def parse_journal_raw(raw_text: str) -> dict:
 
         if META_RE.search(stripped):
             raise ValueError("journal does not support r:, d:, or R:")
+
+        if stripped.startswith("l:"):
+            linked_item_ids.append(parse_link_value(stripped[2:]))
+            continue
 
         for tag in TAG_RE.findall(stripped):
             low = tag.lower()
@@ -69,10 +76,20 @@ def parse_journal_raw(raw_text: str) -> dict:
     if not body:
         raise ValueError("journal content is required")
 
-    return {"title": _extract_title(body), "body": body, "tags": tags}
+    return {
+        "title": _extract_title(body),
+        "body": body,
+        "tags": tags,
+        "linked_item_ids": dedupe_links(linked_item_ids),
+    }
 
 
-def export_journal_raw(journal: dict, *, tags: list[str] | None = None) -> str:
+def export_journal_raw(
+    journal: dict,
+    *,
+    tags: list[str] | None = None,
+    linked_item_ids: list[str] | None = None,
+) -> str:
     body = str(journal.get("body") or "").strip("\n")
     if not body:
         body = str(journal.get("title") or "").strip()
@@ -87,5 +104,8 @@ def export_journal_raw(journal: dict, *, tags: list[str] | None = None) -> str:
     clean_tags = [str(tag).strip().lower() for tag in (tags or []) if str(tag).strip()]
     if clean_tags:
         out.append(" ".join(f"#{tag}" for tag in clean_tags))
+
+    for target_item_id in dedupe_links(list(linked_item_ids or [])):
+        out.append(f"l:{target_item_id}")
 
     return "\n".join(out).strip()

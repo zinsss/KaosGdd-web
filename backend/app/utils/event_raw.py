@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from app.config import SETTINGS
+from app.utils.item_links import dedupe_links, parse_link_value
 from app.utils.datetime_parse import parse_local_datetime_to_iso
 
 EVENT_PREFIX = "^^ "
@@ -87,6 +88,7 @@ def parse_event_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> di
     title = None
     tags: list[str] = []
     remind_at = None
+    linked_item_ids: list[str] = []
     memo_lines: list[str] = []
     in_memo = False
 
@@ -104,7 +106,7 @@ def parse_event_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> di
             continue
 
         if title is None:
-            if stripped.startswith("#") or stripped.startswith("r:") or stripped == MEMO_DELIM:
+            if stripped.startswith("#") or stripped.startswith("r:") or stripped.startswith("l:") or stripped == MEMO_DELIM:
                 raise ValueError("missing title")
             title = stripped
             continue
@@ -125,6 +127,10 @@ def parse_event_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> di
                 start_date,
                 reject_past_datetimes=reject_past_datetimes,
             )
+            continue
+
+        if stripped.startswith("l:"):
+            linked_item_ids.append(parse_link_value(stripped[2:]))
             continue
 
         raise ValueError("unsupported extra event grammar")
@@ -149,10 +155,17 @@ def parse_event_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> di
         "memo": "\n".join(memo_lines).rstrip("\n") if memo_lines else None,
         "tags": deduped,
         "remind_ats": [remind_at] if remind_at else [],
+        "linked_item_ids": dedupe_links(linked_item_ids),
     }
 
 
-def export_event_raw(event: dict, *, tags: list[str] | None = None, remind_at: str | None = None) -> str:
+def export_event_raw(
+    event: dict,
+    *,
+    tags: list[str] | None = None,
+    remind_at: str | None = None,
+    linked_item_ids: list[str] | None = None,
+) -> str:
     date_line = event.get("start_date") or ""
     if event.get("end_date"):
         date_line += f"~{event['end_date']}"
@@ -164,6 +177,9 @@ def export_event_raw(event: dict, *, tags: list[str] | None = None, remind_at: s
 
     if remind_at:
         lines.append(f"r:{remind_at}")
+
+    for target_item_id in dedupe_links(list(linked_item_ids or [])):
+        lines.append(f"l:{target_item_id}")
 
     memo = str(event.get("memo") or "").strip("\n")
     if memo:
