@@ -40,7 +40,7 @@ task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
 journal_service = JournalService(items_repo, journal_repo)
 file_service = FileService(items_repo, file_repo)
-reminder_service = ReminderService(reminder_repo, task_repo, items_repo)
+reminder_service = ReminderService(reminder_repo, task_repo, event_repo, items_repo)
 
 
 @asynccontextmanager

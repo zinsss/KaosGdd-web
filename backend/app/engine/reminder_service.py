@@ -1,16 +1,20 @@
 from datetime import datetime, timedelta, timezone
+import logging
 import re
 
 from app.config import SETTINGS
+from app.db.repo.event_repo import EventRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.task_repo import TaskRepo
-from app.integrations.push_format import build_reminder_push_message
+from app.integrations.push_format import build_push_body, build_push_title
 from app.integrations.pushover_client import send_pushover
 from app.strings import ReminderStatusText
 from app.utils.clock import now_iso
 from app.utils.datetime_parse import parse_local_datetime_to_iso
 from app.utils.timefmt import format_dt_for_ui
+
+logger = logging.getLogger(__name__)
 
 
 class ReminderService:
@@ -18,10 +22,12 @@ class ReminderService:
         self,
         reminder_repo: ReminderRepo,
         task_repo: TaskRepo,
+        event_repo: EventRepo | None = None,
         items_repo: ItemsRepo | None = None,
     ) -> None:
         self.reminder_repo = reminder_repo
         self.task_repo = task_repo
+        self.event_repo = event_repo
         self.items_repo = items_repo
 
     def create_task_reminder(
@@ -295,35 +301,14 @@ class ReminderService:
                 payload={"parent_item_id": row.get("parent_item_id")},
             )
 
-            task = None
-            if row.get("parent_item_id"):
-                task = self.task_repo.get_task_detail(row["parent_item_id"])
-
-            click_url = None
-            if row.get("parent_item_id") and SETTINGS.WEB_BASE_URL:
-                click_url = SETTINGS.WEB_BASE_URL.rstrip("/") + "/tasks/" + row["parent_item_id"]
-
-            if not row.get("parent_item_id") and SETTINGS.WEB_BASE_URL:
-                click_url = SETTINGS.WEB_BASE_URL.rstrip("/") + "/reminders/" + row["id"]
-
-            item_title = task["title"] if task else row["title"]
-            item_type = task.get("item_type") if task else "reminder"
-
-            push_body = build_reminder_push_message(
-                item_type=item_type,
-                title=item_title,
-                due_at=task.get("due_at") if task else None,
-                remind_at=row.get("remind_at"),
+            push_payload = self._build_push_payload(row)
+            send_result = send_pushover(
+                title=push_payload["title"],
+                message=push_payload["message"],
+                url=push_payload["url"],
+                url_title="Open" if push_payload["url"] else None,
             )
-
-            send_pushover(
-                title="𝕂𝕒𝕠𝕤𝔾𝕕𝕕",
-                message=push_body,
-                url=click_url,
-                url_title="Open" if click_url else None,
-                priority=0,
-                sound=None,
-            )
+            self._log_push_result(row=row, send_result=send_result)
 
             fired.append(row)
 
@@ -342,39 +327,66 @@ class ReminderService:
                 payload={"parent_item_id": row.get("parent_item_id")},
             )
 
-            task = None
-            if row.get("parent_item_id"):
-                task = self.task_repo.get_task_detail(row["parent_item_id"])
-
-            click_url = None
-            if row.get("parent_item_id") and SETTINGS.WEB_BASE_URL:
-                click_url = SETTINGS.WEB_BASE_URL.rstrip("/") + "/tasks/" + row["parent_item_id"]
-
-            if not row.get("parent_item_id") and SETTINGS.WEB_BASE_URL:
-                click_url = SETTINGS.WEB_BASE_URL.rstrip("/") + "/reminders/" + row["id"]
-
-            item_title = task["title"] if task else row["title"]
-            item_type = task.get("item_type") if task else "reminder"
-
-            push_body = build_reminder_push_message(
-                item_type=item_type,
-                title=item_title,
-                due_at=task.get("due_at") if task else None,
-                remind_at=row.get("remind_at"),
-            )
-
-            send_pushover(
-                title="𝕂𝕒𝕠𝕤𝔾𝕕𝕕",
-                message=push_body,
-                url=click_url,
-                url_title="Open" if click_url else None,
-                priority=1,
-                sound="persistent",
-            )
-
             missed.append(row)
 
         return missed
+
+    def _build_push_payload(self, reminder: dict) -> dict:
+        parent_item_id = reminder.get("parent_item_id")
+        target_kind = "reminder"
+        item_title = str(reminder.get("title") or "").strip()
+        due_at = None
+        memo = None
+        deep_link_path = f"/reminders/{reminder['id']}"
+
+        if parent_item_id:
+            task = self.task_repo.get_task_detail(parent_item_id)
+            if task is not None:
+                target_kind = "task"
+                item_title = task.get("title") or item_title
+                due_at = task.get("due_at")
+                memo = task.get("memo")
+                deep_link_path = f"/tasks/{parent_item_id}"
+            elif self.event_repo is not None:
+                event = self.event_repo.get_event_detail(parent_item_id)
+                if event is not None:
+                    target_kind = "event"
+                    item_title = event.get("title") or item_title
+                    due_at = event.get("start_date")
+                    memo = event.get("memo")
+                    deep_link_path = f"/events/{parent_item_id}"
+
+        title = build_push_title(target_kind=target_kind)
+        message = build_push_body(
+            item_title=item_title,
+            remind_at=reminder.get("remind_at"),
+            due_at=due_at,
+            memo=memo,
+        )
+        return {
+            "title": title,
+            "message": message,
+            "url": self._build_absolute_url(deep_link_path),
+            "target_kind": target_kind,
+        }
+
+    def _build_absolute_url(self, path: str) -> str | None:
+        if not SETTINGS.APP_BASE_URL:
+            return None
+        return SETTINGS.APP_BASE_URL.rstrip("/") + path
+
+    def _log_push_result(self, *, row: dict, send_result: dict) -> None:
+        logger.info(
+            (
+                "reminder fired push result: reminder_id=%s parent_item_id=%s "
+                "push_attempted=%s push_succeeded=%s reason=%s"
+            ),
+            row.get("id"),
+            row.get("parent_item_id"),
+            bool(send_result.get("attempted")),
+            bool(send_result.get("succeeded")),
+            send_result.get("reason"),
+        )
 
     def _decorate_reminder(self, row: dict) -> dict:
         item = dict(row)
