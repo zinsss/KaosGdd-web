@@ -128,7 +128,7 @@ export default function TaskDetailPanel({ item, raw }) {
             <div className="detailStateText">
               {isRemoved ? UI_STRINGS.REMOVED_STATE : item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}
             </div>
-            {!isRemoved ? <TaskToggleButton taskId={item.id} isDone={item.is_done} /> : null}
+            {!isRemoved ? <TaskToggleButton taskId={item.id} isDone={item.is_done} pill /> : null}
           </div>
         </div>
 
