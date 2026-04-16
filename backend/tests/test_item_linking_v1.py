@@ -129,6 +129,16 @@ def test_l_on_reminders_is_rejected(main_module) -> None:
     assert patch["error"] == "standalone reminder does not support l:"
 
 
+def test_l_targeting_reminder_item_is_rejected(main_module) -> None:
+    reminder = main_module.capture_item({"raw": "!! 2026-12-15 23:38\nlinked reminder"})
+    assert reminder["ok"] is True
+    source = _create_task(main_module, "-- source task")
+
+    patch = main_module.update_task_raw(source, {"raw": f"-- source task\nl:{reminder['id']}"})
+    assert patch["ok"] is False
+    assert patch["error"] == "l: cannot target reminder items"
+
+
 def test_l_on_subtasks_is_rejected(main_module) -> None:
     source = _create_task(main_module, "-- parent")
 

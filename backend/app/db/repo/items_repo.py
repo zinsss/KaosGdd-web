@@ -253,11 +253,13 @@ class ItemsRepo:
                     raise ValueError("self-link is invalid")
 
                 target = conn.execute(
-                    text("SELECT id FROM {items} WHERE id = :id LIMIT 1".format(items=DbTables.ITEMS)),
+                    text("SELECT id, item_type FROM {items} WHERE id = :id LIMIT 1".format(items=DbTables.ITEMS)),
                     {"id": target_item_id},
-                ).fetchone()
+                ).mappings().first()
                 if target is None:
                     raise ValueError(f"linked item not found: {target_item_id}")
+                if target["item_type"] == "reminder":
+                    raise ValueError("l: cannot target reminder items")
 
     def list_item_links(self, source_item_id: str) -> list[str]:
         with self.engine.begin() as conn:
