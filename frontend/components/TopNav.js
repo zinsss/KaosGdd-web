@@ -10,6 +10,7 @@ export default function TopNav() {
   const remindersActive = pathname.startsWith("/reminders");
   const eventsActive = pathname.startsWith("/events");
   const journalsActive = pathname.startsWith("/journals");
+  const filesActive = pathname.startsWith("/files");
 
   return (
     <nav className="topNavScroller" aria-label="Primary">
@@ -25,6 +26,9 @@ export default function TopNav() {
         </Link>
         <Link className={"topNavTextLink" + (journalsActive ? " topNavTextLinkActive" : "")} href="/journals">
           Journals
+        </Link>
+        <Link className={"topNavTextLink" + (filesActive ? " topNavTextLinkActive" : "")} href="/files">
+          Files
         </Link>
       </div>
     </nav>

@@ -22,6 +22,8 @@ def _item_type_path(item_type: str, item_id: str) -> str | None:
         return f"/events/{item_id}"
     if item_type == "journal":
         return "/journals"
+    if item_type == "file":
+        return f"/files/{item_id}"
     return None
 
 

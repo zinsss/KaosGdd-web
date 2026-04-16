@@ -6,18 +6,21 @@ load_dotenv()
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import FileResponse
 
 from app.config import SETTINGS
 from app.core.db import engine
 from app.db.repo.event_repo import EventRepo
 from app.db.repo.journal_repo import JournalRepo
 from app.db.repo.items_repo import ItemsRepo
+from app.db.repo.file_repo import FileRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
 from app.engine.journal_service import JournalService
+from app.engine.file_service import FileService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
 from app.schemas.reminders import normalize_minutes
@@ -31,10 +34,12 @@ items_repo = ItemsRepo(engine)
 task_repo = TaskRepo(engine)
 event_repo = EventRepo(engine)
 journal_repo = JournalRepo(engine)
+file_repo = FileRepo(engine)
 reminder_repo = ReminderRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
 journal_service = JournalService(items_repo, journal_repo)
+file_service = FileService(items_repo, file_repo)
 reminder_service = ReminderService(reminder_repo, task_repo, items_repo)
 
 
@@ -143,6 +148,64 @@ def restore_event(event_id: str):
 @app.get("/journals")
 def list_journals(mode: str = "active"):
     return {"items": journal_service.list_journals(mode=mode)}
+
+
+@app.get("/files")
+def list_files(mode: str = "active"):
+    return {"items": file_service.list_files(mode=mode)}
+
+
+@app.post("/files")
+async def create_file(request: Request):
+    content = await request.body()
+    original_filename = str(request.headers.get("x-file-name") or "").strip() or "uploaded-file"
+    mime_type = str(request.headers.get("x-file-type") or "").strip()
+    if not content:
+        return {"ok": False, "error": "file body is empty"}
+    item_id = file_service.create_file(
+        original_filename=original_filename,
+        mime_type=mime_type,
+        content=content,
+    )
+    return {"ok": True, "id": item_id}
+
+
+@app.get("/files/{file_id}")
+def get_file(file_id: str):
+    item = file_service.get_file(file_id)
+    if item is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "item": item}
+
+
+@app.get("/files/{file_id}/open")
+def open_file(file_id: str):
+    result = file_service.get_file_binary(file_id)
+    if result is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    detail, path = result
+    return FileResponse(
+        path=path,
+        media_type=detail.get("mime_type") or "application/octet-stream",
+        filename=detail.get("original_filename") or detail.get("title") or "file",
+    )
+
+
+@app.get("/files/{file_id}/raw")
+def get_file_raw(file_id: str):
+    raw = file_service.export_file_raw(file_id)
+    if raw is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "raw": raw}
+
+
+@app.patch("/files/{file_id}/raw")
+def update_file_raw(file_id: str, payload: dict):
+    raw_text = str(payload.get("raw") or "")
+    ok, error = file_service.update_file_from_raw(file_id, raw_text)
+    if not ok:
+        return {"ok": False, "error": error or "invalid file raw"}
+    return {"ok": True}
 
 
 @app.get("/journals/{journal_id}")
