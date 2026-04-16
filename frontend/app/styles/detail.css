@@ -54,8 +54,8 @@
 
 .detailReadRow {
   display: grid;
-  grid-template-columns: minmax(96px, 132px) 1px minmax(0, 1fr);
-  column-gap: 12px;
+  grid-template-columns: minmax(90px, 120px) 1px minmax(0, 1fr);
+  column-gap: 10px;
   align-items: start;
 }
 
@@ -164,8 +164,8 @@
   }
 
   .detailReadRow {
-    grid-template-columns: minmax(82px, 116px) 1px minmax(0, 1fr);
-    column-gap: 10px;
+    grid-template-columns: minmax(68px, 96px) 1px minmax(0, 1fr);
+    column-gap: 8px;
   }
 
   .detailReadInline {
