@@ -13,6 +13,7 @@ class Settings:
     LIFECYCLE_DONE_RETENTION_DAYS = int(os.getenv("LIFECYCLE_DONE_RETENTION_DAYS", "365"))
     LIFECYCLE_REMOVED_RETENTION_DAYS = int(os.getenv("LIFECYCLE_REMOVED_RETENTION_DAYS", "90"))
     LIFECYCLE_FIRED_RETENTION_DAYS = int(os.getenv("LIFECYCLE_FIRED_RETENTION_DAYS", "30"))
+    FILE_STORAGE_DIR = os.getenv("FILE_STORAGE_DIR", "/data/uploads")
 
 
 SETTINGS = Settings()
@@ -25,6 +26,7 @@ class DbTables:
     REMINDER_ITEMS = "reminder_items"
     EVENT_ITEMS = "event_items"
     JOURNAL_ITEMS = "journal_items"
+    FILE_ITEMS = "file_items"
     REMINDER_EVENTS = "reminder_events"
     ITEM_REMINDERS = "item_reminders"
     ITEM_TAGS = "item_tags"

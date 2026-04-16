@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS {items} (
     updated_at TEXT NOT NULL,
     archived_at TEXT,
     deleted_at TEXT,
-    CHECK (item_type IN ('task', 'reminder', 'event', 'journal')),
+    CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'file')),
     CHECK (status IN ('active', 'removed', 'archived'))
 );
 
@@ -56,6 +56,15 @@ CREATE TABLE IF NOT EXISTS {event_items} (
 CREATE TABLE IF NOT EXISTS {journal_items} (
     item_id TEXT PRIMARY KEY,
     body TEXT NOT NULL,
+    FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS {file_items} (
+    item_id TEXT PRIMARY KEY,
+    original_filename TEXT NOT NULL,
+    stored_path TEXT NOT NULL,
+    mime_type TEXT NOT NULL,
+    size_bytes INTEGER NOT NULL,
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE
 );
 
@@ -145,6 +154,9 @@ ON {event_items}(start_date, end_date);
 CREATE INDEX IF NOT EXISTS idx_journal_items_created
 ON {items}(item_type, status, created_at);
 
+CREATE INDEX IF NOT EXISTS idx_file_items_created
+ON {items}(item_type, status, created_at);
+
 CREATE INDEX IF NOT EXISTS idx_reminder_items_state_last_fired
 ON {reminder_items}(state, last_fired_at);
 """.format(
@@ -154,6 +166,7 @@ ON {reminder_items}(state, last_fired_at);
     reminder_items=DbTables.REMINDER_ITEMS,
     event_items=DbTables.EVENT_ITEMS,
     journal_items=DbTables.JOURNAL_ITEMS,
+    file_items=DbTables.FILE_ITEMS,
     reminder_events=DbTables.REMINDER_EVENTS,
     item_reminders=DbTables.ITEM_REMINDERS,
     item_tags=DbTables.ITEM_TAGS,
@@ -169,7 +182,7 @@ def _sqlite_items_table_allows_supported_types(conn) -> bool:
     if not row or not row[0]:
         return True
     ddl = str(row[0]).lower()
-    return "'event'" in ddl and "'journal'" in ddl
+    return "'event'" in ddl and "'journal'" in ddl and "'file'" in ddl
 
 
 def _migrate_sqlite_items_table_add_supported_types(conn) -> None:
@@ -188,7 +201,7 @@ def _migrate_sqlite_items_table_add_supported_types(conn) -> None:
                     updated_at TEXT NOT NULL,
                     archived_at TEXT,
                     deleted_at TEXT,
-                    CHECK (item_type IN ('task', 'reminder', 'event', 'journal')),
+                    CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'file')),
                     CHECK (status IN ('active', 'removed', 'archived'))
                 )
                 """

@@ -170,12 +170,15 @@
 
 .bottomCaptureButton {
   width: auto;
-  min-width: 84px;
-  height: 46px;
+  min-width: 68px;
+  height: 34px;
+  line-height: 34px;
   padding: 0 14px;
+  border-radius: 999px;
   border-color: rgba(137, 180, 250, 0.18);
   background: rgba(137, 180, 250, 0.06);
   color: var(--ctp-blue);
+  align-self: flex-end;
 }
 
 .bottomCaptureButton:hover {
@@ -184,9 +187,10 @@
 
 .bottomCaptureCancelButton {
   width: auto;
-  min-width: 72px;
-  height: 46px;
+  min-width: 64px;
+  height: 34px;
   padding: 0 12px;
+  border-radius: 999px;
   border-color: rgba(186, 194, 222, 0.22);
   background: rgba(186, 194, 222, 0.05);
   color: var(--ui-text-dim);
