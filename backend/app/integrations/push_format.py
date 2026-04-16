@@ -1,32 +1,51 @@
 from app.utils.timefmt import format_dt_for_ui
 
 
-def build_item_push_heading(*, item_type: str | None, title: str) -> str:
-    kind = str(item_type or "item").strip().upper()
-    clean_title = str(title or "").strip()
-    if not clean_title:
-        return kind
-    return f"{kind} • {clean_title}"
+def build_push_title(*, target_kind: str) -> str:
+    normalized = str(target_kind or "reminder").strip().lower()
+    if normalized == "task":
+        return "Task Reminder"
+    if normalized == "event":
+        return "Event Reminder"
+    return "Reminder"
 
 
-def build_reminder_push_message(
+def build_push_body(
     *,
-    item_type: str | None,
-    title: str,
-    due_at: str | None,
+    item_title: str,
     remind_at: str | None,
+    due_at: str | None = None,
+    memo: str | None = None,
 ) -> str:
     lines: list[str] = []
 
-    lines.append(build_item_push_heading(item_type=item_type, title=title))
+    title = str(item_title or "").strip()
+    if title:
+        lines.append(title)
+
+    remind_display = format_dt_for_ui(remind_at) if remind_at else None
+    if remind_display:
+        lines.append(f"Remind: {remind_display}")
 
     due_display = format_dt_for_ui(due_at) if due_at else None
-    remind_display = format_dt_for_ui(remind_at) if remind_at else None
-
     if due_display:
-        lines.append(f"📅 {due_display}")
+        lines.append(f"Due: {due_display}")
 
-    if remind_display:
-        lines.append(f"⏰ {remind_display}")
+    memo_line = _first_short_line(memo)
+    if memo_line:
+        lines.append(memo_line)
 
-    return "\n\n".join(lines)
+    return "\n".join(lines)
+
+
+def _first_short_line(memo: str | None, *, max_len: int = 100) -> str | None:
+    if not memo:
+        return None
+    for raw_line in str(memo).splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if len(line) <= max_len:
+            return line
+        return line[: max_len - 1].rstrip() + "…"
+    return None
