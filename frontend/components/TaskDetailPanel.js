@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AddReminderForm from "./AddReminderForm";
 import ReminderActions from "./ReminderActions";
@@ -107,9 +108,9 @@ export default function TaskDetailPanel({ item, raw }) {
   return (
     <main className="page">
       <div className="detailBackLinkRow">
-        <a className="taskLink backLink" href="/tasks">
+        <Link className="taskLink backLink" href="/tasks">
           {UI_STRINGS.BACK_TO_TASKS_LIST}
-        </a>
+        </Link>
       </div>
 
       <section className="panel">

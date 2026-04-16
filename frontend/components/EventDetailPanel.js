@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import EventRawEditor from "./EventRawEditor";
 import LinkedItemsBlock from "./LinkedItemsBlock";
@@ -35,7 +36,7 @@ export default function EventDetailPanel({ item, raw }) {
 
   return (
     <main className="page">
-      <div className="detailBackLinkRow"><a className="taskLink backLink" href="/events">&lt; Back to Events</a></div>
+      <div className="detailBackLinkRow"><Link className="taskLink backLink" href="/events">&lt; Back to Events</Link></div>
 
       <section className="panel">
         <div className="detailPageLabel">• Event Detail</div>
