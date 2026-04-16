@@ -54,25 +54,34 @@
 
 .detailReadRow {
   display: grid;
-  grid-template-columns: 56px minmax(0, 1fr);
+  grid-template-columns: minmax(96px, 132px) 1px minmax(0, 1fr);
   column-gap: 12px;
   align-items: start;
+}
+
+.detailReadRow::before {
+  content: "";
+  grid-column: 2;
+  align-self: stretch;
+  background: var(--ui-border-strong);
 }
 
 .detailReadLabel {
   color: var(--ui-text-dim);
   text-align: left;
-  white-space: nowrap;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .withDivider {
-  border-left: 1px solid var(--ui-border-strong);
-  padding-left: 12px;
+  grid-column: 3;
 }
 
 .detailReadContent {
   min-width: 0;
   color: var(--ui-text);
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .detailReadInline {
@@ -155,7 +164,7 @@
   }
 
   .detailReadRow {
-    grid-template-columns: 50px minmax(0, 1fr);
+    grid-template-columns: minmax(82px, 116px) 1px minmax(0, 1fr);
     column-gap: 10px;
   }
 
