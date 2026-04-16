@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS {file_items} (
     stored_path TEXT NOT NULL,
     mime_type TEXT NOT NULL,
     size_bytes INTEGER NOT NULL,
+    memo TEXT,
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE
 );
 
@@ -257,6 +258,8 @@ def _migrate_sqlite_legacy_task_reminder_tables(conn) -> None:
     _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "last_fired_at TEXT")
     _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "acked_at TEXT")
     _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "snoozed_until TEXT")
+
+    _sqlite_add_column_if_missing(conn, DbTables.FILE_ITEMS, "memo TEXT")
 
     _sqlite_add_column_if_missing(conn, DbTables.ITEM_REMINDERS, "created_at TEXT")
 

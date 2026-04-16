@@ -108,3 +108,87 @@ def test_task_can_link_to_file_item(main_module) -> None:
     assert detail["ok"] is True
     assert detail["item"]["links"][0]["id"] == file_id
     assert detail["item"]["links"][0]["marker"] == "F"
+
+
+def test_file_raw_update_can_change_title(main_module) -> None:
+    file_id = _upload(main_module, "before.pdf", b"content")
+
+    updated = main_module.update_file_raw(file_id, {"raw": "After Title"})
+    assert updated["ok"] is True
+
+    detail = main_module.get_file(file_id)["item"]
+    assert detail["title"] == "After Title"
+
+
+def test_file_raw_update_can_save_memo(main_module) -> None:
+    file_id = _upload(main_module, "memo.pdf", b"content")
+
+    updated = main_module.update_file_raw(
+        file_id,
+        {"raw": "Memo Title\n\n\"\"\"\nline1\nline2\n\"\"\""},
+    )
+    assert updated["ok"] is True
+
+    detail = main_module.get_file(file_id)["item"]
+    assert detail["memo"] == "line1\nline2"
+
+
+def test_file_raw_update_can_save_tags(main_module) -> None:
+    file_id = _upload(main_module, "tags.pdf", b"content")
+
+    updated = main_module.update_file_raw(file_id, {"raw": "Tagged File\n#alpha #beta #alpha"})
+    assert updated["ok"] is True
+
+    detail = main_module.get_file(file_id)["item"]
+    assert detail["tags"] == ["alpha", "beta"]
+
+
+def test_file_raw_update_preserves_links(main_module) -> None:
+    file_id = _upload(main_module, "link-preserve.pdf", b"content")
+    target = main_module.capture_item({"raw": "-- linked target"})
+    assert target["ok"] is True
+
+    first_update = main_module.update_file_raw(file_id, {"raw": f"Initial\nl:{target['id']}"})
+    assert first_update["ok"] is True
+
+    second_update = main_module.update_file_raw(file_id, {"raw": f"Renamed\n#meta\nl:{target['id']}"})
+    assert second_update["ok"] is True
+
+    detail = main_module.get_file(file_id)["item"]
+    assert [link["id"] for link in detail["links"]] == [target["id"]]
+
+
+def test_file_remove_changes_status_to_removed(main_module) -> None:
+    file_id = _upload(main_module, "remove-me.pdf", b"content")
+
+    removed = main_module.remove_file(file_id)
+    assert removed["ok"] is True
+
+    detail = main_module.get_file(file_id)["item"]
+    assert detail["status"] == "removed"
+
+
+def test_removed_file_is_excluded_from_active_file_list(main_module) -> None:
+    keep_id = _upload(main_module, "keep.pdf", b"keep")
+    remove_id = _upload(main_module, "remove.pdf", b"remove")
+
+    removed = main_module.remove_file(remove_id)
+    assert removed["ok"] is True
+
+    active_ids = [item["id"] for item in main_module.list_files()["items"]]
+    removed_ids = [item["id"] for item in main_module.list_files(mode="removed")["items"]]
+
+    assert keep_id in active_ids
+    assert remove_id not in active_ids
+    assert remove_id in removed_ids
+
+
+def test_removed_file_binary_is_not_hard_deleted(main_module) -> None:
+    file_id = _upload(main_module, "binary-stays.pdf", b"persist")
+    path = Path(main_module.get_file(file_id)["item"]["stored_path"])
+    assert path.exists()
+
+    removed = main_module.remove_file(file_id)
+    assert removed["ok"] is True
+
+    assert path.exists()

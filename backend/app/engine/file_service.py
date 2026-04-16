@@ -90,7 +90,12 @@ class FileService:
         detail = self.file_repo.get_file_detail(item_id)
         if detail is None:
             return None
-        return export_file_raw(detail, linked_item_ids=self.items_repo.list_item_links(item_id))
+        tags = self.items_repo.list_item_tags(item_id)
+        return export_file_raw(
+            detail,
+            tags=tags,
+            linked_item_ids=self.items_repo.list_item_links(item_id),
+        )
 
     def update_file_from_raw(self, item_id: str, raw_text: str) -> tuple[bool, str | None]:
         detail = self.file_repo.get_file_detail(item_id)
@@ -103,13 +108,23 @@ class FileService:
         except ValueError as exc:
             return False, str(exc)
 
+        self.items_repo.update_item_title(item_id, parsed["title"])
+        self.file_repo.update_file_memo(item_id, parsed.get("memo"))
+        self.items_repo.replace_item_tags(item_id, list(parsed.get("tags") or []))
         self.items_repo.replace_item_links(item_id, list(parsed.get("linked_item_ids") or []))
         return True, None
+
+    def remove_file(self, item_id: str) -> bool:
+        if self.file_repo.get_file_detail(item_id) is None:
+            return False
+        return self.items_repo.soft_delete_item(item_id)
 
     def _decorate_file(self, row: dict) -> dict:
         item = dict(row)
         item["created_at_display"] = format_dt_for_ui(item.get("created_at"))
         item["updated_at_display"] = format_dt_for_ui(item.get("updated_at"))
+        item["removed_at_display"] = format_dt_for_ui(item.get("deleted_at"))
+        item["tags"] = self.items_repo.list_item_tags(item["id"])
 
         resolved_links = self.items_repo.list_resolved_item_links(item["id"])
         item["links"] = []
