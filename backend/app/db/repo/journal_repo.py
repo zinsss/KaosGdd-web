@@ -65,7 +65,7 @@ class JournalRepo:
                     JOIN {journal_items} j ON i.id = j.item_id
                     WHERE i.item_type = 'journal'
                       AND i.status = :mode
-                    ORDER BY i.created_at DESC, i.updated_at DESC, i.id DESC
+                    ORDER BY i.created_at DESC, i.updated_at DESC, i.rowid DESC, i.id DESC
                     """.format(items=DbTables.ITEMS, journal_items=DbTables.JOURNAL_ITEMS)
                 ),
                 {"mode": mode},
