@@ -19,7 +19,11 @@ function formatBytes(value) {
 
 function buildUploadErrorMessage(response, data, parseFailed) {
   if (data && typeof data.error === "string" && data.error.trim()) {
-    return data.error;
+    const trimmed = data.error.trim();
+    const hasKorean = /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(trimmed);
+    if (!hasKorean) {
+      return trimmed;
+    }
   }
 
   if (!response.ok) {

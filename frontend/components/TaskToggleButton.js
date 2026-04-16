@@ -8,6 +8,7 @@ export default function TaskToggleButton({
   taskId,
   isDone,
   compact = false,
+  pill = false,
   prefixOnly = false,
   onResolved,
   onNotFound,
@@ -69,6 +70,7 @@ export default function TaskToggleButton({
       type="button"
       className={
         "button taskToggleButton" +
+        (pill ? " pillButton" : "") +
         (compact ? " compactInlineButton compactFlatButton" : "") +
         (compact ? (isDone ? " compactFlatButtonUndo" : " compactFlatButtonDone") : "")
       }

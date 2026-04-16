@@ -85,6 +85,14 @@ textarea.textInput:focus {
     border-color 0.15s ease;
 }
 
+.pillButton {
+  min-width: 0;
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  line-height: 34px;
+}
+
 .compactFlatButton {
   min-width: 0;
   padding: 3px 10px;

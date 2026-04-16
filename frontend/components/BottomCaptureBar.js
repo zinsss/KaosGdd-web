@@ -190,7 +190,7 @@ export default function BottomCaptureBar() {
         <div className="bottomCaptureActions">
           {editState ? (
             <button
-              className="button bottomCaptureCancelButton"
+              className="button pillButton bottomCaptureCancelButton"
               type="button"
               onClick={cancelEdit}
               disabled={isSubmitting}
@@ -199,7 +199,7 @@ export default function BottomCaptureBar() {
             </button>
           ) : null}
 
-          <button className="button bottomCaptureButton" type="submit" disabled={isSubmitting}>
+          <button className="button pillButton bottomCaptureButton" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "..." : editState ? "Save" : "Add"}
           </button>
         </div>
