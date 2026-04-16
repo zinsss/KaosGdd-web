@@ -1,5 +1,3 @@
-import os
-
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -28,8 +26,6 @@ from app.strings import ApiText
 from app.utils.capture_parse import parse_capture_input
 
 
-APP_NAME = os.getenv("APP_NAME", SETTINGS.APP_NAME)
-
 items_repo = ItemsRepo(engine)
 task_repo = TaskRepo(engine)
 event_repo = EventRepo(engine)
@@ -49,15 +45,15 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title=APP_NAME, lifespan=lifespan)
+app = FastAPI(title=SETTINGS.APP_NAME, lifespan=lifespan)
 
 
 @app.get("/health")
 def health():
     return {
         "ok": True,
-        "app": APP_NAME,
-        "mode": "frozen-v0-raw-edit",
+        "app": SETTINGS.APP_NAME,
+        "mode": SETTINGS.APP_HEALTH_MODE,
         "timezone": SETTINGS.APP_TIMEZONE,
     }
 
@@ -87,7 +83,7 @@ def create_event(payload: dict):
     if not title:
         return {"ok": False, "error": ApiText.TITLE_REQUIRED}
     if not start_date:
-        return {"ok": False, "error": "start_date is required"}
+        return {"ok": False, "error": ApiText.START_DATE_REQUIRED}
 
     item_id = event_service.create_event(
         title=title,
@@ -161,7 +157,7 @@ async def create_file(request: Request):
     original_filename = str(request.headers.get("x-file-name") or "").strip() or "uploaded-file"
     mime_type = str(request.headers.get("x-file-type") or "").strip()
     if not content:
-        return {"ok": False, "error": "file body is empty"}
+        return {"ok": False, "error": ApiText.FILE_BODY_EMPTY}
     item_id = file_service.create_file(
         original_filename=original_filename,
         mime_type=mime_type,
@@ -204,7 +200,7 @@ def update_file_raw(file_id: str, payload: dict):
     raw_text = str(payload.get("raw") or "")
     ok, error = file_service.update_file_from_raw(file_id, raw_text)
     if not ok:
-        return {"ok": False, "error": error or "invalid file raw"}
+        return {"ok": False, "error": error or ApiText.INVALID_FILE_RAW}
     return {"ok": True}
 
 
@@ -438,7 +434,7 @@ def capture_item(payload: dict):
         if not title:
             return {"ok": False, "error": ApiText.TITLE_REQUIRED}
         if not start_date:
-            return {"ok": False, "error": "missing date after ^^"}
+            return {"ok": False, "error": ApiText.MISSING_EVENT_DATE}
 
         item_id = event_service.create_event(
             title=title,

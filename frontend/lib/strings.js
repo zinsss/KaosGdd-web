@@ -1,9 +1,13 @@
 export const UI_STRINGS = {
   APP_TITLE: "KaosGdd",
+  APP_TITLE_WEB: "KaosGdd Web",
+  APP_DESCRIPTION: "Tailscale-only web UI for KaosGdd",
+  APP_HEADER_SUBTITLE: "Order for Chaotic-Minded Gdd",
   TASKS: "Tasks",
   REMINDERS: "Reminders",
   EVENTS: "Events",
   JOURNALS: "Journals",
+  FILES: "Files",
   TASK_DETAIL: "Task Detail",
   REMINDER_DETAIL: "Reminder Detail",
   TASK_LIST: "Task list",

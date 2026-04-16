@@ -1,15 +1,18 @@
+import { UI_STRINGS } from "../lib/strings";
+import { getApiBase } from "../lib/api-base";
+
 async function getHealth() {
-  const base = process.env.NEXT_PUBLIC_API_BASE || "http://backend:8000";
+  const base = getApiBase();
   try {
     const res = await fetch(`${base}/health`, { cache: "no-store" });
     return await res.json();
   } catch {
-    return { ok: false, app: "backend unreachable" };
+    return { ok: false, app: UI_STRINGS.BACKEND_UNREACHABLE };
   }
 }
 
 async function getTasks() {
-  const base = process.env.NEXT_PUBLIC_API_BASE || "http://backend:8000";
+  const base = getApiBase();
   try {
     const res = await fetch(`${base}/tasks`, { cache: "no-store" });
     return await res.json();
@@ -25,7 +28,7 @@ export default async function HomePage() {
   return (
     <main className="page">
       <section className="panel">
-        <div className="line">KaosGdd Web</div>
+        <div className="line">{UI_STRINGS.APP_TITLE_WEB}</div>
         <div className="subline">Tailscale-only internal web app</div>
       </section>
 
@@ -42,9 +45,9 @@ export default async function HomePage() {
       </section>
 
       <section className="panel">
-        <div className="sectionTitle">Tasks</div>
+        <div className="sectionTitle">{UI_STRINGS.TASKS}</div>
         {tasks.items.length === 0 ? (
-          <div className="empty">No tasks yet.</div>
+          <div className="empty">{UI_STRINGS.NO_TASKS}</div>
         ) : (
           <ul className="taskList">
             {tasks.items.map((task) => (

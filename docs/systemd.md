@@ -23,6 +23,12 @@ npm install
 npm run build
 ```
 
+## Configuration
+
+- Copy the repo-root `.env.example` to `.env` and set values before starting services.
+- Runtime knobs are centralized in `backend/app/config.py`.
+- Centralized user-facing text lives in `backend/app/strings.py` and `frontend/lib/strings.js`.
+
 ## Data directory
 
 ```bash

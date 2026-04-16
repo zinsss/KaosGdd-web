@@ -1,11 +1,16 @@
+import "./globals.css";
+import BottomCaptureBar from "../components/BottomCaptureBar";
+import TopNav from "../components/TopNav";
+import { UI_STRINGS } from "../lib/strings";
+
 export const metadata = {
-  title: "KaosGdd Web",
-  description: "Tailscale-only web UI for KaosGdd",
+  title: UI_STRINGS.APP_TITLE_WEB,
+  description: UI_STRINGS.APP_DESCRIPTION,
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "KaosGdd Web",
+    title: UI_STRINGS.APP_TITLE_WEB,
   },
 };
 
@@ -15,10 +20,6 @@ export const viewport = {
   viewportFit: "cover",
 };
 
-import "./globals.css";
-import BottomCaptureBar from "../components/BottomCaptureBar";
-import TopNav from "../components/TopNav";
-
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
@@ -26,9 +27,9 @@ export default function RootLayout({ children }) {
         <header className="appShellTop">
           <div className="appShellTopInner">
             <div className="appHeaderLine">
-              <span className="appHeaderTitle">KaosGdd</span>
+              <span className="appHeaderTitle">{UI_STRINGS.APP_TITLE}</span>
               <span className="appHeaderDot"> • </span>
-              <span className="appHeaderSubtitle">Order for Chaotic-Minded Gdd</span>
+              <span className="appHeaderSubtitle">{UI_STRINGS.APP_HEADER_SUBTITLE}</span>
             </div>
             <TopNav />
           </div>
