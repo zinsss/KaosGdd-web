@@ -30,13 +30,13 @@ export default function TaskRawEditor({ taskId, initialRaw }) {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || (data && data.ok === false)) {
-        setError((data && data.error) || "Save failed.");
+        setError((data && data.error) || UI_STRINGS.SAVE_FAILED);
         return;
       }
 
       window.location.reload();
     } catch {
-      setError("Save failed.");
+      setError(UI_STRINGS.SAVE_FAILED);
     } finally {
       setIsSubmitting(false);
     }

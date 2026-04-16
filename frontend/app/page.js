@@ -1,15 +1,18 @@
+import { UI_STRINGS } from "../lib/strings";
+import { getApiBase } from "../lib/api-base";
+
 async function getHealth() {
-  const base = process.env.NEXT_PUBLIC_API_BASE || "http://backend:8000";
+  const base = getApiBase();
   try {
     const res = await fetch(`${base}/health`, { cache: "no-store" });
     return await res.json();
   } catch {
-    return { ok: false, app: "backend unreachable" };
+    return { ok: false, app: UI_STRINGS.BACKEND_UNREACHABLE };
   }
 }
 
 async function getTasks() {
-  const base = process.env.NEXT_PUBLIC_API_BASE || "http://backend:8000";
+  const base = getApiBase();
   try {
     const res = await fetch(`${base}/tasks`, { cache: "no-store" });
     return await res.json();
@@ -25,26 +28,26 @@ export default async function HomePage() {
   return (
     <main className="page">
       <section className="panel">
-        <div className="line">KaosGdd Web</div>
-        <div className="subline">Tailscale-only internal web app</div>
+        <div className="line">{UI_STRINGS.APP_TITLE_WEB}</div>
+        <div className="subline">{UI_STRINGS.HOME_SUBTITLE}</div>
       </section>
 
       <section className="panel">
-        <div className="sectionTitle">System</div>
+        <div className="sectionTitle">{UI_STRINGS.SYSTEM}</div>
         <div className="row">
-          <span>Backend</span>
-          <span>{health.ok ? "OK" : "DOWN"}</span>
+          <span>{UI_STRINGS.BACKEND}</span>
+          <span>{health.ok ? UI_STRINGS.STATUS_OK : UI_STRINGS.STATUS_DOWN}</span>
         </div>
         <div className="row">
-          <span>App</span>
+          <span>{UI_STRINGS.APP}</span>
           <span>{health.app}</span>
         </div>
       </section>
 
       <section className="panel">
-        <div className="sectionTitle">Tasks</div>
+        <div className="sectionTitle">{UI_STRINGS.TASKS}</div>
         {tasks.items.length === 0 ? (
-          <div className="empty">No tasks yet.</div>
+          <div className="empty">{UI_STRINGS.NO_TASKS}</div>
         ) : (
           <ul className="taskList">
             {tasks.items.map((task) => (

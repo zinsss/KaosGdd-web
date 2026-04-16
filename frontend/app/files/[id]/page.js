@@ -1,17 +1,19 @@
 import FileDetailPanel from "../../../components/FileDetailPanel";
+import { getApiBase } from "../../../lib/api-base";
+import { UI_STRINGS } from "../../../lib/strings";
 
 async function getFile(id) {
-  const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
+  const base = getApiBase();
   try {
     const res = await fetch(base + "/files/" + id, { cache: "no-store" });
     return await res.json();
   } catch {
-    return { ok: false, error: "backend unreachable" };
+    return { ok: false, error: UI_STRINGS.BACKEND_UNREACHABLE };
   }
 }
 
 async function getFileRaw(id) {
-  const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
+  const base = getApiBase();
   try {
     const res = await fetch(base + "/files/" + id + "/raw", { cache: "no-store" });
     return await res.json();
@@ -27,7 +29,7 @@ export default async function FileDetailPage({ params }) {
   return (
     <main className="page">
       {!result.ok ? (
-        <section className="panel"><div className="errorText">{result.error || "File not found."}</div></section>
+        <section className="panel"><div className="errorText">{result.error || UI_STRINGS.FILE_NOT_FOUND}</div></section>
       ) : (
         <FileDetailPanel item={result.item} raw={rawResult.raw || ""} />
       )}

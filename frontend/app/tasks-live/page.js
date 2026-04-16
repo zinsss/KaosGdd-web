@@ -1,9 +1,11 @@
 import AddTaskForm from "../../components/AddTaskForm";
 import TaskToggleButton from "../../components/TaskToggleButton";
+import { getApiBase } from "../../lib/api-base";
+import { UI_STRINGS } from "../../lib/strings";
 import styles from "./page.module.css";
 
 async function getTasks() {
-  const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
+  const base = getApiBase();
   try {
     const res = await fetch(base + "/tasks", { cache: "no-store" });
     return await res.json();
@@ -18,8 +20,8 @@ export default async function TasksLivePage() {
   return (
     <main className="page">
       <section className="panel">
-        <div className="line">KaosGdd Web</div>
-        <div className="subline">Tasks Live</div>
+        <div className="line">{UI_STRINGS.APP_TITLE_WEB}</div>
+        <div className="subline">{UI_STRINGS.TASKS_LIVE}</div>
       </section>
 
       <div className={styles.formRow}>
@@ -29,9 +31,9 @@ export default async function TasksLivePage() {
       </div>
 
       <section className="panel">
-        <div className="sectionTitle">Task list</div>
+        <div className="sectionTitle">{UI_STRINGS.TASK_LIST}</div>
         {tasks.items.length === 0 ? (
-          <div className="empty">No tasks yet.</div>
+          <div className="empty">{UI_STRINGS.NO_TASKS}</div>
         ) : (
           <ul className="taskList">
             {tasks.items.map((task) => (

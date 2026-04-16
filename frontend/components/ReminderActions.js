@@ -23,13 +23,13 @@ export default function ReminderActions({ reminderId, state }) {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || (data && data.ok === false)) {
-        setError((data && data.error) || "Action failed.");
+        setError((data && data.error) || UI_STRINGS.ACTION_FAILED);
         return;
       }
 
       window.location.reload();
     } catch {
-      setError("Action failed.");
+      setError(UI_STRINGS.ACTION_FAILED);
     } finally {
       setIsSubmitting(false);
     }

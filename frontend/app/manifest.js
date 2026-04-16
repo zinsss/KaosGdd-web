@@ -1,8 +1,10 @@
+import { UI_STRINGS } from "../lib/strings";
+
 export default function manifest() {
   return {
-    name: "KaosGdd Web",
-    short_name: "KaosGdd",
-    description: "Tailscale-only web UI for KaosGdd",
+    name: UI_STRINGS.APP_TITLE_WEB,
+    short_name: UI_STRINGS.APP_TITLE,
+    description: UI_STRINGS.APP_DESCRIPTION,
     start_url: "/tasks",
     scope: "/",
     display: "standalone",

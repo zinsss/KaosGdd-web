@@ -315,7 +315,10 @@ class ReminderService:
         return fired
 
     def scan_missed_reminders(self) -> list[dict]:
-        cutoff = (datetime.now(timezone.utc) - timedelta(hours=2)).isoformat(timespec="seconds")
+        cutoff = (
+            datetime.now(timezone.utc)
+            - timedelta(hours=SETTINGS.REMINDER_MISSED_SCAN_LOOKBACK_HOURS)
+        ).isoformat(timespec="seconds")
         rows = self.reminder_repo.list_missed_candidates(cutoff_iso_value=cutoff)
 
         missed: list[dict] = []

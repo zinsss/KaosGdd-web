@@ -13,7 +13,7 @@ export default function AddReminderForm({ taskId }) {
     const cleanRemindAt = remindAt.trim();
 
     if (!cleanRemindAt) {
-      setError("remind_at is required.");
+      setError(UI_STRINGS.REMIND_AT_REQUIRED_UI);
       return;
     }
 
@@ -30,14 +30,14 @@ export default function AddReminderForm({ taskId }) {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || (data && data.ok === false)) {
-        setError((data && data.error) || "Failed to add reminder.");
+        setError((data && data.error) || UI_STRINGS.FAILED_ADD_REMINDER);
         return;
       }
 
       setRemindAt("");
       window.location.reload();
     } catch {
-      setError("Failed to add reminder.");
+      setError(UI_STRINGS.FAILED_ADD_REMINDER);
     } finally {
       setIsSubmitting(false);
     }
