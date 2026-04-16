@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 
+import { UI_STRINGS } from "../lib/strings";
+
 export default function AddTaskForm() {
   const [title, setTitle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -11,7 +13,7 @@ export default function AddTaskForm() {
     event.preventDefault();
     const cleanTitle = title.trim();
     if (!cleanTitle) {
-      setError("Title is required.");
+      setError(UI_STRINGS.TITLE_REQUIRED_UI);
       return;
     }
 
@@ -22,19 +24,19 @@ export default function AddTaskForm() {
       const res = await fetch("/api/tasks", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title: cleanTitle })
+        body: JSON.stringify({ title: cleanTitle }),
       });
 
       const data = await res.json();
       if (!res.ok || !data.ok) {
-        setError(data.error || "Failed to create task.");
+        setError(data.error || UI_STRINGS.FAILED_CREATE_TASK);
         return;
       }
 
       setTitle("");
       window.location.reload();
     } catch {
-      setError("Failed to create task.");
+      setError(UI_STRINGS.FAILED_CREATE_TASK);
     } finally {
       setIsSubmitting(false);
     }
@@ -42,7 +44,7 @@ export default function AddTaskForm() {
 
   return (
     <form onSubmit={onSubmit} className="panel">
-      <div className="sectionTitle">Add task</div>
+      <div className="sectionTitle">{UI_STRINGS.ADD_TASK}</div>
       <div className="formRow">
         <input
           className="textInput"
@@ -53,7 +55,7 @@ export default function AddTaskForm() {
           disabled={isSubmitting}
         />
         <button className="button" type="submit" disabled={isSubmitting}>
-          {isSubmitting ? "Adding..." : "Add"}
+          {isSubmitting ? UI_STRINGS.ADDING : UI_STRINGS.ADD}
         </button>
       </div>
       {error ? <div className="errorText">{error}</div> : null}

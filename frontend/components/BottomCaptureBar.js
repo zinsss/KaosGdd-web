@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import { UI_STRINGS } from "../lib/strings";
+
 function readEditState() {
   if (typeof window === "undefined") {
     return null;
@@ -101,14 +103,18 @@ export default function BottomCaptureBar() {
     writeEditState(null);
   }
 
-  const modeText = editState ? (editState.kind === "journal" ? "Editing journal" : "Editing reminder") : "";
+  const modeText = editState
+    ? editState.kind === "journal"
+      ? UI_STRINGS.EDITING_JOURNAL
+      : UI_STRINGS.EDITING_REMINDER
+    : "";
   const statusText = error || success || modeText;
 
   async function onSubmit(event) {
     event.preventDefault();
     const clean = raw.trim();
     if (!clean) {
-      setError(editState ? "reminder is empty" : "capture is empty");
+      setError(editState ? UI_STRINGS.REMINDER_EMPTY : UI_STRINGS.CAPTURE_EMPTY);
       setSuccess("");
       return;
     }
@@ -130,12 +136,12 @@ export default function BottomCaptureBar() {
         const data = await res.json().catch(() => null);
 
         if (!res.ok || !data?.ok) {
-          setError((data && data.error) || (isJournal ? "Journal save failed." : "Reminder save failed."));
+          setError((data && data.error) || (isJournal ? UI_STRINGS.JOURNAL_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED));
           return;
         }
 
         cancelEdit();
-        setSuccess("Saved.");
+        setSuccess(UI_STRINGS.SAVED);
         window.setTimeout(() => {
           window.location.reload();
         }, 250);
@@ -151,17 +157,17 @@ export default function BottomCaptureBar() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
-        setError((data && data.error) || "Capture failed.");
+        setError((data && data.error) || UI_STRINGS.CAPTURE_FAILED);
         return;
       }
 
       setRaw("");
-      setSuccess("Saved.");
+      setSuccess(UI_STRINGS.SAVED);
       window.setTimeout(() => {
         window.location.reload();
       }, 250);
     } catch {
-      setError(editState ? (editState.kind === "journal" ? "Journal save failed." : "Reminder save failed.") : "Capture failed.");
+      setError(editState ? (editState.kind === "journal" ? UI_STRINGS.JOURNAL_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED) : UI_STRINGS.CAPTURE_FAILED);
     } finally {
       setIsSubmitting(false);
     }
@@ -195,12 +201,12 @@ export default function BottomCaptureBar() {
               onClick={cancelEdit}
               disabled={isSubmitting}
             >
-              Cancel
+              {UI_STRINGS.CANCEL}
             </button>
           ) : null}
 
           <button className="button pillButton bottomCaptureButton" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? "..." : editState ? "Save" : "Add"}
+            {isSubmitting ? UI_STRINGS.ELLIPSIS : editState ? UI_STRINGS.SAVE : UI_STRINGS.ADD}
           </button>
         </div>
       </div>

@@ -29,17 +29,17 @@ export default async function HomePage() {
     <main className="page">
       <section className="panel">
         <div className="line">{UI_STRINGS.APP_TITLE_WEB}</div>
-        <div className="subline">Tailscale-only internal web app</div>
+        <div className="subline">{UI_STRINGS.HOME_SUBTITLE}</div>
       </section>
 
       <section className="panel">
-        <div className="sectionTitle">System</div>
+        <div className="sectionTitle">{UI_STRINGS.SYSTEM}</div>
         <div className="row">
-          <span>Backend</span>
-          <span>{health.ok ? "OK" : "DOWN"}</span>
+          <span>{UI_STRINGS.BACKEND}</span>
+          <span>{health.ok ? UI_STRINGS.STATUS_OK : UI_STRINGS.STATUS_DOWN}</span>
         </div>
         <div className="row">
-          <span>App</span>
+          <span>{UI_STRINGS.APP}</span>
           <span>{health.app}</span>
         </div>
       </section>

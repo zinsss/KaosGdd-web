@@ -31,7 +31,7 @@ export default function TaskEditForm({ task }) {
     event.preventDefault();
     const cleanTitle = title.trim();
     if (!cleanTitle) {
-      setError("title is required");
+      setError(UI_STRINGS.TITLE_REQUIRED_UI);
       return;
     }
 
@@ -52,13 +52,13 @@ export default function TaskEditForm({ task }) {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || (data && data.ok === false)) {
-        setError((data && data.error) || "Save failed.");
+        setError((data && data.error) || UI_STRINGS.SAVE_FAILED);
         return;
       }
 
       window.location.reload();
     } catch {
-      setError("Save failed.");
+      setError(UI_STRINGS.SAVE_FAILED);
     } finally {
       setIsSubmitting(false);
     }

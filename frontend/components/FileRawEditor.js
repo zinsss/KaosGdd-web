@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 
+import { UI_STRINGS } from "../lib/strings";
+
 export default function FileRawEditor({ fileId, initialRaw }) {
   const [raw, setRaw] = useState(initialRaw || "");
   const [saved, setSaved] = useState(false);
@@ -22,7 +24,7 @@ export default function FileRawEditor({ fileId, initialRaw }) {
     });
     const data = await res.json();
     if (!res.ok || !data.ok) {
-      setError(data.error || "Save failed");
+      setError(data.error || UI_STRINGS.SAVE_FAILED);
       return;
     }
     setSaved(true);
@@ -39,8 +41,8 @@ export default function FileRawEditor({ fileId, initialRaw }) {
         spellCheck={false}
       />
       <div className="actionRow">
-        <button className="button" onClick={save}>Save</button>
-        {saved ? <span className="metaLine">Saved.</span> : null}
+        <button className="button" onClick={save}>{UI_STRINGS.SAVE}</button>
+        {saved ? <span className="metaLine">{UI_STRINGS.SAVED}</span> : null}
       </div>
       {error ? <div className="errorText">{error}</div> : null}
       <div className="rawHint">title · #tags · l:itemId · optional memo in triple quotes</div>
