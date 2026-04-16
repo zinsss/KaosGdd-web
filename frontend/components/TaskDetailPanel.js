@@ -7,6 +7,7 @@ import ReminderActions from "./ReminderActions";
 import TaskRawEditor from "./TaskRawEditor";
 import TaskToggleButton from "./TaskToggleButton";
 import SubtaskToggleButton from "./SubtaskToggleButton";
+import LinkedItemsBlock from "./LinkedItemsBlock";
 import { UI_STRINGS } from "../lib/strings";
 
 function reminderPriority(state) {
@@ -168,6 +169,8 @@ export default function TaskDetailPanel({ item, raw }) {
               </div>
             </div>
           ) : null}
+
+          <LinkedItemsBlock links={item.links} />
 
         </div>
       </section>

@@ -88,6 +88,18 @@
   white-space: pre-wrap;
 }
 
+.linkedItemsList {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+
+.linkedItemRow {
+  word-break: break-word;
+}
+
 .actionRow {
   display: flex;
   gap: 10px;

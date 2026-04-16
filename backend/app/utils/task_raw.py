@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 from app.config import SETTINGS
+from app.utils.item_links import dedupe_links, parse_link_value
 from app.utils.datetime_parse import parse_local_datetime_to_iso
 from app.utils.repeat import normalize_repeat_rule
 from app.utils.timefmt import format_dt_for_ui
@@ -16,7 +17,7 @@ UNDONE_SUBTASK_PREFIX = "--- "
 DONE_SUBTASK_PREFIX = "--x "
 MEMO_DELIM = '"""'
 
-META_PATTERN = re.compile(r"(?:^|\s)(d:|r:|R:)")
+META_PATTERN = re.compile(r"(?:^|\s)(d:|r:|R:|l:)")
 TAG_PATTERN = re.compile(r"(?:^|\s)#")
 DATE_ONLY_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 RELATIVE_REMIND_PATTERN = re.compile(r"^-(\d+)([dhwm])$")
@@ -113,6 +114,7 @@ def export_task_raw(
     tags: list[str] | None = None,
     remind_ats: list[str] | None = None,
     repeat_rule: str | None = None,
+    linked_item_ids: list[str] | None = None,
     subtasks: list[dict] | None = None,
 ) -> str:
     lines: list[str] = []
@@ -139,6 +141,9 @@ def export_task_raw(
     visible_tags = [tag for tag in (tags or []) if tag and not str(tag).startswith(REPEAT_TAG_PREFIX)]
     if visible_tags:
         lines.append(" ".join(f"#{tag}" for tag in visible_tags))
+
+    for target_item_id in dedupe_links(list(linked_item_ids or [])):
+        lines.append(f"l:{target_item_id}")
 
     memo = task.get("memo")
     if memo is not None and str(memo).strip():
@@ -170,6 +175,7 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
     repeat_rule = None
     repeat_rule_seen = False
     tags: list[str] = []
+    linked_item_ids: list[str] = []
     extra_lines: list[str] = []
     memo_lines: list[str] = []
     subtasks: list[dict] = []
@@ -231,6 +237,10 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
             subtasks.append({"content": subtask_content, "is_done": subtask_done, "position": len(subtasks)})
             continue
 
+        if stripped.startswith("l:"):
+            linked_item_ids.append(parse_link_value(stripped[2:]))
+            continue
+
         cleaned, meta = _extract_meta_from_line(original_line)
 
         if meta["due_at"] is not None:
@@ -287,6 +297,7 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
         "remind_ats": remind_ats,
         "repeat_rule": repeat_rule,
         "tags": tags,
+        "linked_item_ids": dedupe_links(linked_item_ids),
         "memo": memo,
         "subtasks": subtasks,
         "is_done": parsed_task_done,

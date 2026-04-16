@@ -127,6 +127,8 @@ class ReminderService:
             title_parts.append(title_from_first)
 
         for line in lines[1:]:
+            if line.startswith("l:"):
+                raise ValueError("standalone reminder does not support l:")
             clean_line, line_tags = strip_tags(line)
             tags.extend(line_tags)
             if clean_line:

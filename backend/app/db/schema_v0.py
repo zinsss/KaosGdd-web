@@ -97,6 +97,15 @@ CREATE TABLE IF NOT EXISTS {item_tags} (
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS {item_links} (
+    source_item_id TEXT NOT NULL,
+    target_item_id TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    PRIMARY KEY (source_item_id, target_item_id),
+    FOREIGN KEY (source_item_id) REFERENCES {items}(id) ON DELETE CASCADE,
+    FOREIGN KEY (target_item_id) REFERENCES {items}(id) ON DELETE CASCADE
+);
+
 CREATE UNIQUE INDEX IF NOT EXISTS uq_item_reminders_one_parent_per_reminder
 ON {item_reminders}(reminder_item_id);
 
@@ -117,6 +126,12 @@ ON {task_subtasks}(task_item_id, position);
 
 CREATE INDEX IF NOT EXISTS idx_item_tags_tag
 ON {item_tags}(tag);
+
+CREATE INDEX IF NOT EXISTS idx_item_links_source
+ON {item_links}(source_item_id);
+
+CREATE INDEX IF NOT EXISTS idx_item_links_target
+ON {item_links}(target_item_id);
 
 CREATE INDEX IF NOT EXISTS idx_reminder_items_state_time
 ON {reminder_items}(state, remind_at, snoozed_until);
@@ -142,6 +157,7 @@ ON {reminder_items}(state, last_fired_at);
     reminder_events=DbTables.REMINDER_EVENTS,
     item_reminders=DbTables.ITEM_REMINDERS,
     item_tags=DbTables.ITEM_TAGS,
+    item_links=DbTables.ITEM_LINKS,
 )
 
 
