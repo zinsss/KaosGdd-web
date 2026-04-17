@@ -148,7 +148,7 @@
   max-width: 760px;
   margin: 8px auto 0;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 10px;
 }
@@ -166,6 +166,21 @@
   justify-content: flex-end;
   gap: 8px;
   flex: 0 0 auto;
+}
+
+.bottomCaptureAttachButton {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  border-color: rgba(186, 194, 222, 0.22);
+  background: rgba(186, 194, 222, 0.05);
+  color: var(--ui-text);
+}
+
+.bottomCaptureAttachButton:hover {
+  background: rgba(186, 194, 222, 0.09);
 }
 
 .bottomCaptureButton {
@@ -239,6 +254,7 @@
     gap: 14px;
   }
 
+  .bottomCaptureAttachButton,
   .bottomCaptureButton,
   .bottomCaptureCancelButton {
     min-width: 0;
