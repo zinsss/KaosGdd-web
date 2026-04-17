@@ -245,7 +245,7 @@ class ItemsRepo:
             if source["item_type"] == "reminder":
                 raise ValueError("l: is not allowed for reminder")
 
-            if source["item_type"] not in {"task", "event", "journal", "file", "fax", "mail"}:
+            if source["item_type"] not in {"task", "event", "journal", "note", "file", "fax", "mail"}:
                 raise ValueError("l: is not allowed for this item type")
 
             for target_item_id in normalized:

@@ -13,9 +13,9 @@ DONE_SUBTASK_PREFIX = "--x "
 EVENT_PREFIX = "^^ "
 REMINDER_PREFIX = "!! "
 JOURNAL_PREFIX = "// "
+NOTE_PREFIX = ":: "
 
 MODAL_PREFIXES: dict[str, str] = {
-    "::": "note",
     "==": "list",
     "++": "file",
     "fax:": "fax",
@@ -30,8 +30,8 @@ TAG_RE = re.compile(r"#([^\s#]+)")
 REMINDER_LEADING_DATETIME_RE = re.compile(r"^(?P<dt>\S+(?:\s+\S+)?)(?:\s+(?P<title>.*))?$")
 
 ActionType = Literal["create_item", "open_modal"]
-ItemType = Literal["task", "event", "reminder", "journal"]
-ModalType = Literal["note", "list", "file", "fax", "mail"]
+ItemType = Literal["task", "event", "reminder", "journal", "note"]
+ModalType = Literal["list", "file", "fax", "mail"]
 
 
 @dataclass
@@ -115,6 +115,12 @@ def parse_capture(raw: str) -> dict:
     elif first.startswith(JOURNAL_PREFIX):
         item_type = "journal"
         title = first[len(JOURNAL_PREFIX) :].strip()
+    elif first == "::":
+        item_type = "note"
+        title = ""
+    elif first.startswith(NOTE_PREFIX):
+        item_type = "note"
+        title = first[len(NOTE_PREFIX) :].strip()
     elif first.startswith(UNDONE_SUBTASK_PREFIX) or first.startswith(DONE_SUBTASK_PREFIX):
         return ParseResult(ok=False, error="subtask line requires a parent task").to_dict()
     else:
@@ -126,6 +132,7 @@ def parse_capture(raw: str) -> dict:
     in_memo = False
     memo_lines: list[str] = []
     journal_lines: list[str] = []
+    note_lines: list[str] = []
 
     reminder_title_lines: list[str] = []
     if result.item_type == "reminder" and result.title:
@@ -163,6 +170,10 @@ def parse_capture(raw: str) -> dict:
                 result.tags.extend(TAG_RE.findall(line))
             else:
                 journal_lines.append(original)
+            continue
+
+        if result.item_type == "note":
+            note_lines.append(original)
             continue
 
         if line.startswith(UNDONE_SUBTASK_PREFIX) or line.startswith(DONE_SUBTASK_PREFIX):
@@ -240,10 +251,13 @@ def parse_capture(raw: str) -> dict:
     if result.item_type == "journal" and not result.title:
         return ParseResult(ok=False, error="journal content is required").to_dict()
 
+    if result.item_type == "note" and not result.title and not note_lines:
+        return ParseResult(ok=False, error="note content is required").to_dict()
+
     if result.item_type == "reminder" and not result.remind_at:
         return ParseResult(ok=False, error="!! requires at least one reminder datetime").to_dict()
 
-    if result.item_type != "event" and result.item_type != "journal" and not result.title:
+    if result.item_type not in {"event", "journal", "note"} and not result.title:
         return ParseResult(ok=False, error="title is required").to_dict()
 
     if result.item_type == "event" and not result.title:
@@ -254,6 +268,9 @@ def parse_capture(raw: str) -> dict:
 
     if result.item_type == "journal" and journal_lines:
         result.memo = "\n".join(journal_lines).rstrip("\n")
+
+    if result.item_type == "note" and note_lines:
+        result.memo = "\n".join(note_lines).rstrip("\n")
 
     seen: set[str] = set()
     deduped: list[str] = []

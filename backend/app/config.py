@@ -34,6 +34,7 @@ class DbTables:
     REMINDER_ITEMS = "reminder_items"
     EVENT_ITEMS = "event_items"
     JOURNAL_ITEMS = "journal_items"
+    NOTE_ITEMS = "note_items"
     FILE_ITEMS = "file_items"
     REMINDER_EVENTS = "reminder_events"
     ITEM_REMINDERS = "item_reminders"
