@@ -99,6 +99,12 @@ function normalizeAttachedFileGrammar(rawText) {
       continue;
     }
 
+    if (trimmed.startsWith("x:")) {
+      // Files capture grammar allows x:, but backend file raw does not persist it yet.
+      // Keep x: valid at capture input boundary while normalizing to persisted raw.
+      continue;
+    }
+
     return { ok: false, error: UI_STRINGS.FILE_GRAMMAR_INVALID_LINE };
   }
 

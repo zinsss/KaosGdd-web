@@ -72,7 +72,7 @@ export const UI_STRINGS = {
   FILE_GRAMMAR_INVALID: "Invalid file grammar.",
   FILE_GRAMMAR_TITLE_PREFIX_REQUIRED: "File title line must start with ++",
   FILE_GRAMMAR_TITLE_REQUIRED: "File title is required.",
-  FILE_GRAMMAR_INVALID_LINE: "Only #tags, l:links, and memo blocks are allowed after ++ title.",
+  FILE_GRAMMAR_INVALID_LINE: "Only #tags, l:links, x:fax, and memo blocks are allowed after ++ title.",
   FILE_GRAMMAR_MEMO_UNCLOSED: 'Memo block must close with """.',
   ACTIVE: "active",
   DONE_STATE: "done",
