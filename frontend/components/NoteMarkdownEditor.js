@@ -67,18 +67,17 @@ const kaosEditorTheme = EditorView.theme(
 );
 
 const kaosHighlightStyle = HighlightStyle.define([
-  { tag: [tags.heading1, tags.heading2, tags.heading3, tags.heading4], color: "var(--ctp-lavender)", fontWeight: "700" },
-  { tag: [tags.heading5, tags.heading6], color: "var(--ctp-blue)", fontWeight: "700" },
-  { tag: [tags.list, tags.separator], color: "var(--ctp-teal)" },
+  { tag: tags.heading, color: "var(--ctp-lavender)", fontWeight: "700" },
+  { tag: tags.list, color: "var(--ctp-teal)" },
   { tag: tags.emphasis, color: "var(--ctp-yellow)", fontStyle: "italic" },
   { tag: tags.strong, color: "var(--ctp-peach)", fontWeight: "700" },
-  { tag: [tags.monospace, tags.inlineCode], color: "var(--ctp-green)" },
-  { tag: [tags.quote, tags.contentSeparator], color: "var(--ctp-overlay2)" },
+  { tag: tags.monospace, color: "var(--ctp-green)" },
+  { tag: tags.quote, color: "var(--ctp-overlay2)" },
   { tag: [tags.link, tags.url], color: "var(--ctp-blue)", textDecoration: "underline" },
   { tag: tags.keyword, color: "var(--ctp-mauve)" },
-  { tag: [tags.string, tags.special(tags.string)], color: "var(--ctp-green)" },
-  { tag: [tags.number, tags.bool], color: "var(--ctp-peach)" },
-  { tag: [tags.comment, tags.meta], color: "var(--ctp-overlay1)" },
+  { tag: tags.string, color: "var(--ctp-green)" },
+  { tag: tags.number, color: "var(--ctp-peach)" },
+  { tag: tags.comment, color: "var(--ctp-overlay1)" },
   { tag: tags.invalid, color: "var(--ctp-red)" },
 ]);
 
