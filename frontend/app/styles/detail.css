@@ -48,14 +48,14 @@
 
 .detailReadBlock {
   display: grid;
-  gap: 14px;
-  margin-top: 12px;
+  gap: 10px;
+  margin-top: 10px;
 }
 
 .detailReadRow {
   display: grid;
-  grid-template-columns: minmax(48px, 68px) 1px minmax(0, 1fr);
-  column-gap: 6px;
+  grid-template-columns: 64px 1px minmax(0, 1fr);
+  column-gap: 5px;
   align-items: start;
 }
 
@@ -85,9 +85,27 @@
   word-break: break-word;
 }
 
+.detailReadList {
+  display: grid;
+  gap: 4px;
+}
+
+.detailReadSubtaskRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detailReadSubtaskText {
+  min-width: 0;
+  word-break: break-word;
+  padding-top: 2px;
+}
+
 .detailBodyBlock {
   min-width: 0;
   width: 100%;
+  margin-top: 8px;
 }
 
 .detailReadInline {
@@ -169,8 +187,8 @@
   }
 
   .detailReadRow {
-    grid-template-columns: minmax(46px, 60px) 1px minmax(0, 1fr);
-    column-gap: 6px;
+    grid-template-columns: 58px 1px minmax(0, 1fr);
+    column-gap: 4px;
   }
 
   .detailReadInline {

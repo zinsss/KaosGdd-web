@@ -131,13 +131,14 @@ export default function TaskDetailPanel({ item, raw }) {
           </div>
         </div>
 
-        {item.tags && item.tags.length > 0 ? (
-          <div className="metaLine">
-            <span>{item.tags.map((tag) => `#${tag}`).join(" ")}</span>
-          </div>
-        ) : null}
-
         <div className="detailReadBlock">
+          {item.tags && item.tags.length > 0 ? (
+            <div className="detailReadRow">
+              <div className="detailReadLabel">Tags</div>
+              <div className="detailReadContent withDivider">{item.tags.map((tag) => `#${tag}`).join(" ")}</div>
+            </div>
+          ) : null}
+
           {item.due_at_display ? (
             <div className="detailReadRow">
               <div className="detailReadLabel">Due</div>
@@ -152,6 +153,28 @@ export default function TaskDetailPanel({ item, raw }) {
               <div className="detailReadLabel">Repeat</div>
               <div className="detailReadContent withDivider">
                 <div className="detailReadInline">{item.repeat_rule}</div>
+              </div>
+            </div>
+          ) : null}
+
+          {item.subtasks && item.subtasks.length > 0 ? (
+            <div className="detailReadRow">
+              <div className="detailReadLabel">Subtasks</div>
+              <div className="detailReadContent detailReadList withDivider">
+                {item.subtasks.map((subtask) => (
+                  <div key={subtask.id} className="detailReadSubtaskRow">
+                    {!isRemoved ? (
+                      <SubtaskToggleButton taskId={item.id} subtaskId={subtask.id} isDone={Boolean(subtask.is_done)} />
+                    ) : (
+                      <span className={"taskListStateIcon" + (subtask.is_done ? " isDone" : " isUndone")}>
+                        {subtask.is_done ? "✓" : "○"}
+                      </span>
+                    )}
+                    <div className={"detailReadSubtaskText" + (subtask.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
+                      {subtask.content}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           ) : null}
@@ -173,28 +196,6 @@ export default function TaskDetailPanel({ item, raw }) {
 
         </div>
       </section>
-
-      {item.subtasks && item.subtasks.length > 0 ? (
-        <section className="panel">
-          <div className="sectionTitle">Subtasks</div>
-          <ul className="subtaskList">
-            {item.subtasks.map((subtask) => (
-              <li key={subtask.id} className="subtaskRow">
-                {!isRemoved ? (
-                  <SubtaskToggleButton taskId={item.id} subtaskId={subtask.id} isDone={Boolean(subtask.is_done)} />
-                ) : (
-                  <span className={"taskListStateIcon" + (subtask.is_done ? " isDone" : " isUndone")}>
-                    {subtask.is_done ? "✓" : "○"}
-                  </span>
-                )}
-                <div className={"subtaskText" + (subtask.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
-                  {subtask.content}
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
 
       <section className="panel">
         <div className="sectionTitle">Reminders</div>

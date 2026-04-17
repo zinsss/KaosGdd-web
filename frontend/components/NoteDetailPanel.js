@@ -113,17 +113,19 @@ export default function NoteDetailPanel({ item, raw }) {
 
       <section className="panel">
         <div className="detailPageLabel">• Note Detail</div>
-        <div className="detailTitleRow">
-          <div className="sectionTitle detailMainTitle">{item.title || "Untitled note"}</div>
-          <div className="detailStateText">{item.status}</div>
-        </div>
-
-        {item.tags?.length ? <div className="metaLine">{item.tags.map((tag) => `#${tag}`).join(" ")}</div> : null}
+        <div className="detailStateText">{item.status}</div>
 
         <div className="detailReadBlock">
           <div className="detailReadRow">
-            <div className="detailReadLabel">Document</div>
-            <div className="detailReadContent withDivider">Markdown</div>
+            <div className="detailReadLabel">Title</div>
+            <div className="detailReadContent withDivider">{item.title || "Untitled note"}</div>
+          </div>
+
+          <div className="detailReadRow">
+            <div className="detailReadLabel">Tags</div>
+            <div className="detailReadContent withDivider">
+              {item.tags?.length ? item.tags.map((tag) => `#${tag}`).join(" ") : "-"}
+            </div>
           </div>
 
           <div className="detailBodyBlock">
