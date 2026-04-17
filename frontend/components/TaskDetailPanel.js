@@ -46,7 +46,6 @@ function reminderFlags(reminder) {
 export default function TaskDetailPanel({ item, raw }) {
   const router = useRouter();
   const [openPanel, setOpenPanel] = useState(null);
-  const [showMore, setShowMore] = useState(false);
   const [copied, setCopied] = useState(false);
   const [removeError, setRemoveError] = useState("");
   const [isRemoving, setIsRemoving] = useState(false);
@@ -129,7 +128,6 @@ export default function TaskDetailPanel({ item, raw }) {
             <div className="detailStateText">
               {isRemoved ? UI_STRINGS.REMOVED_STATE : item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}
             </div>
-            {!isRemoved ? <TaskToggleButton taskId={item.id} isDone={item.is_done} pill /> : null}
           </div>
         </div>
 
@@ -243,9 +241,11 @@ export default function TaskDetailPanel({ item, raw }) {
       <section className="panel">
         {!isRemoved ? (
           <div className="actionRow detailActionRow">
+            <TaskToggleButton taskId={item.id} isDone={item.is_done} />
+
             <button
               type="button"
-              className={"button compactButton" + (openPanel === "reminder" ? " buttonActive" : "")}
+              className={"button" + (openPanel === "reminder" ? " buttonActive" : "")}
               onClick={() => togglePanel("reminder")}
             >
               {UI_STRINGS.REMINDER_BUTTON}
@@ -253,7 +253,7 @@ export default function TaskDetailPanel({ item, raw }) {
 
             <button
               type="button"
-              className={"button compactButton" + (openPanel === "edit" ? " buttonActive" : "")}
+              className={"button" + (openPanel === "edit" ? " buttonActive" : "")}
               onClick={() => togglePanel("edit")}
             >
               {UI_STRINGS.EDIT_BUTTON}
@@ -261,8 +261,8 @@ export default function TaskDetailPanel({ item, raw }) {
 
             <button
               type="button"
-              className={"button compactButton" + (showMore ? " buttonActive" : "")}
-              onClick={() => setShowMore((v) => !v)}
+              className={"button" + (openPanel === "more" ? " buttonActive" : "")}
+              onClick={() => togglePanel("more")}
             >
               {UI_STRINGS.MORE_BUTTON}
             </button>
@@ -283,7 +283,7 @@ export default function TaskDetailPanel({ item, raw }) {
           </div>
         ) : null}
 
-        {showMore ? (
+        {openPanel === "more" ? (
           <div className="toggleBody moreMetaBox">
             <div className="metaStack">
               {item.created_at_display ? <div>{UI_STRINGS.CREATED}: {item.created_at_display}</div> : null}
