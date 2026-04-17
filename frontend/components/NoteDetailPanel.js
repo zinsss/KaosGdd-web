@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import LinkedItemsBlock from "./LinkedItemsBlock";
 import NoteRawEditor from "./NoteRawEditor";
 
 export default function NoteDetailPanel({ item, raw }) {
@@ -48,6 +49,8 @@ export default function NoteDetailPanel({ item, raw }) {
           <div className="detailStateText">{item.status}</div>
         </div>
 
+        {item.tags?.length ? <div className="metaLine">{item.tags.map((tag) => `#${tag}`).join(" ")}</div> : null}
+
         <div className="detailReadBlock">
           <div className="detailReadRow">
             <div className="detailReadLabel">Document</div>
@@ -57,6 +60,10 @@ export default function NoteDetailPanel({ item, raw }) {
               </div>
             </div>
           </div>
+
+          <LinkedItemsBlock links={item.links} />
+
+          {/* TODO(notes-v0-freeze): persist markdown checklist toggle state in read mode. */}
         </div>
       </section>
 

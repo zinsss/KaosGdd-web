@@ -71,16 +71,6 @@ def parse_capture_input(raw_text: str) -> dict:
             },
         }
 
-    if item_type == "note":
-        return {
-            "kind": "note",
-            "raw": normalized_raw,
-            "parsed": {
-                "title": parsed.get("title"),
-                "memo": parsed.get("memo"),
-            },
-        }
-
     if item_type == "event":
         return {
             "kind": "event",

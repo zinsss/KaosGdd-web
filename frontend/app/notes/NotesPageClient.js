@@ -25,7 +25,9 @@ export default function NotesPageClient() {
             {items.map((item) => (
               <li key={item.id} className="taskListRow">
                 <Link href={`/notes/${item.id}`} className="taskLink taskListTitleLink">{item.title || "Untitled note"}</Link>
+                {item.snippet ? <div className="metaLine">{item.snippet}</div> : null}
                 <div className="metaLine">{item.updated_at_display || item.updated_at}</div>
+                {item.tags?.length ? <div className="metaLine">{item.tags.slice(0, 4).map((tag) => `#${tag}`).join(" ")}</div> : null}
               </li>
             ))}
           </ul>

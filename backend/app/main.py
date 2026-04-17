@@ -156,6 +156,16 @@ def list_notes(mode: str = "active"):
     return {"items": note_service.list_notes(mode=mode)}
 
 
+
+@app.post("/notes/raw")
+def create_note_from_raw(payload: dict):
+    raw_text = str(payload.get("raw") or "")
+    note_id, error = note_service.create_note_from_raw(raw_text)
+    if note_id is None:
+        return {"ok": False, "error": error or ApiText.INVALID_NOTE_RAW}
+    return {"ok": True, "id": note_id}
+
+
 @app.get("/notes/{note_id}")
 def get_note(note_id: str):
     item = note_service.get_note(note_id)
