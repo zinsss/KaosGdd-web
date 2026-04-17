@@ -11,6 +11,7 @@ class ApiText:
     INVALID_RAW_TASK = "invalid raw task"
     INVALID_REMINDER_RAW = "invalid reminder raw"
     INVALID_JOURNAL_RAW = "invalid journal raw"
+    INVALID_NOTE_RAW = "invalid note raw"
     INVALID_EVENT_RAW = "invalid event raw"
     INVALID_FILE_RAW = "invalid file raw"
 

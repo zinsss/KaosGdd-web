@@ -13,7 +13,7 @@ function readEditState() {
     const raw = window.sessionStorage.getItem("kaosgdd_capture_edit");
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    if (!parsed || !parsed.id || !parsed.raw) return null;
+    if (!parsed || !parsed.raw) return null;
     return parsed;
   } catch {
     return null;
@@ -106,7 +106,9 @@ export default function BottomCaptureBar() {
   const modeText = editState
     ? editState.kind === "journal"
       ? UI_STRINGS.EDITING_JOURNAL
-      : UI_STRINGS.EDITING_REMINDER
+      : editState.kind === "note"
+        ? UI_STRINGS.EDITING_NOTE
+        : UI_STRINGS.EDITING_REMINDER
     : "";
   const statusText = error || success || modeText;
 
@@ -126,7 +128,8 @@ export default function BottomCaptureBar() {
     try {
       if (editState?.id) {
         const isJournal = editState.kind === "journal";
-        const path = isJournal ? `/api/journals/${editState.id}/raw` : `/api/reminders/${editState.id}`;
+        const isNote = editState.kind === "note";
+        const path = isJournal ? `/api/journals/${editState.id}/raw` : isNote ? `/api/notes/${editState.id}/raw` : `/api/reminders/${editState.id}`;
         const res = await fetch(path, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
@@ -136,7 +139,7 @@ export default function BottomCaptureBar() {
         const data = await res.json().catch(() => null);
 
         if (!res.ok || !data?.ok) {
-          setError((data && data.error) || (isJournal ? UI_STRINGS.JOURNAL_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED));
+          setError((data && data.error) || (isJournal ? UI_STRINGS.JOURNAL_SAVE_FAILED : isNote ? UI_STRINGS.NOTE_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED));
           return;
         }
 
@@ -144,6 +147,27 @@ export default function BottomCaptureBar() {
         setSuccess(UI_STRINGS.SAVED);
         window.setTimeout(() => {
           window.location.reload();
+        }, 250);
+        return;
+      }
+
+      if (editState?.kind === "note" && !editState?.id) {
+        const res = await fetch("/api/notes/raw", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw: clean }),
+        });
+
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.ok) {
+          setError((data && data.error) || UI_STRINGS.SAVE_FAILED);
+          return;
+        }
+
+        cancelEdit();
+        setSuccess(UI_STRINGS.SAVED);
+        window.setTimeout(() => {
+          window.location.href = `/notes/${data.id}`;
         }, 250);
         return;
       }
@@ -161,13 +185,26 @@ export default function BottomCaptureBar() {
         return;
       }
 
+      if (data.kind === "modal" && data.modal_type === "note") {
+        const template = ":::\ntitle:\ntags:\nlink:\n:::";
+        const next = { id: null, raw: template, kind: "note" };
+        setEditState(next);
+        setRaw(template);
+        setSuccess("");
+        writeEditState(next);
+        window.setTimeout(() => {
+          textareaRef.current?.focus();
+        }, 0);
+        return;
+      }
+
       setRaw("");
       setSuccess(UI_STRINGS.SAVED);
       window.setTimeout(() => {
         window.location.reload();
       }, 250);
     } catch {
-      setError(editState ? (editState.kind === "journal" ? UI_STRINGS.JOURNAL_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED) : UI_STRINGS.CAPTURE_FAILED);
+      setError(editState ? (editState.kind === "journal" ? UI_STRINGS.JOURNAL_SAVE_FAILED : editState.kind === "note" ? UI_STRINGS.NOTE_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED) : UI_STRINGS.CAPTURE_FAILED);
     } finally {
       setIsSubmitting(false);
     }

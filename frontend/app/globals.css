@@ -8,3 +8,17 @@
 @import "./styles/utilities.css";
 
 @import "./styles/events.css";
+
+.markdownBody {
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.markdownBody ul,
+.markdownBody ol {
+  padding-left: 1.2rem;
+}
+
+.markdownBody pre {
+  overflow-x: auto;
+}

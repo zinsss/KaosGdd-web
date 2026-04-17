@@ -11,6 +11,7 @@ from app.config import SETTINGS
 from app.core.db import engine
 from app.db.repo.event_repo import EventRepo
 from app.db.repo.journal_repo import JournalRepo
+from app.db.repo.note_repo import NoteRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.file_repo import FileRepo
 from app.db.repo.task_repo import TaskRepo
@@ -18,6 +19,7 @@ from app.db.repo.reminder_repo import ReminderRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
 from app.engine.journal_service import JournalService
+from app.engine.note_service import NoteService
 from app.engine.file_service import FileService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
@@ -30,11 +32,13 @@ items_repo = ItemsRepo(engine)
 task_repo = TaskRepo(engine)
 event_repo = EventRepo(engine)
 journal_repo = JournalRepo(engine)
+note_repo = NoteRepo(engine)
 file_repo = FileRepo(engine)
 reminder_repo = ReminderRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
 journal_service = JournalService(items_repo, journal_repo)
+note_service = NoteService(items_repo, note_repo)
 file_service = FileService(items_repo, file_repo)
 reminder_service = ReminderService(reminder_repo, task_repo, event_repo, items_repo)
 
@@ -144,6 +148,55 @@ def restore_event(event_id: str):
 @app.get("/journals")
 def list_journals(mode: str = "active"):
     return {"items": journal_service.list_journals(mode=mode)}
+
+
+
+@app.get("/notes")
+def list_notes(mode: str = "active"):
+    return {"items": note_service.list_notes(mode=mode)}
+
+
+
+@app.post("/notes/raw")
+def create_note_from_raw(payload: dict):
+    raw_text = str(payload.get("raw") or "")
+    note_id, error = note_service.create_note_from_raw(raw_text)
+    if note_id is None:
+        return {"ok": False, "error": error or ApiText.INVALID_NOTE_RAW}
+    return {"ok": True, "id": note_id}
+
+
+@app.get("/notes/{note_id}")
+def get_note(note_id: str):
+    item = note_service.get_note(note_id)
+    if item is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "item": item}
+
+
+@app.get("/notes/{note_id}/raw")
+def get_note_raw(note_id: str):
+    raw = note_service.export_note_raw(note_id)
+    if raw is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "raw": raw}
+
+
+@app.patch("/notes/{note_id}/raw")
+def update_note_raw(note_id: str, payload: dict):
+    raw_text = str(payload.get("raw") or "")
+    ok, error = note_service.update_note_from_raw(note_id, raw_text)
+    if not ok:
+        return {"ok": False, "error": error or ApiText.INVALID_NOTE_RAW}
+    return {"ok": True}
+
+
+@app.delete("/notes/{note_id}")
+def remove_note(note_id: str):
+    ok = note_service.remove_note(note_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
 
 
 @app.get("/files")

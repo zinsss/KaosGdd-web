@@ -13,9 +13,8 @@ DONE_SUBTASK_PREFIX = "--x "
 EVENT_PREFIX = "^^ "
 REMINDER_PREFIX = "!! "
 JOURNAL_PREFIX = "// "
-
 MODAL_PREFIXES: dict[str, str] = {
-    "::": "note",
+    ":::": "note",
     "==": "list",
     "++": "file",
     "fax:": "fax",
@@ -243,7 +242,7 @@ def parse_capture(raw: str) -> dict:
     if result.item_type == "reminder" and not result.remind_at:
         return ParseResult(ok=False, error="!! requires at least one reminder datetime").to_dict()
 
-    if result.item_type != "event" and result.item_type != "journal" and not result.title:
+    if result.item_type not in {"event", "journal"} and not result.title:
         return ParseResult(ok=False, error="title is required").to_dict()
 
     if result.item_type == "event" and not result.title:
