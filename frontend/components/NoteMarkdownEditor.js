@@ -17,16 +17,18 @@ const kaosEditorTheme = EditorView.theme(
       borderRadius: "8px",
       fontFamily:
         '"Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace',
-      fontSize: "0.95rem",
+      fontSize: "16px",
     },
     ".cm-scroller": {
       backgroundColor: "var(--ui-input)",
       fontFamily: "inherit",
+      fontSize: "16px",
       lineHeight: "1.5",
     },
     ".cm-content": {
       caretColor: "var(--ctp-lavender)",
       color: "var(--ui-text)",
+      fontSize: "16px",
       padding: "10px 0",
     },
     ".cm-line": {

@@ -264,6 +264,13 @@
   overflow: auto;
 }
 
+.newNoteModalPanel input,
+.newNoteModalPanel textarea,
+.newNoteModalPanel select,
+.newNoteModalPanel [contenteditable="true"] {
+  font-size: 16px;
+}
+
 .newNoteModalActions {
   margin-top: 2px;
 }
