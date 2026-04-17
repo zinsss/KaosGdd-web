@@ -81,11 +81,11 @@ const kaosHighlightStyle = HighlightStyle.define([
   { tag: tags.invalid, color: "var(--ctp-red)" },
 ]);
 
-export default function NoteMarkdownEditor({ value, onChange }) {
+export default function NoteMarkdownEditor({ value, onChange, height = "360px" }) {
   return (
     <CodeMirror
       value={value}
-      height="360px"
+      height={height}
       theme="dark"
       extensions={[markdown(), kaosEditorTheme, syntaxHighlighting(kaosHighlightStyle)]}
       onChange={onChange}

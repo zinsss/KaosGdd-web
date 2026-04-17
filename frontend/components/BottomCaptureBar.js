@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 
 import { UI_STRINGS } from "../lib/strings";
+import NewNoteModal from "./NewNoteModal";
+
+const NEW_NOTE_TEMPLATE = ":::\ntitle:\ntags:\nlink:\n:::";
 
 function readEditState() {
   if (typeof window === "undefined") {
@@ -129,6 +132,10 @@ export default function BottomCaptureBar() {
   const [editState, setEditState] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null);
   const [attachedFilename, setAttachedFilename] = useState("");
+  const [isNewNoteModalOpen, setIsNewNoteModalOpen] = useState(false);
+  const [newNoteRaw, setNewNoteRaw] = useState(NEW_NOTE_TEMPLATE);
+  const [newNoteError, setNewNoteError] = useState("");
+  const [isSavingNote, setIsSavingNote] = useState(false);
 
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -202,6 +209,22 @@ export default function BottomCaptureBar() {
     setError("");
     setSuccess("");
     writeEditState(null);
+  }
+
+  function openNewNoteModal() {
+    setIsNewNoteModalOpen(true);
+    setNewNoteRaw(NEW_NOTE_TEMPLATE);
+    setNewNoteError("");
+    setRaw("");
+    setError("");
+    setSuccess("");
+    clearAttachment();
+  }
+
+  function closeNewNoteModal() {
+    setIsNewNoteModalOpen(false);
+    setNewNoteError("");
+    setIsSavingNote(false);
   }
 
   function onPickFile() {
@@ -302,6 +325,11 @@ export default function BottomCaptureBar() {
     setSuccess("");
 
     try {
+      if (!editState && clean.startsWith(":::")) {
+        openNewNoteModal();
+        return;
+      }
+
       if (editState?.id) {
         const isJournal = editState.kind === "journal";
         const isNote = editState.kind === "note";
@@ -369,15 +397,7 @@ export default function BottomCaptureBar() {
       }
 
       if (data.kind === "modal" && data.modal_type === "note") {
-        const template = ":::\ntitle:\ntags:\nlink:\n:::";
-        const next = { id: null, raw: template, kind: "note" };
-        setEditState(next);
-        setRaw(template);
-        setSuccess("");
-        writeEditState(next);
-        window.setTimeout(() => {
-          textareaRef.current?.focus();
-        }, 0);
+        openNewNoteModal();
         return;
       }
 
@@ -393,58 +413,106 @@ export default function BottomCaptureBar() {
     }
   }
 
+  async function saveNewNote() {
+    const clean = newNoteRaw.trim();
+    if (!clean) {
+      setNewNoteError(UI_STRINGS.NOTE_EMPTY);
+      return;
+    }
+
+    setIsSavingNote(true);
+    setNewNoteError("");
+
+    try {
+      const res = await fetch("/api/notes/raw", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ raw: clean }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        setNewNoteError((data && data.error) || UI_STRINGS.NOTE_SAVE_FAILED);
+        return;
+      }
+
+      closeNewNoteModal();
+      setRaw("");
+      setSuccess(UI_STRINGS.SAVED);
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 250);
+    } catch {
+      setNewNoteError(UI_STRINGS.NOTE_SAVE_FAILED);
+    } finally {
+      setIsSavingNote(false);
+    }
+  }
+
   return (
-    <form onSubmit={onSubmit} className="bottomCaptureBar">
-      <div className="bottomCaptureInner">
-        <textarea
-          ref={textareaRef}
-          className="textInput autoTextarea bottomCaptureInput"
-          value={raw}
-          onChange={(event) => setRaw(event.target.value)}
-          rows={1}
-          spellCheck={false}
-          placeholder=""
-          disabled={isSubmitting}
-        />
-      </div>
-
-      <div className="bottomCaptureFooter">
-        <div
-          className={`bottomCaptureStatus${error ? " errorText" : !error && success ? " successText" : " bottomCaptureModeLabel"}`}
-        >
-          {statusText}
-        </div>
-
-        <div className="bottomCaptureActions">
-          <input
-            ref={fileInputRef}
-            className="visuallyHiddenFileInput"
-            type="file"
-            disabled={isSubmitting || Boolean(editState)}
-            onChange={onFileSelected}
-            aria-label={UI_STRINGS.ATTACH_FILE}
+    <>
+      <form onSubmit={onSubmit} className="bottomCaptureBar">
+        <div className="bottomCaptureInner">
+          <textarea
+            ref={textareaRef}
+            className="textInput autoTextarea bottomCaptureInput"
+            value={raw}
+            onChange={(event) => setRaw(event.target.value)}
+            rows={1}
+            spellCheck={false}
+            placeholder=""
+            disabled={isSubmitting}
           />
-
-          <button className="button pillButton bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
-            {UI_STRINGS.ATTACH_ICON}
-          </button>
-
-          <button className="button pillButton bottomCaptureButton" type="submit" disabled={isSubmitting}>
-            {isSubmitting ? UI_STRINGS.ELLIPSIS : editState ? UI_STRINGS.SAVE : UI_STRINGS.ADD}
-          </button>
-
-          {editState ? (
-            <button
-              className="button pillButton bottomCaptureCancelButton"
-              type="button"
-              onClick={cancelEdit}
-              disabled={isSubmitting}
-            >
-              {UI_STRINGS.CANCEL}
-            </button>
-          ) : null}
         </div>
-      </div>
-    </form>
+
+        <div className="bottomCaptureFooter">
+          <div
+            className={`bottomCaptureStatus${error ? " errorText" : !error && success ? " successText" : " bottomCaptureModeLabel"}`}
+          >
+            {statusText}
+          </div>
+
+          <div className="bottomCaptureActions">
+            <input
+              ref={fileInputRef}
+              className="visuallyHiddenFileInput"
+              type="file"
+              disabled={isSubmitting || Boolean(editState)}
+              onChange={onFileSelected}
+              aria-label={UI_STRINGS.ATTACH_FILE}
+            />
+
+            <button className="button pillButton bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
+              {UI_STRINGS.ATTACH_ICON}
+            </button>
+
+            <button className="button pillButton bottomCaptureButton" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? UI_STRINGS.ELLIPSIS : editState ? UI_STRINGS.SAVE : UI_STRINGS.ADD}
+            </button>
+
+            {editState ? (
+              <button
+                className="button pillButton bottomCaptureCancelButton"
+                type="button"
+                onClick={cancelEdit}
+                disabled={isSubmitting}
+              >
+                {UI_STRINGS.CANCEL}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </form>
+
+      <NewNoteModal
+        open={isNewNoteModalOpen}
+        value={newNoteRaw}
+        onChange={setNewNoteRaw}
+        onSave={saveNewNote}
+        onCancel={closeNewNoteModal}
+        isSaving={isSavingNote}
+        error={newNoteError}
+      />
+    </>
   );
 }
