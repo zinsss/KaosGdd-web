@@ -54,8 +54,8 @@
 
 .detailReadRow {
   display: grid;
-  grid-template-columns: 64px 1px minmax(0, 1fr);
-  column-gap: 5px;
+  grid-template-columns: 104px 1px minmax(0, 1fr);
+  column-gap: 8px;
   align-items: start;
 }
 
@@ -69,8 +69,7 @@
 .detailReadLabel {
   color: var(--ui-text-dim);
   text-align: left;
-  min-width: 0;
-  overflow-wrap: anywhere;
+  white-space: nowrap;
   padding-top: 1px;
 }
 
@@ -81,7 +80,7 @@
 .detailReadContent {
   min-width: 0;
   color: var(--ui-text);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   word-break: break-word;
 }
 
@@ -187,8 +186,8 @@
   }
 
   .detailReadRow {
-    grid-template-columns: 58px 1px minmax(0, 1fr);
-    column-gap: 4px;
+    grid-template-columns: 92px 1px minmax(0, 1fr);
+    column-gap: 6px;
   }
 
   .detailReadInline {
