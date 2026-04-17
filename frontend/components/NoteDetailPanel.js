@@ -123,32 +123,34 @@ export default function NoteDetailPanel({ item, raw }) {
         <div className="detailReadBlock">
           <div className="detailReadRow">
             <div className="detailReadLabel">Document</div>
-            <div className="detailReadContent withDivider" style={{ width: "100%" }}>
-              <div className="markdownBody">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    input(props) {
-                      if (props.type !== "checkbox") {
-                        return <input type={props.type} readOnly />;
-                      }
+            <div className="detailReadContent withDivider">Markdown</div>
+          </div>
 
-                      checkboxIndex += 1;
-                      const currentIndex = checkboxIndex;
-                      return (
-                        <input
-                          type="checkbox"
-                          checked={Boolean(props.checked)}
-                          disabled={isChecklistSaving}
-                          onChange={(event) => onToggleChecklist(currentIndex, event.target.checked)}
-                        />
-                      );
-                    },
-                  }}
-                >
-                  {body}
-                </ReactMarkdown>
-              </div>
+          <div className="detailBodyBlock">
+            <div className="markdownBody">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  input(props) {
+                    if (props.type !== "checkbox") {
+                      return <input type={props.type} readOnly />;
+                    }
+
+                    checkboxIndex += 1;
+                    const currentIndex = checkboxIndex;
+                    return (
+                      <input
+                        type="checkbox"
+                        checked={Boolean(props.checked)}
+                        disabled={isChecklistSaving}
+                        onChange={(event) => onToggleChecklist(currentIndex, event.target.checked)}
+                      />
+                    );
+                  },
+                }}
+              >
+                {body}
+              </ReactMarkdown>
             </div>
           </div>
 
