@@ -534,13 +534,6 @@ def capture_item(payload: dict):
         journal_id = journal_service.create_journal(title=title, body=body, tags=tags)
         return {"ok": True, "kind": kind, "id": journal_id}
 
-    if kind == "note":
-        title = str(parsed["parsed"].get("title") or "").strip()
-        memo = str(parsed["parsed"].get("memo") or "").strip()
-        body = title if not memo else f"{title}\n{memo}"
-        note_id = note_service.create_note(body=body)
-        return {"ok": True, "kind": kind, "id": note_id}
-
     return {"ok": False, "error": ApiText.UNSUPPORTED_CAPTURE_KIND}
 
 

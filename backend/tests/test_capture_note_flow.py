@@ -163,3 +163,26 @@ def test_note_snippet_comes_from_body_not_metadata(main_module) -> None:
     listed = main_module.list_notes()
     target = next(item for item in listed["items"] if item["id"] == created["id"])
     assert target["snippet"] == "actual snippet line"
+
+
+def test_note_checklist_toggle_persists_and_updates_timestamp(main_module) -> None:
+    created = main_module.create_note_from_raw(
+        {
+            "raw": ":::\ntitle: groceries\ntags:\nlink:\n:::\n\n- [ ] milk\n- [x] bread",
+        }
+    )
+    assert created["ok"] is True
+
+    before = main_module.get_note(created["id"])["item"]
+    time.sleep(1.1)
+    patched = main_module.update_note_raw(
+        created["id"],
+        {
+            "raw": ":::\ntitle: groceries\ntags:\nlink:\n:::\n\n- [x] milk\n- [x] bread",
+        },
+    )
+    assert patched["ok"] is True
+
+    after = main_module.get_note(created["id"])["item"]
+    assert after["body"] == "- [x] milk\n- [x] bread"
+    assert after["updated_at"] > before["updated_at"]
