@@ -20,9 +20,6 @@ export default function FileDetailPanel({ item, raw }) {
   const [isRemoving, setIsRemoving] = useState(false);
   const [removeError, setRemoveError] = useState("");
   const displayTitle = item.title || item.original_filename || "-";
-  const hasDistinctOriginalFilename = Boolean(
-    item.original_filename && item.original_filename !== displayTitle
-  );
 
   async function onRemove() {
     if (!window.confirm("Move this file to Removed?")) return;
@@ -57,10 +54,17 @@ export default function FileDetailPanel({ item, raw }) {
           <div className="detailStateText">{item.status}</div>
         </div>
 
-        {item.tags?.length ? <div className="metaLine">{item.tags.map((tag) => `#${tag}`).join(" ")}</div> : null}
-
         <div className="detailReadBlock">
-          {hasDistinctOriginalFilename ? <div className="detailReadRow"><div className="detailReadLabel">Original filename</div><div className="detailReadContent withDivider">{item.original_filename}</div></div> : null}
+          {item.tags?.length ? (
+            <div className="detailReadRow">
+              <div className="detailReadLabel">Tags</div>
+              <div className="detailReadContent withDivider">{item.tags.map((tag) => `#${tag}`).join(" ")}</div>
+            </div>
+          ) : null}
+          <div className="detailReadRow">
+            <div className="detailReadLabel">Original</div>
+            <div className="detailReadContent withDivider">{item.original_filename || displayTitle}</div>
+          </div>
           <div className="detailReadRow"><div className="detailReadLabel">Type</div><div className="detailReadContent withDivider">{item.mime_type || "application/octet-stream"}</div></div>
           <div className="detailReadRow"><div className="detailReadLabel">Size</div><div className="detailReadContent withDivider">{formatBytes(item.size_bytes)}</div></div>
           <div className="detailReadRow"><div className="detailReadLabel">Added</div><div className="detailReadContent withDivider">{item.created_at_display || item.created_at}</div></div>
