@@ -54,16 +54,9 @@
 
 .detailReadRow {
   display: grid;
-  grid-template-columns: 104px 1px minmax(0, 1fr);
-  column-gap: 8px;
+  grid-template-columns: 96px minmax(0, 1fr);
+  column-gap: 10px;
   align-items: start;
-}
-
-.detailReadRow::before {
-  content: "";
-  grid-column: 2;
-  align-self: stretch;
-  background: var(--ui-border-strong);
 }
 
 .detailReadLabel {
@@ -74,12 +67,14 @@
 }
 
 .withDivider {
-  grid-column: 3;
+  grid-column: 2;
 }
 
 .detailReadContent {
   min-width: 0;
   color: var(--ui-text);
+  border-left: 1px solid var(--ui-border-strong);
+  padding-left: 12px;
   overflow-wrap: break-word;
   word-break: break-word;
 }
@@ -186,8 +181,12 @@
   }
 
   .detailReadRow {
-    grid-template-columns: 92px 1px minmax(0, 1fr);
-    column-gap: 6px;
+    grid-template-columns: 84px minmax(0, 1fr);
+    column-gap: 8px;
+  }
+
+  .detailReadContent {
+    padding-left: 10px;
   }
 
   .detailReadInline {
