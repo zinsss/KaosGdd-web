@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 function formatBytes(value) {
   const size = Number(value || 0);
@@ -17,33 +17,8 @@ function formatBytes(value) {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function buildUploadErrorMessage(response, data, parseFailed) {
-  if (data && typeof data.error === "string" && data.error.trim()) {
-    const trimmed = data.error.trim();
-    const hasKorean = /[ㄱ-ㅎㅏ-ㅣ가-힣]/.test(trimmed);
-    if (!hasKorean) {
-      return trimmed;
-    }
-  }
-
-  if (!response.ok) {
-    return `Upload failed: ${response.status}`;
-  }
-
-  if (parseFailed) {
-    return "Upload failed: malformed response";
-  }
-
-  return "Upload failed.";
-}
-
 export default function FilesPageClient() {
   const [items, setItems] = useState([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [error, setError] = useState("");
-  const [uploadDebug, setUploadDebug] = useState("");
-  const [selectedFileName, setSelectedFileName] = useState("");
-  const fileInputRef = useRef(null);
 
   async function loadFiles() {
     try {
@@ -59,122 +34,13 @@ export default function FilesPageClient() {
     loadFiles();
   }, []);
 
-  async function onUpload(event) {
-    event.preventDefault();
-
-    if (isUploading) {
-      return;
-    }
-
-    const form = event.currentTarget;
-    const input = form.elements.namedItem("file");
-    const file = input?.files?.[0];
-
-    if (!file) {
-      setError("No file selected.");
-      setUploadDebug("No file selected before submit.");
-      return;
-    }
-
-    console.log("[FilesPageClient] Upload start");
-    console.log("[FilesPageClient] Selected file", {
-      name: file.name,
-      type: file.type || "application/octet-stream",
-      size: file.size,
-    });
-
-    setIsUploading(true);
-    setError("");
-    setUploadDebug("");
-
-    try {
-      const bytes = await file.arrayBuffer();
-      const res = await fetch("/api/files", {
-        method: "POST",
-        body: bytes,
-        headers: {
-          "x-file-name": file.name,
-          "x-file-type": file.type || "application/octet-stream",
-          "content-type": "application/octet-stream",
-        },
-      });
-
-      console.log("[FilesPageClient] Upload response status", res.status);
-
-      let data = null;
-      let parseFailed = false;
-
-      try {
-        data = await res.json();
-        console.log("[FilesPageClient] Upload response body", data);
-      } catch {
-        parseFailed = true;
-        console.log("[FilesPageClient] Upload response parse failure");
-      }
-
-      if (!res.ok || !data?.ok) {
-        const message = buildUploadErrorMessage(res, data, parseFailed);
-        setError(message);
-        setUploadDebug(`status=${res.status}, parsed=${parseFailed ? "no" : "yes"}`);
-        return;
-      }
-
-      form.reset();
-      setSelectedFileName("");
-      await loadFiles();
-    } catch (uploadError) {
-      const reason =
-        uploadError instanceof Error && uploadError.message
-          ? uploadError.message
-          : "backend unreachable";
-
-      console.log("[FilesPageClient] Upload request failed", uploadError);
-      setError(`Upload failed: ${reason}`);
-      setUploadDebug("request threw before valid response");
-    } finally {
-      setIsUploading(false);
-    }
-  }
-
-  function onFileChange(event) {
-    const file = event.target.files?.[0];
-    setSelectedFileName(file?.name || "");
-    if (error) setError("");
-  }
-
-  function onChooseFile() {
-    if (isUploading) return;
-    fileInputRef.current?.click();
-  }
-
   return (
     <main className="page">
       <section className="panel">
         <div className="sectionTitle">Files</div>
-
-        <form className="formRow fileUploadRow" onSubmit={onUpload} style={{ marginBottom: 10 }}>
-          <input
-            ref={fileInputRef}
-            className="visuallyHiddenFileInput"
-            type="file"
-            name="file"
-            disabled={isUploading}
-            onChange={onFileChange}
-            aria-label="Choose file"
-          />
-          <button className="button compactButton" type="button" onClick={onChooseFile} disabled={isUploading}>
-            Choose File
-          </button>
-          <div className="fileUploadName" aria-live="polite">
-            {selectedFileName || "No file selected"}
-          </div>
-          <button className="button compactButton" type="submit" disabled={isUploading}>
-            {isUploading ? "..." : "Upload"}
-          </button>
-        </form>
-
-        {error ? <div className="errorText">{error}</div> : null}
-        {uploadDebug ? <div className="metaLine">Debug: {uploadDebug}</div> : null}
+        <div className="metaLine" style={{ marginBottom: 10 }}>
+          Use the unified bottom bar (📎 + Add) to attach new files.
+        </div>
 
         {items.length === 0 ? (
           <div className="empty">No files.</div>

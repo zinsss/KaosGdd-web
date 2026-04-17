@@ -24,6 +24,10 @@ def export_file_raw(
     for linked_id in dedupe_links(list(linked_item_ids or [])):
         lines.append(f"l:{linked_id}")
 
+    fax_number = str(file_item.get("fax_number") or "").strip()
+    if fax_number:
+        lines.append(f"x:{fax_number}")
+
     memo = str(file_item.get("memo") or "").strip("\n")
     if memo:
         lines.append("")
@@ -43,6 +47,7 @@ def parse_file_raw(raw_text: str) -> dict:
     seen_tags: set[str] = set()
     linked_item_ids: list[str] = []
     memo_lines: list[str] = []
+    fax_number: str | None = None
     in_memo = False
 
     for original in lines:
@@ -81,6 +86,13 @@ def parse_file_raw(raw_text: str) -> dict:
                     tags.append(low)
             continue
 
+        if stripped.startswith("x:"):
+            fax_value = stripped[2:].strip()
+            if not fax_value:
+                raise ValueError("x: value is required")
+            fax_number = fax_value
+            continue
+
         raise ValueError("unsupported extra file grammar")
 
     if in_memo:
@@ -94,6 +106,7 @@ def parse_file_raw(raw_text: str) -> dict:
     return {
         "title": title,
         "memo": memo,
+        "fax_number": fax_number,
         "tags": tags,
         "linked_item_ids": dedupe_links(linked_item_ids),
     }

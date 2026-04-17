@@ -112,7 +112,7 @@ class FileService:
             return False, str(exc)
 
         self.items_repo.update_item_title(item_id, parsed["title"])
-        self.file_repo.update_file_memo(item_id, parsed.get("memo"))
+        self.file_repo.update_file_meta(item_id, memo=parsed.get("memo"), fax_number=parsed.get("fax_number"))
         self.items_repo.replace_item_tags(item_id, list(parsed.get("tags") or []))
         self.items_repo.replace_item_links(item_id, list(parsed.get("linked_item_ids") or []))
         return True, None

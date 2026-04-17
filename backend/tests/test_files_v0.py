@@ -143,6 +143,19 @@ def test_file_raw_update_can_save_tags(main_module) -> None:
     assert detail["tags"] == ["alpha", "beta"]
 
 
+def test_file_raw_update_can_save_fax_number(main_module) -> None:
+    file_id = _upload(main_module, "fax.pdf", b"content")
+
+    updated = main_module.update_file_raw(file_id, {"raw": "Faxed File\nx:02-1234-5678"})
+    assert updated["ok"] is True
+
+    detail = main_module.get_file(file_id)["item"]
+    assert detail["fax_number"] == "02-1234-5678"
+
+    exported = main_module.get_file_raw(file_id)
+    assert exported["ok"] is True
+    assert "x:02-1234-5678" in exported["raw"]
+
 def test_file_raw_update_preserves_links(main_module) -> None:
     file_id = _upload(main_module, "link-preserve.pdf", b"content")
     target = main_module.capture_item({"raw": "-- linked target"})
