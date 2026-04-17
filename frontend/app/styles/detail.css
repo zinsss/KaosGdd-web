@@ -48,14 +48,14 @@
 
 .detailReadBlock {
   display: grid;
-  gap: 16px;
-  margin-top: 14px;
+  gap: 14px;
+  margin-top: 12px;
 }
 
 .detailReadRow {
   display: grid;
-  grid-template-columns: minmax(62px, 84px) 1px minmax(0, 1fr);
-  column-gap: 8px;
+  grid-template-columns: minmax(48px, 68px) 1px minmax(0, 1fr);
+  column-gap: 6px;
   align-items: start;
 }
 
@@ -83,6 +83,11 @@
   color: var(--ui-text);
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+.detailBodyBlock {
+  min-width: 0;
+  width: 100%;
 }
 
 .detailReadInline {
@@ -164,8 +169,8 @@
   }
 
   .detailReadRow {
-    grid-template-columns: minmax(56px, 72px) 1px minmax(0, 1fr);
-    column-gap: 7px;
+    grid-template-columns: minmax(46px, 60px) 1px minmax(0, 1fr);
+    column-gap: 6px;
   }
 
   .detailReadInline {
