@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 function formatBytes(value) {
   const size = Number(value || 0);
@@ -42,6 +42,8 @@ export default function FilesPageClient() {
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState("");
   const [uploadDebug, setUploadDebug] = useState("");
+  const [selectedFileName, setSelectedFileName] = useState("");
+  const fileInputRef = useRef(null);
 
   async function loadFiles() {
     try {
@@ -118,6 +120,7 @@ export default function FilesPageClient() {
       }
 
       form.reset();
+      setSelectedFileName("");
       await loadFiles();
     } catch (uploadError) {
       const reason =
@@ -133,13 +136,38 @@ export default function FilesPageClient() {
     }
   }
 
+  function onFileChange(event) {
+    const file = event.target.files?.[0];
+    setSelectedFileName(file?.name || "");
+    if (error) setError("");
+  }
+
+  function onChooseFile() {
+    if (isUploading) return;
+    fileInputRef.current?.click();
+  }
+
   return (
     <main className="page">
       <section className="panel">
         <div className="sectionTitle">Files</div>
 
-        <form className="formRow" onSubmit={onUpload} style={{ marginBottom: 10 }}>
-          <input className="textInput" type="file" name="file" disabled={isUploading} />
+        <form className="formRow fileUploadRow" onSubmit={onUpload} style={{ marginBottom: 10 }}>
+          <input
+            ref={fileInputRef}
+            className="visuallyHiddenFileInput"
+            type="file"
+            name="file"
+            disabled={isUploading}
+            onChange={onFileChange}
+            aria-label="Choose file"
+          />
+          <button className="button compactButton" type="button" onClick={onChooseFile} disabled={isUploading}>
+            Choose File
+          </button>
+          <div className="fileUploadName" aria-live="polite">
+            {selectedFileName || "No file selected"}
+          </div>
           <button className="button compactButton" type="submit" disabled={isUploading}>
             {isUploading ? "..." : "Upload"}
           </button>

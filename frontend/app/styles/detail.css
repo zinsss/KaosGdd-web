@@ -54,8 +54,8 @@
 
 .detailReadRow {
   display: grid;
-  grid-template-columns: minmax(90px, 120px) 1px minmax(0, 1fr);
-  column-gap: 10px;
+  grid-template-columns: minmax(62px, 84px) 1px minmax(0, 1fr);
+  column-gap: 8px;
   align-items: start;
 }
 
@@ -71,6 +71,7 @@
   text-align: left;
   min-width: 0;
   overflow-wrap: anywhere;
+  padding-top: 1px;
 }
 
 .withDivider {
@@ -163,8 +164,8 @@
   }
 
   .detailReadRow {
-    grid-template-columns: minmax(68px, 96px) 1px minmax(0, 1fr);
-    column-gap: 8px;
+    grid-template-columns: minmax(56px, 72px) 1px minmax(0, 1fr);
+    column-gap: 7px;
   }
 
   .detailReadInline {
