@@ -88,6 +88,19 @@ CREATE TABLE IF NOT EXISTS {reminder_items} (
     CHECK (state IN ('scheduled', 'fired', 'acked', 'missed', 'cancelled', 'snoozed'))
 );
 
+
+CREATE TABLE IF NOT EXISTS {push_subscriptions} (
+    id TEXT PRIMARY KEY,
+    client_id TEXT NOT NULL,
+    endpoint TEXT NOT NULL,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    subscription_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE (client_id, endpoint)
+);
+
 CREATE TABLE IF NOT EXISTS {reminder_events} (
     id TEXT PRIMARY KEY,
     reminder_item_id TEXT NOT NULL,
@@ -170,6 +183,11 @@ ON {items}(item_type, status, created_at);
 
 CREATE INDEX IF NOT EXISTS idx_reminder_items_state_last_fired
 ON {reminder_items}(state, last_fired_at);
+
+
+CREATE INDEX IF NOT EXISTS idx_push_subscriptions_client
+ON {push_subscriptions}(client_id, updated_at);
+
 """.format(
     items=DbTables.ITEMS,
     task_items=DbTables.TASK_ITEMS,
@@ -183,6 +201,7 @@ ON {reminder_items}(state, last_fired_at);
     item_reminders=DbTables.ITEM_REMINDERS,
     item_tags=DbTables.ITEM_TAGS,
     item_links=DbTables.ITEM_LINKS,
+    push_subscriptions=DbTables.PUSH_SUBSCRIPTIONS,
 )
 
 

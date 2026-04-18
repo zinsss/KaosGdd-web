@@ -4,6 +4,8 @@ load_dotenv()
 
 from contextlib import asynccontextmanager
 
+import json
+
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
 
@@ -16,6 +18,7 @@ from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.file_repo import FileRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
+from app.db.repo.push_subscription_repo import PushSubscriptionRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
 from app.engine.journal_service import JournalService
@@ -23,6 +26,7 @@ from app.engine.note_service import NoteService
 from app.engine.file_service import FileService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
+from app.integrations.web_push_client import WebPushClient
 from app.schemas.reminders import normalize_minutes
 from app.strings import ApiText
 from app.utils.capture_parse import parse_capture_input
@@ -35,12 +39,18 @@ journal_repo = JournalRepo(engine)
 note_repo = NoteRepo(engine)
 file_repo = FileRepo(engine)
 reminder_repo = ReminderRepo(engine)
+push_subscription_repo = PushSubscriptionRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
 journal_service = JournalService(items_repo, journal_repo)
 note_service = NoteService(items_repo, note_repo)
 file_service = FileService(items_repo, file_repo)
 reminder_service = ReminderService(reminder_repo, task_repo, event_repo, items_repo)
+web_push_client = WebPushClient(
+    public_key=SETTINGS.WEB_PUSH_VAPID_PUBLIC_KEY,
+    private_key=SETTINGS.WEB_PUSH_VAPID_PRIVATE_KEY,
+    subject=SETTINGS.WEB_PUSH_SUBJECT,
+)
 
 
 @asynccontextmanager
@@ -560,6 +570,92 @@ def cancel_reminder(reminder_id: str):
     if not ok:
         return {"ok": False, "error": status}
     return {"ok": True, "status": status}
+
+
+
+
+@app.get("/push/subscriptions")
+def get_push_public_key():
+    if not web_push_client.is_enabled:
+        return {"ok": False, "error": "Web push is not configured"}
+    return {"ok": True, "public_key": SETTINGS.WEB_PUSH_VAPID_PUBLIC_KEY}
+
+
+@app.post("/push/subscriptions")
+def save_push_subscription(payload: dict):
+    if not web_push_client.is_enabled:
+        return {"ok": False, "error": "Web push is not configured"}
+
+    client_id = str(payload.get("client_id") or "").strip()
+    subscription = payload.get("subscription") or {}
+    endpoint = str(subscription.get("endpoint") or "").strip()
+    keys = subscription.get("keys") or {}
+    p256dh = str(keys.get("p256dh") or "").strip()
+    auth = str(keys.get("auth") or "").strip()
+
+    if not client_id:
+        return {"ok": False, "error": "client_id is required"}
+    if not endpoint or not p256dh or not auth:
+        return {"ok": False, "error": "Invalid push subscription"}
+
+    subscription_id = push_subscription_repo.upsert(
+        client_id=client_id,
+        endpoint=endpoint,
+        p256dh=p256dh,
+        auth=auth,
+        subscription_json=subscription,
+    )
+    return {"ok": True, "id": subscription_id}
+
+
+@app.delete("/push/subscriptions")
+def delete_push_subscription(payload: dict):
+    client_id = str(payload.get("client_id") or "").strip()
+    endpoint = str(payload.get("endpoint") or "").strip()
+
+    if not client_id or not endpoint:
+        return {"ok": False, "error": "client_id and endpoint are required"}
+
+    removed = push_subscription_repo.remove(client_id=client_id, endpoint=endpoint)
+    return {"ok": True, "removed": removed}
+
+
+@app.post("/push/test")
+def send_push_test(payload: dict):
+    if not web_push_client.is_enabled:
+        return {"ok": False, "error": "Web push is not configured"}
+
+    client_id = str(payload.get("client_id") or "").strip()
+    if not client_id:
+        return {"ok": False, "error": "client_id is required"}
+
+    subscriptions = push_subscription_repo.list_for_client(client_id)
+    if not subscriptions:
+        return {"ok": False, "error": "No subscriptions found for client"}
+
+    sent = 0
+    removed = 0
+    for subscription_row in subscriptions:
+        try:
+            web_push_client.send(
+                subscription_info=subscription_row.get("subscription") or {},
+                payload_json=json.dumps(
+                    {
+                        "title": "KaosGdd test push",
+                        "body": "Push is connected. Open fired reminders.",
+                        "url": "/reminders?mode=fired",
+                    }
+                ),
+            )
+            sent += 1
+        except Exception:
+            push_subscription_repo.remove(
+                client_id=client_id,
+                endpoint=str(subscription_row.get("endpoint") or ""),
+            )
+            removed += 1
+
+    return {"ok": sent > 0, "sent": sent, "removed": removed}
 
 
 @app.post("/internal/reminders/fire-due")

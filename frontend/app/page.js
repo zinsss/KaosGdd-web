@@ -1,5 +1,6 @@
 import { UI_STRINGS } from "../lib/strings";
 import { getApiBase } from "../lib/api-base";
+import PushControls from "../components/pwa/PushControls";
 
 async function getHealth() {
   const base = getApiBase();
@@ -31,6 +32,8 @@ export default async function HomePage() {
         <div className="line">{UI_STRINGS.APP_TITLE_WEB}</div>
         <div className="subline">{UI_STRINGS.HOME_SUBTITLE}</div>
       </section>
+
+      <PushControls />
 
       <section className="panel">
         <div className="sectionTitle">{UI_STRINGS.SYSTEM}</div>

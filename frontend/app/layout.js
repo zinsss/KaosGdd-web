@@ -1,6 +1,7 @@
 import "./globals.css";
 import BottomCaptureBar from "../components/BottomCaptureBar";
 import TopNav from "../components/TopNav";
+import PwaBootstrap from "../components/pwa/PwaBootstrap";
 import { UI_STRINGS } from "../lib/strings";
 
 export const metadata = {
@@ -12,18 +13,24 @@ export const metadata = {
     statusBarStyle: "black-translucent",
     title: UI_STRINGS.APP_TITLE_WEB,
   },
+  icons: {
+    icon: "/icons/icon-192.svg",
+    apple: "/icons/icon-192.svg",
+  },
 };
 
 export const viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#121212",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
+        <PwaBootstrap />
         <header className="appShellTop">
           <div className="appShellTopInner">
             <div className="appHeaderLine">
