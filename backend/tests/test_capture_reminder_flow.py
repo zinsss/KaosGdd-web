@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import importlib
 import os
+from datetime import datetime
 from pathlib import Path
 
 import pytest
+from app.utils import datetime_parse
 
 
 @pytest.fixture()
@@ -93,3 +95,17 @@ def test_reminder_raw_update_roundtrips_datetime_first_form(main_module) -> None
     raw = main_module.get_reminder_raw(created["id"])
     assert raw["ok"] is True
     assert raw["raw"] == "!! 2026-12-16 09:10\nupdated reminder title\n#clinic #work"
+
+
+def test_capture_uses_client_timezone_for_near_future_validation(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-04-19T02:28:00+00:00")  # 19:28 in America/Los_Angeles
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    payload = main_module.capture_item(
+        {
+            "raw": "!! 2026-04-18 19:29 timezone check",
+            "timezone": "America/Los_Angeles",
+        }
+    )
+
+    assert payload["ok"] is True

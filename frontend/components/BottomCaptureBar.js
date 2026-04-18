@@ -403,7 +403,10 @@ export default function BottomCaptureBar() {
       const res = await fetch("/api/capture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ raw: clean }),
+        body: JSON.stringify({
+          raw: clean,
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || undefined,
+        }),
       });
 
       const data = await res.json().catch(() => null);
