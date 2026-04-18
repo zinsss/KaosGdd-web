@@ -14,8 +14,9 @@
   left: 0;
   right: 0;
   z-index: 60;
-  background: var(--ctp-crust);
-  border-bottom: 1px solid rgba(137, 180, 250, 0.1);
+  background: var(--app-shell-bottom-bar-bg);
+  border-bottom: 1px solid rgba(137, 180, 250, 0.06);
+  box-shadow: 0 1px 0 rgba(137, 180, 250, 0.02);
   padding-top: var(--app-shell-safe-top);
 }
 
