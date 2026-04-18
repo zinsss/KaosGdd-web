@@ -148,7 +148,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
   pointer-events: auto;
 }
 
@@ -161,7 +161,7 @@
   background: var(--ctp-surface0);
   padding-top: 8px;
   padding-bottom: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.34);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .bottomCaptureFooter {
@@ -172,17 +172,17 @@
 }
 
 .bottomCaptureStatus {
-  min-height: 34px;
+  min-height: 32px;
   flex: 1 1 auto;
   min-width: 0;
   font-size: 12px;
-  border: 1px solid rgba(186, 194, 222, 0.2);
-  border-radius: 999px;
+  border: 1px solid rgba(186, 194, 222, 0.24);
+  border-radius: 10px;
   background: var(--ctp-surface0);
-  padding: 0 12px;
+  padding: 0 10px;
   display: inline-flex;
   align-items: center;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -205,11 +205,12 @@
   border-color: rgba(186, 194, 222, 0.24);
   background: var(--ctp-surface0);
   color: var(--ui-text);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .bottomCaptureAttachButton:hover {
-  background: var(--ctp-surface1);
+  border-color: rgba(186, 194, 222, 0.34);
+  background: var(--ctp-surface0);
 }
 
 .bottomCaptureButton {
@@ -223,11 +224,12 @@
   background: var(--ctp-surface0);
   color: var(--ctp-blue);
   align-self: flex-end;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .bottomCaptureButton:hover {
-  background: var(--ctp-surface1);
+  border-color: rgba(137, 180, 250, 0.34);
+  background: var(--ctp-surface0);
 }
 
 .bottomCaptureCancelButton {
@@ -239,11 +241,12 @@
   border-color: rgba(186, 194, 222, 0.24);
   background: var(--ctp-surface0);
   color: var(--ui-text-dim);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .bottomCaptureCancelButton:hover {
-  background: var(--ctp-surface1);
+  border-color: rgba(186, 194, 222, 0.34);
+  background: var(--ctp-surface0);
   color: var(--ui-text);
 }
 
