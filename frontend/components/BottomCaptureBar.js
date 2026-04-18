@@ -189,6 +189,23 @@ export default function BottomCaptureBar() {
     };
   }, []);
 
+
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const prefillRaw = window.sessionStorage.getItem("kaosgdd_capture_prefill");
+    if (!prefillRaw) return;
+
+    window.sessionStorage.removeItem("kaosgdd_capture_prefill");
+    setRaw(prefillRaw);
+    setError("");
+    setSuccess("Shared content ready.");
+
+    window.setTimeout(() => {
+      textareaRef.current?.focus();
+    }, 0);
+  }, []);
+
   useEffect(() => {
     if (!textareaRef.current) return;
     textareaRef.current.style.height = "0px";

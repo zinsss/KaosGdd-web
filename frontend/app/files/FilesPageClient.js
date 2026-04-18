@@ -19,6 +19,7 @@ function formatBytes(value) {
 
 export default function FilesPageClient() {
   const [items, setItems] = useState([]);
+  const [shareFeedback, setShareFeedback] = useState("");
 
   async function loadFiles() {
     try {
@@ -31,6 +32,12 @@ export default function FilesPageClient() {
   }
 
   useEffect(() => {
+    const feedback = window.sessionStorage.getItem("kaosgdd_share_feedback");
+    if (feedback) {
+      setShareFeedback(feedback);
+      window.sessionStorage.removeItem("kaosgdd_share_feedback");
+    }
+
     loadFiles();
   }, []);
 
@@ -41,6 +48,7 @@ export default function FilesPageClient() {
         <div className="metaLine" style={{ marginBottom: 10 }}>
           Use the unified bottom bar (📎 + Add) to attach new files.
         </div>
+        {shareFeedback ? <div className="subline">{shareFeedback}</div> : null}
 
         {items.length === 0 ? (
           <div className="empty">No files.</div>

@@ -23,6 +23,10 @@ class Settings:
 
     FILE_STORAGE_DIR = os.getenv("FILE_STORAGE_DIR", "/data/uploads")
 
+    WEB_PUSH_VAPID_PUBLIC_KEY = os.getenv("WEB_PUSH_VAPID_PUBLIC_KEY", "")
+    WEB_PUSH_VAPID_PRIVATE_KEY = os.getenv("WEB_PUSH_VAPID_PRIVATE_KEY", "")
+    WEB_PUSH_SUBJECT = os.getenv("WEB_PUSH_SUBJECT", "mailto:admin@localhost")
+
 
 SETTINGS = Settings()
 
@@ -40,3 +44,4 @@ class DbTables:
     ITEM_REMINDERS = "item_reminders"
     ITEM_TAGS = "item_tags"
     ITEM_LINKS = "item_links"
+    PUSH_SUBSCRIPTIONS = "push_subscriptions"
