@@ -466,8 +466,9 @@ def create_task_reminder(task_id: str, payload: dict):
 @app.post("/capture")
 def capture_item(payload: dict):
     raw_text = str(payload.get("raw") or "")
+    timezone_name = str(payload.get("timezone") or "").strip() or None
     try:
-        parsed = parse_capture_input(raw_text)
+        parsed = parse_capture_input(raw_text, timezone_name=timezone_name)
     except ValueError as exc:
         return {"ok": False, "error": str(exc)}
 

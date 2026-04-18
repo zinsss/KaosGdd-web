@@ -56,6 +56,31 @@ def test_unsupported_natural_language_is_rejected(monkeypatch: pytest.MonkeyPatc
         parse_local_datetime_to_iso("next friday")
 
 
+def test_time_only_one_minute_future_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
+    _freeze_now(monkeypatch, "2026-04-18T10:28:00+00:00")  # 19:28 in Asia/Seoul
+    assert parse_local_datetime_to_iso("19:29", allow_past=False) == "2026-04-18T10:29:00+00:00"
+
+
+def test_time_only_future_second_is_accepted(monkeypatch: pytest.MonkeyPatch) -> None:
+    _freeze_now(monkeypatch, "2026-04-18T10:28:00+00:00")  # 19:28 in Asia/Seoul
+    assert parse_local_datetime_to_iso("19:28:30", allow_past=False) == "2026-04-18T10:28:30+00:00"
+
+
+def test_time_only_past_minute_is_rejected(monkeypatch: pytest.MonkeyPatch) -> None:
+    _freeze_now(monkeypatch, "2026-04-18T10:28:00+00:00")  # 19:28 in Asia/Seoul
+    with pytest.raises(ValueError, match="resolved datetime is in the past"):
+        parse_local_datetime_to_iso("19:27", allow_past=False)
+
+
+def test_capture_uses_provided_local_timezone(monkeypatch: pytest.MonkeyPatch) -> None:
+    _freeze_now(monkeypatch, "2026-04-19T02:28:00+00:00")  # 19:28 in America/Los_Angeles
+    assert parse_local_datetime_to_iso(
+        "2026-04-18 19:29",
+        allow_past=False,
+        timezone_name="America/Los_Angeles",
+    ) == "2026-04-19T02:29:00+00:00"
+
+
 def test_task_d_and_r_use_same_datetime_normalization(monkeypatch: pytest.MonkeyPatch) -> None:
     _freeze_now(monkeypatch, "2026-04-15T00:00:00+00:00")
     parsed = parse_task_raw("-- Example\nd:+2d\nr:+2d")

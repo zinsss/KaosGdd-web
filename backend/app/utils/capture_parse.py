@@ -4,7 +4,7 @@ from app.parsers.capture_grammar import parse_capture
 from app.utils.datetime_parse import parse_local_datetime_to_iso
 
 
-def parse_capture_input(raw_text: str) -> dict:
+def parse_capture_input(raw_text: str, *, timezone_name: str | None = None) -> dict:
     normalized_raw = str(raw_text or "").replace("\r\n", "\n").strip()
     parsed = parse_capture(normalized_raw)
 
@@ -48,7 +48,13 @@ def parse_capture_input(raw_text: str) -> dict:
         remind_at = parsed.get("remind_at")
         remind_ats: list[str] = []
         if remind_at:
-            remind_ats = [parse_local_datetime_to_iso(remind_at, allow_past=False)]
+            remind_ats = [
+                parse_local_datetime_to_iso(
+                    remind_at,
+                    allow_past=False,
+                    timezone_name=timezone_name,
+                )
+            ]
         return {
             "kind": "simple_reminder",
             "raw": normalized_raw,
