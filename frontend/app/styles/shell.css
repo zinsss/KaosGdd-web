@@ -1,6 +1,9 @@
 :root {
   --app-shell-safe-top: env(safe-area-inset-top, 0px);
-  --app-shell-fixed-height: calc(122px + var(--app-shell-safe-top));
+  --app-shell-header-base-height: 122px;
+  --app-shell-fixed-height: calc(
+    var(--app-shell-header-base-height) + var(--app-shell-safe-top)
+  );
 }
 
 .appShellTop {
@@ -282,6 +285,10 @@
 }
 
 @media (max-width: 640px) {
+  :root {
+    --app-shell-header-base-height: 92px;
+  }
+
   .appShellTopInner {
     padding: 12px 12px 10px;
   }
@@ -298,12 +305,7 @@
     font-size: 13px;
   }
 
-  .appShellTopSpacer {
-    height: 92px;
-  }
-
   .appShellMain {
-    height: calc(100dvh - 92px);
     padding-bottom: 148px;
   }
 
