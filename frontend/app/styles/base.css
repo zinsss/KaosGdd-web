@@ -28,7 +28,7 @@ select {
 }
 
 body {
-  background: var(--ui-bg);
+  background: var(--app-shell-bottom-bar-bg, var(--ui-bg));
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow: hidden;
