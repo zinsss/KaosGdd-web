@@ -107,3 +107,25 @@ class PushSubscriptionRepo:
                 item["subscription"] = {}
             items.append(item)
         return items
+
+    def list_all(self) -> list[dict]:
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT id, client_id, endpoint, p256dh, auth, subscription_json
+                    FROM {push_subscriptions}
+                    ORDER BY updated_at DESC
+                    """.format(push_subscriptions=DbTables.PUSH_SUBSCRIPTIONS)
+                )
+            ).mappings().all()
+
+        items = []
+        for row in rows:
+            item = dict(row)
+            try:
+                item["subscription"] = json.loads(item.get("subscription_json") or "{}")
+            except json.JSONDecodeError:
+                item["subscription"] = {}
+            items.append(item)
+        return items
