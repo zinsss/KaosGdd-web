@@ -3,7 +3,7 @@ body {
   height: 100%;
   margin: 0;
   padding: 0;
-  background: var(--ui-bg);
+  background: var(--app-shell-bottom-bar-bg, var(--ui-bg));
   color: var(--ui-text);
   font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
     "SFMono-Regular", "Menlo", "Consolas", monospace;
@@ -28,6 +28,7 @@ select {
 }
 
 body {
+  background: var(--ui-bg);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow: hidden;

@@ -1,5 +1,7 @@
 :root {
   --app-shell-safe-top: env(safe-area-inset-top, 0px);
+  --app-shell-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --app-shell-bottom-bar-bg: var(--ctp-mantle);
   --app-shell-header-base-height: 122px;
   --app-shell-fixed-height: calc(
     var(--app-shell-header-base-height) + var(--app-shell-safe-top)
@@ -134,9 +136,9 @@
   bottom: 0;
   z-index: 50;
   border-top: 1px solid rgba(137, 180, 250, 0.12);
-  background: rgba(24, 24, 37, 0.9);
+  background: var(--app-shell-bottom-bar-bg);
   box-shadow: 0 -1px 0 rgba(137, 180, 250, 0.03);
-  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
+  padding: 10px 12px calc(10px + var(--app-shell-safe-bottom));
 }
 
 .bottomCaptureInner {
