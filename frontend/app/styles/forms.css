@@ -43,7 +43,7 @@ textarea.textInput {
   padding: 10px 12px;
   font: inherit;
   font-size: 16px;
-  border-radius: 0;
+  border-radius: 6px;
   outline: none;
 }
 
@@ -82,7 +82,7 @@ textarea.textInput:focus {
   padding: 10px 14px;
   font: inherit;
   cursor: pointer;
-  border-radius: 0;
+  border-radius: 6px;
   white-space: nowrap;
 }
 

@@ -154,6 +154,7 @@
   border-color: var(--ctp-surface0);
   padding-top: 8px;
   padding-bottom: 8px;
+  border-radius: 14px;
 }
 
 .bottomCaptureFooter {
