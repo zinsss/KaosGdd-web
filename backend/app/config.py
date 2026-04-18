@@ -14,6 +14,7 @@ class Settings:
     PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY", "")
     PUSHOVER_DEVICE = os.getenv("PUSHOVER_DEVICE", "").strip()
     PUSHOVER_PRIORITY_DEFAULT = int(os.getenv("PUSHOVER_PRIORITY_DEFAULT", "0"))
+    PUSHOVER_DELAY_SECONDS = float(os.getenv("PUSHOVER_DELAY_SECONDS", "5"))
 
     APP_BASE_URL = os.getenv("APP_BASE_URL", os.getenv("WEB_BASE_URL", ""))
 

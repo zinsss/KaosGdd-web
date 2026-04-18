@@ -14,6 +14,7 @@ def main_module(tmp_path: Path):
     os.environ["PUSHOVER_ENABLED"] = "1"
     os.environ["PUSHOVER_APP_TOKEN"] = "app-token"
     os.environ["PUSHOVER_USER_KEY"] = "user-key"
+    os.environ["PUSHOVER_DELAY_SECONDS"] = "0"
     os.environ["APP_BASE_URL"] = "https://kaos.test"
 
     import app.core.db as db_module
@@ -120,3 +121,55 @@ def test_standalone_payload_has_basic_title_and_body(main_module, monkeypatch: p
     assert calls[0]["title"] == "Reminder"
     assert "buy batteries" in calls[0]["message"]
     assert "Remind:" in calls[0]["message"]
+
+
+def test_fire_due_reminder_sends_web_push_before_delayed_pushover(
+    main_module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task = main_module.create_task({"title": "Renew passport"})
+    assert task["ok"] is True
+
+    reminder = main_module.create_task_reminder(task["id"], {"remind_at": "2020-01-01T00:00:00+00:00"})
+    assert reminder["ok"] is True
+
+    calls: list[str] = []
+
+    class FakePushSubscriptionRepo:
+        def list_all(self):
+            return [
+                {
+                    "client_id": "client-1",
+                    "endpoint": "https://push.example/sub/1",
+                    "subscription": {"endpoint": "https://push.example/sub/1", "keys": {}},
+                }
+            ]
+
+        def remove(self, *, client_id: str, endpoint: str):
+            calls.append(f"remove:{client_id}:{endpoint}")
+            return True
+
+    class FakeWebPushClient:
+        is_enabled = True
+
+        def send(self, *, subscription_info: dict, payload_json: str):
+            assert subscription_info["endpoint"] == "https://push.example/sub/1"
+            assert "Task Reminder" in payload_json
+            calls.append("web_push")
+
+    def fake_delay():
+        calls.append("delay")
+
+    def fake_send_pushover(**kwargs):
+        assert kwargs["title"] == "Task Reminder"
+        calls.append("pushover")
+        return {"attempted": True, "succeeded": True, "reason": None}
+
+    main_module.reminder_service.push_subscription_repo = FakePushSubscriptionRepo()
+    main_module.reminder_service.web_push_client = FakeWebPushClient()
+    monkeypatch.setattr(main_module.reminder_service, "_delay_before_pushover", fake_delay)
+    monkeypatch.setattr("app.engine.reminder_service.send_pushover", fake_send_pushover)
+
+    fired = main_module.fire_due_reminders()
+    assert fired["ok"] is True
+    assert fired["count"] == 1
+    assert calls == ["web_push", "delay", "pushover"]

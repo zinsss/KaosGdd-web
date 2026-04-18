@@ -1,6 +1,8 @@
 from datetime import datetime, timedelta, timezone
+import json
 import logging
 import re
+import time
 
 from app.config import SETTINGS
 from app.db.repo.event_repo import EventRepo
@@ -24,11 +26,15 @@ class ReminderService:
         task_repo: TaskRepo,
         event_repo: EventRepo | None = None,
         items_repo: ItemsRepo | None = None,
+        push_subscription_repo=None,
+        web_push_client=None,
     ) -> None:
         self.reminder_repo = reminder_repo
         self.task_repo = task_repo
         self.event_repo = event_repo
         self.items_repo = items_repo
+        self.push_subscription_repo = push_subscription_repo
+        self.web_push_client = web_push_client
 
     def create_task_reminder(
         self,
@@ -302,6 +308,8 @@ class ReminderService:
             )
 
             push_payload = self._build_push_payload(row)
+            self._send_web_push(row=row, push_payload=push_payload)
+            self._delay_before_pushover()
             send_result = send_pushover(
                 title=push_payload["title"],
                 message=push_payload["message"],
@@ -340,7 +348,7 @@ class ReminderService:
         item_title = str(reminder.get("title") or "").strip()
         due_at = None
         memo = None
-        deep_link_path = f"/reminders/{reminder['id']}"
+        deep_link_path = "/reminders?mode=fired"
 
         if parent_item_id:
             task = self.task_repo.get_task_detail(parent_item_id)
@@ -372,6 +380,56 @@ class ReminderService:
             "url": self._build_absolute_url(deep_link_path),
             "target_kind": target_kind,
         }
+
+    def _send_web_push(self, *, row: dict, push_payload: dict) -> None:
+        if self.push_subscription_repo is None or self.web_push_client is None:
+            return
+        if not self.web_push_client.is_enabled:
+            return
+
+        subscriptions = self.push_subscription_repo.list_all()
+        if not subscriptions:
+            return
+
+        sent = 0
+        removed = 0
+        for subscription_row in subscriptions:
+            endpoint = str(subscription_row.get("endpoint") or "")
+            client_id = str(subscription_row.get("client_id") or "")
+            subscription = subscription_row.get("subscription") or {}
+            try:
+                self.web_push_client.send(
+                    subscription_info=subscription,
+                    payload_json=json.dumps(
+                        {
+                            "title": push_payload["title"],
+                            "body": push_payload["message"],
+                            "url": push_payload["url"] or "/reminders?mode=fired",
+                        }
+                    ),
+                )
+                sent += 1
+            except Exception:
+                if client_id and endpoint:
+                    self.push_subscription_repo.remove(client_id=client_id, endpoint=endpoint)
+                    removed += 1
+
+        logger.info(
+            (
+                "reminder fired web push result: reminder_id=%s parent_item_id=%s "
+                "web_push_sent=%s web_push_removed=%s"
+            ),
+            row.get("id"),
+            row.get("parent_item_id"),
+            sent,
+            removed,
+        )
+
+    def _delay_before_pushover(self) -> None:
+        delay_seconds = max(0.0, float(SETTINGS.PUSHOVER_DELAY_SECONDS))
+        if delay_seconds <= 0:
+            return
+        time.sleep(delay_seconds)
 
     def _build_absolute_url(self, path: str) -> str | None:
         if not SETTINGS.APP_BASE_URL:
