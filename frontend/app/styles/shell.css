@@ -136,40 +136,56 @@
   right: 0;
   bottom: 0;
   z-index: 50;
-  border-top: 1px solid rgba(137, 180, 250, 0.12);
-  background: var(--app-shell-bottom-bar-bg);
-  box-shadow: 0 -1px 0 rgba(137, 180, 250, 0.03);
-  padding: 8px 12px max(8px, var(--app-shell-safe-bottom));
+  background: transparent;
+  border-top: 0;
+  box-shadow: none;
+  padding: 8px 12px max(10px, var(--app-shell-safe-bottom));
+  pointer-events: none;
 }
 
 .bottomCaptureInner {
   max-width: 760px;
   margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  pointer-events: auto;
 }
 
 .bottomCaptureInput {
   width: 100%;
   min-height: 46px;
   height: 46px;
-  border-color: var(--ctp-surface0);
+  border: 1px solid rgba(186, 194, 222, 0.24);
+  border-radius: 14px;
+  background: var(--ctp-surface0);
   padding-top: 8px;
   padding-bottom: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .bottomCaptureFooter {
-  max-width: 760px;
-  margin: 6px auto 0;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
 }
 
 .bottomCaptureStatus {
-  min-height: 16px;
+  min-height: 32px;
   flex: 1 1 auto;
   min-width: 0;
   font-size: 12px;
+  border: 1px solid rgba(186, 194, 222, 0.24);
+  border-radius: 10px;
+  background: var(--ctp-surface0);
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .bottomCaptureActions {
@@ -186,13 +202,15 @@
   height: 34px;
   padding: 0;
   border-radius: 999px;
-  border-color: rgba(186, 194, 222, 0.22);
-  background: rgba(186, 194, 222, 0.05);
+  border-color: rgba(186, 194, 222, 0.24);
+  background: var(--ctp-surface0);
   color: var(--ui-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .bottomCaptureAttachButton:hover {
-  background: rgba(186, 194, 222, 0.09);
+  border-color: rgba(186, 194, 222, 0.34);
+  background: var(--ctp-surface0);
 }
 
 .bottomCaptureButton {
@@ -202,14 +220,16 @@
   line-height: 34px;
   padding: 0 14px;
   border-radius: 999px;
-  border-color: rgba(137, 180, 250, 0.18);
-  background: rgba(137, 180, 250, 0.06);
+  border-color: rgba(137, 180, 250, 0.24);
+  background: var(--ctp-surface0);
   color: var(--ctp-blue);
   align-self: flex-end;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .bottomCaptureButton:hover {
-  background: rgba(137, 180, 250, 0.1);
+  border-color: rgba(137, 180, 250, 0.34);
+  background: var(--ctp-surface0);
 }
 
 .bottomCaptureCancelButton {
@@ -218,18 +238,25 @@
   height: 34px;
   padding: 0 12px;
   border-radius: 999px;
-  border-color: rgba(186, 194, 222, 0.22);
-  background: rgba(186, 194, 222, 0.05);
+  border-color: rgba(186, 194, 222, 0.24);
+  background: var(--ctp-surface0);
   color: var(--ui-text-dim);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
 }
 
 .bottomCaptureCancelButton:hover {
-  background: rgba(186, 194, 222, 0.09);
+  border-color: rgba(186, 194, 222, 0.34);
+  background: var(--ctp-surface0);
   color: var(--ui-text);
 }
 
 .bottomCaptureModeLabel {
   color: var(--ui-text-dim);
+}
+
+.bottomCaptureStatus.errorText,
+.bottomCaptureStatus.successText {
+  margin-top: 0;
 }
 
 .newNoteModalOverlay {
