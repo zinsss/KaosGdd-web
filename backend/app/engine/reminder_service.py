@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 import json
 import logging
 import re
-import time
+import threading
 
 from app.config import SETTINGS
 from app.db.repo.event_repo import EventRepo
@@ -309,14 +309,7 @@ class ReminderService:
 
             push_payload = self._build_push_payload(row)
             self._send_web_push(row=row, push_payload=push_payload)
-            self._delay_before_pushover()
-            send_result = send_pushover(
-                title=push_payload["title"],
-                message=push_payload["message"],
-                url=push_payload["url"],
-                url_title="Open" if push_payload["url"] else None,
-            )
-            self._log_push_result(row=row, send_result=send_result)
+            self._schedule_pushover(row=row, push_payload=push_payload)
 
             fired.append(row)
 
@@ -425,11 +418,28 @@ class ReminderService:
             removed,
         )
 
-    def _delay_before_pushover(self) -> None:
+    def _schedule_pushover(self, *, row: dict, push_payload: dict) -> None:
         delay_seconds = max(0.0, float(SETTINGS.PUSHOVER_DELAY_SECONDS))
         if delay_seconds <= 0:
+            self._send_pushover(row=row, push_payload=push_payload)
             return
-        time.sleep(delay_seconds)
+
+        timer = threading.Timer(
+            delay_seconds,
+            self._send_pushover,
+            kwargs={"row": row, "push_payload": push_payload},
+        )
+        timer.daemon = True
+        timer.start()
+
+    def _send_pushover(self, *, row: dict, push_payload: dict) -> None:
+        send_result = send_pushover(
+            title=push_payload["title"],
+            message=push_payload["message"],
+            url=push_payload["url"],
+            url_title="Open" if push_payload["url"] else None,
+        )
+        self._log_push_result(row=row, send_result=send_result)
 
     def _build_absolute_url(self, path: str) -> str | None:
         if not SETTINGS.APP_BASE_URL:

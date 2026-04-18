@@ -17,9 +17,11 @@ def main_module(tmp_path: Path):
     os.environ["PUSHOVER_DELAY_SECONDS"] = "0"
     os.environ["APP_BASE_URL"] = "https://kaos.test"
 
+    import app.config as config_module
     import app.core.db as db_module
     import app.main as main_module
 
+    importlib.reload(config_module)
     importlib.reload(db_module)
     importlib.reload(main_module)
     main_module.init_schema_v0(main_module.engine)
@@ -65,6 +67,7 @@ def test_fire_due_reminder_calls_push_sender(main_module, monkeypatch: pytest.Mo
         calls.append(kwargs)
         return {"attempted": True, "succeeded": True, "reason": None}
 
+    monkeypatch.setattr("app.engine.reminder_service.SETTINGS.PUSHOVER_DELAY_SECONDS", 0)
     monkeypatch.setattr("app.engine.reminder_service.send_pushover", fake_send)
 
     fired = main_module.fire_due_reminders()
@@ -87,6 +90,7 @@ def test_push_failure_does_not_rollback_fired_state(main_module, monkeypatch: py
     def fake_send(**_kwargs):
         return {"attempted": True, "succeeded": False, "reason": "network error"}
 
+    monkeypatch.setattr("app.engine.reminder_service.SETTINGS.PUSHOVER_DELAY_SECONDS", 0)
     monkeypatch.setattr("app.engine.reminder_service.send_pushover", fake_send)
 
     fired = main_module.fire_due_reminders()
@@ -111,6 +115,7 @@ def test_standalone_payload_has_basic_title_and_body(main_module, monkeypatch: p
         calls.append(kwargs)
         return {"attempted": True, "succeeded": True, "reason": None}
 
+    monkeypatch.setattr("app.engine.reminder_service.SETTINGS.PUSHOVER_DELAY_SECONDS", 0)
     monkeypatch.setattr("app.engine.reminder_service.send_pushover", fake_send)
 
     fired = main_module.fire_due_reminders()
@@ -156,8 +161,16 @@ def test_fire_due_reminder_sends_web_push_before_delayed_pushover(
             assert "Task Reminder" in payload_json
             calls.append("web_push")
 
-    def fake_delay():
-        calls.append("delay")
+    class FakeTimer:
+        def __init__(self, interval: float, fn, kwargs: dict | None = None):
+            assert interval == 5
+            self.fn = fn
+            self.kwargs = kwargs or {}
+            self.daemon = False
+
+        def start(self):
+            calls.append("timer_start")
+            self.fn(**self.kwargs)
 
     def fake_send_pushover(**kwargs):
         assert kwargs["title"] == "Task Reminder"
@@ -166,10 +179,11 @@ def test_fire_due_reminder_sends_web_push_before_delayed_pushover(
 
     main_module.reminder_service.push_subscription_repo = FakePushSubscriptionRepo()
     main_module.reminder_service.web_push_client = FakeWebPushClient()
-    monkeypatch.setattr(main_module.reminder_service, "_delay_before_pushover", fake_delay)
+    monkeypatch.setattr("app.engine.reminder_service.SETTINGS.PUSHOVER_DELAY_SECONDS", 5)
+    monkeypatch.setattr("app.engine.reminder_service.threading.Timer", FakeTimer)
     monkeypatch.setattr("app.engine.reminder_service.send_pushover", fake_send_pushover)
 
     fired = main_module.fire_due_reminders()
     assert fired["ok"] is True
     assert fired["count"] == 1
-    assert calls == ["web_push", "delay", "pushover"]
+    assert calls == ["web_push", "timer_start", "pushover"]
