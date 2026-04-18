@@ -483,43 +483,42 @@ export default function BottomCaptureBar() {
             placeholder=""
             disabled={isSubmitting}
           />
-        </div>
+          <div className="bottomCaptureFooter">
+            <div
+              className={`bottomCaptureStatus${error ? " errorText" : !error && success ? " successText" : " bottomCaptureModeLabel"}`}
+            >
+              {statusText}
+            </div>
 
-        <div className="bottomCaptureFooter">
-          <div
-            className={`bottomCaptureStatus${error ? " errorText" : !error && success ? " successText" : " bottomCaptureModeLabel"}`}
-          >
-            {statusText}
-          </div>
+            <div className="bottomCaptureActions">
+              <input
+                ref={fileInputRef}
+                className="visuallyHiddenFileInput"
+                type="file"
+                disabled={isSubmitting || Boolean(editState)}
+                onChange={onFileSelected}
+                aria-label={UI_STRINGS.ATTACH_FILE}
+              />
 
-          <div className="bottomCaptureActions">
-            <input
-              ref={fileInputRef}
-              className="visuallyHiddenFileInput"
-              type="file"
-              disabled={isSubmitting || Boolean(editState)}
-              onChange={onFileSelected}
-              aria-label={UI_STRINGS.ATTACH_FILE}
-            />
-
-            <button className="button pillButton bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
-              {UI_STRINGS.ATTACH_ICON}
-            </button>
-
-            <button className="button pillButton bottomCaptureButton" type="submit" disabled={isSubmitting}>
-              {isSubmitting ? UI_STRINGS.ELLIPSIS : editState ? UI_STRINGS.SAVE : UI_STRINGS.ADD}
-            </button>
-
-            {editState ? (
-              <button
-                className="button pillButton bottomCaptureCancelButton"
-                type="button"
-                onClick={cancelEdit}
-                disabled={isSubmitting}
-              >
-                {UI_STRINGS.CANCEL}
+              <button className="button pillButton bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
+                {UI_STRINGS.ATTACH_ICON}
               </button>
-            ) : null}
+
+              <button className="button pillButton bottomCaptureButton" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? UI_STRINGS.ELLIPSIS : editState ? UI_STRINGS.SAVE : UI_STRINGS.ADD}
+              </button>
+
+              {editState ? (
+                <button
+                  className="button pillButton bottomCaptureCancelButton"
+                  type="button"
+                  onClick={cancelEdit}
+                  disabled={isSubmitting}
+                >
+                  {UI_STRINGS.CANCEL}
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
       </form>
