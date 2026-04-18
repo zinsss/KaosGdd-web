@@ -1,3 +1,8 @@
+:root {
+  --app-shell-safe-top: env(safe-area-inset-top, 0px);
+  --app-shell-fixed-height: calc(122px + var(--app-shell-safe-top));
+}
+
 .appShellTop {
   position: fixed;
   top: 0;
@@ -6,6 +11,7 @@
   z-index: 60;
   background: var(--ctp-crust);
   border-bottom: 1px solid rgba(137, 180, 250, 0.1);
+  padding-top: var(--app-shell-safe-top);
 }
 
 .appShellTopInner {
@@ -47,12 +53,12 @@
 }
 
 .appShellTopSpacer {
-  height: 122px;
+  height: var(--app-shell-fixed-height);
 }
 
 .appShellMain {
   width: 100%;
-  height: calc(100dvh - 122px);
+  height: calc(100dvh - var(--app-shell-fixed-height));
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
