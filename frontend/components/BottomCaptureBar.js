@@ -142,8 +142,25 @@ export default function BottomCaptureBar() {
 
   function resizeTextarea(node = textareaRef.current) {
     if (!node) return;
-    node.style.height = "0px";
-    node.style.height = `${Math.max(node.scrollHeight, 46)}px`;
+
+    const computed = window.getComputedStyle(node);
+    const lineHeight = Number.parseFloat(computed.lineHeight) || 22;
+    const paddingTop = Number.parseFloat(computed.paddingTop) || 0;
+    const paddingBottom = Number.parseFloat(computed.paddingBottom) || 0;
+    const borderTop = Number.parseFloat(computed.borderTopWidth) || 0;
+    const borderBottom = Number.parseFloat(computed.borderBottomWidth) || 0;
+    const lineCount = Math.max(node.value.split("\n").length, 1);
+
+    node.style.height = "auto";
+
+    const minVisibleHeight =
+      lineCount * lineHeight +
+      paddingTop +
+      paddingBottom +
+      borderTop +
+      borderBottom;
+
+    node.style.height = `${Math.max(node.scrollHeight + borderTop + borderBottom, minVisibleHeight, 46)}px`;
   }
 
   useEffect(() => {

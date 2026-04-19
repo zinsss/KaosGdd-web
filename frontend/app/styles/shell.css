@@ -163,6 +163,7 @@
   min-height: 46px;
   height: auto;
   max-height: none;
+  line-height: 1.45;
   border: 1px solid rgba(186, 194, 222, 0.24);
   border-radius: 24px;
   background: var(--bottom-capture-surface);
