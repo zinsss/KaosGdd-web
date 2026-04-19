@@ -140,6 +140,27 @@ export default function BottomCaptureBar() {
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  function collectTextareaDebugMetrics(node, requestedHeightPx) {
+    if (!node || typeof window === "undefined") return;
+
+    const computed = window.getComputedStyle(node);
+    const parent = node.parentElement;
+    const parentComputed = parent ? window.getComputedStyle(parent) : null;
+
+    node.dataset.requestedHeight = String(requestedHeightPx);
+    node.dataset.computedHeight = computed.height;
+    node.dataset.clientHeight = String(node.clientHeight);
+    node.dataset.scrollHeight = String(node.scrollHeight);
+    node.dataset.lineHeight = computed.lineHeight;
+    node.dataset.verticalPadding = `${computed.paddingTop} + ${computed.paddingBottom}`;
+    node.dataset.verticalBorder = `${computed.borderTopWidth} + ${computed.borderBottomWidth}`;
+    node.dataset.parentOverflow = parentComputed
+      ? `${parentComputed.overflow}/${parentComputed.overflowY}/${parentComputed.overflowX}`
+      : "";
+    node.dataset.parentMinHeight = parentComputed ? parentComputed.minHeight : "";
+    node.dataset.parentMaxHeight = parentComputed ? parentComputed.maxHeight : "";
+  }
+
   function resizeTextarea(node = textareaRef.current) {
     if (!node) return;
 
@@ -160,7 +181,9 @@ export default function BottomCaptureBar() {
       borderTop +
       borderBottom;
 
-    node.style.height = `${Math.max(node.scrollHeight + borderTop + borderBottom, minVisibleHeight, 46)}px`;
+    const targetHeight = Math.max(node.scrollHeight + borderTop + borderBottom, minVisibleHeight, 46);
+    node.style.height = `${targetHeight}px`;
+    collectTextareaDebugMetrics(node, targetHeight);
   }
 
   useEffect(() => {
