@@ -2,6 +2,7 @@
   --app-shell-safe-top: env(safe-area-inset-top, 0px);
   --app-shell-safe-bottom: env(safe-area-inset-bottom, 0px);
   --app-shell-bottom-bar-bg: var(--ctp-mantle);
+  --app-shell-bottom-reserve: calc(var(--app-shell-safe-bottom) + 20px);
   --app-shell-header-base-height: 122px;
   --app-shell-fixed-height: calc(
     var(--app-shell-header-base-height) + var(--app-shell-safe-top)
@@ -68,7 +69,7 @@
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 132px;
+  padding-bottom: var(--app-shell-bottom-reserve);
 }
 
 .modeDots {
@@ -204,15 +205,16 @@
   height: 34px;
   padding: 0;
   border-radius: 999px;
-  border-color: rgba(180, 190, 254, 0.38);
-  background: rgba(180, 190, 254, 0.14);
-  color: var(--ctp-lavender);
+  border-color: var(--ctp-lavender);
+  background: var(--ctp-lavender);
+  color: var(--ctp-base);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  opacity: 1;
 }
 
 .bottomCaptureBar .bottomCaptureAttachButton:hover {
-  border-color: rgba(180, 190, 254, 0.54);
-  background: rgba(180, 190, 254, 0.2);
+  border-color: #c4cbff;
+  background: #c4cbff;
 }
 
 .bottomCaptureBar .bottomCaptureButton {
@@ -222,16 +224,25 @@
   line-height: 34px;
   padding: 0 14px;
   border-radius: 999px;
-  border-color: rgba(180, 190, 254, 0.38);
-  background: rgba(180, 190, 254, 0.14);
-  color: var(--ctp-lavender);
+  border-color: var(--ctp-lavender);
+  background: var(--ctp-lavender);
+  color: var(--ctp-base);
   align-self: flex-end;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  opacity: 1;
 }
 
 .bottomCaptureBar .bottomCaptureButton:hover {
-  border-color: rgba(180, 190, 254, 0.54);
-  background: rgba(180, 190, 254, 0.2);
+  border-color: #c4cbff;
+  background: #c4cbff;
+}
+
+.bottomCaptureBar .bottomCaptureAttachButton:disabled,
+.bottomCaptureBar .bottomCaptureButton:disabled {
+  opacity: 1;
+  border-color: rgba(180, 190, 254, 0.65);
+  background: rgba(180, 190, 254, 0.7);
+  color: rgba(30, 30, 46, 0.88);
 }
 
 .bottomCaptureBar .bottomCaptureCancelButton {
@@ -335,10 +346,6 @@
 
   .appHeaderSubtitle {
     font-size: 13px;
-  }
-
-  .appShellMain {
-    padding-bottom: 148px;
   }
 
   .modeDots {
