@@ -140,11 +140,10 @@ export default function BottomCaptureBar() {
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
 
-  function resizeTextarea() {
-    const node = textareaRef.current;
+  function resizeTextarea(node = textareaRef.current) {
     if (!node) return;
-    node.style.height = "auto";
-    node.style.height = `${node.scrollHeight}px`;
+    node.style.height = "0px";
+    node.style.height = `${Math.max(node.scrollHeight, 46)}px`;
   }
 
   useEffect(() => {
@@ -486,7 +485,7 @@ export default function BottomCaptureBar() {
             value={raw}
             onChange={(event) => {
               setRaw(event.target.value);
-              resizeTextarea();
+              resizeTextarea(event.currentTarget);
             }}
             rows={1}
             spellCheck={false}
