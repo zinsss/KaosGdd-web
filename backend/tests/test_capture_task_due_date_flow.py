@@ -75,6 +75,60 @@ def test_capture_task_supports_relative_reminder_days(main_module) -> None:
     assert detail["item"]["reminders"][0]["remind_at"] == "2026-04-28"
 
 
+def test_capture_task_due_datetime_multiline(main_module) -> None:
+    raw = "-- 블루팜 위고비 바늘 주사기 원밴드\nd:2026-04-20 14:00"
+
+    payload = main_module.capture_item({"raw": raw})
+
+    assert payload["ok"] is True
+    assert payload["kind"] == "task"
+    assert payload.get("id")
+
+    detail = main_module.get_task(payload["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["title"] == "블루팜 위고비 바늘 주사기 원밴드"
+    assert detail["item"]["due_at"] == "2026-04-20T05:00:00+00:00"
+
+
+def test_capture_task_absolute_reminder_datetime_multiline(main_module) -> None:
+    raw = "-- 삼성에어컨 a/s 신청\nr:2026-04-20 13:15"
+
+    payload = main_module.capture_item({"raw": raw})
+
+    assert payload["ok"] is True
+    assert payload["kind"] == "task"
+    assert payload.get("id")
+
+    detail = main_module.get_task(payload["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["title"] == "삼성에어컨 a/s 신청"
+    assert len(detail["item"]["reminders"]) == 1
+    assert detail["item"]["reminders"][0]["remind_at"] == "2026-04-20T04:15:00+00:00"
+
+
+def test_capture_task_due_date_multiline(main_module) -> None:
+    raw = "-- due date only\nd:2026-04-20"
+
+    payload = main_module.capture_item({"raw": raw})
+
+    assert payload["ok"] is True
+    detail = main_module.get_task(payload["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["due_at"] == "2026-04-20T01:30:00+00:00"
+
+
+def test_capture_task_relative_reminder_multiline(main_module) -> None:
+    raw = "-- relative reminder task\nd:2026-04-20\nr:-1d"
+
+    payload = main_module.capture_item({"raw": raw})
+
+    assert payload["ok"] is True
+    detail = main_module.get_task(payload["id"])
+    assert detail["ok"] is True
+    assert len(detail["item"]["reminders"]) == 1
+    assert detail["item"]["reminders"][0]["remind_at"] == "2026-04-19"
+
+
 def test_capture_task_rejects_past_resolved_datetime(main_module) -> None:
     payload = main_module.capture_item({"raw": "-- old task\nd:2020-01-01"})
     assert payload["ok"] is False

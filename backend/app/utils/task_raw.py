@@ -255,6 +255,26 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
             linked_item_ids.append(parse_link_value(stripped[2:]))
             continue
 
+        if stripped.startswith("d:"):
+            due_raw = stripped[2:].strip()
+            try:
+                due_at = _parse_due_value(due_raw, reject_past_datetimes=reject_past_datetimes)
+            except ValueError as exc:
+                if str(exc) == "resolved datetime is in the past":
+                    raise ValueError(str(exc)) from exc
+                raise ValueError(f"invalid due format: {due_raw}") from exc
+            continue
+
+        if stripped.startswith("r:"):
+            remind_raw = stripped[2:].strip()
+            if RELATIVE_REMIND_PATTERN.fullmatch(remind_raw):
+                relative_remind_tokens.append(remind_raw)
+                continue
+            normalized = parse_local_datetime_to_iso(remind_raw, allow_past=not reject_past_datetimes)
+            if normalized not in remind_ats:
+                remind_ats.append(normalized)
+            continue
+
         cleaned, meta = _extract_meta_from_line(original_line)
 
         if meta["due_at"] is not None:
