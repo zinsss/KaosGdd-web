@@ -132,6 +132,7 @@
 
 .bottomCaptureBar {
   --bottom-capture-surface: #37384a;
+  --bottom-capture-status-surface: #2f3040;
   position: fixed;
   left: 0;
   right: 0;
@@ -140,7 +141,7 @@
   background: transparent;
   border-top: 0;
   box-shadow: none;
-  padding: 8px 12px max(10px, var(--app-shell-safe-bottom));
+  padding: 8px 12px var(--app-shell-safe-bottom);
   pointer-events: none;
 }
 
@@ -178,9 +179,9 @@
   min-width: 0;
   font-size: 12px;
   border: 1px solid rgba(186, 194, 222, 0.24);
-  border-radius: 10px;
-  background: var(--bottom-capture-surface);
-  padding: 0 10px;
+  border-radius: 999px;
+  background: var(--bottom-capture-status-surface);
+  padding: 0 12px;
   display: inline-flex;
   align-items: center;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
