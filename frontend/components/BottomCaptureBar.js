@@ -160,7 +160,8 @@ export default function BottomCaptureBar() {
       borderTop +
       borderBottom;
 
-    node.style.height = `${Math.max(node.scrollHeight + borderTop + borderBottom, minVisibleHeight, 46)}px`;
+    const targetHeight = Math.max(node.scrollHeight + borderTop + borderBottom, minVisibleHeight, 46);
+    node.style.height = `${targetHeight}px`;
   }
 
   useEffect(() => {
