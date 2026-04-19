@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 
 import { UI_STRINGS } from "../lib/strings";
 import NewNoteModal from "./NewNoteModal";
@@ -140,6 +140,13 @@ export default function BottomCaptureBar() {
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
 
+  function resizeTextarea() {
+    const node = textareaRef.current;
+    if (!node) return;
+    node.style.height = "auto";
+    node.style.height = `${node.scrollHeight}px`;
+  }
+
   useEffect(() => {
     const initial = readEditState();
     if (initial) {
@@ -166,6 +173,7 @@ export default function BottomCaptureBar() {
       writeEditState(next);
 
       window.setTimeout(() => {
+        resizeTextarea();
         textareaRef.current?.focus();
       }, 0);
     }
@@ -202,14 +210,13 @@ export default function BottomCaptureBar() {
     setSuccess("Shared content ready.");
 
     window.setTimeout(() => {
+      resizeTextarea();
       textareaRef.current?.focus();
     }, 0);
   }, []);
 
-  useEffect(() => {
-    if (!textareaRef.current) return;
-    textareaRef.current.style.height = "0px";
-    textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+  useLayoutEffect(() => {
+    resizeTextarea();
   }, [raw]);
 
   function clearAttachment() {
@@ -477,7 +484,10 @@ export default function BottomCaptureBar() {
             ref={textareaRef}
             className="textInput autoTextarea bottomCaptureInput"
             value={raw}
-            onChange={(event) => setRaw(event.target.value)}
+            onChange={(event) => {
+              setRaw(event.target.value);
+              resizeTextarea();
+            }}
             rows={1}
             spellCheck={false}
             placeholder=""
