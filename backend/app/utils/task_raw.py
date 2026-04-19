@@ -21,6 +21,7 @@ META_PATTERN = re.compile(r"(?:^|\s)(d:|r:|R:|l:)")
 TAG_PATTERN = re.compile(r"(?:^|\s)#")
 DATE_ONLY_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 RELATIVE_REMIND_PATTERN = re.compile(r"^-(\d+)([dhwm])$")
+INLINE_DUE_PATTERN = re.compile(r"(?:(?<=^)|(?<=\s))d:(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2})?)")
 
 
 def _extract_meta_from_line(line: str) -> tuple[str, dict]:
@@ -199,6 +200,19 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
 
     if not title:
         raise ValueError("title is required")
+
+    inline_due_match = INLINE_DUE_PATTERN.search(title)
+    if inline_due_match:
+        inline_due_raw = inline_due_match.group(1).strip()
+        try:
+            due_at = _parse_due_value(inline_due_raw, reject_past_datetimes=reject_past_datetimes)
+        except ValueError as exc:
+            if str(exc) == "resolved datetime is in the past":
+                raise ValueError(str(exc)) from exc
+            raise ValueError(f"invalid due format: {inline_due_raw}") from exc
+        title = " ".join((title[: inline_due_match.start()] + title[inline_due_match.end() :]).split()) or None
+        if not title:
+            raise ValueError("title is required")
 
     seen_first_content = False
 
