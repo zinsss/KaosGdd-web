@@ -424,7 +424,12 @@ def get_task_raw(task_id: str):
 @app.patch("/tasks/{task_id}/raw")
 def update_task_raw(task_id: str, payload: dict):
     raw_text = str(payload.get("raw") or "")
-    ok, error = task_service.update_task_from_raw(task_id, raw_text)
+    timezone_name = str(payload.get("timezone") or "").strip() or None
+    ok, error = task_service.update_task_from_raw(
+        task_id,
+        raw_text,
+        timezone_name=timezone_name,
+    )
     if not ok:
         return {"ok": False, "error": error or ApiText.INVALID_RAW_TASK}
     return {"ok": True}
@@ -494,6 +499,7 @@ def capture_item(payload: dict):
             item_id,
             parsed["raw"],
             reject_past_datetimes=True,
+            timezone_name=timezone_name,
         )
         if not ok:
             return {"ok": False, "error": error or ApiText.INVALID_RAW_TASK}

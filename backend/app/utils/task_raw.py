@@ -57,14 +57,28 @@ def _extract_meta_from_line(line: str) -> tuple[str, dict]:
     return cleaned, meta
 
 
-def _parse_due_value(raw_due: str, *, reject_past_datetimes: bool = False) -> str:
+def _parse_due_value(
+    raw_due: str,
+    *,
+    reject_past_datetimes: bool = False,
+    timezone_name: str | None = None,
+) -> str:
     candidate = str(raw_due or "").strip()
     if not candidate:
         return candidate
-    return parse_local_datetime_to_iso(candidate, allow_past=not reject_past_datetimes)
+    return parse_local_datetime_to_iso(
+        candidate,
+        allow_past=not reject_past_datetimes,
+        timezone_name=timezone_name,
+    )
 
 
-def _resolve_relative_reminder(remind_raw: str, due_at: str | None) -> str:
+def _resolve_relative_reminder(
+    remind_raw: str,
+    due_at: str | None,
+    *,
+    timezone_name: str | None = None,
+) -> str:
     clean = str(remind_raw or "").strip()
     match = RELATIVE_REMIND_PATTERN.fullmatch(clean)
     if not match:
@@ -75,13 +89,15 @@ def _resolve_relative_reminder(remind_raw: str, due_at: str | None) -> str:
     amount = int(match.group(1))
     unit = match.group(2)
 
+    tz = ZoneInfo(timezone_name or SETTINGS.APP_TIMEZONE)
+
     if DATE_ONLY_PATTERN.fullmatch(due_at):
-        due_midnight_local = datetime.strptime(due_at, "%Y-%m-%d").replace(tzinfo=ZoneInfo(SETTINGS.APP_TIMEZONE))
+        due_midnight_local = datetime.strptime(due_at, "%Y-%m-%d").replace(tzinfo=tz)
     else:
         due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00"))
         if due_dt.tzinfo is None:
-            due_dt = due_dt.replace(tzinfo=ZoneInfo(SETTINGS.APP_TIMEZONE))
-        due_midnight_local = due_dt.astimezone(ZoneInfo(SETTINGS.APP_TIMEZONE)).replace(
+            due_dt = due_dt.replace(tzinfo=tz)
+        due_midnight_local = due_dt.astimezone(tz).replace(
             hour=0,
             minute=0,
             second=0,
@@ -163,7 +179,12 @@ def export_task_raw(
     return "\n".join(lines)
 
 
-def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dict:
+def parse_task_raw(
+    raw_text: str,
+    *,
+    reject_past_datetimes: bool = False,
+    timezone_name: str | None = None,
+) -> dict:
     text = str(raw_text or "").replace("\r\n", "\n").strip()
     if not text:
         raise ValueError("title is required")
@@ -205,7 +226,11 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
     if inline_due_match:
         inline_due_raw = inline_due_match.group(1).strip()
         try:
-            due_at = _parse_due_value(inline_due_raw, reject_past_datetimes=reject_past_datetimes)
+            due_at = _parse_due_value(
+                inline_due_raw,
+                reject_past_datetimes=reject_past_datetimes,
+                timezone_name=timezone_name,
+            )
         except ValueError as exc:
             if str(exc) == "resolved datetime is in the past":
                 raise ValueError(str(exc)) from exc
@@ -258,7 +283,11 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
         if stripped.startswith("d:"):
             due_raw = stripped[2:].strip()
             try:
-                due_at = _parse_due_value(due_raw, reject_past_datetimes=reject_past_datetimes)
+                due_at = _parse_due_value(
+                    due_raw,
+                    reject_past_datetimes=reject_past_datetimes,
+                    timezone_name=timezone_name,
+                )
             except ValueError as exc:
                 if str(exc) == "resolved datetime is in the past":
                     raise ValueError(str(exc)) from exc
@@ -270,7 +299,11 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
             if RELATIVE_REMIND_PATTERN.fullmatch(remind_raw):
                 relative_remind_tokens.append(remind_raw)
                 continue
-            normalized = parse_local_datetime_to_iso(remind_raw, allow_past=not reject_past_datetimes)
+            normalized = parse_local_datetime_to_iso(
+                remind_raw,
+                allow_past=not reject_past_datetimes,
+                timezone_name=timezone_name,
+            )
             if normalized not in remind_ats:
                 remind_ats.append(normalized)
             continue
@@ -279,7 +312,11 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
 
         if meta["due_at"] is not None:
             try:
-                due_at = _parse_due_value(meta["due_at"], reject_past_datetimes=reject_past_datetimes)
+                due_at = _parse_due_value(
+                    meta["due_at"],
+                    reject_past_datetimes=reject_past_datetimes,
+                    timezone_name=timezone_name,
+                )
             except ValueError as exc:
                 if str(exc) == "resolved datetime is in the past":
                     raise ValueError(str(exc)) from exc
@@ -289,7 +326,11 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
             if RELATIVE_REMIND_PATTERN.fullmatch(remind_at):
                 relative_remind_tokens.append(remind_at)
                 continue
-            normalized = parse_local_datetime_to_iso(remind_at, allow_past=not reject_past_datetimes)
+            normalized = parse_local_datetime_to_iso(
+                remind_at,
+                allow_past=not reject_past_datetimes,
+                timezone_name=timezone_name,
+            )
             if normalized not in remind_ats:
                 remind_ats.append(normalized)
 
@@ -311,7 +352,7 @@ def parse_task_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> dic
         raise ValueError("unclosed memo block")
 
     for relative_token in relative_remind_tokens:
-        resolved = _resolve_relative_reminder(relative_token, due_at)
+        resolved = _resolve_relative_reminder(relative_token, due_at, timezone_name=timezone_name)
         if resolved not in remind_ats:
             remind_ats.append(resolved)
 

@@ -195,13 +195,18 @@ class TaskService:
         raw_text: str,
         *,
         reject_past_datetimes: bool = False,
+        timezone_name: str | None = None,
     ) -> tuple[bool, str | None]:
         detail = self.task_repo.get_task_detail(item_id)
         if detail is None:
             return False, "not found"
 
         try:
-            parsed = parse_task_raw(raw_text, reject_past_datetimes=reject_past_datetimes)
+            parsed = parse_task_raw(
+                raw_text,
+                reject_past_datetimes=reject_past_datetimes,
+                timezone_name=timezone_name,
+            )
         except ValueError as exc:
             return False, str(exc)
 
