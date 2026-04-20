@@ -134,6 +134,9 @@ def test_capture_task_rejects_past_resolved_datetime(main_module) -> None:
     assert payload["ok"] is False
     assert payload["error"] == "resolved datetime is in the past"
 
+    listed = main_module.list_tasks()
+    assert listed["items"] == []
+
 
 def test_raw_edit_task_allows_existing_past_datetime(main_module) -> None:
     created = main_module.capture_item({"raw": "-- keep overdue editable"})

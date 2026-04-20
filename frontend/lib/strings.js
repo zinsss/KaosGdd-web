@@ -22,6 +22,7 @@ export const UI_STRINGS = {
   CAPTURE_EMPTY: "capture is empty",
   REMINDER_EMPTY: "reminder is empty",
   CAPTURE_FAILED: "Capture failed.",
+  REFRESH_FAILED_AFTER_SAVE: "Saved, but refresh failed. Please reload.",
   JOURNAL_SAVE_FAILED: "Journal save failed.",
   NOTE_SAVE_FAILED: "Note save failed.",
   NOTE_EMPTY: "note is empty",
