@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { UI_STRINGS } from "../lib/strings";
 import NewNoteModal from "./NewNoteModal";
@@ -125,6 +126,7 @@ function normalizeAttachedFileGrammar(rawText) {
 }
 
 export default function BottomCaptureBar() {
+  const router = useRouter();
   const [raw, setRaw] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -140,6 +142,7 @@ export default function BottomCaptureBar() {
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
   const submitLockRef = useRef(false);
+  const activeRequestIdRef = useRef(0);
 
   function resizeTextarea(node = textareaRef.current) {
     if (!node) return;
@@ -304,6 +307,45 @@ export default function BottomCaptureBar() {
 
   const statusText = error || success || attachedFilename || modeText;
 
+  function beginCaptureRequest() {
+    activeRequestIdRef.current += 1;
+    return activeRequestIdRef.current;
+  }
+
+  function isActiveCaptureRequest(requestId) {
+    return activeRequestIdRef.current === requestId;
+  }
+
+  async function finalizeCreateSuccess({ requestId, clearInput = true, navigate }) {
+    if (!isActiveCaptureRequest(requestId)) return;
+
+    if (clearInput) {
+      setRaw("");
+    }
+    setError("");
+    setSuccess(UI_STRINGS.SAVED);
+
+    if (typeof navigate === "function") {
+      try {
+        navigate();
+      } catch {
+        if (!isActiveCaptureRequest(requestId)) return;
+        setSuccess(UI_STRINGS.REFRESH_FAILED_AFTER_SAVE);
+      }
+      return;
+    }
+
+    try {
+      router.refresh();
+      window.setTimeout(() => {
+        window.location.reload();
+      }, 250);
+    } catch {
+      if (!isActiveCaptureRequest(requestId)) return;
+      setSuccess(UI_STRINGS.REFRESH_FAILED_AFTER_SAVE);
+    }
+  }
+
   async function submitAttachedFile(cleanRaw) {
     if (!attachedFile) return false;
 
@@ -368,6 +410,7 @@ export default function BottomCaptureBar() {
     }
 
     submitLockRef.current = true;
+    const requestId = beginCaptureRequest();
     setIsSubmitting(true);
     setError("");
     setSuccess("");
@@ -391,15 +434,13 @@ export default function BottomCaptureBar() {
         const data = await res.json().catch(() => null);
 
         if (!res.ok || !data?.ok) {
+          if (!isActiveCaptureRequest(requestId)) return;
           setError((data && data.error) || (isJournal ? UI_STRINGS.JOURNAL_SAVE_FAILED : isNote ? UI_STRINGS.NOTE_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED));
           return;
         }
 
         cancelEdit();
-        setSuccess(UI_STRINGS.SAVED);
-        window.setTimeout(() => {
-          window.location.reload();
-        }, 250);
+        await finalizeCreateSuccess({ requestId });
         return;
       }
 
@@ -419,15 +460,18 @@ export default function BottomCaptureBar() {
 
         const data = await res.json().catch(() => null);
         if (!res.ok || !data?.ok) {
+          if (!isActiveCaptureRequest(requestId)) return;
           setError((data && data.error) || UI_STRINGS.SAVE_FAILED);
           return;
         }
 
         cancelEdit();
-        setSuccess(UI_STRINGS.SAVED);
-        window.setTimeout(() => {
-          window.location.href = `/notes/${data.id}`;
-        }, 250);
+        await finalizeCreateSuccess({
+          requestId,
+          navigate: () => {
+            window.location.href = `/notes/${data.id}`;
+          },
+        });
         return;
       }
 
@@ -443,6 +487,7 @@ export default function BottomCaptureBar() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
+        if (!isActiveCaptureRequest(requestId)) return;
         setError((data && data.error) || UI_STRINGS.CAPTURE_FAILED);
         return;
       }
@@ -452,16 +497,15 @@ export default function BottomCaptureBar() {
         return;
       }
 
-      setRaw("");
-      setSuccess(UI_STRINGS.SAVED);
-      window.setTimeout(() => {
-        window.location.reload();
-      }, 250);
+      await finalizeCreateSuccess({ requestId });
     } catch {
+      if (!isActiveCaptureRequest(requestId)) return;
       setError(editState ? (editState.kind === "journal" ? UI_STRINGS.JOURNAL_SAVE_FAILED : editState.kind === "note" ? UI_STRINGS.NOTE_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED) : UI_STRINGS.CAPTURE_FAILED);
     } finally {
-      setIsSubmitting(false);
-      submitLockRef.current = false;
+      if (isActiveCaptureRequest(requestId)) {
+        setIsSubmitting(false);
+        submitLockRef.current = false;
+      }
     }
   }
 
