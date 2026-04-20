@@ -139,6 +139,7 @@ export default function BottomCaptureBar() {
 
   const textareaRef = useRef(null);
   const fileInputRef = useRef(null);
+  const submitLockRef = useRef(false);
 
   function resizeTextarea(node = textareaRef.current) {
     if (!node) return;
@@ -354,13 +355,19 @@ export default function BottomCaptureBar() {
 
   async function onSubmit(event) {
     event.preventDefault();
-    const clean = raw.trim();
+    if (submitLockRef.current) {
+      return;
+    }
+
+    const currentRaw = textareaRef.current?.value ?? raw;
+    const clean = currentRaw.trim();
     if (!clean) {
       setError(editState ? UI_STRINGS.REMINDER_EMPTY : UI_STRINGS.CAPTURE_EMPTY);
       setSuccess("");
       return;
     }
 
+    submitLockRef.current = true;
     setIsSubmitting(true);
     setError("");
     setSuccess("");
@@ -454,6 +461,7 @@ export default function BottomCaptureBar() {
       setError(editState ? (editState.kind === "journal" ? UI_STRINGS.JOURNAL_SAVE_FAILED : editState.kind === "note" ? UI_STRINGS.NOTE_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED) : UI_STRINGS.CAPTURE_FAILED);
     } finally {
       setIsSubmitting(false);
+      submitLockRef.current = false;
     }
   }
 
