@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS {reminder_items} (
     acked_at TEXT,
     snoozed_until TEXT,
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE,
-    CHECK (state IN ('scheduled', 'fired', 'acked', 'missed', 'cancelled', 'snoozed'))
+    CHECK (state IN ('scheduled', 'fired', 'acked', 'missed', 'cancelled', 'snoozed', 'completed'))
 );
 
 
@@ -216,6 +216,17 @@ def _sqlite_items_table_allows_supported_types(conn) -> bool:
     return "'event'" in ddl and "'journal'" in ddl and "'note'" in ddl and "'file'" in ddl
 
 
+def _sqlite_reminder_items_allows_completed_state(conn) -> bool:
+    row = conn.execute(
+        text("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = :name"),
+        {"name": DbTables.REMINDER_ITEMS},
+    ).fetchone()
+    if not row or not row[0]:
+        return True
+    ddl = str(row[0]).lower()
+    return "'completed'" in ddl
+
+
 def _migrate_sqlite_items_table_add_supported_types(conn) -> None:
     conn.execute(text("PRAGMA foreign_keys = OFF"))
     try:
@@ -251,6 +262,58 @@ def _migrate_sqlite_items_table_add_supported_types(conn) -> None:
             )
         )
         conn.execute(text(f"DROP TABLE {DbTables.ITEMS}__legacy"))
+    finally:
+        conn.execute(text("PRAGMA foreign_keys = ON"))
+
+
+def _migrate_sqlite_reminder_items_add_completed_state(conn) -> None:
+    conn.execute(text("PRAGMA foreign_keys = OFF"))
+    try:
+        conn.execute(
+            text(
+                f"ALTER TABLE {DbTables.REMINDER_ITEMS} RENAME TO {DbTables.REMINDER_ITEMS}__legacy"
+            )
+        )
+        conn.execute(
+            text(
+                f"""
+                CREATE TABLE {DbTables.REMINDER_ITEMS} (
+                    item_id TEXT PRIMARY KEY,
+                    remind_at TEXT NOT NULL,
+                    state TEXT NOT NULL DEFAULT 'scheduled',
+                    alert_policy TEXT,
+                    last_fired_at TEXT,
+                    acked_at TEXT,
+                    snoozed_until TEXT,
+                    FOREIGN KEY (item_id) REFERENCES {DbTables.ITEMS}(id) ON DELETE CASCADE,
+                    CHECK (state IN ('scheduled', 'fired', 'acked', 'missed', 'cancelled', 'snoozed', 'completed'))
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                f"""
+                INSERT INTO {DbTables.REMINDER_ITEMS} (
+                    item_id, remind_at, state, alert_policy, last_fired_at, acked_at, snoozed_until
+                )
+                SELECT
+                    item_id,
+                    remind_at,
+                    CASE
+                        WHEN state IN ('scheduled', 'fired', 'acked', 'missed', 'cancelled', 'snoozed', 'completed')
+                        THEN state
+                        ELSE 'scheduled'
+                    END AS state,
+                    alert_policy,
+                    last_fired_at,
+                    acked_at,
+                    snoozed_until
+                FROM {DbTables.REMINDER_ITEMS}__legacy
+                """
+            )
+        )
+        conn.execute(text(f"DROP TABLE {DbTables.REMINDER_ITEMS}__legacy"))
     finally:
         conn.execute(text("PRAGMA foreign_keys = ON"))
 
@@ -301,6 +364,8 @@ def init_schema_v0(engine) -> None:
             _migrate_sqlite_items_table_add_supported_types(conn)
         if engine.dialect.name == "sqlite":
             _migrate_sqlite_legacy_task_reminder_tables(conn)
+            if not _sqlite_reminder_items_allows_completed_state(conn):
+                _migrate_sqlite_reminder_items_add_completed_state(conn)
         for statement in SCHEMA_SQL.split(";\n\n"):
             sql = statement.strip()
             if not sql:

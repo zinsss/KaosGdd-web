@@ -25,6 +25,8 @@ function reminderPriority(state) {
       return 5;
     case "cancelled":
       return 6;
+    case "completed":
+      return 7;
     default:
       return 9;
   }
@@ -37,9 +39,10 @@ function reminderFlags(reminder) {
       reminder.state === "fired" ||
       reminder.state === "acked" ||
       reminder.state === "snoozed" ||
-      reminder.state === "cancelled",
+      reminder.state === "cancelled" ||
+      reminder.state === "completed",
     dimState: reminder.state === "acked" || reminder.state === "snoozed",
-    dimmerState: reminder.state === "cancelled",
+    dimmerState: reminder.state === "cancelled" || reminder.state === "completed",
   };
 }
 
