@@ -85,7 +85,7 @@ CREATE TABLE IF NOT EXISTS {reminder_items} (
     acked_at TEXT,
     snoozed_until TEXT,
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE,
-    CHECK (state IN ('scheduled', 'fired', 'acked', 'missed', 'cancelled', 'snoozed'))
+    CHECK (state IN ('scheduled', 'fired', 'acked', 'missed', 'cancelled', 'snoozed', 'completed'))
 );
 
 

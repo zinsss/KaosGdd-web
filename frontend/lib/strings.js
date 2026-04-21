@@ -97,7 +97,7 @@ export const UI_STRINGS = {
   TASKS_REMOVED_TITLE: "Tasks • Removed",
   TASKS_ARCHIVED_TITLE: "Tasks • Archived",
   REMINDERS_ACTIVE_TITLE: "Reminders • Active",
-  REMINDERS_FIRED_TITLE: "Reminders • Fired",
+  REMINDERS_FIRED_TITLE: "Reminders • Fired / Completed",
   REMINDERS_REMOVED_TITLE: "Reminders • Removed",
   REMINDER_BUTTON: "Reminder",
   EDIT_BUTTON: "Edit",

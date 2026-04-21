@@ -129,6 +129,8 @@ class TaskService:
         if toggled is None:
             return None
         if (not was_done) and toggled:
+            if self.reminder_repo is not None:
+                self.reminder_repo.mark_linked_active_completed(item_id)
             self._rollover_repeat_task_on_completion(detail)
         return toggled
 

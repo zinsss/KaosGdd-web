@@ -237,7 +237,7 @@ export default function RemindersPageClient({ initialMode, items }) {
     }
   }
 
-  const modeContext = mode === "fired" ? "Fired" : mode === "removed" ? "Removed" : "Active";
+  const modeContext = mode === "fired" ? "Fired / Completed" : mode === "removed" ? "Removed" : "Active";
 
   return (
     <main className="page">

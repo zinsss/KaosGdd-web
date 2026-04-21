@@ -138,8 +138,7 @@ class ReminderRepo:
                     + """
                     WHERE i.item_type = 'reminder'
                       AND i.status = 'active'
-                      AND ir.item_id IS NULL
-                      AND r.state IN ('fired', 'acked', 'cancelled')
+                      AND r.state IN ('fired', 'acked', 'cancelled', 'completed')
                       AND COALESCE(r.last_fired_at, r.acked_at, r.remind_at) >= :fired_cutoff_iso
                     ORDER BY
                         COALESCE(r.last_fired_at, r.acked_at, r.remind_at) DESC,
@@ -184,7 +183,8 @@ class ReminderRepo:
                             WHEN 'fired' THEN 4
                             WHEN 'acked' THEN 5
                             WHEN 'cancelled' THEN 6
-                            ELSE 7
+                            WHEN 'completed' THEN 7
+                            ELSE 8
                         END ASC,
                         COALESCE(r.snoozed_until, r.remind_at) ASC,
                         i.created_at ASC
@@ -228,7 +228,8 @@ class ReminderRepo:
                             WHEN 'snoozed' THEN 4
                             WHEN 'acked' THEN 5
                             WHEN 'cancelled' THEN 6
-                            ELSE 7
+                            WHEN 'completed' THEN 7
+                            ELSE 8
                         END ASC,
                         COALESCE(r.snoozed_until, r.remind_at) ASC,
                         i.created_at ASC
@@ -480,6 +481,53 @@ class ReminderRepo:
                 text("UPDATE {items} SET updated_at = :now WHERE id = :item_id".format(items=DbTables.ITEMS)),
                 {"item_id": reminder_item_id, "now": now},
             )
+
+    def mark_linked_active_completed(self, parent_item_id: str) -> int:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            result = conn.execute(
+                text(
+                    """
+                    UPDATE {reminder_items}
+                    SET state = 'completed',
+                        snoozed_until = NULL
+                    WHERE item_id IN (
+                        SELECT r.item_id
+                        FROM {item_reminders} ir
+                        JOIN {items} i ON i.id = ir.reminder_item_id
+                        JOIN {reminder_items} r ON r.item_id = ir.reminder_item_id
+                        WHERE ir.item_id = :parent_item_id
+                          AND i.item_type = 'reminder'
+                          AND i.status = 'active'
+                          AND r.state IN ('scheduled', 'snoozed', 'missed')
+                    )
+                    """
+                    .format(
+                        reminder_items=DbTables.REMINDER_ITEMS,
+                        item_reminders=DbTables.ITEM_REMINDERS,
+                        items=DbTables.ITEMS,
+                    )
+                ),
+                {"parent_item_id": parent_item_id},
+            )
+            affected = int(result.rowcount or 0)
+            if affected > 0:
+                conn.execute(
+                    text(
+                        """
+                        UPDATE {items}
+                        SET updated_at = :now
+                        WHERE id IN (
+                            SELECT reminder_item_id
+                            FROM {item_reminders}
+                            WHERE item_id = :parent_item_id
+                        )
+                        """
+                        .format(items=DbTables.ITEMS, item_reminders=DbTables.ITEM_REMINDERS)
+                    ),
+                    {"parent_item_id": parent_item_id, "now": now},
+                )
+        return affected
 
     def create_event(self, *, reminder_item_id: str, event_type: str, payload: dict | None = None) -> str:
         event_id = new_id()
