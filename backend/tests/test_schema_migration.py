@@ -129,3 +129,54 @@ def test_init_schema_migrates_legacy_task_reminder_tables_for_multiline_capture(
     assert {subtask["content"] for subtask in detail["item"]["subtasks"]} == {"something must be done", "귀찮아"}
     assert len(detail["item"]["reminders"]) == 1
     assert detail["item"]["reminders"][0]["remind_at"] == "2026-04-30T04:40:00+00:00"
+
+
+def test_init_schema_migrates_reminder_state_check_to_allow_completed(tmp_path) -> None:
+    db_path = tmp_path / "legacy-reminder-state.db"
+    conn = sqlite3.connect(db_path)
+    conn.executescript(
+        """
+        CREATE TABLE items (
+            id TEXT PRIMARY KEY,
+            item_type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            archived_at TEXT,
+            deleted_at TEXT,
+            CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'note', 'file')),
+            CHECK (status IN ('active', 'removed', 'archived'))
+        );
+
+        CREATE TABLE reminder_items (
+            item_id TEXT PRIMARY KEY,
+            remind_at TEXT NOT NULL,
+            state TEXT NOT NULL DEFAULT 'scheduled',
+            alert_policy TEXT,
+            last_fired_at TEXT,
+            acked_at TEXT,
+            snoozed_until TEXT,
+            FOREIGN KEY (item_id) REFERENCES items(id) ON DELETE CASCADE,
+            CHECK (state IN ('scheduled', 'fired', 'acked', 'missed', 'cancelled', 'snoozed'))
+        );
+
+        INSERT INTO items(id, item_type, title, status, created_at, updated_at)
+        VALUES ('rem-1', 'reminder', 'legacy reminder', 'active', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');
+
+        INSERT INTO reminder_items(item_id, remind_at, state)
+        VALUES ('rem-1', '2026-01-02T00:00:00Z', 'scheduled');
+        """
+    )
+    conn.commit()
+    conn.close()
+
+    engine = create_engine(f"sqlite:///{db_path}")
+    init_schema_v0(engine)
+
+    with engine.begin() as db:
+        sql = db.execute(text("SELECT sql FROM sqlite_master WHERE type='table' AND name='reminder_items'")).scalar_one()
+        assert "'completed'" in sql
+        db.execute(text("UPDATE reminder_items SET state='completed' WHERE item_id='rem-1'"))
+        state = db.execute(text("SELECT state FROM reminder_items WHERE item_id='rem-1'")).scalar_one()
+        assert state == "completed"
