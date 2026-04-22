@@ -178,29 +178,24 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
                 </button>
               ) : null}
 
-              {reminder.state !== "removed" &&
-              reminder.state !== "acked" &&
-              reminder.state !== "cancelled" &&
-              reminder.state !== "completed" ? (
-                <button
-                  type="button"
-                  className="button compactButton"
-                  disabled={isSubmitting}
-                  onClick={() =>
-                    runAction(async () => {
-                      const res = await fetch(`/api/reminders/${reminder.id}`, {
-                        method: "DELETE",
-                      });
-                      const data = await res.json().catch(() => null);
-                      if (!res.ok || !data?.ok) {
-                        throw new Error((data && data.error) || "Reminder remove failed.");
-                      }
-                    })
-                  }
-                >
-                  Delete
-                </button>
-              ) : null}
+              <button
+                type="button"
+                className="button compactButton"
+                disabled={isSubmitting}
+                onClick={() =>
+                  runAction(async () => {
+                    const res = await fetch(`/api/reminders/${reminder.id}`, {
+                      method: "DELETE",
+                    });
+                    const data = await res.json().catch(() => null);
+                    if (!res.ok || !data?.ok) {
+                      throw new Error((data && data.error) || "Reminder remove failed.");
+                    }
+                  })
+                }
+              >
+                Delete
+              </button>
             </div>
           ) : (
             <div className="actionRow reminderExpandActions">
