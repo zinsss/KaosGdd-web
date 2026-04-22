@@ -84,3 +84,25 @@ def test_completed_linked_reminder_appears_in_fired_history_bucket(main_module) 
     assert len(completed) == 1
     assert completed[0]["state"] == "completed"
     assert completed[0]["parent_item_id"] == task["id"]
+
+
+def test_manually_complete_reminder_moves_to_fired_completed(main_module) -> None:
+    task = main_module.create_task({"title": "manual complete"})
+    assert task["ok"] is True
+
+    reminder = main_module.create_task_reminder(task["id"], {"remind_at": "2099-01-01T00:00:00+00:00"})
+    assert reminder["ok"] is True
+
+    completed = main_module.complete_reminder(reminder["id"])
+    assert completed["ok"] is True
+    assert completed["status"] == "completed"
+
+    detail = main_module.get_reminder(reminder["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["state"] == "completed"
+
+    active = main_module.list_reminders("active")
+    assert all(item["id"] != reminder["id"] for item in active["items"])
+
+    fired = main_module.list_reminders("fired")
+    assert any(item["id"] == reminder["id"] and item["state"] == "completed" for item in fired["items"])

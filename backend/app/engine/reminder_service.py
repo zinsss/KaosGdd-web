@@ -295,6 +295,19 @@ class ReminderService:
         )
         return True, ReminderStatusText.CANCELLED
 
+    def complete_reminder(self, reminder_item_id: str) -> tuple[bool, str]:
+        detail = self.reminder_repo.get_reminder_detail(reminder_item_id)
+        if detail is None:
+            return False, "not found"
+
+        self.reminder_repo.mark_completed(reminder_item_id)
+        self.reminder_repo.create_event(
+            reminder_item_id=reminder_item_id,
+            event_type="completed",
+            payload={"parent_item_id": detail.get("parent_item_id")},
+        )
+        return True, ReminderStatusText.COMPLETED
+
     def fire_due_reminders(self) -> list[dict]:
         rows = self.reminder_repo.list_due_reminders(now_iso_value=now_iso())
         fired: list[dict] = []

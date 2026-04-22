@@ -63,6 +63,8 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
   const letter = itemLetter(reminder);
   const titleText = reminder.parent_item_title || reminder.title;
   const isStandalone = !reminder.parent_item_id;
+  const requiresCompleteConfirm =
+    reminder.state === "scheduled" || reminder.state === "snoozed" || reminder.state === "missed";
 
   async function runAction(fn) {
     if (isSubmitting) return;
@@ -86,6 +88,17 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
         detail: { id: reminder.id, raw },
       }),
     );
+  }
+
+  function onComplete() {
+    if (requiresCompleteConfirm) {
+      const confirmed = window.confirm(
+        "This reminder has not fired yet. Completing it now will prevent it from firing and move it to Fired / Completed.",
+      );
+      if (!confirmed) return;
+    }
+
+    runAction(() => postReminderAction(`/api/reminders/${reminder.id}/complete`));
   }
 
   return (
@@ -151,24 +164,43 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
                 </button>
               ) : null}
 
-              <button
-                type="button"
-                className="button compactButton"
-                disabled={isSubmitting}
-                onClick={() =>
-                  runAction(async () => {
-                    const res = await fetch(`/api/reminders/${reminder.id}`, {
-                      method: "DELETE",
-                    });
-                    const data = await res.json().catch(() => null);
-                    if (!res.ok || !data?.ok) {
-                      throw new Error((data && data.error) || "Reminder remove failed.");
-                    }
-                  })
-                }
-              >
-                Delete
-              </button>
+              {reminder.state !== "removed" &&
+              reminder.state !== "acked" &&
+              reminder.state !== "cancelled" &&
+              reminder.state !== "completed" ? (
+                <button
+                  type="button"
+                  className="button compactButton"
+                  disabled={isSubmitting}
+                  onClick={onComplete}
+                >
+                  {UI_STRINGS.COMPLETE}
+                </button>
+              ) : null}
+
+              {reminder.state !== "removed" &&
+              reminder.state !== "acked" &&
+              reminder.state !== "cancelled" &&
+              reminder.state !== "completed" ? (
+                <button
+                  type="button"
+                  className="button compactButton"
+                  disabled={isSubmitting}
+                  onClick={() =>
+                    runAction(async () => {
+                      const res = await fetch(`/api/reminders/${reminder.id}`, {
+                        method: "DELETE",
+                      });
+                      const data = await res.json().catch(() => null);
+                      if (!res.ok || !data?.ok) {
+                        throw new Error((data && data.error) || "Reminder remove failed.");
+                      }
+                    })
+                  }
+                >
+                  Delete
+                </button>
+              ) : null}
             </div>
           ) : (
             <div className="actionRow reminderExpandActions">
