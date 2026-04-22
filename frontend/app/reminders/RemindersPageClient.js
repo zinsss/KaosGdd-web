@@ -7,6 +7,7 @@ import ReminderRestoreButton from "../../components/ReminderRestoreButton";
 import { UI_STRINGS } from "../../lib/strings";
 
 const REMINDER_MODES = ["active", "fired", "removed"];
+const PRE_FIRE_ACTIVE_STATES = new Set(["scheduled", "snoozed", "missed"]);
 
 function buildReminderModeHref(mode) {
   return mode === "active" ? "/reminders" : `/reminders?mode=${mode}`;
@@ -63,8 +64,7 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
   const letter = itemLetter(reminder);
   const titleText = reminder.parent_item_title || reminder.title;
   const isStandalone = !reminder.parent_item_id;
-  const requiresCompleteConfirm =
-    reminder.state === "scheduled" || reminder.state === "snoozed" || reminder.state === "missed";
+  const requiresCompleteConfirm = PRE_FIRE_ACTIVE_STATES.has(reminder.state);
 
   async function runAction(fn) {
     if (isSubmitting) return;
@@ -93,7 +93,7 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
   function onComplete() {
     if (requiresCompleteConfirm) {
       const confirmed = window.confirm(
-        "This reminder has not fired yet. Completing it now will prevent it from firing and move it to Fired / Completed.",
+        "This reminder has not fired yet. Marking it completed now will stop it from firing and move it out of Active into Fired / Completed.",
       );
       if (!confirmed) return;
     }
