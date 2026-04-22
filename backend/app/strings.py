@@ -24,3 +24,4 @@ class ReminderStatusText:
     ACKED = "acked"
     SNOOZED = "snoozed"
     CANCELLED = "cancelled"
+    COMPLETED = "completed"

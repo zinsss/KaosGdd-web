@@ -482,6 +482,26 @@ class ReminderRepo:
                 {"item_id": reminder_item_id, "now": now},
             )
 
+    def mark_completed(self, reminder_item_id: str) -> None:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    UPDATE {reminder_items}
+                    SET state = 'completed',
+                        snoozed_until = NULL
+                    WHERE item_id = :item_id
+                    """
+                    .format(reminder_items=DbTables.REMINDER_ITEMS)
+                ),
+                {"item_id": reminder_item_id},
+            )
+            conn.execute(
+                text("UPDATE {items} SET updated_at = :now WHERE id = :item_id".format(items=DbTables.ITEMS)),
+                {"item_id": reminder_item_id, "now": now},
+            )
+
     def mark_linked_active_completed(self, parent_item_id: str) -> int:
         now = now_iso()
         with self.engine.begin() as conn:

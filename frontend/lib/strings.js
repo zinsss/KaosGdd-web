@@ -65,6 +65,7 @@ export const UI_STRINGS = {
   ACK: "Ack",
   SNOOZE_10M: "Snooze 10m",
   CANCEL: "Cancel",
+  COMPLETE: "Complete",
   ATTACH_ICON: "+",
   ATTACH_FILE: "Attach file",
   ATTACHMENT_EDIT_MODE_UNAVAILABLE: "Attachment is only available in Add mode.",

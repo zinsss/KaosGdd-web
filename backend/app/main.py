@@ -588,6 +588,14 @@ def cancel_reminder(reminder_id: str):
     return {"ok": True, "status": status}
 
 
+@app.post("/reminders/{reminder_id}/complete")
+def complete_reminder(reminder_id: str):
+    ok, status = reminder_service.complete_reminder(reminder_id)
+    if not ok:
+        return {"ok": False, "error": status}
+    return {"ok": True, "status": status}
+
+
 
 
 @app.get("/push/subscriptions")
