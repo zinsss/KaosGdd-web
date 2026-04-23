@@ -12,7 +12,7 @@ function buildSupplyModeHref(mode) {
 }
 
 function doneDateKey(item) {
-  return String(item.done_at || "").slice(0, 10) || "unknown";
+  return String(item.done_date_key || "").trim() || "unknown";
 }
 
 function groupDoneByDate(items) {

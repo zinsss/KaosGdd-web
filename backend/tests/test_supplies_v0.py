@@ -5,6 +5,8 @@ import os
 from pathlib import Path
 
 import pytest
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy import text
 
 
 @pytest.fixture()
@@ -127,3 +129,62 @@ def test_preset_use_adds_supply_and_refreshes_recency(main_module) -> None:
 
     presets = main_module.list_supply_presets()["items"]
     assert presets[0]["name"] == "mask"
+
+
+def test_duplicate_create_integrity_conflict_returns_existing_active(main_module) -> None:
+    first = main_module.create_supply({"title": "gauze"})
+    assert first["ok"] is True
+
+    original_lookup = main_module.supply_service.supply_repo.get_active_by_normalized_title
+    call_count = {"value": 0}
+
+    def flaky_lookup(normalized_title: str):
+        call_count["value"] += 1
+        if call_count["value"] == 1:
+            return None
+        return original_lookup(normalized_title)
+
+    def raise_integrity(*, item_id: str, normalized_title: str) -> None:
+        raise IntegrityError("simulated unique conflict", params={}, orig=None)
+
+    original_create = main_module.supply_service.supply_repo.create_supply
+    main_module.supply_service.supply_repo.get_active_by_normalized_title = flaky_lookup
+    main_module.supply_service.supply_repo.create_supply = raise_integrity
+    try:
+        duplicate = main_module.create_supply({"title": "GAUZE"})
+    finally:
+        main_module.supply_service.supply_repo.get_active_by_normalized_title = original_lookup
+        main_module.supply_service.supply_repo.create_supply = original_create
+
+    assert duplicate["ok"] is True
+    assert duplicate["created"] is False
+    assert duplicate["id"] == first["id"]
+
+    active = main_module.list_supplies(mode="active")["items"]
+    assert len(active) == 1
+
+
+def test_done_grouping_uses_local_app_timezone_date_key(main_module) -> None:
+    created = main_module.create_supply({"title": "midnight edge"})
+    assert created["ok"] is True
+    assert main_module.mark_supply_done(created["id"])["ok"] is True
+
+    with main_module.engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                UPDATE supply_items
+                SET done_at = :done_at
+                WHERE item_id = :item_id
+                """
+            ),
+            {
+                "item_id": created["id"],
+                "done_at": "2026-04-22T23:30:00+00:00",
+            },
+        )
+
+    done = main_module.list_supplies(mode="done")["items"]
+    target = next(item for item in done if item["id"] == created["id"])
+    assert str(target["done_at"]).startswith("2026-04-22")
+    assert target["done_date_key"] == "2026-04-23"

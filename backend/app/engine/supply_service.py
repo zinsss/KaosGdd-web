@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+from sqlalchemy.exc import IntegrityError
+
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.supply_repo import SupplyRepo
+from app.utils.timefmt import format_dt_for_ui, local_date_key_for_ui
 
 
 class SupplyService:
@@ -30,14 +33,21 @@ class SupplyService:
             return str(existing.get("id") or ""), False
 
         item_id = self.items_repo.create_item(item_type="supply", title=clean_title, status="active")
-        self.supply_repo.create_supply(item_id=item_id, normalized_title=normalized_title)
-        return item_id, True
+        try:
+            self.supply_repo.create_supply(item_id=item_id, normalized_title=normalized_title)
+            return item_id, True
+        except IntegrityError:
+            self.supply_repo.hard_delete(item_id)
+            existing = self.supply_repo.get_active_by_normalized_title(normalized_title)
+            if existing is not None:
+                return str(existing.get("id") or ""), False
+            raise
 
     def list_supplies(self, mode: str = "active") -> list[dict]:
         normalized_mode = str(mode or "active").strip().lower()
         if normalized_mode == "done":
-            return self.supply_repo.list_done()
-        return self.supply_repo.list_active()
+            return [self._decorate_supply_row(row) for row in self.supply_repo.list_done()]
+        return [self._decorate_supply_row(row) for row in self.supply_repo.list_active()]
 
     def mark_supply_done(self, supply_id: str) -> bool:
         return self.supply_repo.mark_done(supply_id)
@@ -50,3 +60,10 @@ class SupplyService:
 
     def use_preset(self, name: str) -> tuple[str | None, bool]:
         return self.create_supply(name)
+
+    def _decorate_supply_row(self, row: dict) -> dict:
+        decorated = dict(row)
+        done_at = decorated.get("done_at")
+        decorated["done_at_display"] = format_dt_for_ui(done_at)
+        decorated["done_date_key"] = local_date_key_for_ui(done_at)
+        return decorated
