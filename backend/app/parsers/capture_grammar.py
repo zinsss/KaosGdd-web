@@ -29,7 +29,7 @@ TAG_RE = re.compile(r"#([^\s#]+)")
 REMINDER_LEADING_DATETIME_RE = re.compile(r"^(?P<dt>\S+(?:\s+\S+)?)(?:\s+(?P<title>.*))?$")
 
 ActionType = Literal["create_item", "open_modal"]
-ItemType = Literal["task", "event", "reminder", "journal"]
+ItemType = Literal["task", "event", "reminder", "journal", "supply"]
 ModalType = Literal["note", "list", "file", "fax", "mail"]
 
 
@@ -114,6 +114,13 @@ def parse_capture(raw: str) -> dict:
     elif first.startswith(JOURNAL_PREFIX):
         item_type = "journal"
         title = first[len(JOURNAL_PREFIX) :].strip()
+    elif first == "$$":
+        return ParseResult(ok=False, error="title is required").to_dict()
+    elif first.startswith("$$"):
+        if len(first) > 2 and not first[2].isspace():
+            return ParseResult(ok=False, error="supply line must start with $$ ").to_dict()
+        item_type = "supply"
+        title = first[2:].strip()
     elif first.startswith(UNDONE_SUBTASK_PREFIX) or first.startswith(DONE_SUBTASK_PREFIX):
         return ParseResult(ok=False, error="subtask line requires a parent task").to_dict()
     else:
@@ -163,6 +170,9 @@ def parse_capture(raw: str) -> dict:
             else:
                 journal_lines.append(original)
             continue
+
+        if result.item_type == "supply":
+            return ParseResult(ok=False, error=f"unrecognized line: {original}").to_dict()
 
         if line.startswith(UNDONE_SUBTASK_PREFIX) or line.startswith(DONE_SUBTASK_PREFIX):
             if result.item_type != "task":

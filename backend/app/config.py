@@ -34,6 +34,8 @@ SETTINGS = Settings()
 
 class DbTables:
     ITEMS = "items"
+    SUPPLY_ITEMS = "supply_items"
+    SUPPLY_PRESETS = "supply_presets"
     TASK_ITEMS = "task_items"
     TASK_SUBTASKS = "task_subtasks"
     REMINDER_ITEMS = "reminder_items"

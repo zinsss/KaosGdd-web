@@ -19,6 +19,7 @@ from app.db.repo.file_repo import FileRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.push_subscription_repo import PushSubscriptionRepo
+from app.db.repo.supply_repo import SupplyRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
 from app.engine.journal_service import JournalService
@@ -26,6 +27,7 @@ from app.engine.note_service import NoteService
 from app.engine.file_service import FileService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
+from app.engine.supply_service import SupplyService
 from app.integrations.web_push_client import WebPushClient
 from app.schemas.reminders import normalize_minutes
 from app.strings import ApiText
@@ -40,6 +42,7 @@ note_repo = NoteRepo(engine)
 file_repo = FileRepo(engine)
 reminder_repo = ReminderRepo(engine)
 push_subscription_repo = PushSubscriptionRepo(engine)
+supply_repo = SupplyRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
 journal_service = JournalService(items_repo, journal_repo)
@@ -58,6 +61,7 @@ reminder_service = ReminderService(
     push_subscription_repo,
     web_push_client,
 )
+supply_service = SupplyService(items_repo, supply_repo)
 
 
 @asynccontextmanager
@@ -82,6 +86,54 @@ def health():
 @app.get("/tasks")
 def list_tasks(mode: str = "active"):
     return {"items": task_service.list_tasks(mode=mode)}
+
+
+@app.get("/supplies")
+def list_supplies(mode: str = "active"):
+    return {"items": supply_service.list_supplies(mode=mode)}
+
+
+@app.post("/supplies")
+def create_supply(payload: dict):
+    title = str(payload.get("title") or "").strip()
+    if not title:
+        return {"ok": False, "error": ApiText.TITLE_REQUIRED}
+    supply_id, created = supply_service.create_supply(title)
+    if not supply_id:
+        return {"ok": False, "error": ApiText.TITLE_REQUIRED}
+    return {"ok": True, "id": supply_id, "created": created}
+
+
+@app.post("/supplies/{supply_id}/done")
+def mark_supply_done(supply_id: str):
+    ok = supply_service.mark_supply_done(supply_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
+
+
+@app.delete("/supplies/{supply_id}")
+def delete_supply(supply_id: str):
+    ok = supply_service.delete_supply(supply_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
+
+
+@app.get("/supplies/presets")
+def list_supply_presets():
+    return {"items": supply_service.list_presets()}
+
+
+@app.post("/supplies/presets/use")
+def use_supply_preset(payload: dict):
+    name = str(payload.get("name") or "").strip()
+    if not name:
+        return {"ok": False, "error": ApiText.TITLE_REQUIRED}
+    supply_id, created = supply_service.use_preset(name)
+    if not supply_id:
+        return {"ok": False, "error": ApiText.TITLE_REQUIRED}
+    return {"ok": True, "id": supply_id, "created": created}
 
 
 @app.get("/events")
@@ -559,6 +611,15 @@ def capture_item(payload: dict):
         tags = list(parsed["parsed"].get("tags") or [])
         journal_id = journal_service.create_journal(title=title, body=body, tags=tags)
         return {"ok": True, "kind": kind, "id": journal_id}
+
+    if kind == "supply":
+        title = str(parsed["parsed"].get("title") or "").strip()
+        if not title:
+            return {"ok": False, "error": ApiText.TITLE_REQUIRED}
+        supply_id, _created = supply_service.create_supply(title)
+        if not supply_id:
+            return {"ok": False, "error": ApiText.TITLE_REQUIRED}
+        return {"ok": True, "kind": kind, "id": supply_id}
 
     return {"ok": False, "error": ApiText.UNSUPPORTED_CAPTURE_KIND}
 

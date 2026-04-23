@@ -14,6 +14,7 @@ export default function TopNav() {
   const journalsActive = pathname.startsWith("/journals");
   const notesActive = pathname.startsWith("/notes");
   const filesActive = pathname.startsWith("/files");
+  const suppliesActive = pathname.startsWith("/supplies");
 
   return (
     <nav className="topNavScroller" aria-label="Primary">
@@ -35,6 +36,9 @@ export default function TopNav() {
         </Link>
         <Link className={"topNavTextLink" + (filesActive ? " topNavTextLinkActive" : "")} href="/files">
           {UI_STRINGS.FILES}
+        </Link>
+        <Link className={"topNavTextLink" + (suppliesActive ? " topNavTextLinkActive" : "")} href="/supplies">
+          {UI_STRINGS.SUPPLIES}
         </Link>
       </div>
     </nav>
