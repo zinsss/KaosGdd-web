@@ -147,6 +147,66 @@ def test_init_schema_rebuilds_items_children_after_sqlite_items_table_migration(
         assert tags == ["beta"]
 
 
+def test_init_schema_repairs_existing_sqlite_db_with_items_legacy_fk_references(tmp_path) -> None:
+    db_path = tmp_path / "broken-items-legacy-fk.db"
+    conn = sqlite3.connect(db_path)
+    conn.executescript(
+        """
+        PRAGMA foreign_keys = OFF;
+
+        CREATE TABLE items (
+            id TEXT PRIMARY KEY,
+            item_type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            archived_at TEXT,
+            deleted_at TEXT,
+            CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'note', 'file', 'supply')),
+            CHECK (status IN ('active', 'removed', 'archived'))
+        );
+
+        CREATE TABLE item_tags (
+            item_id TEXT NOT NULL,
+            tag TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (item_id, tag),
+            FOREIGN KEY (item_id) REFERENCES items__legacy(id) ON DELETE CASCADE
+        );
+
+        INSERT INTO items(id, item_type, title, status, created_at, updated_at)
+        VALUES ('task-1', 'task', 'still here', 'active', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');
+
+        PRAGMA foreign_keys = ON;
+        """
+    )
+    conn.commit()
+    conn.close()
+
+    engine = create_engine(f"sqlite:///{db_path}")
+    init_schema_v0(engine)
+
+    with engine.begin() as db:
+        fk_tables = {
+            row[2]
+            for row in db.execute(text("PRAGMA foreign_key_list(item_tags)")).fetchall()
+            if row[3] == "item_id"
+        }
+        assert fk_tables == {"items"}
+
+        db.execute(
+            text(
+                """
+                INSERT INTO item_tags(item_id, tag, created_at)
+                VALUES ('task-1', 'restored', '2026-01-01T00:01:00Z')
+                """
+            )
+        )
+        tags = [row[0] for row in db.execute(text("SELECT tag FROM item_tags")).fetchall()]
+        assert tags == ["restored"]
+
+
 def test_init_schema_migrates_legacy_task_reminder_tables_for_multiline_capture(tmp_path) -> None:
     db_path = tmp_path / "legacy-capture.db"
     conn = sqlite3.connect(db_path)

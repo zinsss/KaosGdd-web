@@ -345,6 +345,24 @@ def _sqlite_rebuild_tables_referencing_legacy_items(conn) -> None:
             conn.execute(text(str(aux_sql)))
 
 
+def _sqlite_has_items_legacy_references(conn) -> bool:
+    count = conn.execute(
+        text("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND sql LIKE :pattern"),
+        {"pattern": f"%{DbTables.ITEMS}__legacy%"},
+    ).scalar_one()
+    return bool(count)
+
+
+def _repair_sqlite_items_legacy_references(conn) -> None:
+    if not _sqlite_has_items_legacy_references(conn):
+        return
+    conn.execute(text("PRAGMA foreign_keys = OFF"))
+    try:
+        _sqlite_rebuild_tables_referencing_legacy_items(conn)
+    finally:
+        conn.execute(text("PRAGMA foreign_keys = ON"))
+
+
 def _migrate_sqlite_reminder_items_add_completed_state(conn) -> None:
     conn.execute(text("PRAGMA foreign_keys = OFF"))
     try:
@@ -445,6 +463,7 @@ def init_schema_v0(engine) -> None:
             _migrate_sqlite_legacy_task_reminder_tables(conn)
             if not _sqlite_reminder_items_allows_completed_state(conn):
                 _migrate_sqlite_reminder_items_add_completed_state(conn)
+            _repair_sqlite_items_legacy_references(conn)
         for statement in SCHEMA_SQL.split(";\n\n"):
             sql = statement.strip()
             if not sql:
