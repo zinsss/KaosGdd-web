@@ -286,7 +286,79 @@ def _migrate_sqlite_items_table_add_supported_types(conn) -> None:
                 """
             )
         )
+        _sqlite_rebuild_tables_referencing_legacy_items(conn)
         conn.execute(text(f"DROP TABLE {DbTables.ITEMS}__legacy"))
+    finally:
+        conn.execute(text("PRAGMA foreign_keys = ON"))
+
+
+def _sqlite_replace_items_legacy_references(sql: str) -> str:
+    return (
+        sql.replace(f"REFERENCES {DbTables.ITEMS}__legacy", f"REFERENCES {DbTables.ITEMS}")
+        .replace(f'REFERENCES "{DbTables.ITEMS}__legacy"', f'REFERENCES "{DbTables.ITEMS}"')
+        .replace(f"references {DbTables.ITEMS}__legacy", f"references {DbTables.ITEMS}")
+        .replace(f'references "{DbTables.ITEMS}__legacy"', f'references "{DbTables.ITEMS}"')
+    )
+
+
+def _sqlite_rebuild_tables_referencing_legacy_items(conn) -> None:
+    tables = conn.execute(
+        text(
+            "SELECT name, sql FROM sqlite_master WHERE type = 'table' AND sql LIKE :pattern AND name NOT LIKE 'sqlite_%'"
+        ),
+        {"pattern": f"%{DbTables.ITEMS}__legacy%"},
+    ).fetchall()
+
+    for table_name, table_sql in tables:
+        if not table_name or not table_sql:
+            continue
+        replacement_sql = _sqlite_replace_items_legacy_references(str(table_sql))
+        if replacement_sql == table_sql:
+            continue
+
+        shadow_table = f"{table_name}__fkfix"
+        create_shadow_sql = replacement_sql.replace(f"CREATE TABLE {table_name}", f"CREATE TABLE {shadow_table}", 1)
+        create_shadow_sql = create_shadow_sql.replace(
+            f"CREATE TABLE IF NOT EXISTS {table_name}", f"CREATE TABLE {shadow_table}", 1
+        )
+        create_shadow_sql = create_shadow_sql.replace(
+            f'CREATE TABLE "{table_name}"', f'CREATE TABLE "{shadow_table}"', 1
+        )
+        create_shadow_sql = create_shadow_sql.replace(
+            f'CREATE TABLE IF NOT EXISTS "{table_name}"', f'CREATE TABLE "{shadow_table}"', 1
+        )
+
+        aux_sql_rows = conn.execute(
+            text(
+                "SELECT type, sql FROM sqlite_master WHERE tbl_name = :table_name "
+                "AND type IN ('index', 'trigger') AND sql IS NOT NULL"
+            ),
+            {"table_name": table_name},
+        ).fetchall()
+
+        conn.execute(text(create_shadow_sql))
+        conn.execute(text(f"INSERT INTO {shadow_table} SELECT * FROM {table_name}"))
+        conn.execute(text(f"DROP TABLE {table_name}"))
+        conn.execute(text(f"ALTER TABLE {shadow_table} RENAME TO {table_name}"))
+
+        for _, aux_sql in aux_sql_rows:
+            conn.execute(text(str(aux_sql)))
+
+
+def _sqlite_has_items_legacy_references(conn) -> bool:
+    count = conn.execute(
+        text("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND sql LIKE :pattern"),
+        {"pattern": f"%{DbTables.ITEMS}__legacy%"},
+    ).scalar_one()
+    return bool(count)
+
+
+def _repair_sqlite_items_legacy_references(conn) -> None:
+    if not _sqlite_has_items_legacy_references(conn):
+        return
+    conn.execute(text("PRAGMA foreign_keys = OFF"))
+    try:
+        _sqlite_rebuild_tables_referencing_legacy_items(conn)
     finally:
         conn.execute(text("PRAGMA foreign_keys = ON"))
 
@@ -391,6 +463,7 @@ def init_schema_v0(engine) -> None:
             _migrate_sqlite_legacy_task_reminder_tables(conn)
             if not _sqlite_reminder_items_allows_completed_state(conn):
                 _migrate_sqlite_reminder_items_add_completed_state(conn)
+            _repair_sqlite_items_legacy_references(conn)
         for statement in SCHEMA_SQL.split(";\n\n"):
             sql = statement.strip()
             if not sql:
