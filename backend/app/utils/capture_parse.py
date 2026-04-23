@@ -91,4 +91,13 @@ def parse_capture_input(raw_text: str, *, timezone_name: str | None = None) -> d
             },
         }
 
+    if item_type == "supply":
+        return {
+            "kind": "supply",
+            "raw": normalized_raw,
+            "parsed": {
+                "title": parsed.get("title"),
+            },
+        }
+
     raise ValueError("unsupported capture kind")

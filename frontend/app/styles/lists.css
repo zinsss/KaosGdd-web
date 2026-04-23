@@ -195,6 +195,17 @@
   overscroll-behavior-x: contain;
 }
 
+.supplyRow {
+  cursor: pointer;
+}
+
+.supplyPresetWrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
 @media (max-width: 640px) {
   .taskListRowMain {
     gap: 10px;

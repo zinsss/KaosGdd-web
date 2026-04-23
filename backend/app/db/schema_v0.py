@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS {items} (
     updated_at TEXT NOT NULL,
     archived_at TEXT,
     deleted_at TEXT,
-    CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'note', 'file')),
+    CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'note', 'file', 'supply')),
     CHECK (status IN ('active', 'removed', 'archived'))
 );
 
@@ -28,6 +28,19 @@ CREATE TABLE IF NOT EXISTS {task_items} (
     done_at TEXT,
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE,
     CHECK (is_done IN (0, 1))
+);
+
+CREATE TABLE IF NOT EXISTS {supply_items} (
+    item_id TEXT PRIMARY KEY,
+    normalized_title TEXT NOT NULL,
+    done_at TEXT,
+    FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS {supply_presets} (
+    name TEXT PRIMARY KEY,
+    normalized_name TEXT NOT NULL UNIQUE,
+    last_used_at TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS {task_subtasks} (
@@ -169,6 +182,16 @@ ON {reminder_items}(state, remind_at, snoozed_until);
 CREATE INDEX IF NOT EXISTS idx_task_items_done_state_time
 ON {task_items}(is_done, done_at);
 
+CREATE INDEX IF NOT EXISTS idx_supply_items_done_at
+ON {supply_items}(done_at, item_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_supply_items_active_normalized
+ON {supply_items}(normalized_title)
+WHERE done_at IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_supply_presets_last_used_at
+ON {supply_presets}(last_used_at DESC);
+
 CREATE INDEX IF NOT EXISTS idx_event_items_start_end
 ON {event_items}(start_date, end_date);
 
@@ -193,6 +216,8 @@ ON {push_subscriptions}(client_id, updated_at);
     task_items=DbTables.TASK_ITEMS,
     task_subtasks=DbTables.TASK_SUBTASKS,
     reminder_items=DbTables.REMINDER_ITEMS,
+    supply_items=DbTables.SUPPLY_ITEMS,
+    supply_presets=DbTables.SUPPLY_PRESETS,
     event_items=DbTables.EVENT_ITEMS,
     journal_items=DbTables.JOURNAL_ITEMS,
     note_items=DbTables.NOTE_ITEMS,
@@ -213,7 +238,7 @@ def _sqlite_items_table_allows_supported_types(conn) -> bool:
     if not row or not row[0]:
         return True
     ddl = str(row[0]).lower()
-    return "'event'" in ddl and "'journal'" in ddl and "'note'" in ddl and "'file'" in ddl
+    return "'event'" in ddl and "'journal'" in ddl and "'note'" in ddl and "'file'" in ddl and "'supply'" in ddl
 
 
 def _sqlite_reminder_items_allows_completed_state(conn) -> bool:
@@ -243,7 +268,7 @@ def _migrate_sqlite_items_table_add_supported_types(conn) -> None:
                     updated_at TEXT NOT NULL,
                     archived_at TEXT,
                     deleted_at TEXT,
-                    CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'note', 'file')),
+                    CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'note', 'file', 'supply')),
                     CHECK (status IN ('active', 'removed', 'archived'))
                 )
                 """
