@@ -125,6 +125,17 @@ function normalizeAttachedFileGrammar(rawText) {
   };
 }
 
+function datetimeSelectionRange(rawText) {
+  const source = String(rawText || "");
+  const firstLineEnd = source.indexOf("\n");
+  const firstLine = firstLineEnd === -1 ? source : source.slice(0, firstLineEnd);
+  const match = firstLine.match(/!!\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})/);
+  if (!match || match.index === undefined) return null;
+  const value = match[1];
+  const start = match.index + firstLine.slice(match.index).indexOf(value);
+  return { start, end: start + value.length };
+}
+
 export default function BottomCaptureBar() {
   const router = useRouter();
   const [raw, setRaw] = useState("");
@@ -199,6 +210,34 @@ export default function BottomCaptureBar() {
       }, 0);
     }
 
+    function onAddAsNew(event) {
+      const detail = event.detail || {};
+      const nextRaw = String(detail.raw || "").trim();
+      if (!nextRaw) return;
+
+      setEditState(null);
+      setRaw(nextRaw);
+      setAttachedFile(null);
+      setAttachedFilename("");
+      setError("");
+      setSuccess("");
+      writeEditState(null);
+
+      const selection = datetimeSelectionRange(nextRaw);
+      window.requestAnimationFrame(() => {
+        const node = textareaRef.current;
+        if (!node) return;
+        resizeTextarea(node);
+        node.focus();
+        if (!selection) return;
+        window.requestAnimationFrame(() => {
+          try {
+            node.setSelectionRange(selection.start, selection.end);
+          } catch {}
+        });
+      });
+    }
+
     function onCancelEdit() {
       setEditState(null);
       setRaw("");
@@ -210,11 +249,13 @@ export default function BottomCaptureBar() {
     window.addEventListener("kaosgdd:start-reminder-edit", onStartEdit);
     window.addEventListener("kaosgdd:start-journal-edit", onStartEdit);
     window.addEventListener("kaosgdd:cancel-reminder-edit", onCancelEdit);
+    window.addEventListener("kaosgdd:add-reminder-as-new", onAddAsNew);
 
     return () => {
       window.removeEventListener("kaosgdd:start-reminder-edit", onStartEdit);
       window.removeEventListener("kaosgdd:start-journal-edit", onStartEdit);
       window.removeEventListener("kaosgdd:cancel-reminder-edit", onCancelEdit);
+      window.removeEventListener("kaosgdd:add-reminder-as-new", onAddAsNew);
     };
   }, []);
 

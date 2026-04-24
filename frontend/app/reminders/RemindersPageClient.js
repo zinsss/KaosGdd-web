@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import ReminderRestoreButton from "../../components/ReminderRestoreButton";
@@ -36,10 +36,24 @@ function reminderWhen(reminder) {
 function buildStandaloneReminderRaw(reminder) {
   const when = reminder.remind_at_display || reminderWhen(reminder);
   const tags = (reminder.tags || []).map((tag) => `#${tag}`).join(" ");
-  const lines = [`!! ${when}`];
-  if (reminder.title) lines.push(reminder.title);
-  if (tags) lines.push(tags);
-  return lines.join("\n").trim();
+  const firstLineParts = [`!! ${when}`];
+  if (reminder.title) firstLineParts.push(reminder.title);
+  if (tags) firstLineParts.push(tags);
+  return firstLineParts.join(" ").trim();
+}
+
+function parentHref(reminder) {
+  if (!reminder.parent_item_id) return null;
+  const type = reminder.parent_item_type || "task";
+  const map = {
+    task: `/tasks/${reminder.parent_item_id}`,
+    event: `/events/${reminder.parent_item_id}`,
+    journal: `/journals/${reminder.parent_item_id}`,
+    note: `/notes/${reminder.parent_item_id}`,
+    file: `/files/${reminder.parent_item_id}`,
+    reminder: `/reminders/${reminder.parent_item_id}`,
+  };
+  return map[type] || `/tasks/${reminder.parent_item_id}`;
 }
 
 async function postReminderAction(path, payload) {
@@ -63,8 +77,23 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
   const letter = itemLetter(reminder);
   const titleText = reminder.parent_item_title || reminder.title;
   const isStandalone = !reminder.parent_item_id;
+  const hasParent = Boolean(reminder.parent_item_id);
+  const parentLink = parentHref(reminder);
   const requiresCompleteConfirm =
     reminder.state === "scheduled" || reminder.state === "snoozed" || reminder.state === "missed";
+  const isActionableState =
+    reminder.state === "scheduled" ||
+    reminder.state === "fired" ||
+    reminder.state === "missed" ||
+    reminder.state === "snoozed";
+  const isDoneState = reminder.state === "acked" || reminder.state === "completed";
+  const rowStateClass = isDoneState
+    ? " reminderRowDone"
+    : reminder.state === "snoozed"
+      ? " reminderRowSnoozed"
+      : reminder.state === "missed"
+        ? " reminderRowMissed"
+        : "";
 
   async function runAction(fn) {
     if (isSubmitting) return;
@@ -90,6 +119,11 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
     );
   }
 
+  function addAsNew() {
+    const raw = buildStandaloneReminderRaw(reminder);
+    window.dispatchEvent(new CustomEvent("kaosgdd:add-reminder-as-new", { detail: { raw } }));
+  }
+
   function onComplete() {
     if (requiresCompleteConfirm) {
       const confirmed = window.confirm(
@@ -102,7 +136,7 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
   }
 
   return (
-    <li className="taskListRow reminderListRow">
+    <li className={`taskListRow reminderListRow${rowStateClass}`} data-reminder-id={reminder.id}>
       <button type="button" className="reminderRowButton" onClick={onToggle}>
         <div className="reminderListTopLine">
           <span className="reminderListWhen">{reminderWhen(reminder)}</span>
@@ -121,91 +155,67 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
             <div className="actionRow reminderExpandActions">
               <ReminderRestoreButton reminderId={reminder.id} />
             </div>
-          ) : isStandalone ? (
-            <div className="actionRow reminderExpandActions">
-              {(reminder.state === "fired" || reminder.state === "missed") ? (
-                <>
-                  <button
-                    type="button"
-                    className="button compactButton"
-                    disabled={isSubmitting}
-                    onClick={() =>
-                      runAction(() => postReminderAction(`/api/reminders/${reminder.id}/ack`))
-                    }
-                  >
-                    Ack
-                  </button>
-
-                  <button
-                    type="button"
-                    className="button compactButton"
-                    disabled={isSubmitting}
-                    onClick={() =>
-                      runAction(() =>
-                        postReminderAction(`/api/reminders/${reminder.id}/snooze`, { minutes: 10 })
-                      )
-                    }
-                  >
-                    Snooze
-                  </button>
-                </>
-              ) : null}
-
-              {reminder.state !== "removed" &&
-              reminder.state !== "acked" &&
-              reminder.state !== "cancelled" ? (
-                <button
-                  type="button"
-                  className="button compactButton"
-                  disabled={isSubmitting}
-                  onClick={startEdit}
-                >
-                  Edit
-                </button>
-              ) : null}
-
-              {reminder.state !== "removed" &&
-              reminder.state !== "acked" &&
-              reminder.state !== "cancelled" &&
-              reminder.state !== "completed" ? (
-                <button
-                  type="button"
-                  className="button compactButton"
-                  disabled={isSubmitting}
-                  onClick={onComplete}
-                >
-                  {UI_STRINGS.COMPLETE}
-                </button>
-              ) : null}
-
-              <button
-                type="button"
-                className="button compactButton"
-                disabled={isSubmitting}
-                onClick={() =>
-                  runAction(async () => {
-                    const res = await fetch(`/api/reminders/${reminder.id}`, {
-                      method: "DELETE",
-                    });
-                    const data = await res.json().catch(() => null);
-                    if (!res.ok || !data?.ok) {
-                      throw new Error((data && data.error) || "Reminder remove failed.");
-                    }
-                  })
-                }
-              >
-                Delete
-              </button>
-            </div>
           ) : (
-            <div className="actionRow reminderExpandActions">
-              <Link
-                className="button compactButton reminderParentButton"
-                href={`/tasks/${reminder.parent_item_id}`}
-              >
-                Go to Parent
-              </Link>
-            </div>
+            <>
+              <div className="actionRow reminderExpandActions">
+                {isActionableState ? (
+                  <>
+                    <button
+                      type="button"
+                      className="button compactButton"
+                      disabled={isSubmitting}
+                      onClick={() =>
+                        runAction(() => postReminderAction(`/api/reminders/${reminder.id}/ack`))
+                      }
+                    >
+                      Ack
+                    </button>
+
+                    <button
+                      type="button"
+                      className="button compactButton"
+                      disabled={isSubmitting}
+                      onClick={() =>
+                        runAction(() =>
+                          postReminderAction(`/api/reminders/${reminder.id}/snooze`, { minutes: 10 })
+                        )
+                      }
+                    >
+                      Snooze
+                    </button>
+
+                    <button
+                      type="button"
+                      className="button compactButton"
+                      disabled={isSubmitting}
+                      onClick={onComplete}
+                    >
+                      {UI_STRINGS.COMPLETE}
+                    </button>
+                  </>
+                ) : null}
+
+                {isDoneState ? (
+                  <button type="button" className="button compactButton" disabled={isSubmitting} onClick={addAsNew}>
+                    Add as New
+                  </button>
+                ) : null}
+
+                {!isActionableState && !isDoneState && isStandalone && reminder.state !== "removed" ? (
+                  <button type="button" className="button compactButton" disabled={isSubmitting} onClick={startEdit}>
+                    Edit
+                  </button>
+                ) : null}
+              </div>
+
+              {hasParent && parentLink ? (
+                <div className="actionRow reminderExpandActions reminderExpandActionsSecondary">
+                  <Link className="button compactButton reminderParentButton" href={parentLink}>
+                    Go to Parent
+                  </Link>
+                </div>
+              ) : null}
+            </>
           )}
 
           {localError ? <div className="errorText">{localError}</div> : null}
@@ -215,11 +225,13 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
   );
 }
 
-export default function RemindersPageClient({ initialMode, items }) {
+export default function RemindersPageClient({ initialMode, items, initialExpandedReminderId }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
-  const [expandedId, setExpandedId] = useState(null);
+  const [expandedId, setExpandedId] = useState(initialExpandedReminderId || null);
+  const listRef = useRef(null);
+  const pendingInitialScrollIdRef = useRef(initialExpandedReminderId || null);
   const mode = REMINDER_MODES.includes(initialMode) ? initialMode : "active";
 
   const modeLinks = useMemo(
@@ -238,9 +250,21 @@ export default function RemindersPageClient({ initialMode, items }) {
     } else {
       params.set("mode", nextMode);
     }
+    params.delete("reminder_id");
     const qs = params.toString();
     router.push(qs ? `${pathname}?${qs}` : pathname);
   }
+
+  useEffect(() => {
+    const targetId = pendingInitialScrollIdRef.current;
+    if (!targetId || expandedId !== targetId) return;
+    const root = listRef.current;
+    if (!root) return;
+    const row = root.querySelector(`[data-reminder-id="${CSS.escape(targetId)}"]`);
+    if (!row) return;
+    pendingInitialScrollIdRef.current = null;
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [expandedId, items]);
 
   function onTouchStart(event) {
     const touch = event.changedTouches?.[0];
@@ -300,7 +324,7 @@ export default function RemindersPageClient({ initialMode, items }) {
         {items.length === 0 ? (
           <div className="empty">{UI_STRINGS.NO_REMINDERS}</div>
         ) : (
-          <ul className="taskList reminderCompactList">
+          <ul ref={listRef} className="taskList reminderCompactList">
             {items.map((reminder) => (
               <ReminderRow
                 key={reminder.id}

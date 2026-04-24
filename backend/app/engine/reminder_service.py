@@ -349,12 +349,15 @@ class ReminderService:
         return missed
 
     def _build_push_payload(self, reminder: dict) -> dict:
+        reminder_id = str(reminder.get("id") or "").strip()
         parent_item_id = reminder.get("parent_item_id")
         target_kind = "reminder"
         item_title = str(reminder.get("title") or "").strip()
         due_at = None
         memo = None
-        deep_link_path = "/reminders?mode=fired"
+        deep_link_path = (
+            f"/reminders?mode=fired&reminder_id={reminder_id}" if reminder_id else "/reminders?mode=fired"
+        )
 
         if parent_item_id:
             task = self.task_repo.get_task_detail(parent_item_id)
@@ -363,7 +366,6 @@ class ReminderService:
                 item_title = task.get("title") or item_title
                 due_at = task.get("due_at")
                 memo = task.get("memo")
-                deep_link_path = f"/tasks/{parent_item_id}"
             elif self.event_repo is not None:
                 event = self.event_repo.get_event_detail(parent_item_id)
                 if event is not None:
@@ -371,7 +373,6 @@ class ReminderService:
                     item_title = event.get("title") or item_title
                     due_at = event.get("start_date")
                     memo = event.get("memo")
-                    deep_link_path = f"/events/{parent_item_id}"
 
         title = build_push_title(target_kind=target_kind)
         message = build_push_body(
