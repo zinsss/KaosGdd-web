@@ -4,6 +4,7 @@ export const UI_STRINGS = {
   APP_DESCRIPTION: "Tailscale-only web UI for KaosGdd",
   APP_HEADER_SUBTITLE: "Order for Chaotic-Minded Gdd",
   HOME_SUBTITLE: "Tailscale-only internal web app",
+  HOME: "Home",
   SYSTEM: "System",
   BACKEND: "Backend",
   APP: "App",

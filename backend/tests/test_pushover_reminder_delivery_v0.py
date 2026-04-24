@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import os
 from pathlib import Path
 
@@ -187,3 +188,91 @@ def test_fire_due_reminder_sends_web_push_before_delayed_pushover(
     assert fired["ok"] is True
     assert fired["count"] == 1
     assert calls == ["web_push", "timer_start", "pushover"]
+
+
+def test_web_push_payload_includes_positive_badge_count(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    task = main_module.create_task({"title": "Badge count task"})
+    assert task["ok"] is True
+
+    reminder = main_module.create_task_reminder(task["id"], {"remind_at": "2020-01-01T00:00:00+00:00"})
+    assert reminder["ok"] is True
+
+    captured_payloads: list[dict] = []
+
+    class FakePushSubscriptionRepo:
+        def list_all(self):
+            return [
+                {
+                    "client_id": "client-1",
+                    "endpoint": "https://push.example/sub/1",
+                    "subscription": {"endpoint": "https://push.example/sub/1", "keys": {}},
+                }
+            ]
+
+        def remove(self, *, client_id: str, endpoint: str):
+            return True
+
+    class FakeWebPushClient:
+        is_enabled = True
+
+        def send(self, *, subscription_info: dict, payload_json: str):
+            captured_payloads.append(json.loads(payload_json))
+
+    monkeypatch.setattr("app.engine.reminder_service.SETTINGS.PUSHOVER_DELAY_SECONDS", 0)
+    monkeypatch.setattr(
+        main_module.reminder_service.reminder_repo,
+        "count_attention_reminders",
+        lambda: 2,
+    )
+    main_module.reminder_service.push_subscription_repo = FakePushSubscriptionRepo()
+    main_module.reminder_service.web_push_client = FakeWebPushClient()
+
+    fired = main_module.fire_due_reminders()
+    assert fired["ok"] is True
+    assert fired["count"] == 1
+    assert len(captured_payloads) == 1
+    assert captured_payloads[0]["badge_count"] == 2
+
+
+def test_web_push_payload_includes_zero_badge_count(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    task = main_module.create_task({"title": "Clear badge task"})
+    assert task["ok"] is True
+
+    reminder = main_module.create_task_reminder(task["id"], {"remind_at": "2020-01-01T00:00:00+00:00"})
+    assert reminder["ok"] is True
+
+    captured_payloads: list[dict] = []
+
+    class FakePushSubscriptionRepo:
+        def list_all(self):
+            return [
+                {
+                    "client_id": "client-1",
+                    "endpoint": "https://push.example/sub/1",
+                    "subscription": {"endpoint": "https://push.example/sub/1", "keys": {}},
+                }
+            ]
+
+        def remove(self, *, client_id: str, endpoint: str):
+            return True
+
+    class FakeWebPushClient:
+        is_enabled = True
+
+        def send(self, *, subscription_info: dict, payload_json: str):
+            captured_payloads.append(json.loads(payload_json))
+
+    monkeypatch.setattr("app.engine.reminder_service.SETTINGS.PUSHOVER_DELAY_SECONDS", 0)
+    monkeypatch.setattr(
+        main_module.reminder_service.reminder_repo,
+        "count_attention_reminders",
+        lambda: 0,
+    )
+    main_module.reminder_service.push_subscription_repo = FakePushSubscriptionRepo()
+    main_module.reminder_service.web_push_client = FakeWebPushClient()
+
+    fired = main_module.fire_due_reminders()
+    assert fired["ok"] is True
+    assert fired["count"] == 1
+    assert len(captured_payloads) == 1
+    assert captured_payloads[0]["badge_count"] == 0

@@ -1,0 +1,10 @@
+[Unit]
+Description=Run KaosGdd due reminder fire sweep every minute
+
+[Timer]
+OnCalendar=*:0/1
+Persistent=true
+Unit=kaosgdd-reminders-fire-due.service
+
+[Install]
+WantedBy=timers.target
