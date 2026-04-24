@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 from app.utils import datetime_parse
+from app.utils.capture_parse import parse_capture_input
+from app.utils.datetime_parse import parse_local_datetime_to_iso
 
 
 @pytest.fixture()
@@ -109,3 +111,98 @@ def test_capture_uses_client_timezone_for_near_future_validation(main_module, mo
     )
 
     assert payload["ok"] is True
+
+
+def test_standalone_reminder_today_defaults_to_1030(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-04-19T14:00:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    parsed = parse_capture_input(
+        "!! today buy batteries",
+        timezone_name="America/Los_Angeles",
+    )
+
+    assert parsed["kind"] == "simple_reminder"
+    assert parsed["parsed"]["title"] == "buy batteries"
+    assert parsed["parsed"]["remind_ats"] == ["2026-04-19T17:30:00+00:00"]
+
+
+def test_standalone_reminder_tomorrow_defaults_to_1030(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-04-19T14:00:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    parsed = parse_capture_input(
+        "!! tomorrow call clinic",
+        timezone_name="America/Los_Angeles",
+    )
+
+    assert parsed["kind"] == "simple_reminder"
+    assert parsed["parsed"]["title"] == "call clinic"
+    assert parsed["parsed"]["remind_ats"] == ["2026-04-20T17:30:00+00:00"]
+
+
+def test_standalone_reminder_relative_day_with_time(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-04-19T14:00:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    parsed = parse_capture_input(
+        "!! +3d 09:00 send fax",
+        timezone_name="America/Los_Angeles",
+    )
+
+    assert parsed["kind"] == "simple_reminder"
+    assert parsed["parsed"]["title"] == "send fax"
+    assert parsed["parsed"]["remind_ats"] == ["2026-04-22T16:00:00+00:00"]
+
+
+def test_standalone_reminder_time_only_defaults_to_today(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-04-19T14:00:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    parsed = parse_capture_input(
+        "!! 09:00 call lab",
+        timezone_name="America/Los_Angeles",
+    )
+
+    assert parsed["kind"] == "simple_reminder"
+    assert parsed["parsed"]["title"] == "call lab"
+    assert parsed["parsed"]["remind_ats"] == ["2026-04-19T16:00:00+00:00"]
+
+
+def test_standalone_reminder_date_only_defaults_to_1030(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-04-19T14:00:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    parsed = parse_capture_input(
+        "!! 2026-04-25 send fax",
+        timezone_name="America/Los_Angeles",
+    )
+
+    assert parsed["kind"] == "simple_reminder"
+    assert parsed["parsed"]["title"] == "send fax"
+    assert parsed["parsed"]["remind_ats"] == ["2026-04-25T17:30:00+00:00"]
+
+
+def test_standalone_and_r_parsing_share_same_datetime_normalization(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-04-19T14:00:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    standalone = parse_capture_input("!! +3d 09:00 title", timezone_name="America/Los_Angeles")
+    from_r = parse_local_datetime_to_iso(
+        "+3d 09:00",
+        allow_past=False,
+        timezone_name="America/Los_Angeles",
+    )
+
+    assert standalone["parsed"]["remind_ats"] == [from_r]
+
+
+def test_standalone_past_datetime_matches_shared_parser_behavior(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-04-19T20:00:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    with pytest.raises(ValueError, match="resolved datetime is in the past"):
+        parse_capture_input(
+            "!! today title",
+            timezone_name="America/Los_Angeles",
+        )

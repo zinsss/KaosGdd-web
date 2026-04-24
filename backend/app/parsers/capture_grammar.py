@@ -26,7 +26,6 @@ META_REMIND = "r:"
 META_REPEAT = "R:"
 MEMO_DELIM = '"""'
 TAG_RE = re.compile(r"#([^\s#]+)")
-REMINDER_LEADING_DATETIME_RE = re.compile(r"^(?P<dt>\S+(?:\s+\S+)?)(?:\s+(?P<title>.*))?$")
 
 ActionType = Literal["create_item", "open_modal"]
 ItemType = Literal["task", "event", "reminder", "journal", "supply"]
@@ -230,27 +229,10 @@ def parse_capture(raw: str) -> dict:
 
     if result.item_type == "reminder":
         reminder_title = " ".join(part.strip() for part in reminder_title_lines if part.strip()).strip()
-
-        if reminder_title:
-            dt_match = REMINDER_LEADING_DATETIME_RE.match(reminder_title)
-            if dt_match:
-                candidate = (dt_match.group("dt") or "").strip()
-                trailing = (dt_match.group("title") or "").strip()
-                if re.fullmatch(r"\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}", candidate):
-                    result.remind_at = candidate
-                    result.title = trailing
-                else:
-                    result.title = reminder_title
-            else:
-                result.title = reminder_title
-        else:
-            result.title = ""
+        result.title = reminder_title
 
     if result.item_type == "journal" and not result.title:
         return ParseResult(ok=False, error="journal content is required").to_dict()
-
-    if result.item_type == "reminder" and not result.remind_at:
-        return ParseResult(ok=False, error="!! requires at least one reminder datetime").to_dict()
 
     if result.item_type not in {"event", "journal"} and not result.title:
         return ParseResult(ok=False, error="title is required").to_dict()
