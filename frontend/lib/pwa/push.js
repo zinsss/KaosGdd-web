@@ -72,13 +72,54 @@ async function ensurePushSubscription(registration) {
   return subscription;
 }
 
+function isPushSupported() {
+  if (typeof window === "undefined") return false;
+  return (
+    "serviceWorker" in navigator &&
+    "PushManager" in window &&
+    "Notification" in window &&
+    window.isSecureContext
+  );
+}
+
+async function getRegistration() {
+  if (!("serviceWorker" in navigator)) return null;
+  return navigator.serviceWorker.ready;
+}
+
+export async function getPushStatus() {
+  if (!isPushSupported()) {
+    return { state: "unsupported", message: "Push not supported on this device/browser" };
+  }
+
+  const permission = Notification.permission;
+  if (permission === "denied") {
+    return { state: "blocked", message: "Notifications blocked in browser settings" };
+  }
+
+  const registration = await getRegistration();
+  if (!registration) {
+    return { state: "unsupported", message: "Push not supported on this device/browser" };
+  }
+
+  const subscription = await registration.pushManager.getSubscription();
+  if (permission === "granted" && subscription) {
+    return { state: "enabled", message: "Notifications enabled" };
+  }
+
+  return { state: "disabled", message: "Notifications are off" };
+}
+
 export async function subscribeToPush(registration) {
   if (typeof window === "undefined") return null;
   if (!("Notification" in window)) {
     throw new Error("Notifications are not supported on this browser");
   }
 
-  const permission = await Notification.requestPermission();
+  let permission = Notification.permission;
+  if (permission !== "granted") {
+    permission = await Notification.requestPermission();
+  }
   if (permission !== "granted") {
     throw new Error("Notification permission was not granted");
   }
@@ -87,17 +128,11 @@ export async function subscribeToPush(registration) {
 }
 
 export async function bootstrapPushSubscription() {
-  if (typeof window === "undefined") return;
-  if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) return;
-  if (!window.isSecureContext) return;
+  if (!isPushSupported()) return;
 
   try {
-    const registration = await navigator.serviceWorker.ready;
-    const permission =
-      Notification.permission === "granted"
-        ? "granted"
-        : await Notification.requestPermission().catch(() => "default");
-    if (permission !== "granted") return;
+    const registration = await getRegistration();
+    if (!registration || Notification.permission !== "granted") return;
 
     await ensurePushSubscription(registration);
   } catch {
@@ -106,13 +141,20 @@ export async function bootstrapPushSubscription() {
 }
 
 export async function unsubscribeFromPush(registration) {
+  const knownEndpoint = getStoredEndpoint();
   const subscription = await registration.pushManager.getSubscription();
   if (!subscription) {
+    if (knownEndpoint) {
+      await deleteSubscriptionEndpoint(knownEndpoint);
+    }
     setStoredEndpoint("");
     return;
   }
 
   await deleteSubscriptionEndpoint(subscription.endpoint);
+  if (knownEndpoint && knownEndpoint !== subscription.endpoint) {
+    await deleteSubscriptionEndpoint(knownEndpoint);
+  }
 
   await subscription.unsubscribe();
   setStoredEndpoint("");
