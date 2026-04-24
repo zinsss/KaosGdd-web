@@ -129,6 +129,31 @@ def test_standalone_payload_has_basic_title_and_body(main_module, monkeypatch: p
     assert "Remind:" in calls[0]["message"]
 
 
+def test_reminder_push_deeplink_targets_fired_mode_with_reminder_id(
+    main_module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    task = main_module.create_task({"title": "Doctor follow-up"})
+    assert task["ok"] is True
+
+    reminder = main_module.create_task_reminder(task["id"], {"remind_at": "2020-01-01T00:00:00+00:00"})
+    assert reminder["ok"] is True
+
+    calls: list[dict] = []
+
+    def fake_send(**kwargs):
+        calls.append(kwargs)
+        return {"attempted": True, "succeeded": True, "reason": None}
+
+    monkeypatch.setattr("app.engine.reminder_service.SETTINGS.PUSHOVER_DELAY_SECONDS", 0)
+    monkeypatch.setattr("app.engine.reminder_service.send_pushover", fake_send)
+
+    fired = main_module.fire_due_reminders()
+    assert fired["ok"] is True
+    assert fired["count"] == 1
+    assert len(calls) == 1
+    assert calls[0]["url"] == f"https://kaos.test/reminders?mode=fired&reminder_id={reminder['id']}"
+
+
 def test_fire_due_reminder_sends_web_push_before_delayed_pushover(
     main_module, monkeypatch: pytest.MonkeyPatch
 ) -> None:

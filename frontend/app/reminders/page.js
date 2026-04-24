@@ -14,8 +14,19 @@ async function getReminders(mode) {
 }
 
 export default async function RemindersPage({ searchParams }) {
-  const mode = REMINDER_MODES.includes(searchParams?.mode) ? searchParams.mode : "active";
+  const modeParam = Array.isArray(searchParams?.mode) ? searchParams.mode[0] : searchParams?.mode;
+  const reminderIdParam = Array.isArray(searchParams?.reminder_id)
+    ? searchParams.reminder_id[0]
+    : searchParams?.reminder_id;
+  const mode = REMINDER_MODES.includes(modeParam) ? modeParam : "active";
   const result = await getReminders(mode);
+  const initialExpandedReminderId = reminderIdParam ? String(reminderIdParam) : null;
 
-  return <RemindersPageClient initialMode={mode} items={result.items || []} />;
+  return (
+    <RemindersPageClient
+      initialMode={mode}
+      items={result.items || []}
+      initialExpandedReminderId={initialExpandedReminderId}
+    />
+  );
 }
