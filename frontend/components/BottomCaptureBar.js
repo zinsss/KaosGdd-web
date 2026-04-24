@@ -154,6 +154,74 @@ export default function BottomCaptureBar() {
   const fileInputRef = useRef(null);
   const submitLockRef = useRef(false);
   const activeRequestIdRef = useRef(0);
+  const focusAnchorRafRef = useRef(0);
+  const focusAnchorTimeoutRef = useRef(0);
+  const isTextareaFocusedRef = useRef(false);
+
+  function getMainScroller() {
+    if (typeof document === "undefined") return null;
+    return document.querySelector(".appShellMain");
+  }
+
+  function clearPendingFocusAnchor() {
+    if (focusAnchorRafRef.current) {
+      window.cancelAnimationFrame(focusAnchorRafRef.current);
+      focusAnchorRafRef.current = 0;
+    }
+
+    if (focusAnchorTimeoutRef.current) {
+      window.clearTimeout(focusAnchorTimeoutRef.current);
+      focusAnchorTimeoutRef.current = 0;
+    }
+  }
+
+  function anchorCaptureForFocus({ behavior = "auto", extraDelay = 0 } = {}) {
+    if (typeof window === "undefined") return;
+
+    clearPendingFocusAnchor();
+
+    const runAnchor = () => {
+      const node = textareaRef.current;
+      if (!node || !isTextareaFocusedRef.current) return;
+
+      const scroller = getMainScroller();
+      if (scroller) {
+        scroller.scrollTo({ top: scroller.scrollHeight, behavior });
+      }
+
+      try {
+        node.scrollIntoView({ block: "end", inline: "nearest", behavior });
+      } catch {}
+
+      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+      const nodeRect = node.getBoundingClientRect();
+      const overlap = nodeRect.bottom - viewportHeight + 12;
+      if (overlap > 0) {
+        if (scroller) {
+          scroller.scrollTop += overlap;
+        } else {
+          window.scrollBy({ top: overlap, behavior });
+        }
+      }
+    };
+
+    const queueAnchor = () => {
+      focusAnchorRafRef.current = window.requestAnimationFrame(() => {
+        focusAnchorRafRef.current = 0;
+        runAnchor();
+      });
+    };
+
+    if (extraDelay > 0) {
+      focusAnchorTimeoutRef.current = window.setTimeout(() => {
+        focusAnchorTimeoutRef.current = 0;
+        queueAnchor();
+      }, extraDelay);
+      return;
+    }
+
+    queueAnchor();
+  }
 
   function resizeTextarea(node = textareaRef.current) {
     if (!node) return;
@@ -256,6 +324,26 @@ export default function BottomCaptureBar() {
       window.removeEventListener("kaosgdd:start-journal-edit", onStartEdit);
       window.removeEventListener("kaosgdd:cancel-reminder-edit", onCancelEdit);
       window.removeEventListener("kaosgdd:add-reminder-as-new", onAddAsNew);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onViewportShift = () => {
+      if (!isTextareaFocusedRef.current) return;
+      anchorCaptureForFocus({ behavior: "auto" });
+    };
+
+    window.addEventListener("resize", onViewportShift);
+    window.visualViewport?.addEventListener("resize", onViewportShift);
+    window.visualViewport?.addEventListener("scroll", onViewportShift);
+
+    return () => {
+      window.removeEventListener("resize", onViewportShift);
+      window.visualViewport?.removeEventListener("resize", onViewportShift);
+      window.visualViewport?.removeEventListener("scroll", onViewportShift);
+      clearPendingFocusAnchor();
     };
   }, []);
 
@@ -597,6 +685,18 @@ export default function BottomCaptureBar() {
             onChange={(event) => {
               setRaw(event.target.value);
               resizeTextarea(event.currentTarget);
+              if (isTextareaFocusedRef.current) {
+                anchorCaptureForFocus({ behavior: "auto" });
+              }
+            }}
+            onFocus={() => {
+              isTextareaFocusedRef.current = true;
+              anchorCaptureForFocus({ behavior: "smooth", extraDelay: 40 });
+              anchorCaptureForFocus({ behavior: "auto", extraDelay: 260 });
+            }}
+            onBlur={() => {
+              isTextareaFocusedRef.current = false;
+              clearPendingFocusAnchor();
             }}
             rows={1}
             spellCheck={false}
