@@ -1,0 +1,10 @@
+[Unit]
+Description=Run KaosGdd missed reminder scan every 5 minutes
+
+[Timer]
+OnCalendar=*:0/5
+Persistent=true
+Unit=kaosgdd-reminders-scan-missed.service
+
+[Install]
+WantedBy=timers.target

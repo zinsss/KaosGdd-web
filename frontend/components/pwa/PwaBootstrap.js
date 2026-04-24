@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 import { setBadgeCount } from "../../lib/pwa/badge";
+import { bootstrapPushSubscription } from "../../lib/pwa/push";
 
 async function refreshAttentionBadge() {
   const [activeRes, firedRes] = await Promise.all([
@@ -29,6 +30,7 @@ export default function PwaBootstrap() {
     }
 
     refreshAttentionBadge().catch(() => undefined);
+    bootstrapPushSubscription().catch(() => undefined);
   }, []);
 
   return null;

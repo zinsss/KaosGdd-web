@@ -385,6 +385,7 @@ class ReminderService:
             "message": message,
             "url": self._build_absolute_url(deep_link_path),
             "target_kind": target_kind,
+            "badge_count": self._get_attention_badge_count(),
         }
 
     def _send_web_push(self, *, row: dict, push_payload: dict) -> None:
@@ -411,6 +412,7 @@ class ReminderService:
                             "title": push_payload["title"],
                             "body": push_payload["message"],
                             "url": push_payload["url"] or "/reminders?mode=fired",
+                            "badge_count": push_payload.get("badge_count", 0),
                         }
                     ),
                 )
@@ -471,6 +473,12 @@ class ReminderService:
             bool(send_result.get("succeeded")),
             send_result.get("reason"),
         )
+
+    def _get_attention_badge_count(self) -> int:
+        try:
+            return max(0, int(self.reminder_repo.count_attention_reminders()))
+        except Exception:
+            return 0
 
     def _decorate_reminder(self, row: dict) -> dict:
         item = dict(row)

@@ -363,6 +363,23 @@ class ReminderRepo:
             ).mappings().all()
         return [dict(row) for row in rows]
 
+    def count_attention_reminders(self) -> int:
+        with self.engine.begin() as conn:
+            row = conn.execute(
+                text(
+                    """
+                    SELECT COUNT(*) AS total
+                    FROM {items} i
+                    JOIN {reminder_items} r ON i.id = r.item_id
+                    WHERE i.item_type = 'reminder'
+                      AND i.status = 'active'
+                      AND r.state IN ('fired', 'missed')
+                    """
+                    .format(items=DbTables.ITEMS, reminder_items=DbTables.REMINDER_ITEMS)
+                )
+            ).mappings().first()
+        return int((row or {}).get("total") or 0)
+
     def mark_fired(self, reminder_item_id: str) -> None:
         now = now_iso()
         with self.engine.begin() as conn:

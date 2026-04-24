@@ -1,0 +1,8 @@
+[Unit]
+Description=KaosGdd Fire Due Reminders
+After=kaosgdd-backend.service
+Requires=kaosgdd-backend.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/curl --fail --show-error --silent -X POST http://127.0.0.1:8000/internal/reminders/fire-due
