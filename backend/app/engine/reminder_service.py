@@ -343,6 +343,8 @@ class ReminderService:
                 event_type="missed",
                 payload={"parent_item_id": row.get("parent_item_id")},
             )
+            missed_push_payload = self._build_missed_push_payload(row)
+            self._send_web_push(row=row, push_payload=missed_push_payload)
 
             missed.append(row)
 
@@ -388,6 +390,11 @@ class ReminderService:
             "target_kind": target_kind,
             "badge_count": self._get_attention_badge_count(),
         }
+
+    def _build_missed_push_payload(self, reminder: dict) -> dict:
+        payload = self._build_push_payload(reminder)
+        payload["title"] = "You have missed reminder"
+        return payload
 
     def _send_web_push(self, *, row: dict, push_payload: dict) -> None:
         if self.push_subscription_repo is None or self.web_push_client is None:
