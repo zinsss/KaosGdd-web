@@ -20,3 +20,41 @@ class WebPushClient:
             vapid_private_key=self.private_key,
             vapid_claims={"sub": self.subject},
         )
+
+    @staticmethod
+    def summarize_exception(exc: Exception) -> dict:
+        exception_type = exc.__class__.__name__
+        message = str(exc) or repr(exc)
+        status_code = None
+
+        response = getattr(exc, "response", None)
+        if response is not None:
+            status_code = getattr(response, "status_code", None) or getattr(response, "status", None)
+        if status_code is None:
+            status_code = getattr(exc, "status_code", None)
+
+        if status_code is not None:
+            summary = f"{exception_type}: HTTP {status_code} - {message}"
+        else:
+            summary = f"{exception_type}: {message}"
+
+        lowered = message.lower()
+        is_invalid_subscription = status_code in {404, 410} or any(
+            token in lowered
+            for token in (
+                "subscription no longer valid",
+                "invalid subscription",
+                "endpoint not found",
+                "unsubscribed",
+                "expired",
+                "gone",
+            )
+        )
+
+        return {
+            "exception_type": exception_type,
+            "message": message,
+            "status_code": status_code,
+            "summary": summary,
+            "is_invalid_subscription": is_invalid_subscription,
+        }

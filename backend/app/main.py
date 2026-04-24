@@ -5,6 +5,8 @@ load_dotenv()
 from contextlib import asynccontextmanager
 
 import json
+import logging
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
@@ -19,6 +21,7 @@ from app.db.repo.file_repo import FileRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.push_subscription_repo import PushSubscriptionRepo
+from app.db.repo.push_test_diagnostic_repo import PushTestDiagnosticRepo
 from app.db.repo.supply_repo import SupplyRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
@@ -42,6 +45,7 @@ note_repo = NoteRepo(engine)
 file_repo = FileRepo(engine)
 reminder_repo = ReminderRepo(engine)
 push_subscription_repo = PushSubscriptionRepo(engine)
+push_test_diagnostic_repo = PushTestDiagnosticRepo(engine)
 supply_repo = SupplyRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
@@ -62,6 +66,7 @@ reminder_service = ReminderService(
     web_push_client,
 )
 supply_service = SupplyService(items_repo, supply_repo)
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -711,16 +716,32 @@ def send_push_test(payload: dict):
         return {"ok": False, "error": "Web push is not configured"}
 
     client_id = str(payload.get("client_id") or "").strip()
+    requested_endpoint = str(payload.get("endpoint") or "").strip()
     if not client_id:
         return {"ok": False, "error": "client_id is required"}
 
-    subscriptions = push_subscription_repo.list_for_client(client_id)
-    if not subscriptions:
+    raw_subscriptions = push_subscription_repo.list_for_client(client_id)
+    deduped_subscriptions = []
+    seen_endpoints = set()
+    for row in raw_subscriptions:
+        endpoint = str(row.get("endpoint") or "")
+        if not endpoint or endpoint in seen_endpoints:
+            continue
+        seen_endpoints.add(endpoint)
+        deduped_subscriptions.append(row)
+
+    endpoint_match = None
+    if requested_endpoint:
+        endpoint_match = requested_endpoint in seen_endpoints
+
+    if not deduped_subscriptions:
         return {"ok": False, "error": "No subscriptions found for client"}
 
     sent = 0
     removed = 0
-    for subscription_row in subscriptions:
+    errors = []
+    for subscription_row in deduped_subscriptions:
+        endpoint = str(subscription_row.get("endpoint") or "")
         try:
             web_push_client.send(
                 subscription_info=subscription_row.get("subscription") or {},
@@ -733,14 +754,80 @@ def send_push_test(payload: dict):
                 ),
             )
             sent += 1
-        except Exception:
-            push_subscription_repo.remove(
-                client_id=client_id,
-                endpoint=str(subscription_row.get("endpoint") or ""),
-            )
-            removed += 1
+        except Exception as exc:
+            details = web_push_client.summarize_exception(exc)
+            was_removed = False
+            if endpoint and details["is_invalid_subscription"]:
+                was_removed = push_subscription_repo.remove(client_id=client_id, endpoint=endpoint)
+                if was_removed:
+                    removed += 1
 
-    return {"ok": sent > 0, "sent": sent, "removed": removed}
+            logger.warning(
+                (
+                    "push test send failed: client_id=%s endpoint=%s "
+                    "exception_type=%s exception_message=%s invalid_subscription=%s removed=%s"
+                ),
+                client_id,
+                endpoint,
+                details["exception_type"],
+                details["message"],
+                details["is_invalid_subscription"],
+                was_removed,
+            )
+            errors.append(
+                {
+                    "endpoint": endpoint,
+                    "exception_type": details["exception_type"],
+                    "message": details["message"],
+                    "summary": details["summary"],
+                    "removed_due_to_invalid": details["is_invalid_subscription"],
+                    "removed": was_removed,
+                }
+            )
+
+    compact_summary = f"sent={sent} removed={removed} errors={len(errors)}"
+    first_error_summary = str(errors[0].get("summary")) if errors else None
+    result = {
+        "ok": sent > 0,
+        "sent": sent,
+        "removed": removed,
+        "endpoint_match": endpoint_match,
+        "summary": compact_summary,
+        "errors": errors,
+    }
+    push_test_diagnostic_repo.upsert_last_test(
+        client_id=client_id,
+        test_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        ok=result["ok"],
+        sent=sent,
+        removed=removed,
+        first_error_summary=first_error_summary,
+    )
+    return result
+
+
+@app.get("/push/status")
+def get_push_status(client_id: str, endpoint: str | None = None):
+    clean_client_id = str(client_id or "").strip()
+    if not clean_client_id:
+        return {"ok": False, "error": "client_id is required"}
+
+    subscriptions = push_subscription_repo.list_for_client(clean_client_id)
+    has_subscription = len(subscriptions) > 0
+    endpoint_match = None
+    clean_endpoint = str(endpoint or "").strip()
+    if clean_endpoint:
+        endpoint_match = any(str(row.get("endpoint") or "") == clean_endpoint for row in subscriptions)
+
+    return {
+        "ok": True,
+        "client_id": clean_client_id,
+        "web_push_configured": web_push_client.is_enabled,
+        "subscription_count": len(subscriptions),
+        "backend_subscription_saved": has_subscription,
+        "endpoint_match": endpoint_match,
+        "last_test": push_test_diagnostic_repo.get_for_client(clean_client_id),
+    }
 
 
 @app.post("/internal/reminders/fire-due")

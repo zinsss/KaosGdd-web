@@ -114,6 +114,17 @@ CREATE TABLE IF NOT EXISTS {push_subscriptions} (
     UNIQUE (client_id, endpoint)
 );
 
+CREATE TABLE IF NOT EXISTS {push_test_diagnostics} (
+    client_id TEXT PRIMARY KEY,
+    last_test_at TEXT NOT NULL,
+    ok INTEGER NOT NULL,
+    sent INTEGER NOT NULL,
+    removed INTEGER NOT NULL,
+    first_error_summary TEXT,
+    updated_at TEXT NOT NULL,
+    CHECK (ok IN (0, 1))
+);
+
 CREATE TABLE IF NOT EXISTS {reminder_events} (
     id TEXT PRIMARY KEY,
     reminder_item_id TEXT NOT NULL,
@@ -211,6 +222,9 @@ ON {reminder_items}(state, last_fired_at);
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_client
 ON {push_subscriptions}(client_id, updated_at);
 
+CREATE INDEX IF NOT EXISTS idx_push_test_diagnostics_updated_at
+ON {push_test_diagnostics}(updated_at);
+
 """.format(
     items=DbTables.ITEMS,
     task_items=DbTables.TASK_ITEMS,
@@ -227,6 +241,7 @@ ON {push_subscriptions}(client_id, updated_at);
     item_tags=DbTables.ITEM_TAGS,
     item_links=DbTables.ITEM_LINKS,
     push_subscriptions=DbTables.PUSH_SUBSCRIPTIONS,
+    push_test_diagnostics=DbTables.PUSH_TEST_DIAGNOSTICS,
 )
 
 

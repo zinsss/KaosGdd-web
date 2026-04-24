@@ -46,6 +46,9 @@ export default function PushControls() {
     <section className="panel">
       <div className="sectionTitle">Notifications</div>
       <div className="subline">{status.message}</div>
+      {status.localStatus ? <div className="subline">{status.localStatus}</div> : null}
+      {status.backendStatus ? <div className="subline">{status.backendStatus}</div> : null}
+      {status.deliveryStatus ? <div className="subline">{status.deliveryStatus}</div> : null}
 
       {status.state === "disabled" ? (
         <div className="actionRow">
@@ -62,6 +65,9 @@ export default function PushControls() {
           </button>
           <button className="button compactButton" disabled={busy} onClick={() => run(() => sendTestPush())}>
             Send test notification
+          </button>
+          <button className="button compactButton" disabled={busy} onClick={() => run(() => Promise.resolve())}>
+            Refresh status
           </button>
         </div>
       ) : null}

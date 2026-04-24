@@ -1,4 +1,5 @@
 import { getClientId } from "./client-id";
+import { describeEnabledPushState } from "./push-status-state";
 
 const PUSH_ENDPOINT_STORAGE_KEY = "kaosgdd_pwa_push_endpoint";
 
@@ -87,6 +88,19 @@ async function getRegistration() {
   return navigator.serviceWorker.ready;
 }
 
+async function fetchBackendPushStatus(endpoint) {
+  const params = new URLSearchParams({ client_id: getClientId() });
+  if (endpoint) {
+    params.set("endpoint", endpoint);
+  }
+  const res = await fetch(`/api/push/status?${params.toString()}`, { cache: "no-store" });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.ok) {
+    throw new Error(data?.error || "Unable to load backend push status");
+  }
+  return data;
+}
+
 export async function getPushStatus() {
   if (!isPushSupported()) {
     return { state: "unsupported", message: "Push not supported on this device/browser" };
@@ -104,7 +118,23 @@ export async function getPushStatus() {
 
   const subscription = await registration.pushManager.getSubscription();
   if (permission === "granted" && subscription) {
-    return { state: "enabled", message: "Notifications enabled" };
+    try {
+      const backendStatus = await fetchBackendPushStatus(subscription.endpoint);
+      const details = describeEnabledPushState(backendStatus);
+      return {
+        state: "enabled",
+        message: details.message,
+        localStatus: "Local permission and browser subscription are active",
+        backendStatus: details.backendConnected
+          ? "Backend subscription is saved"
+          : "Backend subscription is missing",
+        deliveryStatus: details.deliveryStatus,
+        backendConnected: details.backendConnected,
+        lastTest: backendStatus.last_test || null,
+      };
+    } catch {
+      return { state: "enabled", message: "Notifications enabled (backend status unavailable)" };
+    }
   }
 
   return { state: "disabled", message: "Notifications are off" };
@@ -161,13 +191,22 @@ export async function unsubscribeFromPush(registration) {
 }
 
 export async function sendTestPush() {
+  const registration = await getRegistration();
+  const subscription = registration ? await registration.pushManager.getSubscription() : null;
   const res = await fetch("/api/push/test", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ client_id: getClientId() }),
+    body: JSON.stringify({ client_id: getClientId(), endpoint: subscription?.endpoint || "" }),
   });
   const data = await res.json().catch(() => null);
-  if (!res.ok || !data?.ok) {
+  if (!res.ok || !data) {
     throw new Error(data?.error || "Failed to send test push");
   }
+  if (!data.ok) {
+    const firstError = data?.errors?.[0];
+    const suffix = firstError?.summary ? ` (${firstError.summary})` : "";
+    const removedText = firstError?.removed ? " Subscription was removed after failed delivery." : "";
+    throw new Error(`Push send failed on backend${suffix}.${removedText} ${data?.summary || ""}`.trim());
+  }
+  return data;
 }

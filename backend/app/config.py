@@ -48,3 +48,4 @@ class DbTables:
     ITEM_TAGS = "item_tags"
     ITEM_LINKS = "item_links"
     PUSH_SUBSCRIPTIONS = "push_subscriptions"
+    PUSH_TEST_DIAGNOSTICS = "push_test_diagnostics"
