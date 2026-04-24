@@ -87,6 +87,19 @@ async function getRegistration() {
   return navigator.serviceWorker.ready;
 }
 
+async function fetchBackendPushStatus(endpoint) {
+  const params = new URLSearchParams({ client_id: getClientId() });
+  if (endpoint) {
+    params.set("endpoint", endpoint);
+  }
+  const res = await fetch(`/api/push/status?${params.toString()}`, { cache: "no-store" });
+  const data = await res.json().catch(() => null);
+  if (!res.ok || !data?.ok) {
+    throw new Error(data?.error || "Unable to load backend push status");
+  }
+  return data;
+}
+
 export async function getPushStatus() {
   if (!isPushSupported()) {
     return { state: "unsupported", message: "Push not supported on this device/browser" };
@@ -104,7 +117,33 @@ export async function getPushStatus() {
 
   const subscription = await registration.pushManager.getSubscription();
   if (permission === "granted" && subscription) {
-    return { state: "enabled", message: "Notifications enabled" };
+    try {
+      const backendStatus = await fetchBackendPushStatus(subscription.endpoint);
+      if (!backendStatus.backend_subscription_saved || backendStatus.endpoint_match === false) {
+        return {
+          state: "enabled",
+          message: "Notifications enabled locally, but backend subscription is missing",
+          backendConnected: false,
+          lastTest: backendStatus.last_test || null,
+        };
+      }
+      if (backendStatus.last_test && backendStatus.last_test.ok === false) {
+        return {
+          state: "enabled",
+          message: "Notifications enabled, but last backend test push failed",
+          backendConnected: true,
+          lastTest: backendStatus.last_test,
+        };
+      }
+      return {
+        state: "enabled",
+        message: "Notifications enabled and backend connected",
+        backendConnected: true,
+        lastTest: backendStatus.last_test || null,
+      };
+    } catch {
+      return { state: "enabled", message: "Notifications enabled (backend status unavailable)" };
+    }
   }
 
   return { state: "disabled", message: "Notifications are off" };
@@ -167,7 +206,14 @@ export async function sendTestPush() {
     body: JSON.stringify({ client_id: getClientId() }),
   });
   const data = await res.json().catch(() => null);
-  if (!res.ok || !data?.ok) {
+  if (!res.ok || !data) {
     throw new Error(data?.error || "Failed to send test push");
   }
+  if (!data.ok) {
+    const firstError = data?.errors?.[0];
+    const suffix = firstError?.summary ? ` (${firstError.summary})` : "";
+    const removedText = data?.removed ? " Subscription was removed after failed delivery." : "";
+    throw new Error(`Push send failed on backend${suffix}.${removedText}`.trim());
+  }
+  return data;
 }
