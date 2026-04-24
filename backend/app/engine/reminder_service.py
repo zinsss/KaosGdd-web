@@ -420,20 +420,21 @@ class ReminderService:
             except Exception as exc:
                 details = self.web_push_client.summarize_exception(exc)
                 was_removed = False
-                if client_id and endpoint and details["remove_subscription"]:
+                if client_id and endpoint and details["is_invalid_subscription"]:
                     was_removed = self.push_subscription_repo.remove(client_id=client_id, endpoint=endpoint)
                     if was_removed:
                         removed += 1
                 logger.warning(
                     (
                         "reminder web push send failed: reminder_id=%s client_id=%s endpoint=%s "
-                        "exception_type=%s exception_message=%s removed=%s"
+                        "exception_type=%s exception_message=%s invalid_subscription=%s removed=%s"
                     ),
                     row.get("id"),
                     client_id,
                     endpoint,
                     details["exception_type"],
                     details["message"],
+                    details["is_invalid_subscription"],
                     was_removed,
                 )
 

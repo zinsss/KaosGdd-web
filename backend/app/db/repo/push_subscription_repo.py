@@ -45,6 +45,15 @@ class PushSubscriptionRepo:
                         "updated_at": now,
                     },
                 )
+                conn.execute(
+                    text(
+                        """
+                        DELETE FROM {push_subscriptions}
+                        WHERE client_id = :client_id AND endpoint <> :endpoint
+                        """.format(push_subscriptions=DbTables.PUSH_SUBSCRIPTIONS)
+                    ),
+                    {"client_id": client_id, "endpoint": endpoint},
+                )
                 return str(existing["id"])
 
             subscription_id = new_id()
@@ -68,6 +77,15 @@ class PushSubscriptionRepo:
                     "created_at": now,
                     "updated_at": now,
                 },
+            )
+            conn.execute(
+                text(
+                    """
+                    DELETE FROM {push_subscriptions}
+                    WHERE client_id = :client_id AND endpoint <> :endpoint
+                    """.format(push_subscriptions=DbTables.PUSH_SUBSCRIPTIONS)
+                ),
+                {"client_id": client_id, "endpoint": endpoint},
             )
             return subscription_id
 

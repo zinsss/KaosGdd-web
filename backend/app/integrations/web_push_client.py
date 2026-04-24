@@ -39,7 +39,7 @@ class WebPushClient:
             summary = f"{exception_type}: {message}"
 
         lowered = message.lower()
-        remove_subscription = status_code in {404, 410} or any(
+        is_invalid_subscription = status_code in {404, 410} or any(
             token in lowered
             for token in (
                 "subscription no longer valid",
@@ -56,5 +56,5 @@ class WebPushClient:
             "message": message,
             "status_code": status_code,
             "summary": summary,
-            "remove_subscription": remove_subscription,
+            "is_invalid_subscription": is_invalid_subscription,
         }
