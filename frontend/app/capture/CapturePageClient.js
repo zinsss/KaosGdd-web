@@ -38,28 +38,26 @@ function buildRaw({ type, title, due, remindAt, repeat, eventDate, reminderAt, t
   const tagText = tags.length ? tags.map((tag) => `#${tag}`).join(" ") : "";
 
   if (type === "task") {
-    const parts = ["--", String(title || "").trim()];
-    if (due.trim()) parts.push(`d:${due.trim()}`);
-    if (remindAt.trim()) parts.push(`r:${remindAt.trim()}`);
-    if (repeat.trim()) parts.push(`R:${repeat.trim()}`);
-    if (tagText) parts.push(tagText);
-    const firstLine = parts.join(" ").trim();
+    const lines = [`-- ${String(title || "").trim()}`.trim()];
+    if (due.trim()) lines.push(`d:${due.trim()}`);
+    if (remindAt.trim()) lines.push(`r:${remindAt.trim()}`);
+    if (repeat.trim()) lines.push(`R:${repeat.trim()}`);
+    if (tagText) lines.push(tagText);
     if (memo.trim()) {
-      return `${firstLine}\n"""\n${memo.trim()}\n"""`;
+      lines.push('"""', memo.trim(), '"""');
     }
-    return firstLine;
+    return lines.join("\n").trim();
   }
 
   if (type === "event") {
-    const parts = ["^^", String(title || "").trim()];
-    if (eventDate.trim()) parts.push(`d:${eventDate.trim()}`);
-    if (repeat.trim()) parts.push(`R:${repeat.trim()}`);
-    if (tagText) parts.push(tagText);
-    const firstLine = parts.join(" ").trim();
+    const lines = [`^^ ${String(title || "").trim()}`.trim()];
+    if (eventDate.trim()) lines.push(`d:${eventDate.trim()}`);
+    if (repeat.trim()) lines.push(`R:${repeat.trim()}`);
+    if (tagText) lines.push(tagText);
     if (memo.trim()) {
-      return `${firstLine}\n"""\n${memo.trim()}\n"""`;
+      lines.push('"""', memo.trim(), '"""');
     }
-    return firstLine;
+    return lines.join("\n").trim();
   }
 
   if (type === "reminder") {
@@ -68,9 +66,9 @@ function buildRaw({ type, title, due, remindAt, repeat, eventDate, reminderAt, t
     return parts.join(" ").trim();
   }
 
-  const journalParts = ["//", String(body || "").trim()];
-  if (tagText) journalParts.push(tagText);
-  return journalParts.join(" ").trim();
+  const lines = [`// ${String(body || "").trim()}`.trim()];
+  if (tagText) lines.push(tagText);
+  return lines.join("\n").trim();
 }
 
 function validate({ type, title, due, remindAt, eventDate, reminderAt, body, raw }) {
