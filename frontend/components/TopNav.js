@@ -22,12 +22,10 @@ export default function TopNav() {
   const tasksActive = pathname.startsWith("/tasks");
   const remindersActive = pathname.startsWith("/reminders");
   const eventsActive = pathname.startsWith("/events");
-  const journalsActive = pathname.startsWith("/journals");
   const notesActive = pathname.startsWith("/notes");
   const filesActive = pathname.startsWith("/files");
   const faxActive = pathname.startsWith("/fax");
   const suppliesActive = pathname.startsWith("/supplies");
-  const captureActive = pathname.startsWith("/capture");
 
   useEffect(() => {
     let isMounted = true;
@@ -89,19 +87,22 @@ export default function TopNav() {
           {UI_STRINGS.TASKS}
         </Link>
         <Link
+          className={"topNavTextLink" + reminderAttentionClass + (remindersActive ? " topNavTextLinkActive" : "")}
+          href="/reminders"
+        >
+          {UI_STRINGS.REMINDERS}
+        </Link>
+        <Link
           className={"topNavTextLink" + eventAttentionClass + (eventsActive ? " topNavTextLinkActive" : "")}
           href="/events"
         >
           {UI_STRINGS.EVENTS}
         </Link>
         <Link
-          className={"topNavTextLink" + reminderAttentionClass + (remindersActive ? " topNavTextLinkActive" : "")}
-          href="/reminders"
+          className={"topNavTextLink" + suppliesAttentionClass + (suppliesActive ? " topNavTextLinkActive" : "")}
+          href="/supplies"
         >
-          {UI_STRINGS.REMINDERS}
-        </Link>
-        <Link className={"topNavTextLink" + (journalsActive ? " topNavTextLinkActive" : "")} href="/journals">
-          {UI_STRINGS.JOURNALS}
+          {UI_STRINGS.SUPPLIES}
         </Link>
         <Link className={"topNavTextLink" + noteAttentionClass + (notesActive ? " topNavTextLinkActive" : "")} href="/notes">
           {UI_STRINGS.NOTES}
@@ -111,15 +112,6 @@ export default function TopNav() {
         </Link>
         <Link className={"topNavTextLink" + (faxActive ? " topNavTextLinkActive" : "")} href="/fax">
           {UI_STRINGS.FAX}
-        </Link>
-        <Link
-          className={"topNavTextLink" + suppliesAttentionClass + (suppliesActive ? " topNavTextLinkActive" : "")}
-          href="/supplies"
-        >
-          {UI_STRINGS.SUPPLIES}
-        </Link>
-        <Link className={"topNavTextLink" + (captureActive ? " topNavTextLinkActive" : "")} href="/capture">
-          {UI_STRINGS.CAPTURE}
         </Link>
       </div>
     </nav>

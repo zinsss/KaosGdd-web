@@ -411,6 +411,11 @@ export default function BottomCaptureBar() {
     fileInputRef.current?.click();
   }
 
+  function onOpenCapturePage() {
+    if (isSubmitting) return;
+    router.push("/capture");
+  }
+
   function onFileSelected(event) {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -719,6 +724,10 @@ export default function BottomCaptureBar() {
                 onChange={onFileSelected}
                 aria-label={UI_STRINGS.ATTACH_FILE}
               />
+
+              <button className="button pillButton bottomCaptureCaptureButton" type="button" onClick={onOpenCapturePage} disabled={isSubmitting}>
+                {UI_STRINGS.CAPTURE}
+              </button>
 
               <button className="button pillButton bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
                 {UI_STRINGS.ATTACH_ICON}
