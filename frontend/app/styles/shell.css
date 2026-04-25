@@ -258,6 +258,24 @@
   opacity: 1;
 }
 
+.bottomCaptureBar .bottomCaptureCaptureButton {
+  width: auto;
+  min-width: 84px;
+  height: 34px;
+  line-height: 34px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border-color: rgba(186, 194, 222, 0.24);
+  background: var(--bottom-capture-surface);
+  color: var(--ui-text);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+}
+
+.bottomCaptureBar .bottomCaptureCaptureButton:hover {
+  border-color: rgba(186, 194, 222, 0.34);
+  background: #414357;
+}
+
 .bottomCaptureBar .bottomCaptureAttachButton:hover {
   border-color: #c4cbff;
   background: #c4cbff;
@@ -284,7 +302,8 @@
 }
 
 .bottomCaptureBar .bottomCaptureAttachButton:disabled,
-.bottomCaptureBar .bottomCaptureButton:disabled {
+.bottomCaptureBar .bottomCaptureButton:disabled,
+.bottomCaptureBar .bottomCaptureCaptureButton:disabled {
   opacity: 1;
   border-color: rgba(180, 190, 254, 0.65);
   background: rgba(180, 190, 254, 0.7);
@@ -403,6 +422,7 @@
   }
 
   .bottomCaptureAttachButton,
+  .bottomCaptureCaptureButton,
   .bottomCaptureButton,
   .bottomCaptureCancelButton {
     min-width: 0;
