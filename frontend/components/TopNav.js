@@ -65,10 +65,10 @@ export default function TopNav() {
     () => attentionClass({ calm: navStatus.has_note_draft, tone: "Teal" }),
     [navStatus.has_note_draft],
   );
-  const fileAttentionClass = useMemo(() => {
-    if (navStatus.has_attention_fax) return attentionClass({ strong: true, tone: "Red" });
-    return attentionClass({ calm: navStatus.has_file_draft, tone: "Teal" });
-  }, [navStatus.has_attention_fax, navStatus.has_file_draft]);
+  const fileAttentionClass = useMemo(
+    () => attentionClass({ calm: navStatus.has_file_draft, tone: "Teal" }),
+    [navStatus.has_file_draft],
+  );
   const suppliesAttentionClass = useMemo(
     () => attentionClass({ calm: navStatus.has_pending_supplies, tone: "Yellow" }),
     [navStatus.has_pending_supplies],
