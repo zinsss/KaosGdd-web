@@ -1,5 +1,42 @@
 const SW_CACHE = "kaosgdd-app-shell-v0";
 const APP_SHELL_PATHS = ["/", "/tasks", "/reminders", "/events", "/journals", "/notes", "/files"];
+const BADGE_DEBUG_PREFIX = "[sw:badge]";
+
+const canUseBadgeApi = () => typeof self.navigator !== "undefined";
+
+const tryUpdateBadge = async (badgeCount) => {
+  const hasNavigator = canUseBadgeApi();
+  const hasSetAppBadge = hasNavigator && "setAppBadge" in self.navigator;
+  const hasClearAppBadge = hasNavigator && "clearAppBadge" in self.navigator;
+
+  console.debug(
+    `${BADGE_DEBUG_PREFIX} api=${hasSetAppBadge || hasClearAppBadge} count=${badgeCount}`,
+  );
+
+  if (!Number.isFinite(badgeCount)) return;
+
+  try {
+    if (badgeCount > 0) {
+      if (!hasSetAppBadge) {
+        console.debug(`${BADGE_DEBUG_PREFIX} set skipped (unsupported)`);
+        return;
+      }
+      await self.navigator.setAppBadge(badgeCount);
+      console.debug(`${BADGE_DEBUG_PREFIX} set ok count=${badgeCount}`);
+      return;
+    }
+
+    if (!hasClearAppBadge) {
+      console.debug(`${BADGE_DEBUG_PREFIX} clear skipped (unsupported)`);
+      return;
+    }
+    await self.navigator.clearAppBadge();
+    console.debug(`${BADGE_DEBUG_PREFIX} clear ok`);
+  } catch (error) {
+    const errorText = error instanceof Error ? error.message : String(error);
+    console.debug(`${BADGE_DEBUG_PREFIX} failed ${errorText}`);
+  }
+};
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -54,12 +91,7 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     (async () => {
       if (badgeCount !== null) {
-        if (badgeCount > 0 && "setAppBadge" in self.registration) {
-          await self.registration.setAppBadge(badgeCount).catch(() => undefined);
-        }
-        if (badgeCount <= 0 && "clearAppBadge" in self.registration) {
-          await self.registration.clearAppBadge().catch(() => undefined);
-        }
+        await tryUpdateBadge(badgeCount);
       }
 
       await self.registration.showNotification(title, {
@@ -89,4 +121,19 @@ self.addEventListener("notificationclick", (event) => {
       return self.clients.openWindow(nextUrl);
     }),
   );
+});
+
+self.addEventListener("message", (event) => {
+  const data = event.data;
+  if (!data || data.type !== "KAOSGDD_DEBUG_BADGE") return;
+  if (self.location.hostname !== "localhost") return;
+
+  if (data.action === "set") {
+    const count = Number(data.count);
+    void tryUpdateBadge(Number.isFinite(count) ? count : 1);
+    return;
+  }
+  if (data.action === "clear") {
+    void tryUpdateBadge(0);
+  }
 });
