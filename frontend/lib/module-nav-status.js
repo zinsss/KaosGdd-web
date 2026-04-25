@@ -12,7 +12,6 @@ export function hasAppAttention(status) {
   const navStatus = normalizeModuleNavStatus(status);
   return (
     navStatus.has_overdue_tasks ||
-    navStatus.has_today_events ||
     navStatus.has_missed_reminders ||
     navStatus.has_pending_supplies ||
     navStatus.has_note_draft ||

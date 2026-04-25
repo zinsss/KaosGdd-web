@@ -3,7 +3,6 @@ import json
 import logging
 import re
 import threading
-from zoneinfo import ZoneInfo
 
 from app.config import SETTINGS
 from app.db.repo.event_repo import EventRepo
@@ -518,8 +517,6 @@ class ReminderService:
             self._is_task_due_at_overdue(task.get("due_at"), now_utc) for task in self.task_repo.list_tasks_active()
         )
 
-        today = datetime.now(ZoneInfo(SETTINGS.APP_TIMEZONE)).date().isoformat()
-        has_today_events = bool(self.event_repo and self.event_repo.list_events_in_range(start_date=today, end_date=today, mode="active"))
         has_missed_reminders = any(
             (reminder.get("state") or "").strip().lower() == "missed"
             for reminder in self.reminder_repo.list_reminders_active()
@@ -529,7 +526,6 @@ class ReminderService:
         return any(
             [
                 has_overdue_tasks,
-                has_today_events,
                 has_missed_reminders,
                 has_pending_supplies,
                 False,  # has_note_draft
