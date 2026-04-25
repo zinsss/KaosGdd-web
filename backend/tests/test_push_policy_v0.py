@@ -96,6 +96,7 @@ def test_fax_received_push_is_one_per_event(main_module) -> None:
     assert first["sent"] is True
     assert len(web_push.payloads) == 1
     assert web_push.payloads[0]["title"] == "Fax received"
+    assert web_push.payloads[0]["url"] == "https://kaos.test/fax"
 
     duplicate = main_module.notify_fax_received({"fax_id": "fax-123", "event_id": "evt-1", "title": "Lab fax"})
     assert duplicate["ok"] is True
@@ -118,6 +119,7 @@ def test_fax_send_failed_push_is_one_per_event(main_module) -> None:
     assert first["sent"] is True
     assert len(web_push.payloads) == 1
     assert web_push.payloads[0]["title"] == "Fax send failed"
+    assert web_push.payloads[0]["url"] == "https://kaos.test/fax"
 
     duplicate = main_module.notify_fax_send_failed(
         {"fax_id": "fax-456", "event_id": "send-fail-1", "title": "Outbound referral"}

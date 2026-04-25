@@ -438,7 +438,7 @@ class ReminderService:
         push_payload = {
             "title": push_title,
             "message": display_title,
-            "url": self._build_absolute_url("/reminders?mode=fired"),
+            "url": self._build_absolute_url("/fax"),
             "badge_count": self._get_attention_badge_count(),
             "has_app_attention": True,
         }

@@ -25,6 +25,7 @@ export default function TopNav() {
   const journalsActive = pathname.startsWith("/journals");
   const notesActive = pathname.startsWith("/notes");
   const filesActive = pathname.startsWith("/files");
+  const faxActive = pathname.startsWith("/fax");
   const suppliesActive = pathname.startsWith("/supplies");
 
   useEffect(() => {
@@ -106,6 +107,9 @@ export default function TopNav() {
         </Link>
         <Link className={"topNavTextLink" + fileAttentionClass + (filesActive ? " topNavTextLinkActive" : "")} href="/files">
           {UI_STRINGS.FILES}
+        </Link>
+        <Link className={"topNavTextLink" + (faxActive ? " topNavTextLinkActive" : "")} href="/fax">
+          {UI_STRINGS.FAX}
         </Link>
         <Link
           className={"topNavTextLink" + suppliesAttentionClass + (suppliesActive ? " topNavTextLinkActive" : "")}
