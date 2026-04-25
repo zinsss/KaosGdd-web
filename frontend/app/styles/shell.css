@@ -114,8 +114,14 @@
 }
 
 .topNavTextLink {
+  --top-nav-link-color: var(--ui-text-dim);
+  --top-nav-link-opacity: 1;
+  --top-nav-link-weight: 400;
+  --top-nav-active-link-color: var(--ctp-lavender);
   display: inline-block;
-  color: var(--ui-text-dim);
+  color: var(--top-nav-link-color);
+  opacity: var(--top-nav-link-opacity);
+  font-weight: var(--top-nav-link-weight);
   text-decoration: none;
   white-space: nowrap;
   padding: 0 0 3px;
@@ -127,8 +133,42 @@
 }
 
 .topNavTextLinkActive {
-  color: var(--ctp-lavender);
-  border-bottom-color: var(--ctp-lavender);
+  color: var(--top-nav-active-link-color);
+  border-bottom-color: var(--top-nav-active-link-color);
+}
+
+.topNavAttentionStrong {
+  --top-nav-link-opacity: 1;
+  --top-nav-link-weight: 600;
+}
+
+.topNavAttentionCalm {
+  --top-nav-link-opacity: 0.86;
+}
+
+.topNavAttentionToneMaroon {
+  --top-nav-link-color: var(--ctp-maroon);
+  --top-nav-active-link-color: var(--ctp-maroon);
+}
+
+.topNavAttentionToneRed {
+  --top-nav-link-color: var(--ctp-red);
+  --top-nav-active-link-color: var(--ctp-red);
+}
+
+.topNavAttentionToneRosewater {
+  --top-nav-link-color: var(--ctp-rosewater);
+  --top-nav-active-link-color: var(--ctp-rosewater);
+}
+
+.topNavAttentionToneYellow {
+  --top-nav-link-color: var(--ctp-yellow);
+  --top-nav-active-link-color: var(--ctp-yellow);
+}
+
+.topNavAttentionToneTeal {
+  --top-nav-link-color: var(--ctp-teal);
+  --top-nav-active-link-color: var(--ctp-teal);
 }
 
 .bottomCaptureBar {
