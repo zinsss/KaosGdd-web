@@ -8,6 +8,18 @@ export const DEFAULT_MODULE_NAV_STATUS = {
   has_attention_fax: false,
 };
 
+export function hasAppAttention(status) {
+  const navStatus = normalizeModuleNavStatus(status);
+  return (
+    navStatus.has_overdue_tasks ||
+    navStatus.has_missed_reminders ||
+    navStatus.has_pending_supplies ||
+    navStatus.has_note_draft ||
+    navStatus.has_file_draft ||
+    navStatus.has_attention_fax
+  );
+}
+
 export function normalizeModuleNavStatus(payload) {
   if (!payload || typeof payload !== "object") return { ...DEFAULT_MODULE_NAV_STATUS };
 

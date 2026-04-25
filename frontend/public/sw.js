@@ -21,8 +21,8 @@ const tryUpdateBadge = async (badgeCount) => {
         console.debug(`${BADGE_DEBUG_PREFIX} set skipped (unsupported)`);
         return;
       }
-      await self.navigator.setAppBadge(badgeCount);
-      console.debug(`${BADGE_DEBUG_PREFIX} set ok count=${badgeCount}`);
+      await self.navigator.setAppBadge();
+      console.debug(`${BADGE_DEBUG_PREFIX} set ok`);
       return;
     }
 
@@ -86,12 +86,16 @@ self.addEventListener("push", (event) => {
   const title = payload.title || "KaosGdd";
   const body = payload.body || "New reminder";
   const url = payload.url || "/reminders?mode=fired";
+  const hasAppAttention =
+    typeof payload.has_app_attention === "boolean" ? payload.has_app_attention : null;
   const badgeCount = Number.isFinite(payload.badge_count) ? Number(payload.badge_count) : null;
 
   event.waitUntil(
     (async () => {
-      if (badgeCount !== null) {
-        await tryUpdateBadge(badgeCount);
+      if (hasAppAttention !== null) {
+        await tryUpdateBadge(hasAppAttention ? 1 : 0);
+      } else if (badgeCount !== null) {
+        await tryUpdateBadge(badgeCount > 0 ? 1 : 0);
       }
 
       await self.registration.showNotification(title, {
