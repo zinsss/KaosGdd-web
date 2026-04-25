@@ -22,6 +22,7 @@ export default function TopNav() {
   const tasksActive = pathname.startsWith("/tasks");
   const remindersActive = pathname.startsWith("/reminders");
   const eventsActive = pathname.startsWith("/events");
+  const journalActive = pathname.startsWith("/journals");
   const notesActive = pathname.startsWith("/notes");
   const filesActive = pathname.startsWith("/files");
   const faxActive = pathname.startsWith("/fax");
@@ -97,6 +98,9 @@ export default function TopNav() {
           href="/events"
         >
           {UI_STRINGS.EVENTS}
+        </Link>
+        <Link className={"topNavTextLink" + (journalActive ? " topNavTextLinkActive" : "")} href="/journals">
+          Journal
         </Link>
         <Link
           className={"topNavTextLink" + suppliesAttentionClass + (suppliesActive ? " topNavTextLinkActive" : "")}
