@@ -27,6 +27,7 @@ export default function TopNav() {
   const filesActive = pathname.startsWith("/files");
   const faxActive = pathname.startsWith("/fax");
   const suppliesActive = pathname.startsWith("/supplies");
+  const captureActive = pathname.startsWith("/capture");
 
   useEffect(() => {
     let isMounted = true;
@@ -116,6 +117,9 @@ export default function TopNav() {
           href="/supplies"
         >
           {UI_STRINGS.SUPPLIES}
+        </Link>
+        <Link className={"topNavTextLink" + (captureActive ? " topNavTextLinkActive" : "")} href="/capture">
+          {UI_STRINGS.CAPTURE}
         </Link>
       </div>
     </nav>

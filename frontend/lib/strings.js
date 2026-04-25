@@ -41,6 +41,7 @@ export const UI_STRINGS = {
   FILES: "Files",
   FAX: "Fax",
   SUPPLIES: "Supplies",
+  CAPTURE: "Capture",
   TASK_DETAIL: "Task Detail",
   REMINDER_DETAIL: "Reminder Detail",
   TASK_LIST: "Task list",
