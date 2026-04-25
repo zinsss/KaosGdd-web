@@ -49,3 +49,5 @@ class DbTables:
     ITEM_LINKS = "item_links"
     PUSH_SUBSCRIPTIONS = "push_subscriptions"
     PUSH_TEST_DIAGNOSTICS = "push_test_diagnostics"
+    PUSH_TASK_OVERDUE_STATE = "push_task_overdue_state"
+    PUSH_EVENT_DEDUPE = "push_event_dedupe"

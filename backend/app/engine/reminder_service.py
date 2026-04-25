@@ -30,6 +30,7 @@ class ReminderService:
         supply_repo: SupplyRepo | None = None,
         push_subscription_repo=None,
         web_push_client=None,
+        push_policy_repo=None,
     ) -> None:
         self.reminder_repo = reminder_repo
         self.task_repo = task_repo
@@ -38,6 +39,7 @@ class ReminderService:
         self.supply_repo = supply_repo
         self.push_subscription_repo = push_subscription_repo
         self.web_push_client = web_push_client
+        self.push_policy_repo = push_policy_repo
 
     def create_task_reminder(
         self,
@@ -352,6 +354,96 @@ class ReminderService:
             missed.append(row)
 
         return missed
+
+    def scan_task_overdue_pushes(self) -> list[dict]:
+        if self.push_policy_repo is None:
+            return []
+
+        now_utc = datetime.now(timezone.utc)
+        previous_state = self.push_policy_repo.list_task_overdue_state()
+        pushed: list[dict] = []
+
+        for task in self.task_repo.list_tasks_active():
+            task_id = str(task.get("id") or "").strip()
+            due_at = str(task.get("due_at") or "").strip() or None
+            if not task_id:
+                continue
+
+            is_overdue = self._is_task_due_at_overdue(due_at, now_utc)
+            prev = previous_state.get(task_id, {})
+            prev_due_at = str(prev.get("last_due_at") or "").strip() or None
+            prev_is_overdue = bool(prev.get("last_is_overdue"))
+
+            became_overdue = is_overdue and (not prev_is_overdue or prev_due_at != due_at)
+            if became_overdue:
+                push_payload = {
+                    "title": "Task became overdue",
+                    "message": str(task.get("title") or "A task").strip() or "A task became overdue.",
+                    "url": self._build_absolute_url(f"/tasks/{task_id}"),
+                    "badge_count": self._get_attention_badge_count(),
+                    "has_app_attention": True,
+                }
+                self._send_web_push(row={"id": task_id, "parent_item_id": task_id}, push_payload=push_payload)
+                pushed.append({"task_id": task_id, "due_at": due_at})
+
+            self.push_policy_repo.upsert_task_overdue_state(
+                task_item_id=task_id,
+                due_at=due_at,
+                is_overdue=is_overdue,
+            )
+
+        return pushed
+
+    def notify_fax_received(self, *, fax_id: str, title: str | None = None, event_id: str | None = None) -> bool:
+        return self._notify_fax_event(
+            fax_id=fax_id,
+            title=title,
+            event_id=event_id,
+            event_type="fax_received",
+            push_title="Fax received",
+        )
+
+    def notify_fax_send_failed(self, *, fax_id: str, title: str | None = None, event_id: str | None = None) -> bool:
+        return self._notify_fax_event(
+            fax_id=fax_id,
+            title=title,
+            event_id=event_id,
+            event_type="fax_send_failed",
+            push_title="Fax send failed",
+        )
+
+    def _notify_fax_event(
+        self,
+        *,
+        fax_id: str,
+        title: str | None,
+        event_id: str | None,
+        event_type: str,
+        push_title: str,
+    ) -> bool:
+        if self.push_policy_repo is None:
+            return False
+
+        clean_fax_id = str(fax_id or "").strip()
+        if not clean_fax_id:
+            return False
+
+        clean_event_id = str(event_id or "").strip()
+        dedupe_key = f"{event_type}:{clean_event_id or clean_fax_id}"
+        should_send = self.push_policy_repo.record_event_once(event_key=dedupe_key, event_type=event_type)
+        if not should_send:
+            return False
+
+        display_title = str(title or "").strip() or f"Fax {clean_fax_id}"
+        push_payload = {
+            "title": push_title,
+            "message": display_title,
+            "url": self._build_absolute_url("/fax"),
+            "badge_count": self._get_attention_badge_count(),
+            "has_app_attention": True,
+        }
+        self._send_web_push(row={"id": clean_fax_id, "parent_item_id": None}, push_payload=push_payload)
+        return True
 
     def _build_push_payload(self, reminder: dict) -> dict:
         reminder_id = str(reminder.get("id") or "").strip()
