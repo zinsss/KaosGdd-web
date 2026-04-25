@@ -125,6 +125,21 @@ CREATE TABLE IF NOT EXISTS {push_test_diagnostics} (
     CHECK (ok IN (0, 1))
 );
 
+CREATE TABLE IF NOT EXISTS {push_task_overdue_state} (
+    task_item_id TEXT PRIMARY KEY,
+    last_due_at TEXT,
+    last_is_overdue INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (task_item_id) REFERENCES {task_items}(item_id) ON DELETE CASCADE,
+    CHECK (last_is_overdue IN (0, 1))
+);
+
+CREATE TABLE IF NOT EXISTS {push_event_dedupe} (
+    event_key TEXT PRIMARY KEY,
+    event_type TEXT NOT NULL,
+    created_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS {reminder_events} (
     id TEXT PRIMARY KEY,
     reminder_item_id TEXT NOT NULL,
@@ -225,6 +240,12 @@ ON {push_subscriptions}(client_id, updated_at);
 CREATE INDEX IF NOT EXISTS idx_push_test_diagnostics_updated_at
 ON {push_test_diagnostics}(updated_at);
 
+CREATE INDEX IF NOT EXISTS idx_push_task_overdue_state_updated_at
+ON {push_task_overdue_state}(updated_at);
+
+CREATE INDEX IF NOT EXISTS idx_push_event_dedupe_type_created
+ON {push_event_dedupe}(event_type, created_at);
+
 """.format(
     items=DbTables.ITEMS,
     task_items=DbTables.TASK_ITEMS,
@@ -242,6 +263,8 @@ ON {push_test_diagnostics}(updated_at);
     item_links=DbTables.ITEM_LINKS,
     push_subscriptions=DbTables.PUSH_SUBSCRIPTIONS,
     push_test_diagnostics=DbTables.PUSH_TEST_DIAGNOSTICS,
+    push_task_overdue_state=DbTables.PUSH_TASK_OVERDUE_STATE,
+    push_event_dedupe=DbTables.PUSH_EVENT_DEDUPE,
 )
 
 

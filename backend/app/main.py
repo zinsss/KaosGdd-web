@@ -22,6 +22,7 @@ from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.push_subscription_repo import PushSubscriptionRepo
 from app.db.repo.push_test_diagnostic_repo import PushTestDiagnosticRepo
+from app.db.repo.push_policy_repo import PushPolicyRepo
 from app.db.repo.supply_repo import SupplyRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
@@ -46,6 +47,7 @@ file_repo = FileRepo(engine)
 reminder_repo = ReminderRepo(engine)
 push_subscription_repo = PushSubscriptionRepo(engine)
 push_test_diagnostic_repo = PushTestDiagnosticRepo(engine)
+push_policy_repo = PushPolicyRepo(engine)
 supply_repo = SupplyRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
@@ -65,6 +67,7 @@ reminder_service = ReminderService(
     supply_repo,
     push_subscription_repo,
     web_push_client,
+    push_policy_repo,
 )
 supply_service = SupplyService(items_repo, supply_repo)
 logger = logging.getLogger(__name__)
@@ -840,7 +843,42 @@ def fire_due_reminders():
 @app.post("/internal/reminders/scan-missed")
 def scan_missed_reminders():
     rows = reminder_service.scan_missed_reminders()
+    overdue_rows = reminder_service.scan_task_overdue_pushes()
+    return {
+        "ok": True,
+        "count": len(rows),
+        "items": rows,
+        "overdue_push_count": len(overdue_rows),
+        "overdue_items": overdue_rows,
+    }
+
+
+@app.post("/internal/tasks/scan-overdue-pushes")
+def scan_overdue_pushes():
+    rows = reminder_service.scan_task_overdue_pushes()
     return {"ok": True, "count": len(rows), "items": rows}
+
+
+@app.post("/internal/fax/received")
+def notify_fax_received(payload: dict):
+    fax_id = str(payload.get("fax_id") or "").strip()
+    if not fax_id:
+        return {"ok": False, "error": "fax_id is required"}
+    title = str(payload.get("title") or "").strip() or None
+    event_id = str(payload.get("event_id") or "").strip() or None
+    sent = reminder_service.notify_fax_received(fax_id=fax_id, title=title, event_id=event_id)
+    return {"ok": True, "sent": bool(sent)}
+
+
+@app.post("/internal/fax/send-failed")
+def notify_fax_send_failed(payload: dict):
+    fax_id = str(payload.get("fax_id") or "").strip()
+    if not fax_id:
+        return {"ok": False, "error": "fax_id is required"}
+    title = str(payload.get("title") or "").strip() or None
+    event_id = str(payload.get("event_id") or "").strip() or None
+    sent = reminder_service.notify_fax_send_failed(fax_id=fax_id, title=title, event_id=event_id)
+    return {"ok": True, "sent": bool(sent)}
 
 
 @app.post("/internal/lifecycle/maintain")
