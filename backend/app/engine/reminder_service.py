@@ -3,11 +3,13 @@ import json
 import logging
 import re
 import threading
+from zoneinfo import ZoneInfo
 
 from app.config import SETTINGS
 from app.db.repo.event_repo import EventRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.reminder_repo import ReminderRepo
+from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.task_repo import TaskRepo
 from app.integrations.push_format import build_push_body, build_push_title
 from app.integrations.pushover_client import send_pushover
@@ -26,6 +28,7 @@ class ReminderService:
         task_repo: TaskRepo,
         event_repo: EventRepo | None = None,
         items_repo: ItemsRepo | None = None,
+        supply_repo: SupplyRepo | None = None,
         push_subscription_repo=None,
         web_push_client=None,
     ) -> None:
@@ -33,6 +36,7 @@ class ReminderService:
         self.task_repo = task_repo
         self.event_repo = event_repo
         self.items_repo = items_repo
+        self.supply_repo = supply_repo
         self.push_subscription_repo = push_subscription_repo
         self.web_push_client = web_push_client
 
@@ -383,12 +387,14 @@ class ReminderService:
             due_at=due_at,
             memo=memo,
         )
+        has_app_attention = self._has_app_attention()
         return {
             "title": title,
             "message": message,
             "url": self._build_absolute_url(deep_link_path),
             "target_kind": target_kind,
-            "badge_count": self._get_attention_badge_count(),
+            "badge_count": 1 if has_app_attention else 0,
+            "has_app_attention": has_app_attention,
         }
 
     def _build_missed_push_payload(self, reminder: dict) -> dict:
@@ -421,6 +427,7 @@ class ReminderService:
                             "body": push_payload["message"],
                             "url": push_payload["url"] or "/reminders?mode=fired",
                             "badge_count": push_payload.get("badge_count", 0),
+                            "has_app_attention": bool(push_payload.get("has_app_attention", False)),
                         }
                     ),
                 )
@@ -500,9 +507,53 @@ class ReminderService:
 
     def _get_attention_badge_count(self) -> int:
         try:
-            return max(0, int(self.reminder_repo.count_attention_reminders()))
+            return 1 if self._has_app_attention() else 0
         except Exception:
             return 0
+
+    def _has_app_attention(self) -> bool:
+        now_utc = datetime.now(timezone.utc)
+
+        has_overdue_tasks = any(
+            self._is_task_due_at_overdue(task.get("due_at"), now_utc) for task in self.task_repo.list_tasks_active()
+        )
+
+        today = datetime.now(ZoneInfo(SETTINGS.APP_TIMEZONE)).date().isoformat()
+        has_today_events = bool(self.event_repo and self.event_repo.list_events_in_range(start_date=today, end_date=today, mode="active"))
+        has_missed_reminders = any(
+            (reminder.get("state") or "").strip().lower() == "missed"
+            for reminder in self.reminder_repo.list_reminders_active()
+        )
+        has_pending_supplies = bool(self.supply_repo and self.supply_repo.list_active())
+
+        return any(
+            [
+                has_overdue_tasks,
+                has_today_events,
+                has_missed_reminders,
+                has_pending_supplies,
+                False,  # has_note_draft
+                False,  # has_file_draft
+                False,  # has_attention_fax
+            ]
+        )
+
+    def _is_task_due_at_overdue(self, due_at: str | None, now_utc: datetime) -> bool:
+        if not due_at:
+            return False
+        clean_due_at = str(due_at).strip()
+        if not clean_due_at:
+            return False
+
+        try:
+            parsed_due = datetime.fromisoformat(clean_due_at.replace("Z", "+00:00"))
+            if parsed_due.tzinfo is None:
+                parsed_due = parsed_due.replace(tzinfo=timezone.utc)
+            else:
+                parsed_due = parsed_due.astimezone(timezone.utc)
+            return parsed_due < now_utc
+        except ValueError:
+            return False
 
     def _decorate_reminder(self, row: dict) -> dict:
         item = dict(row)

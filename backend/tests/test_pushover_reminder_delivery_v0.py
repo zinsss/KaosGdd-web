@@ -215,7 +215,7 @@ def test_fire_due_reminder_sends_web_push_before_delayed_pushover(
     assert calls == ["web_push", "timer_start", "pushover"]
 
 
-def test_web_push_payload_includes_positive_badge_count(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_web_push_payload_includes_binary_attention_badge_set(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
     task = main_module.create_task({"title": "Badge count task"})
     assert task["ok"] is True
 
@@ -244,11 +244,7 @@ def test_web_push_payload_includes_positive_badge_count(main_module, monkeypatch
             captured_payloads.append(json.loads(payload_json))
 
     monkeypatch.setattr("app.engine.reminder_service.SETTINGS.PUSHOVER_DELAY_SECONDS", 0)
-    monkeypatch.setattr(
-        main_module.reminder_service.reminder_repo,
-        "count_attention_reminders",
-        lambda: 2,
-    )
+    monkeypatch.setattr(main_module.reminder_service, "_has_app_attention", lambda: True)
     main_module.reminder_service.push_subscription_repo = FakePushSubscriptionRepo()
     main_module.reminder_service.web_push_client = FakeWebPushClient()
 
@@ -256,10 +252,11 @@ def test_web_push_payload_includes_positive_badge_count(main_module, monkeypatch
     assert fired["ok"] is True
     assert fired["count"] == 1
     assert len(captured_payloads) == 1
-    assert captured_payloads[0]["badge_count"] == 2
+    assert captured_payloads[0]["badge_count"] == 1
+    assert captured_payloads[0]["has_app_attention"] is True
 
 
-def test_web_push_payload_includes_zero_badge_count(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_web_push_payload_includes_binary_attention_badge_clear(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
     task = main_module.create_task({"title": "Clear badge task"})
     assert task["ok"] is True
 
@@ -288,11 +285,7 @@ def test_web_push_payload_includes_zero_badge_count(main_module, monkeypatch: py
             captured_payloads.append(json.loads(payload_json))
 
     monkeypatch.setattr("app.engine.reminder_service.SETTINGS.PUSHOVER_DELAY_SECONDS", 0)
-    monkeypatch.setattr(
-        main_module.reminder_service.reminder_repo,
-        "count_attention_reminders",
-        lambda: 0,
-    )
+    monkeypatch.setattr(main_module.reminder_service, "_has_app_attention", lambda: False)
     main_module.reminder_service.push_subscription_repo = FakePushSubscriptionRepo()
     main_module.reminder_service.web_push_client = FakeWebPushClient()
 
@@ -301,3 +294,4 @@ def test_web_push_payload_includes_zero_badge_count(main_module, monkeypatch: py
     assert fired["count"] == 1
     assert len(captured_payloads) == 1
     assert captured_payloads[0]["badge_count"] == 0
+    assert captured_payloads[0]["has_app_attention"] is False

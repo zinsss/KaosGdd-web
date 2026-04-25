@@ -62,6 +62,7 @@ reminder_service = ReminderService(
     task_repo,
     event_repo,
     items_repo,
+    supply_repo,
     push_subscription_repo,
     web_push_client,
 )
