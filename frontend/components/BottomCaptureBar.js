@@ -151,11 +151,13 @@ export default function BottomCaptureBar() {
   const [isSavingNote, setIsSavingNote] = useState(false);
 
   const textareaRef = useRef(null);
+  const captureContainerRef = useRef(null);
   const fileInputRef = useRef(null);
   const submitLockRef = useRef(false);
   const activeRequestIdRef = useRef(0);
   const focusAnchorRafRef = useRef(0);
   const focusAnchorTimeoutRef = useRef(0);
+  const focusAnchorLoopEndRef = useRef(0);
   const isTextareaFocusedRef = useRef(false);
 
   function getMainScroller() {
@@ -163,7 +165,7 @@ export default function BottomCaptureBar() {
     return document.querySelector(".appShellMain");
   }
 
-  function clearPendingFocusAnchor() {
+  function stopFocusAnchorLoop() {
     if (focusAnchorRafRef.current) {
       window.cancelAnimationFrame(focusAnchorRafRef.current);
       focusAnchorRafRef.current = 0;
@@ -173,54 +175,69 @@ export default function BottomCaptureBar() {
       window.clearTimeout(focusAnchorTimeoutRef.current);
       focusAnchorTimeoutRef.current = 0;
     }
+
+    focusAnchorLoopEndRef.current = 0;
   }
 
-  function anchorCaptureForFocus({ behavior = "auto", extraDelay = 0 } = {}) {
+  function anchorCaptureForFocus({ behavior = "auto" } = {}) {
     if (typeof window === "undefined") return;
+    const node = textareaRef.current;
+    if (!node || !isTextareaFocusedRef.current) return;
 
-    clearPendingFocusAnchor();
-
-    const runAnchor = () => {
-      const node = textareaRef.current;
-      if (!node || !isTextareaFocusedRef.current) return;
-
-      const scroller = getMainScroller();
-      if (scroller) {
-        scroller.scrollTo({ top: scroller.scrollHeight, behavior });
-      }
-
-      try {
-        node.scrollIntoView({ block: "end", inline: "nearest", behavior });
-      } catch {}
-
-      const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-      const nodeRect = node.getBoundingClientRect();
-      const overlap = nodeRect.bottom - viewportHeight + 12;
-      if (overlap > 0) {
-        if (scroller) {
-          scroller.scrollTop += overlap;
-        } else {
-          window.scrollBy({ top: overlap, behavior });
-        }
-      }
-    };
-
-    const queueAnchor = () => {
-      focusAnchorRafRef.current = window.requestAnimationFrame(() => {
-        focusAnchorRafRef.current = 0;
-        runAnchor();
-      });
-    };
-
-    if (extraDelay > 0) {
-      focusAnchorTimeoutRef.current = window.setTimeout(() => {
-        focusAnchorTimeoutRef.current = 0;
-        queueAnchor();
-      }, extraDelay);
-      return;
+    const scroller = getMainScroller();
+    if (scroller) {
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior });
     }
 
-    queueAnchor();
+    const captureContainer = captureContainerRef.current;
+    try {
+      (captureContainer || node).scrollIntoView({ block: "end", inline: "nearest", behavior });
+    } catch {}
+
+    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
+    const anchorRect = (captureContainer || node).getBoundingClientRect();
+    const overlap = anchorRect.bottom - viewportHeight + 12;
+    if (overlap > 0) {
+      if (scroller) {
+        scroller.scrollTop += overlap;
+      }
+      try {
+        window.scrollTo({ top: document.documentElement.scrollHeight, behavior });
+      } catch {}
+    }
+  }
+
+  function startFocusAnchorLoop(durationMs = 900) {
+    if (typeof window === "undefined") return;
+    if (!isTextareaFocusedRef.current) return;
+
+    stopFocusAnchorLoop();
+    focusAnchorLoopEndRef.current = Date.now() + durationMs;
+
+    const runLoop = () => {
+      focusAnchorRafRef.current = 0;
+      focusAnchorTimeoutRef.current = 0;
+
+      if (!isTextareaFocusedRef.current) {
+        stopFocusAnchorLoop();
+        return;
+      }
+
+      anchorCaptureForFocus({ behavior: "auto" });
+
+      if (Date.now() >= focusAnchorLoopEndRef.current) {
+        stopFocusAnchorLoop();
+        return;
+      }
+
+      focusAnchorTimeoutRef.current = window.setTimeout(() => {
+        focusAnchorTimeoutRef.current = 0;
+        focusAnchorRafRef.current = window.requestAnimationFrame(runLoop);
+      }, 60);
+    };
+
+    anchorCaptureForFocus({ behavior: "auto" });
+    focusAnchorRafRef.current = window.requestAnimationFrame(runLoop);
   }
 
   function resizeTextarea(node = textareaRef.current) {
@@ -343,7 +360,7 @@ export default function BottomCaptureBar() {
       window.removeEventListener("resize", onViewportShift);
       window.visualViewport?.removeEventListener("resize", onViewportShift);
       window.visualViewport?.removeEventListener("scroll", onViewportShift);
-      clearPendingFocusAnchor();
+      stopFocusAnchorLoop();
     };
   }, []);
 
@@ -715,7 +732,7 @@ export default function BottomCaptureBar() {
   return (
     <>
       <form onSubmit={onSubmit} className="bottomCaptureBar">
-        <div className="bottomCaptureInner">
+        <div ref={captureContainerRef} className="bottomCaptureInner">
           <textarea
             ref={textareaRef}
             className="textInput autoTextarea bottomCaptureInput"
@@ -727,14 +744,25 @@ export default function BottomCaptureBar() {
                 anchorCaptureForFocus({ behavior: "auto" });
               }
             }}
+            onPointerDown={() => {
+              if (isTextareaFocusedRef.current) return;
+              isTextareaFocusedRef.current = true;
+              anchorCaptureForFocus({ behavior: "auto" });
+              isTextareaFocusedRef.current = false;
+            }}
+            onTouchStart={() => {
+              if (isTextareaFocusedRef.current) return;
+              isTextareaFocusedRef.current = true;
+              anchorCaptureForFocus({ behavior: "auto" });
+              isTextareaFocusedRef.current = false;
+            }}
             onFocus={() => {
               isTextareaFocusedRef.current = true;
-              anchorCaptureForFocus({ behavior: "smooth", extraDelay: 40 });
-              anchorCaptureForFocus({ behavior: "auto", extraDelay: 260 });
+              startFocusAnchorLoop(1000);
             }}
             onBlur={() => {
               isTextareaFocusedRef.current = false;
-              clearPendingFocusAnchor();
+              stopFocusAnchorLoop();
             }}
             rows={1}
             spellCheck={false}
