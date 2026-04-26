@@ -439,7 +439,11 @@ export default function BottomCaptureBar() {
         : UI_STRINGS.EDITING_REMINDER
     : "";
 
-  const statusText = error || success || attachedFilename || modeText;
+  const statusText = error
+    ? attachedFilename
+      ? `${attachedFilename} · ${error}`
+      : error
+    : success || attachedFilename || modeText;
 
   function beginCaptureRequest() {
     activeRequestIdRef.current += 1;
@@ -481,6 +485,12 @@ export default function BottomCaptureBar() {
   }
 
   async function submitAttachedFile(cleanRaw) {
+    console.debug("[BottomCaptureBar] attached-file", {
+      exists: Boolean(attachedFile),
+      name: attachedFile?.name || "",
+      size: attachedFile?.size || 0,
+      type: attachedFile?.type || "",
+    });
     if (!attachedFile) return false;
 
     const normalized = normalizeAttachedFileGrammar(cleanRaw);
@@ -489,16 +499,31 @@ export default function BottomCaptureBar() {
       return true;
     }
 
-    const bytes = await attachedFile.arrayBuffer();
-    const uploadRes = await fetch("/api/files", {
-      method: "POST",
-      body: bytes,
-      headers: {
-        "x-file-name": attachedFile.name || "uploaded-file",
-        "x-file-type": attachedFile.type || "application/octet-stream",
-        "content-type": "application/octet-stream",
-      },
-    });
+    let bytes;
+    try {
+      bytes = await attachedFile.arrayBuffer();
+    } catch (error) {
+      console.error("[BottomCaptureBar] attached-file stage=file-read failed", error);
+      setError(UI_STRINGS.FILE_READ_FAILED);
+      return true;
+    }
+
+    let uploadRes;
+    try {
+      uploadRes = await fetch("/api/files", {
+        method: "POST",
+        body: bytes,
+        headers: {
+          "x-file-name": attachedFile.name || "uploaded-file",
+          "x-file-type": attachedFile.type || "application/octet-stream",
+          "content-type": "application/octet-stream",
+        },
+      });
+    } catch (error) {
+      console.error("[BottomCaptureBar] attached-file stage=file-upload-post failed", error);
+      setError(UI_STRINGS.FILE_UPLOAD_REQUEST_FAILED);
+      return true;
+    }
 
     const uploadData = await uploadRes.json().catch(() => null);
     if (!uploadRes.ok || !uploadData?.ok || !uploadData?.id) {
@@ -506,11 +531,19 @@ export default function BottomCaptureBar() {
       return true;
     }
 
-    const rawRes = await fetch(`/api/files/${uploadData.id}/raw`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ raw: normalized.normalizedRaw }),
-    });
+    let rawRes;
+    try {
+      rawRes = await fetch(`/api/files/${uploadData.id}/raw`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ raw: normalized.normalizedRaw }),
+      });
+    } catch (error) {
+      console.error("[BottomCaptureBar] attached-file stage=file-raw-patch failed", error);
+      await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
+      setError(UI_STRINGS.FILE_METADATA_SAVE_REQUEST_FAILED);
+      return true;
+    }
 
     const rawData = await rawRes.json().catch(() => null);
     if (!rawRes.ok || !rawData?.ok) {
