@@ -86,7 +86,7 @@ def test_file_items_support_linking_and_detail_resolves_links(main_module) -> No
     target = main_module.capture_item({"raw": "-- linked task"})
     assert target["ok"] is True
 
-    updated = main_module.update_file_raw(file_id, {"raw": f"linked.pdf\nl:{target['id']}"})
+    updated = main_module.update_file_raw(file_id, {"raw": f"++ linked.pdf\nl:{target['id']}"})
     assert updated["ok"] is True
 
     detail = main_module.get_file(file_id)["item"]
@@ -113,7 +113,7 @@ def test_task_can_link_to_file_item(main_module) -> None:
 def test_file_raw_update_can_change_title(main_module) -> None:
     file_id = _upload(main_module, "before.pdf", b"content")
 
-    updated = main_module.update_file_raw(file_id, {"raw": "After Title"})
+    updated = main_module.update_file_raw(file_id, {"raw": "++ After Title"})
     assert updated["ok"] is True
 
     detail = main_module.get_file(file_id)["item"]
@@ -125,7 +125,7 @@ def test_file_raw_update_can_save_memo(main_module) -> None:
 
     updated = main_module.update_file_raw(
         file_id,
-        {"raw": "Memo Title\n\n\"\"\"\nline1\nline2\n\"\"\""},
+        {"raw": "++ Memo Title\n\n\"\"\"\nline1\nline2\n\"\"\""},
     )
     assert updated["ok"] is True
 
@@ -136,7 +136,7 @@ def test_file_raw_update_can_save_memo(main_module) -> None:
 def test_file_raw_update_can_save_tags(main_module) -> None:
     file_id = _upload(main_module, "tags.pdf", b"content")
 
-    updated = main_module.update_file_raw(file_id, {"raw": "Tagged File\n#alpha #beta #alpha"})
+    updated = main_module.update_file_raw(file_id, {"raw": "++ Tagged File\n#alpha #beta #alpha"})
     assert updated["ok"] is True
 
     detail = main_module.get_file(file_id)["item"]
@@ -146,7 +146,7 @@ def test_file_raw_update_can_save_tags(main_module) -> None:
 def test_file_raw_update_can_save_fax_number(main_module) -> None:
     file_id = _upload(main_module, "fax.pdf", b"content")
 
-    updated = main_module.update_file_raw(file_id, {"raw": "Faxed File\nx:02-1234-5678"})
+    updated = main_module.update_file_raw(file_id, {"raw": "++ Faxed File\nx:02-1234-5678"})
     assert updated["ok"] is True
 
     detail = main_module.get_file(file_id)["item"]
@@ -154,6 +154,7 @@ def test_file_raw_update_can_save_fax_number(main_module) -> None:
 
     exported = main_module.get_file_raw(file_id)
     assert exported["ok"] is True
+    assert exported["raw"].startswith("++ Faxed File")
     assert "x:02-1234-5678" in exported["raw"]
 
 def test_file_raw_update_preserves_links(main_module) -> None:
@@ -161,10 +162,10 @@ def test_file_raw_update_preserves_links(main_module) -> None:
     target = main_module.capture_item({"raw": "-- linked target"})
     assert target["ok"] is True
 
-    first_update = main_module.update_file_raw(file_id, {"raw": f"Initial\nl:{target['id']}"})
+    first_update = main_module.update_file_raw(file_id, {"raw": f"++ Initial\nl:{target['id']}"})
     assert first_update["ok"] is True
 
-    second_update = main_module.update_file_raw(file_id, {"raw": f"Renamed\n#meta\nl:{target['id']}"})
+    second_update = main_module.update_file_raw(file_id, {"raw": f"++ Renamed\n#meta\nl:{target['id']}"})
     assert second_update["ok"] is True
 
     detail = main_module.get_file(file_id)["item"]
@@ -205,3 +206,24 @@ def test_removed_file_binary_is_not_hard_deleted(main_module) -> None:
     assert removed["ok"] is True
 
     assert path.exists()
+
+
+def test_file_raw_requires_plus_plus_title_prefix(main_module) -> None:
+    file_id = _upload(main_module, "title-format.pdf", b"content")
+
+    updated = main_module.update_file_raw(file_id, {"raw": "Plain title\n#a"})
+    assert updated["ok"] is False
+    assert "++" in str(updated["error"])
+
+
+def test_hard_remove_file_deletes_db_item_and_binary(main_module) -> None:
+    file_id = _upload(main_module, "cleanup.pdf", b"payload")
+    path = Path(main_module.get_file(file_id)["item"]["stored_path"])
+    assert path.exists()
+
+    removed = main_module.remove_file_hard(file_id)
+    assert removed["ok"] is True
+    assert not path.exists()
+
+    detail = main_module.get_file(file_id)
+    assert detail["ok"] is False

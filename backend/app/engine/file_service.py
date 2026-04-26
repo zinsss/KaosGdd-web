@@ -122,6 +122,20 @@ class FileService:
             return False
         return self.items_repo.soft_delete_item(item_id)
 
+    def remove_file_hard(self, item_id: str) -> bool:
+        detail = self.file_repo.get_file_detail(item_id)
+        if detail is None:
+            return False
+
+        path = str(detail.get("stored_path") or "").strip()
+        if path and os.path.isfile(path):
+            try:
+                os.remove(path)
+            except OSError:
+                return False
+
+        return self.items_repo.hard_delete_item(item_id)
+
     def _decorate_file(self, row: dict) -> dict:
         item = dict(row)
         item["created_at_display"] = format_dt_for_ui(item.get("created_at"))

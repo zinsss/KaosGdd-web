@@ -15,7 +15,8 @@ def export_file_raw(
     tags: list[str] | None = None,
     linked_item_ids: list[str] | None = None,
 ) -> str:
-    lines = [str(file_item.get("title") or file_item.get("original_filename") or "").strip()]
+    title = str(file_item.get("title") or file_item.get("original_filename") or "").strip()
+    lines = [f"++ {title}"]
 
     clean_tags = [str(tag).strip().lower() for tag in (tags or []) if str(tag).strip()]
     if clean_tags:
@@ -71,7 +72,12 @@ def parse_file_raw(raw_text: str) -> dict:
             raise ValueError("file does not support d:, r:, or R:")
 
         if not title:
-            title = stripped
+            if not stripped.startswith("++"):
+                raise ValueError("file title line must start with ++")
+            parsed_title = stripped[2:].strip()
+            if not parsed_title:
+                raise ValueError("title is required")
+            title = parsed_title
             continue
 
         if stripped.startswith("l:"):

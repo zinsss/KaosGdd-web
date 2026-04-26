@@ -74,7 +74,7 @@ function normalizeAttachedFileGrammar(rawText) {
         return { ok: false, error: UI_STRINGS.FILE_GRAMMAR_TITLE_REQUIRED };
       }
 
-      output.push(title);
+      output.push(`++ ${title}`);
       sawTitle = true;
       continue;
     }
@@ -514,7 +514,7 @@ export default function BottomCaptureBar() {
 
     const rawData = await rawRes.json().catch(() => null);
     if (!rawRes.ok || !rawData?.ok) {
-      await fetch(`/api/files/${uploadData.id}`, { method: "DELETE" }).catch(() => null);
+      await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
       setError((rawData && rawData.error) || UI_STRINGS.INVALID_FILE_GRAMMAR);
       return true;
     }
