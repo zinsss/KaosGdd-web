@@ -45,7 +45,7 @@ export default function FileRawEditor({ fileId, initialRaw }) {
         {saved ? <span className="metaLine">{UI_STRINGS.SAVED}</span> : null}
       </div>
       {error ? <div className="errorText">{error}</div> : null}
-      <div className="rawHint">title · #tags · l:itemId · optional memo in triple quotes</div>
+      <div className="rawHint">++ title · #tags · l:itemId · x:fax · optional memo in triple quotes</div>
     </div>
   );
 }

@@ -125,6 +125,19 @@ class ItemsRepo:
             )
         return int(result.rowcount or 0)
 
+    def hard_delete_item(self, item_id: str) -> bool:
+        with self.engine.begin() as conn:
+            result = conn.execute(
+                text(
+                    """
+                    DELETE FROM {items}
+                    WHERE id = :id
+                    """.format(items=DbTables.ITEMS)
+                ),
+                {"id": item_id},
+            )
+        return bool(result.rowcount)
+
     def list_item_tags(self, item_id: str) -> list[str]:
         with self.engine.begin() as conn:
             rows = conn.execute(

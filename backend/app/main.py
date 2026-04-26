@@ -343,6 +343,14 @@ def remove_file(file_id: str):
     return {"ok": True}
 
 
+@app.delete("/files/{file_id}/hard")
+def remove_file_hard(file_id: str):
+    ok = file_service.remove_file_hard(file_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
+
+
 @app.get("/journals/{journal_id}")
 def get_journal(journal_id: str):
     item = journal_service.get_journal(journal_id)
