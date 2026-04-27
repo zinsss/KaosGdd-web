@@ -1,4 +1,5 @@
 import "./globals.css";
+import Link from "next/link";
 import BottomCaptureBar from "../components/BottomCaptureBar";
 import TopNav from "../components/TopNav";
 import PwaBootstrap from "../components/pwa/PwaBootstrap";
@@ -34,7 +35,7 @@ export default function RootLayout({ children }) {
         <header className="appShellTop">
           <div className="appShellTopInner">
             <div className="appHeaderLine">
-              <span className="appHeaderTitle">{UI_STRINGS.APP_TITLE}</span>
+              <Link className="appHeaderTitle appHeaderTitleLink" href="/">{UI_STRINGS.APP_TITLE}</Link>
               <span className="appHeaderDot"> • </span>
               <span className="appHeaderSubtitle">{UI_STRINGS.APP_HEADER_SUBTITLE}</span>
             </div>
