@@ -49,6 +49,16 @@
   letter-spacing: 0.01em;
 }
 
+
+.appHeaderTitleLink {
+  text-decoration: none;
+}
+
+.appHeaderTitleLink:hover {
+  color: var(--ctp-yellow);
+  opacity: 0.92;
+}
+
 .appHeaderDot {
   color: var(--ui-text-dim);
 }

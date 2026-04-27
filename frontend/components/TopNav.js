@@ -18,7 +18,6 @@ export default function TopNav() {
   const pathname = usePathname();
   const [navStatus, setNavStatus] = useState(DEFAULT_MODULE_NAV_STATUS);
 
-  const homeActive = pathname === "/";
   const tasksActive = pathname.startsWith("/tasks");
   const remindersActive = pathname.startsWith("/reminders");
   const eventsActive = pathname.startsWith("/events");
@@ -78,9 +77,6 @@ export default function TopNav() {
   return (
     <nav className="topNavScroller" aria-label="Primary">
       <div className="topNavRow topNavRowFlat">
-        <Link className={"topNavTextLink" + (homeActive ? " topNavTextLinkActive" : "")} href="/">
-          {UI_STRINGS.HOME}
-        </Link>
         <Link
           className={"topNavTextLink" + taskAttentionClass + (tasksActive ? " topNavTextLinkActive" : "")}
           href="/tasks"
