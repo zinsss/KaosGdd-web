@@ -516,24 +516,15 @@ export default function BottomCaptureBar() {
       return true;
     }
 
-    let bytes;
-    try {
-      bytes = await attachedFile.arrayBuffer();
-    } catch (error) {
-      console.error("[BottomCaptureBar] attached-file stage=file-read failed", error);
-      setError(UI_STRINGS.FILE_READ_FAILED);
-      return true;
-    }
-
     let uploadRes;
     try {
       uploadRes = await fetch("/api/files", {
         method: "POST",
-        body: bytes,
+        body: attachedFile,
         headers: {
           "x-file-name": attachedFile.name || "uploaded-file",
           "x-file-type": attachedFile.type || "application/octet-stream",
-          "content-type": "application/octet-stream",
+          "content-type": attachedFile.type || "application/octet-stream",
         },
       });
     } catch (error) {
