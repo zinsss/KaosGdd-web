@@ -149,6 +149,14 @@
   padding-top: 12px;
 }
 
+
+.moreActionRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
 .copyRow {
   display: flex;
   gap: 10px;
@@ -156,6 +164,7 @@
   justify-content: space-between;
   flex-wrap: wrap;
 }
+
 
 @media (max-width: 640px) {
   .compactButton {
@@ -173,6 +182,15 @@
     width: auto;
     flex: 1 1 0;
     min-width: 0;
+  }
+
+  .moreActionRow {
+    flex-wrap: nowrap;
+  }
+
+  .moreActionRow .button {
+    width: auto;
+    flex: 0 0 auto;
   }
 
   .copyRow {

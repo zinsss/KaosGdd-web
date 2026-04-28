@@ -293,14 +293,12 @@ export default function TaskDetailPanel({ item, raw }) {
               {item.created_at_display ? <div>{UI_STRINGS.CREATED}: {item.created_at_display}</div> : null}
               {item.updated_at_display ? <div>{UI_STRINGS.UPDATED}: {item.updated_at_display}</div> : null}
 
-              <div className="copyRow">
-                <button type="button" className="button" onClick={onCopyId}>
-                  {copied ? UI_STRINGS.COPIED : UI_STRINGS.COPY_ID}
-                </button>
-              </div>
             </div>
 
-            <div className="actionRow" style={{ marginTop: 12 }}>
+            <div className="moreActionRow">
+              <button type="button" className="button" onClick={onCopyId}>
+                {copied ? UI_STRINGS.COPIED : UI_STRINGS.COPY_ID}
+              </button>
               <button
                 type="button"
                 className="button"

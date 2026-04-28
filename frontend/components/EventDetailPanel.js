@@ -83,13 +83,11 @@ export default function EventDetailPanel({ item, raw }) {
             <div className="metaStack">
               <div>created: {item.created_at_display || "-"}</div>
               <div>updated: {item.updated_at_display || "-"}</div>
-              <div className="copyRow">
-                <button type="button" className="button" onClick={onCopyId}>
-                  {copied ? "ID copied" : "Copy ID"}
-                </button>
-              </div>
             </div>
-            <div className="actionRow" style={{ marginTop: 12 }}>
+            <div className="moreActionRow">
+              <button type="button" className="button" onClick={onCopyId}>
+                {copied ? "ID copied" : "Copy ID"}
+              </button>
               <button type="button" className="button" onClick={onRemove} disabled={isRemoving}>{isRemoving ? "..." : "Remove"}</button>
             </div>
             {removeError ? <div className="errorText">{removeError}</div> : null}
