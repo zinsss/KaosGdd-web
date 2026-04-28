@@ -16,11 +16,13 @@ export async function GET(request) {
 export async function POST(request) {
   const base = getApiBase();
   const uploadTarget = `${base}/files`;
+  const encodedFileName = request.headers.get("x-file-name-url") || "";
   const fileName = request.headers.get("x-file-name") || "uploaded-file";
   const fileType = request.headers.get("x-file-type") || "application/octet-stream";
   const contentLength = request.headers.get("content-length") || "unknown";
 
   console.info("[api/files] upload request received", {
+    encodedFileName,
     fileName,
     fileType,
     contentLength,
@@ -29,9 +31,14 @@ export async function POST(request) {
 
   const headers = {
     "content-type": request.headers.get("content-type") || "application/octet-stream",
-    "x-file-name": fileName,
     "x-file-type": fileType,
   };
+
+  if (encodedFileName) {
+    headers["x-file-name-url"] = encodedFileName;
+  } else {
+    headers["x-file-name"] = fileName;
+  }
 
   if (request.headers.get("content-length")) {
     headers["content-length"] = request.headers.get("content-length");
