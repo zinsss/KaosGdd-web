@@ -99,7 +99,7 @@ export const UI_STRINGS = {
   MORE: "More",
   ID: "item ID",
   COPY_ID: "Copy ID",
-  COPIED: "Copied",
+  COPIED: "ID copied",
   TASKS_ACTIVE_TITLE: "Tasks • Active",
   TASKS_DONE_TITLE: "Tasks • Done",
   TASKS_REMOVED_TITLE: "Tasks • Removed",
