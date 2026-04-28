@@ -294,7 +294,6 @@ export default function TaskDetailPanel({ item, raw }) {
               {item.updated_at_display ? <div>{UI_STRINGS.UPDATED}: {item.updated_at_display}</div> : null}
 
               <div className="copyRow">
-                <span>{UI_STRINGS.ID}: {item.id}</span>
                 <button type="button" className="button" onClick={onCopyId}>
                   {copied ? UI_STRINGS.COPIED : UI_STRINGS.COPY_ID}
                 </button>

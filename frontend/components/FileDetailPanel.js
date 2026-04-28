@@ -17,6 +17,7 @@ export default function FileDetailPanel({ item, raw }) {
   const router = useRouter();
   const [showEdit, setShowEdit] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [removeError, setRemoveError] = useState("");
   const displayTitle = item.title || item.original_filename || "-";
@@ -41,6 +42,14 @@ export default function FileDetailPanel({ item, raw }) {
     } finally {
       setIsRemoving(false);
     }
+  }
+
+  async function onCopyId() {
+    try {
+      await navigator.clipboard.writeText(item.id);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 1200);
+    } catch {}
   }
 
   return (
@@ -86,7 +95,11 @@ export default function FileDetailPanel({ item, raw }) {
             <div className="metaStack">
               <div>created: {item.created_at_display || "-"}</div>
               <div>updated: {item.updated_at_display || "-"}</div>
-              <div>item ID: {item.id}</div>
+              <div className="copyRow">
+                <button type="button" className="button" onClick={onCopyId}>
+                  {copied ? "ID copied" : "Copy ID"}
+                </button>
+              </div>
             </div>
             <div className="actionRow" style={{ marginTop: 12 }}>
               <button type="button" className="button" onClick={onRemove} disabled={isRemoving}>{isRemoving ? "..." : "Remove"}</button>
