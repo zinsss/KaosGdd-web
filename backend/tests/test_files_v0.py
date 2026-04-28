@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import os
 from pathlib import Path
+from urllib.parse import quote
 
 import pytest
 
@@ -227,3 +228,17 @@ def test_hard_remove_file_deletes_db_item_and_binary(main_module) -> None:
 
     detail = main_module.get_file(file_id)
     assert detail["ok"] is False
+
+
+def test_file_upload_accepts_urlencoded_filename_header(main_module) -> None:
+    korean_name = "(붙임)HPV 국가예방접종 12세 남아 확대 시행 안내.pdf"
+    encoded = quote(korean_name, safe="")
+
+    resolved = main_module.resolve_upload_filename(
+        {
+            "x-file-name-url": encoded,
+            "x-file-name": "legacy-name.pdf",
+        }
+    )
+
+    assert resolved == korean_name

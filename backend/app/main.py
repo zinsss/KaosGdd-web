@@ -7,6 +7,7 @@ from contextlib import asynccontextmanager
 import json
 import logging
 from datetime import datetime, timezone
+from urllib.parse import unquote
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
@@ -80,6 +81,18 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=SETTINGS.APP_NAME, lifespan=lifespan)
+
+
+def resolve_upload_filename(headers) -> str:
+    encoded_filename = str(headers.get("x-file-name-url") or "").strip()
+    decoded_filename = ""
+    if encoded_filename:
+        try:
+            decoded_filename = unquote(encoded_filename).strip()
+        except Exception:
+            decoded_filename = ""
+    legacy_filename = str(headers.get("x-file-name") or "").strip()
+    return decoded_filename or legacy_filename or "uploaded-file"
 
 
 @app.get("/health")
@@ -285,7 +298,7 @@ def list_files(mode: str = "active"):
 @app.post("/files")
 async def create_file(request: Request):
     content = await request.body()
-    original_filename = str(request.headers.get("x-file-name") or "").strip() or "uploaded-file"
+    original_filename = resolve_upload_filename(request.headers)
     mime_type = str(request.headers.get("x-file-type") or "").strip()
     if not content:
         return {"ok": False, "error": ApiText.FILE_BODY_EMPTY}

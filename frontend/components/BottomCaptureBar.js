@@ -522,7 +522,7 @@ export default function BottomCaptureBar() {
         method: "POST",
         body: attachedFile,
         headers: {
-          "x-file-name": attachedFile.name || "uploaded-file",
+          "x-file-name-url": encodeURIComponent(attachedFile.name || "uploaded-file"),
           "x-file-type": attachedFile.type || "application/octet-stream",
           "content-type": attachedFile.type || "application/octet-stream",
         },
