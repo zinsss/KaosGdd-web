@@ -159,6 +159,7 @@ export default function BottomCaptureBar() {
   const focusAnchorTimeoutRef = useRef(0);
   const focusAnchorLoopEndRef = useRef(0);
   const isTextareaFocusedRef = useRef(false);
+  const userScrollOverrideRef = useRef(false);
 
   function getMainScroller() {
     if (typeof document === "undefined") return null;
@@ -179,37 +180,36 @@ export default function BottomCaptureBar() {
     focusAnchorLoopEndRef.current = 0;
   }
 
+  function captureBottomOverflowPx() {
+    if (typeof window === "undefined") return 0;
+    const node = captureContainerRef.current || textareaRef.current;
+    if (!node) return 0;
+
+    const viewport = window.visualViewport;
+    const viewportBottom = viewport ? viewport.offsetTop + viewport.height : window.innerHeight;
+    const rect = node.getBoundingClientRect();
+    return rect.bottom - viewportBottom + 12;
+  }
+
   function anchorCaptureForFocus({ behavior = "auto" } = {}) {
     if (typeof window === "undefined") return;
     const node = textareaRef.current;
     if (!node || !isTextareaFocusedRef.current) return;
+    if (userScrollOverrideRef.current) return;
+
+    const overlap = captureBottomOverflowPx();
+    if (overlap <= 0) return true;
 
     const scroller = getMainScroller();
-    if (scroller) {
-      scroller.scrollTo({ top: scroller.scrollHeight, behavior });
-    }
-
-    const captureContainer = captureContainerRef.current;
-    try {
-      (captureContainer || node).scrollIntoView({ block: "end", inline: "nearest", behavior });
-    } catch {}
-
-    const viewportHeight = window.visualViewport?.height ?? window.innerHeight;
-    const anchorRect = (captureContainer || node).getBoundingClientRect();
-    const overlap = anchorRect.bottom - viewportHeight + 12;
-    if (overlap > 0) {
-      if (scroller) {
-        scroller.scrollTop += overlap;
-      }
-      try {
-        window.scrollTo({ top: document.documentElement.scrollHeight, behavior });
-      } catch {}
-    }
+    if (!scroller) return;
+    scroller.scrollTo({ top: scroller.scrollTop + overlap, behavior });
+    return captureBottomOverflowPx() <= 0;
   }
 
-  function startFocusAnchorLoop(durationMs = 900) {
+  function startFocusAnchorLoop(durationMs = 300) {
     if (typeof window === "undefined") return;
     if (!isTextareaFocusedRef.current) return;
+    if (userScrollOverrideRef.current) return;
 
     stopFocusAnchorLoop();
     focusAnchorLoopEndRef.current = Date.now() + durationMs;
@@ -223,7 +223,11 @@ export default function BottomCaptureBar() {
         return;
       }
 
-      anchorCaptureForFocus({ behavior: "auto" });
+      const fullyVisible = anchorCaptureForFocus({ behavior: "auto" });
+      if (fullyVisible) {
+        stopFocusAnchorLoop();
+        return;
+      }
 
       if (Date.now() >= focusAnchorLoopEndRef.current) {
         stopFocusAnchorLoop();
@@ -354,13 +358,34 @@ export default function BottomCaptureBar() {
 
     window.addEventListener("resize", onViewportShift);
     window.visualViewport?.addEventListener("resize", onViewportShift);
-    window.visualViewport?.addEventListener("scroll", onViewportShift);
 
     return () => {
       window.removeEventListener("resize", onViewportShift);
       window.visualViewport?.removeEventListener("resize", onViewportShift);
-      window.visualViewport?.removeEventListener("scroll", onViewportShift);
       stopFocusAnchorLoop();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const onUserScrollIntent = () => {
+      if (!isTextareaFocusedRef.current) return;
+      userScrollOverrideRef.current = true;
+      stopFocusAnchorLoop();
+    };
+
+    const scroller = getMainScroller();
+    scroller?.addEventListener("wheel", onUserScrollIntent, { passive: true });
+    scroller?.addEventListener("touchmove", onUserScrollIntent, { passive: true });
+    window.addEventListener("wheel", onUserScrollIntent, { passive: true });
+    window.addEventListener("touchmove", onUserScrollIntent, { passive: true });
+
+    return () => {
+      scroller?.removeEventListener("wheel", onUserScrollIntent);
+      scroller?.removeEventListener("touchmove", onUserScrollIntent);
+      window.removeEventListener("wheel", onUserScrollIntent);
+      window.removeEventListener("touchmove", onUserScrollIntent);
     };
   }, []);
 
@@ -735,24 +760,14 @@ export default function BottomCaptureBar() {
                 anchorCaptureForFocus({ behavior: "auto" });
               }
             }}
-            onPointerDown={() => {
-              if (isTextareaFocusedRef.current) return;
-              isTextareaFocusedRef.current = true;
-              anchorCaptureForFocus({ behavior: "auto" });
-              isTextareaFocusedRef.current = false;
-            }}
-            onTouchStart={() => {
-              if (isTextareaFocusedRef.current) return;
-              isTextareaFocusedRef.current = true;
-              anchorCaptureForFocus({ behavior: "auto" });
-              isTextareaFocusedRef.current = false;
-            }}
             onFocus={() => {
               isTextareaFocusedRef.current = true;
-              startFocusAnchorLoop(1000);
+              userScrollOverrideRef.current = false;
+              startFocusAnchorLoop(300);
             }}
             onBlur={() => {
               isTextareaFocusedRef.current = false;
+              userScrollOverrideRef.current = false;
               stopFocusAnchorLoop();
             }}
             rows={1}
