@@ -140,6 +140,27 @@ function attachedFileShortcutKind(rawText) {
   return null;
 }
 
+function appendTaskLink(rawText, fileId) {
+  return `${String(rawText || "").trim()}\nl:${fileId}`;
+}
+
+function appendReminderLink(rawText, fileId) {
+  return `${String(rawText || "").trim()}\nl:${fileId}`;
+}
+
+function appendNoteLink(rawText, fileId) {
+  const source = String(rawText || "").replace(/\r\n/g, "\n");
+  const match = source.match(/^:::\n([\s\S]*?)\n:::/);
+  if (!match) return source;
+  const metadata = match[1].split("\n");
+  const updated = metadata.map((line) => {
+    if (!line.startsWith("link:")) return line;
+    const current = line.slice(5).trim();
+    return current ? `link: ${current}, ${fileId}` : `link: ${fileId}`;
+  });
+  return source.replace(match[0], `:::\n${updated.join("\n")}\n:::`);
+}
+
 function datetimeSelectionRange(rawText) {
   const source = String(rawText || "");
   const firstLineEnd = source.indexOf("\n");
@@ -643,16 +664,30 @@ export default function BottomCaptureBar() {
         return true;
       }
 
-      const linkedRaw = `${normalized.normalizedRaw}\nl:${linkedItemId}`;
-      const linkRawRes = await fetch(`/api/files/${uploadData.id}/raw`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ raw: linkedRaw }),
-      });
-      const linkRawData = await linkRawRes.json().catch(() => null);
-      if (!linkRawRes.ok || !linkRawData?.ok) {
+      let patchRes;
+      if (shortcutKind === "task") {
+        patchRes = await fetch(`/api/tasks/${linkedItemId}/raw`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw: appendTaskLink(cleanRaw, uploadData.id) }),
+        });
+      } else if (shortcutKind === "reminder") {
+        patchRes = await fetch(`/api/reminders/${linkedItemId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw: appendReminderLink(cleanRaw, uploadData.id) }),
+        });
+      } else {
+        patchRes = await fetch(`/api/notes/${linkedItemId}/raw`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw: appendNoteLink(cleanRaw, uploadData.id) }),
+        });
+      }
+      const patchData = await patchRes.json().catch(() => null);
+      if (!patchRes.ok || !patchData?.ok) {
         await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
-        setError((linkRawData && linkRawData.error) || UI_STRINGS.INVALID_FILE_GRAMMAR);
+        setError((patchData && patchData.error) || UI_STRINGS.SAVE_FAILED);
         return true;
       }
     }
@@ -688,7 +723,7 @@ export default function BottomCaptureBar() {
     setSuccess("");
 
     try {
-      if (!editState && clean.startsWith(":::")) {
+      if (!editState && !attachedFile && clean.startsWith(":::")) {
         openNewNoteModal();
         return;
       }

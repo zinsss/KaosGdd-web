@@ -121,6 +121,7 @@ class ReminderService:
             raise ValueError("reminder body is required after !!")
 
         tags: list[str] = []
+        linked_item_ids: list[str] = []
 
         def strip_tags(value: str) -> tuple[str, list[str]]:
             found = re.findall(r"(?:(?<=^)|(?<=\s))#([^\s#]+)", value)
@@ -145,7 +146,8 @@ class ReminderService:
 
         for line in lines[1:]:
             if line.startswith("l:"):
-                raise ValueError("standalone reminder does not support l:")
+                linked_item_ids.append(line[2:].strip())
+                continue
             clean_line, line_tags = strip_tags(line)
             tags.extend(line_tags)
             if clean_line:
@@ -166,6 +168,7 @@ class ReminderService:
             "title": title,
             "remind_at": parse_local_datetime_to_iso(remind_at_local),
             "tags": deduped,
+            "linked_item_ids": linked_item_ids,
         }
 
     def export_standalone_reminder_raw(self, reminder_item_id: str) -> str | None:
@@ -190,6 +193,10 @@ class ReminderService:
             tags = []
         if tags:
             lines.append(" ".join(f"#{tag}" for tag in tags))
+        if self.items_repo is not None:
+            linked_item_ids = self.items_repo.list_item_links(reminder_item_id)
+            for linked_item_id in linked_item_ids:
+                lines.append(f"l:{linked_item_id}")
         return "\n".join(lines)
 
     def update_standalone_reminder_from_raw(self, reminder_item_id: str, raw_text: str) -> tuple[bool, str | None]:
@@ -214,6 +221,7 @@ class ReminderService:
 
         if self.items_repo is not None:
             self.items_repo.replace_item_tags(reminder_item_id, parsed["tags"])
+            self.items_repo.replace_item_links(reminder_item_id, list(parsed.get("linked_item_ids") or []))
 
         return True, None
 
