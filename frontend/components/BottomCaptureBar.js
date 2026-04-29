@@ -125,6 +125,47 @@ function normalizeAttachedFileGrammar(rawText) {
   };
 }
 
+function attachedFileShortcutKind(rawText) {
+  const firstLine = String(rawText || "")
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => Boolean(line));
+  if (!firstLine) return null;
+  if (firstLine.startsWith("fax:")) return null;
+  if (firstLine.startsWith("++")) return null;
+  if (firstLine.startsWith("-- ") || firstLine.startsWith("-x ")) return "task";
+  if (firstLine === "!!" || firstLine.startsWith("!! ")) return "reminder";
+  if (firstLine.startsWith(":::")) return "note";
+  return null;
+}
+
+function appendTaskLink(rawText, fileId) {
+  return `${String(rawText || "").trim()}\nl:${fileId}`;
+}
+
+function appendReminderLink(rawText, fileId) {
+  return `${String(rawText || "").trim()}\nl:${fileId}`;
+}
+
+function appendNoteLink(rawText, fileId) {
+  const source = String(rawText || "").replace(/\r\n/g, "\n");
+  const match = source.match(/^:::\n([\s\S]*?)\n:::/);
+  if (!match) return source;
+  const metadata = match[1].split("\n");
+  let foundLink = false;
+  const updated = metadata.map((line) => {
+    if (!line.startsWith("link:")) return line;
+    foundLink = true;
+    const current = line.slice(5).trim();
+    return current ? `link: ${current}, ${fileId}` : `link: ${fileId}`;
+  });
+  if (!foundLink) {
+    updated.push(`link: ${fileId}`);
+  }
+  return source.replace(match[0], `:::\n${updated.join("\n")}\n:::`);
+}
+
 function datetimeSelectionRange(rawText) {
   const source = String(rawText || "");
   const firstLineEnd = source.indexOf("\n");
@@ -535,7 +576,11 @@ export default function BottomCaptureBar() {
     });
     if (!attachedFile) return false;
 
-    const normalized = normalizeAttachedFileGrammar(cleanRaw);
+    const shortcutKind = attachedFileShortcutKind(cleanRaw);
+    const shouldAutoCreateLinkedItem = Boolean(shortcutKind);
+    const normalized = shouldAutoCreateLinkedItem
+      ? { ok: true, normalizedRaw: `++ ${deriveTitleFromFilename(attachedFile?.name || "")}` }
+      : normalizeAttachedFileGrammar(cleanRaw);
     if (!normalized.ok) {
       setError(normalized.error || UI_STRINGS.FILE_GRAMMAR_INVALID);
       return true;
@@ -585,6 +630,88 @@ export default function BottomCaptureBar() {
       return true;
     }
 
+    if (shouldAutoCreateLinkedItem) {
+      let linkedItemId = "";
+      let createdKind = shortcutKind;
+      try {
+        if (shortcutKind === "note") {
+          const noteRes = await fetch("/api/notes/raw", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ raw: cleanRaw }),
+          });
+          const noteData = await noteRes.json().catch(() => null);
+          if (!noteRes.ok || !noteData?.ok || !noteData?.id) {
+            await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
+            setError((noteData && noteData.error) || UI_STRINGS.NOTE_SAVE_FAILED);
+            return true;
+          }
+          linkedItemId = noteData.id;
+        } else {
+          const captureRes = await fetch("/api/capture", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              raw: cleanRaw,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || undefined,
+            }),
+          });
+          const captureData = await captureRes.json().catch(() => null);
+          if (!captureRes.ok || !captureData?.ok || !captureData?.id) {
+            await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
+            setError((captureData && captureData.error) || UI_STRINGS.CAPTURE_FAILED);
+            return true;
+          }
+          linkedItemId = captureData.id;
+          createdKind = captureData.kind || shortcutKind;
+        }
+      } catch {
+        await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
+        setError(UI_STRINGS.CAPTURE_FAILED);
+        return true;
+      }
+
+      let patchRes;
+      if (shortcutKind === "task") {
+        patchRes = await fetch(`/api/tasks/${linkedItemId}/raw`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw: appendTaskLink(cleanRaw, uploadData.id) }),
+        });
+      } else if (shortcutKind === "reminder") {
+        patchRes = await fetch(`/api/reminders/${linkedItemId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw: appendReminderLink(cleanRaw, uploadData.id) }),
+        });
+      } else {
+        patchRes = await fetch(`/api/notes/${linkedItemId}/raw`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw: appendNoteLink(cleanRaw, uploadData.id) }),
+        });
+      }
+      const patchData = await patchRes.json().catch(() => null);
+      if (!patchRes.ok || !patchData?.ok) {
+        if (linkedItemId) {
+          const deletePath =
+            createdKind === "task"
+              ? `/api/tasks/${linkedItemId}`
+              : createdKind === "simple_reminder" || createdKind === "reminder"
+                ? `/api/reminders/${linkedItemId}`
+                : createdKind === "note"
+                  ? `/api/notes/${linkedItemId}`
+                  : null;
+          if (deletePath) {
+            await fetch(deletePath, { method: "DELETE" }).catch(() => null);
+          }
+        }
+        await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
+        setError((patchData && patchData.error) || UI_STRINGS.SAVE_FAILED);
+        return true;
+      }
+    }
+
     clearAttachment();
     setRaw("");
     setSuccess(UI_STRINGS.SAVED);
@@ -616,7 +743,7 @@ export default function BottomCaptureBar() {
     setSuccess("");
 
     try {
-      if (!editState && clean.startsWith(":::")) {
+      if (!editState && !attachedFile && clean.startsWith(":::")) {
         openNewNoteModal();
         return;
       }
