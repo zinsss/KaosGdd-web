@@ -402,6 +402,13 @@
   margin-top: 2px;
 }
 
+
+@media (min-width: 768px) {
+  .bottomCaptureBar {
+    bottom: 10px;
+  }
+}
+
 @media (max-width: 640px) {
   :root {
     --app-shell-header-base-height: 92px;
