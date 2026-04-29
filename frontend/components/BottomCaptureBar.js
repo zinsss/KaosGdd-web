@@ -153,11 +153,16 @@ function appendNoteLink(rawText, fileId) {
   const match = source.match(/^:::\n([\s\S]*?)\n:::/);
   if (!match) return source;
   const metadata = match[1].split("\n");
+  let foundLink = false;
   const updated = metadata.map((line) => {
     if (!line.startsWith("link:")) return line;
+    foundLink = true;
     const current = line.slice(5).trim();
     return current ? `link: ${current}, ${fileId}` : `link: ${fileId}`;
   });
+  if (!foundLink) {
+    updated.push(`link: ${fileId}`);
+  }
   return source.replace(match[0], `:::\n${updated.join("\n")}\n:::`);
 }
 
@@ -627,6 +632,7 @@ export default function BottomCaptureBar() {
 
     if (shouldAutoCreateLinkedItem) {
       let linkedItemId = "";
+      let createdKind = shortcutKind;
       try {
         if (shortcutKind === "note") {
           const noteRes = await fetch("/api/notes/raw", {
@@ -657,6 +663,7 @@ export default function BottomCaptureBar() {
             return true;
           }
           linkedItemId = captureData.id;
+          createdKind = captureData.kind || shortcutKind;
         }
       } catch {
         await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
@@ -686,6 +693,19 @@ export default function BottomCaptureBar() {
       }
       const patchData = await patchRes.json().catch(() => null);
       if (!patchRes.ok || !patchData?.ok) {
+        if (linkedItemId) {
+          const deletePath =
+            createdKind === "task"
+              ? `/api/tasks/${linkedItemId}`
+              : createdKind === "simple_reminder" || createdKind === "reminder"
+                ? `/api/reminders/${linkedItemId}`
+                : createdKind === "note"
+                  ? `/api/notes/${linkedItemId}`
+                  : null;
+          if (deletePath) {
+            await fetch(deletePath, { method: "DELETE" }).catch(() => null);
+          }
+        }
         await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
         setError((patchData && patchData.error) || UI_STRINGS.SAVE_FAILED);
         return true;
