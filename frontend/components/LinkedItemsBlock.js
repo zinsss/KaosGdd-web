@@ -21,21 +21,25 @@ export default function LinkedItemsBlock({ links }) {
             const href = link?.href;
             return (
               <li key={key} className="linkedItemRow">
-                {href ? (
-                  isInternalHref(href) ? (
-                    <Link className="taskLink" href={href}>
-                      [{marker}] {label}
-                    </Link>
+                <span className="linkedItemBullet" aria-hidden="true">
+                  -
+                </span>
+                <span className="linkedItemType">[{marker}]</span>
+                <span className="linkedItemText">
+                  {href ? (
+                    isInternalHref(href) ? (
+                      <Link className="taskLink" href={href}>
+                        {label}
+                      </Link>
+                    ) : (
+                      <a className="taskLink" href={href}>
+                        {label}
+                      </a>
+                    )
                   ) : (
-                    <a className="taskLink" href={href}>
-                      [{marker}] {label}
-                    </a>
-                  )
-                ) : (
-                  <span>
-                    [{marker}] {label}
-                  </span>
-                )}
+                    <span>{label}</span>
+                  )}
+                </span>
               </li>
             );
           })}

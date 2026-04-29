@@ -124,6 +124,25 @@
 }
 
 .linkedItemRow {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  column-gap: 6px;
+  align-items: start;
+}
+
+.linkedItemBullet {
+  color: var(--ui-text-dim);
+  white-space: nowrap;
+}
+
+.linkedItemType {
+  color: var(--ui-text-dim);
+  white-space: nowrap;
+}
+
+.linkedItemText {
+  min-width: 0;
+  overflow-wrap: break-word;
   word-break: break-word;
 }
 
