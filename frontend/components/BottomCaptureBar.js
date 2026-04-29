@@ -125,6 +125,21 @@ function normalizeAttachedFileGrammar(rawText) {
   };
 }
 
+function attachedFileShortcutKind(rawText) {
+  const firstLine = String(rawText || "")
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => Boolean(line));
+  if (!firstLine) return null;
+  if (firstLine.startsWith("fax:")) return null;
+  if (firstLine.startsWith("++")) return null;
+  if (firstLine.startsWith("-- ") || firstLine.startsWith("-x ")) return "task";
+  if (firstLine === "!!" || firstLine.startsWith("!! ")) return "reminder";
+  if (firstLine.startsWith(":::")) return "note";
+  return null;
+}
+
 function datetimeSelectionRange(rawText) {
   const source = String(rawText || "");
   const firstLineEnd = source.indexOf("\n");
@@ -535,7 +550,11 @@ export default function BottomCaptureBar() {
     });
     if (!attachedFile) return false;
 
-    const normalized = normalizeAttachedFileGrammar(cleanRaw);
+    const shortcutKind = attachedFileShortcutKind(cleanRaw);
+    const shouldAutoCreateLinkedItem = Boolean(shortcutKind);
+    const normalized = shouldAutoCreateLinkedItem
+      ? { ok: true, normalizedRaw: `++ ${deriveTitleFromFilename(attachedFile?.name || "")}` }
+      : normalizeAttachedFileGrammar(cleanRaw);
     if (!normalized.ok) {
       setError(normalized.error || UI_STRINGS.FILE_GRAMMAR_INVALID);
       return true;
@@ -583,6 +602,59 @@ export default function BottomCaptureBar() {
       await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
       setError((rawData && rawData.error) || UI_STRINGS.INVALID_FILE_GRAMMAR);
       return true;
+    }
+
+    if (shouldAutoCreateLinkedItem) {
+      let linkedItemId = "";
+      try {
+        if (shortcutKind === "note") {
+          const noteRes = await fetch("/api/notes/raw", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ raw: cleanRaw }),
+          });
+          const noteData = await noteRes.json().catch(() => null);
+          if (!noteRes.ok || !noteData?.ok || !noteData?.id) {
+            await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
+            setError((noteData && noteData.error) || UI_STRINGS.NOTE_SAVE_FAILED);
+            return true;
+          }
+          linkedItemId = noteData.id;
+        } else {
+          const captureRes = await fetch("/api/capture", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              raw: cleanRaw,
+              timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || undefined,
+            }),
+          });
+          const captureData = await captureRes.json().catch(() => null);
+          if (!captureRes.ok || !captureData?.ok || !captureData?.id) {
+            await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
+            setError((captureData && captureData.error) || UI_STRINGS.CAPTURE_FAILED);
+            return true;
+          }
+          linkedItemId = captureData.id;
+        }
+      } catch {
+        await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
+        setError(UI_STRINGS.CAPTURE_FAILED);
+        return true;
+      }
+
+      const linkedRaw = `${normalized.normalizedRaw}\nl:${linkedItemId}`;
+      const linkRawRes = await fetch(`/api/files/${uploadData.id}/raw`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ raw: linkedRaw }),
+      });
+      const linkRawData = await linkRawRes.json().catch(() => null);
+      if (!linkRawRes.ok || !linkRawData?.ok) {
+        await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
+        setError((linkRawData && linkRawData.error) || UI_STRINGS.INVALID_FILE_GRAMMAR);
+        return true;
+      }
     }
 
     clearAttachment();
