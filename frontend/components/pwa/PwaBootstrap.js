@@ -9,7 +9,7 @@ import { bootstrapPushSubscription } from "../../lib/pwa/push";
 async function refreshAttentionBadge() {
   const navStatusRes = await fetch("/api/nav-status", { cache: "no-store" });
   const navStatusData = await navStatusRes.json().catch(() => ({}));
-  await setBadgeCount(hasAppAttention(navStatusData) ? 1 : 0);
+  await setBadgeCount(hasAppAttention(navStatusData));
 }
 
 export default function PwaBootstrap() {

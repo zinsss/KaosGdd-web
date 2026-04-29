@@ -4,19 +4,19 @@ const BADGE_DEBUG_PREFIX = "[sw:badge]";
 
 const canUseBadgeApi = () => typeof self.navigator !== "undefined";
 
-const tryUpdateBadge = async (badgeCount) => {
+const tryUpdateBadge = async (hasAttention) => {
   const hasNavigator = canUseBadgeApi();
   const hasSetAppBadge = hasNavigator && "setAppBadge" in self.navigator;
   const hasClearAppBadge = hasNavigator && "clearAppBadge" in self.navigator;
 
   console.debug(
-    `${BADGE_DEBUG_PREFIX} api=${hasSetAppBadge || hasClearAppBadge} count=${badgeCount}`,
+    `${BADGE_DEBUG_PREFIX} api=${hasSetAppBadge || hasClearAppBadge} attention=${hasAttention}`,
   );
 
-  if (!Number.isFinite(badgeCount)) return;
+  if (typeof hasAttention !== "boolean") return;
 
   try {
-    if (badgeCount > 0) {
+    if (hasAttention) {
       if (!hasSetAppBadge) {
         console.debug(`${BADGE_DEBUG_PREFIX} set skipped (unsupported)`);
         return;
@@ -93,9 +93,9 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     (async () => {
       if (hasAppAttention !== null) {
-        await tryUpdateBadge(hasAppAttention ? 1 : 0);
+        await tryUpdateBadge(hasAppAttention);
       } else if (badgeCount !== null) {
-        await tryUpdateBadge(badgeCount > 0 ? 1 : 0);
+        await tryUpdateBadge(badgeCount > 0);
       }
 
       await self.registration.showNotification(title, {
@@ -133,11 +133,10 @@ self.addEventListener("message", (event) => {
   if (self.location.hostname !== "localhost") return;
 
   if (data.action === "set") {
-    const count = Number(data.count);
-    void tryUpdateBadge(Number.isFinite(count) ? count : 1);
+    void tryUpdateBadge(true);
     return;
   }
   if (data.action === "clear") {
-    void tryUpdateBadge(0);
+    void tryUpdateBadge(false);
   }
 });
