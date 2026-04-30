@@ -31,10 +31,9 @@ function eachCalendarCell(monthValue) {
 }
 
 export default function EventsPageClient() {
-  const now = new Date();
-  const todayYmd = ymd(now);
-  const [month, setMonth] = useState(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
-  const [selectedDate, setSelectedDate] = useState(ymd(now));
+  const [todayYmd, setTodayYmd] = useState(null);
+  const [month, setMonth] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(null);
   const [items, setItems] = useState([]);
   const swipeRef = useRef({
     startX: 0,
@@ -44,15 +43,25 @@ export default function EventsPageClient() {
     handled: false,
   });
 
-  const cells = useMemo(() => eachCalendarCell(month), [month]);
+  const cells = useMemo(() => (month ? eachCalendarCell(month) : []), [month]);
 
   useEffect(() => {
+    if (!month) return;
+
     const { start, end } = monthBounds(month);
     fetch(`/api/events?start_date=${start}&end_date=${end}`)
       .then((res) => res.json())
       .then((data) => setItems(data.items || []))
       .catch(() => setItems([]));
   }, [month]);
+
+  useEffect(() => {
+    const now = new Date();
+    const currentYmd = ymd(now);
+    setTodayYmd(currentYmd);
+    setMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
+    setSelectedDate(currentYmd);
+  }, []);
 
   useEffect(() => {
     document.body.classList.add("eventsPageActive");
