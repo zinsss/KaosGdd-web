@@ -26,6 +26,8 @@ def main_module(tmp_path: Path):
     [
         "^^ 2026-05-09\n주열NP",
         "^^ 2026-05-09   \n\n주열NP",
+        "^^ 2026-05-09 주열NP",
+        "^^ 2026-05-09 주열NP #family r:-2d",
     ],
 )
 def test_capture_event_minimal_forms_succeed(main_module, raw: str) -> None:
