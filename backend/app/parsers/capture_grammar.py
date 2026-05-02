@@ -74,7 +74,7 @@ def _expand_event_inline_tail(inline_tail: str) -> list[str]:
     tail = (inline_tail or "").strip()
     if not tail:
         return []
-    marker = re.search(r'\s(?=(?:#|r:|"""))', tail)
+    marker = re.search(r'\s(?=(?:#|r:|l:|"""))', tail)
     if not marker:
         return [tail]
     title = tail[: marker.start()].strip()
@@ -251,6 +251,11 @@ def parse_capture(raw: str) -> dict:
 
         if line.startswith("#"):
             result.tags.extend(TAG_RE.findall(line))
+            continue
+
+        if line.startswith("l:"):
+            if result.item_type == "reminder":
+                return ParseResult(ok=False, error="standalone reminder does not support l:").to_dict()
             continue
 
         if result.item_type == "reminder":
