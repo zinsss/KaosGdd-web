@@ -78,7 +78,16 @@ export default function FileDetailPanel({ item, raw }) {
           <div className="detailReadRow"><div className="detailReadLabel">Size</div><div className="detailReadContent withDivider">{formatBytes(item.size_bytes)}</div></div>
           <div className="detailReadRow"><div className="detailReadLabel">Added</div><div className="detailReadContent withDivider">{item.created_at_display || item.created_at}</div></div>
           {item.updated_at_display ? <div className="detailReadRow"><div className="detailReadLabel">Updated</div><div className="detailReadContent withDivider">{item.updated_at_display}</div></div> : null}
-          <div className="detailReadRow"><div className="detailReadLabel">File</div><div className="detailReadContent withDivider"><a className="taskLink" href={`/api/files/${item.id}/open`} target="_blank" rel="noreferrer">Open / Download</a></div></div>
+          <div className="detailReadRow">
+            <div className="detailReadLabel">File</div>
+            <div className="detailReadContent withDivider">
+              <div className="actionRow" style={{ gap: 8, flexWrap: "wrap" }}>
+                <Link className="button" href={`/files/${item.id}/preview`}>Preview</Link>
+                <a className="button" href={`/api/files/${item.id}/open`} target="_blank" rel="noreferrer">Open</a>
+                <a className="button" href={`/api/files/${item.id}/preview?download=1`}>Download</a>
+              </div>
+            </div>
+          </div>
           {item.memo ? <div className="detailReadRow"><div className="detailReadLabel">Memo</div><div className="detailReadContent detailReadMemo withDivider">{String(item.memo).split("\n").map((line, idx) => <div key={idx}>{line || "\u00A0"}</div>)}</div></div> : null}
           <LinkedItemsBlock links={item.links} />
         </div>
