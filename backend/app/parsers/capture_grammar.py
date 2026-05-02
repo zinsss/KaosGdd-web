@@ -54,6 +54,36 @@ class ParseResult:
         return asdict(self)
 
 
+def _split_event_header_date_and_tail(header: str) -> tuple[str, str]:
+    body = header[len(EVENT_PREFIX) :].strip()
+    if not body:
+        return "", ""
+
+    range_match = re.match(r"^(\d{4}-\d{2}-\d{2}\s*~\s*\d{4}-\d{2}-\d{2})(?:\s+(.*))?$", body)
+    if range_match:
+        return range_match.group(1), (range_match.group(2) or "").strip()
+
+    single_match = re.match(r"^(\d{4}-\d{2}-\d{2})(?:\s+(.*))?$", body)
+    if single_match:
+        return single_match.group(1), (single_match.group(2) or "").strip()
+
+    return body, ""
+
+
+def _expand_event_inline_tail(inline_tail: str) -> list[str]:
+    tail = (inline_tail or "").strip()
+    if not tail:
+        return []
+    marker = re.search(r'\s(?=(?:#|r:|l:|"""))', tail)
+    if not marker:
+        return [tail]
+    title = tail[: marker.start()].strip()
+    meta_tail = tail[marker.start() + 1 :].strip()
+    parts = [title] if title else []
+    parts.extend(token.strip() for token in meta_tail.split() if token.strip())
+    return parts
+
+
 def parse_capture(raw: str) -> dict:
     text = (raw or "").strip()
     if not text:
@@ -76,6 +106,7 @@ def parse_capture(raw: str) -> dict:
     is_done = False
     start_date = None
     end_date = None
+    event_inline_tail = ""
 
     if first.startswith(UNDONE_TASK_PREFIX):
         item_type = "task"
@@ -91,7 +122,7 @@ def parse_capture(raw: str) -> dict:
         if not first.startswith(EVENT_PREFIX):
             return ParseResult(ok=False, error="event line must start with ^^ ").to_dict()
         item_type = "event"
-        date_part = first[len(EVENT_PREFIX) :].strip()
+        date_part, event_inline_tail = _split_event_header_date_and_tail(first)
         if not date_part:
             return ParseResult(ok=False, error="missing date after ^^").to_dict()
         if "~" in date_part:
@@ -136,7 +167,11 @@ def parse_capture(raw: str) -> dict:
     if result.item_type == "reminder" and result.title:
         reminder_title_lines.append(result.title)
 
-    for original in lines[first_idx + 1 :]:
+    remaining_lines = lines[first_idx + 1 :]
+    if item_type == "event" and event_inline_tail:
+        remaining_lines = [*_expand_event_inline_tail(event_inline_tail), *remaining_lines]
+
+    for original in remaining_lines:
         line = original.strip()
 
         if in_memo:
@@ -216,6 +251,11 @@ def parse_capture(raw: str) -> dict:
 
         if line.startswith("#"):
             result.tags.extend(TAG_RE.findall(line))
+            continue
+
+        if line.startswith("l:"):
+            if result.item_type == "reminder":
+                return ParseResult(ok=False, error="standalone reminder does not support l:").to_dict()
             continue
 
         if result.item_type == "reminder":

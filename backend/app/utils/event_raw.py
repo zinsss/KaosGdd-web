@@ -15,6 +15,38 @@ REL_REMIND_RE = re.compile(r"^-(\d+)([dhwm])$")
 TAG_RE = re.compile(r"#([^\s#]+)")
 
 
+def _split_header_date_and_tail(header: str) -> tuple[str, str]:
+    body = header[len(EVENT_PREFIX):].strip()
+    if not body:
+        return "", ""
+
+    range_match = re.match(r"^(\d{4}-\d{2}-\d{2}\s*~\s*\d{4}-\d{2}-\d{2})(?:\s+(.*))?$", body)
+    if range_match:
+        return range_match.group(1), (range_match.group(2) or "").strip()
+
+    single_match = re.match(r"^(\d{4}-\d{2}-\d{2})(?:\s+(.*))?$", body)
+    if single_match:
+        return single_match.group(1), (single_match.group(2) or "").strip()
+
+    return body, ""
+
+
+def _expand_inline_tail(inline_tail: str) -> list[str]:
+    tail = (inline_tail or "").strip()
+    if not tail:
+        return []
+
+    marker = re.search(r'\s(?=(?:#|r:|l:|"""))', tail)
+    if not marker:
+        return [tail]
+
+    title = tail[: marker.start()].strip()
+    meta_tail = tail[marker.start() + 1 :].strip()
+    parts = [title] if title else []
+    parts.extend(token.strip() for token in meta_tail.split() if token.strip())
+    return parts
+
+
 def _validate_date(value: str) -> str:
     if not DATE_RE.match(value):
         raise ValueError("invalid event date format (expected YYYY-MM-DD)")
@@ -67,7 +99,7 @@ def parse_event_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> di
     if not first.startswith(EVENT_PREFIX):
         raise ValueError("event line must start with ^^ ")
 
-    date_part = first[len(EVENT_PREFIX):].strip()
+    date_part, inline_tail = _split_header_date_and_tail(first)
     if not date_part:
         raise ValueError("missing date after ^^")
 
@@ -83,7 +115,10 @@ def parse_event_raw(raw_text: str, *, reject_past_datetimes: bool = False) -> di
         start_date = _validate_date(date_part)
         end_date = None
 
-    rest = lines[lines.index(next(line for line in lines if line.strip())) + 1:]
+    first_idx = lines.index(next(line for line in lines if line.strip()))
+    rest = lines[first_idx + 1:]
+    if inline_tail:
+        rest = [*_expand_inline_tail(inline_tail), *rest]
 
     title = None
     tags: list[str] = []

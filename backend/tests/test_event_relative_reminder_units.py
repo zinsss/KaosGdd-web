@@ -17,3 +17,11 @@ def test_event_relative_reminder_hours_and_minutes() -> None:
 
     assert parsed_hours["remind_ats"] == ["2026-05-08T13:00:00+00:00"]
     assert parsed_minutes["remind_ats"] == ["2026-05-08T14:30:00+00:00"]
+
+
+def test_event_single_line_parses_title_tags_and_reminder() -> None:
+    parsed = parse_event_raw("^^ 2026-05-09 Event #family #trip r:-1w")
+
+    assert parsed["title"] == "Event"
+    assert parsed["tags"] == ["family", "trip"]
+    assert parsed["remind_ats"] == ["2026-05-02"]

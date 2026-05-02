@@ -26,6 +26,8 @@ def main_module(tmp_path: Path):
     [
         "^^ 2026-05-09\n주열NP",
         "^^ 2026-05-09   \n\n주열NP",
+        "^^ 2026-05-09 주열NP",
+        "^^ 2026-05-09 주열NP #family r:-2d",
     ],
 )
 def test_capture_event_minimal_forms_succeed(main_module, raw: str) -> None:
@@ -74,3 +76,16 @@ def test_raw_edit_event_allows_existing_past_reminder(main_module) -> None:
     assert detail["ok"] is True
     assert len(detail["item"]["reminders"]) == 1
     assert detail["item"]["reminders"][0]["remind_at"] == "2020-01-01T00:00:00+00:00"
+
+
+def test_capture_event_single_line_with_l_metadata(main_module) -> None:
+    target = main_module.capture_item({"raw": "-- linked task"})
+    assert target["ok"] is True
+
+    payload = main_module.capture_item({"raw": f"^^ 2026-05-09 Mom birthday l:{target['id']} #family r:-1w"})
+    assert payload["ok"] is True
+
+    detail = main_module.get_event(payload["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["title"] == "Mom birthday"
+    assert [link["id"] for link in detail["item"]["links"]] == [target["id"]]
