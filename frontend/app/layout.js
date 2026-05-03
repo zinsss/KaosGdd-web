@@ -45,9 +45,10 @@ export default function RootLayout({ children }) {
 
         <div className="appShellTopSpacer" />
 
-        <main className="appShellMain">{children}</main>
-
-        <BottomCaptureBar />
+        <main className="appShellMain">
+          <BottomCaptureBar />
+          {children}
+        </main>
       </body>
     </html>
   );
