@@ -460,3 +460,16 @@
     padding: 12px;
   }
 }
+
+@media (max-width: 767px) {
+  .appShellMain {
+    padding-bottom: 0;
+  }
+
+  .bottomCaptureBar {
+    position: static;
+    z-index: auto;
+    padding: 10px 12px 6px;
+    pointer-events: auto;
+  }
+}

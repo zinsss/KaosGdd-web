@@ -202,6 +202,11 @@ export default function BottomCaptureBar() {
   const isTextareaFocusedRef = useRef(false);
   const userScrollOverrideRef = useRef(false);
 
+  function isBottomAnchoredMode() {
+    if (typeof window === "undefined") return true;
+    return window.matchMedia("(min-width: 768px)").matches;
+  }
+
   function getMainScroller() {
     if (typeof document === "undefined") return null;
     return document.querySelector(".appShellMain");
@@ -234,6 +239,7 @@ export default function BottomCaptureBar() {
 
   function anchorCaptureForFocus({ behavior = "auto" } = {}) {
     if (typeof window === "undefined") return;
+    if (!isBottomAnchoredMode()) return true;
     const node = textareaRef.current;
     if (!node || !isTextareaFocusedRef.current) return;
     if (userScrollOverrideRef.current) return;
@@ -249,6 +255,7 @@ export default function BottomCaptureBar() {
 
   function startFocusAnchorLoop(durationMs = 300) {
     if (typeof window === "undefined") return;
+    if (!isBottomAnchoredMode()) return;
     if (!isTextareaFocusedRef.current) return;
     if (userScrollOverrideRef.current) return;
 
@@ -393,6 +400,7 @@ export default function BottomCaptureBar() {
     if (typeof window === "undefined") return;
 
     const onViewportShift = () => {
+      if (!isBottomAnchoredMode()) return;
       if (!isTextareaFocusedRef.current) return;
       anchorCaptureForFocus({ behavior: "auto" });
     };
@@ -409,6 +417,7 @@ export default function BottomCaptureBar() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!isBottomAnchoredMode()) return;
 
     const onUserScrollIntent = () => {
       if (!isTextareaFocusedRef.current) return;
