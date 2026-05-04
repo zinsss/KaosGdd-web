@@ -41,7 +41,7 @@ export default async function FilePreviewPage({ params }) {
         </div>
 
         {isPdf ? (
-          <PdfPreviewClient fileId={file.id} title={title} />
+          <PdfPreviewClient fileId={file.id} />
         ) : (
           <div className="detailReadBlock">
             <div className="detailReadRow">
