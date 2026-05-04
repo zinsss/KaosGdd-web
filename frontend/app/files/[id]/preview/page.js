@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { getApiBase } from "../../../../lib/api-base";
 import { UI_STRINGS } from "../../../../lib/strings";
-import PdfPreviewClient from "./PdfPreviewClient";
 
 async function getFile(id) {
   const base = getApiBase();
@@ -40,17 +39,13 @@ export default async function FilePreviewPage({ params }) {
           </div>
         </div>
 
-        {isPdf ? (
-          <PdfPreviewClient fileId={file.id} />
-        ) : (
-          <div className="detailReadBlock">
-            <div className="detailReadRow">
-              <div className="detailReadContent withDivider">
-                Inline preview is not available for this file type.
-              </div>
+        <div className="detailReadBlock">
+          <div className="detailReadRow">
+            <div className="detailReadContent withDivider">
+              {isPdf ? "PDF preview is not shown in-app." : "Inline preview is not available for this file type."}
             </div>
           </div>
-        )}
+        </div>
       </section>
     </main>
   );
