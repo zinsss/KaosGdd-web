@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const INITIAL_RENDER_COUNT = 2;
-const RENDER_BATCH_SIZE = 2;
+const LOAD_BATCH_SIZE = 2;
 
-function PdfPageCanvas({ pdfRef, pageNumber, shouldRender }) {
+function PdfPageCanvas({ pdfRef, pageNumber, shouldRender, renderTasksRef }) {
   const canvasRef = useRef(null);
 
   useEffect(() => {
     if (!shouldRender || !pdfRef.current || !canvasRef.current) return;
+
     let cancelled = false;
 
     async function renderPage() {
@@ -19,31 +20,44 @@ function PdfPageCanvas({ pdfRef, pageNumber, shouldRender }) {
       const canvas = canvasRef.current;
       const context = canvas?.getContext("2d");
       if (!canvas || !context || cancelled) return;
+
       canvas.width = Math.floor(viewport.width);
       canvas.height = Math.floor(viewport.height);
-      await page.render({ canvasContext: context, viewport }).promise;
+
+      const renderTask = page.render({ canvasContext: context, viewport });
+      renderTasksRef.current.set(pageNumber, renderTask);
+      try {
+        await renderTask.promise;
+      } finally {
+        renderTasksRef.current.delete(pageNumber);
+      }
     }
 
     renderPage().catch(() => {});
 
     return () => {
       cancelled = true;
+      const activeTask = renderTasksRef.current.get(pageNumber);
+      if (activeTask) {
+        activeTask.cancel();
+        renderTasksRef.current.delete(pageNumber);
+      }
     };
-  }, [pdfRef, pageNumber, shouldRender]);
+  }, [pageNumber, pdfRef, shouldRender, renderTasksRef]);
 
   return (
     <div style={{ border: "1px solid var(--line)", borderRadius: 8, background: "#fff", padding: 4 }}>
-      <canvas
-        ref={canvasRef}
-        aria-label={`PDF page ${pageNumber}`}
-        style={{ width: "100%", height: "auto", display: "block" }}
-      />
+      <canvas ref={canvasRef} aria-label={`PDF page ${pageNumber}`} style={{ width: "100%", height: "auto", display: "block" }} />
     </div>
   );
 }
 
 export default function PdfPreviewClient({ fileId }) {
   const pdfRef = useRef(null);
+  const loadingTaskRef = useRef(null);
+  const renderTasksRef = useRef(new Map());
+  const sentinelRef = useRef(null);
+
   const [numPages, setNumPages] = useState(0);
   const [renderCount, setRenderCount] = useState(0);
   const [error, setError] = useState("");
@@ -55,9 +69,10 @@ export default function PdfPreviewClient({ fileId }) {
     async function loadPdf() {
       try {
         const pdfjsLib = await import("pdfjs-dist/legacy/build/pdf.mjs");
-        pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("pdfjs-dist/legacy/build/pdf.worker.mjs", import.meta.url).toString();
-
-        const loadingTask = pdfjsLib.getDocument(`/api/files/${fileId}/preview`);
+        const response = await fetch(`/api/files/${fileId}/preview`, { cache: "no-store" });
+        const data = await response.arrayBuffer();
+        const loadingTask = pdfjsLib.getDocument({ data, disableWorker: true });
+        loadingTaskRef.current = loadingTask;
         const pdf = await loadingTask.promise;
 
         if (cancelled) return;
@@ -74,17 +89,41 @@ export default function PdfPreviewClient({ fileId }) {
     }
 
     loadPdf();
+
     return () => {
       cancelled = true;
+
+      if (loadingTaskRef.current) {
+        loadingTaskRef.current.destroy();
+        loadingTaskRef.current = null;
+      }
+
+      renderTasksRef.current.forEach((task) => task.cancel());
+      renderTasksRef.current.clear();
+
+      if (pdfRef.current) {
+        pdfRef.current.destroy();
+        pdfRef.current = null;
+      }
     };
   }, [fileId]);
 
   useEffect(() => {
-    if (!numPages || renderCount >= numPages) return;
-    const timer = window.setTimeout(() => {
-      setRenderCount((current) => Math.min(current + RENDER_BATCH_SIZE, numPages));
-    }, 120);
-    return () => window.clearTimeout(timer);
+    if (!sentinelRef.current || !numPages || renderCount >= numPages) return;
+
+    const node = sentinelRef.current;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry?.isIntersecting) {
+          setRenderCount((current) => Math.min(current + LOAD_BATCH_SIZE, numPages));
+        }
+      },
+      { rootMargin: "240px 0px" }
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
   }, [renderCount, numPages]);
 
   const pageNumbers = useMemo(() => Array.from({ length: numPages }, (_, i) => i + 1), [numPages]);
@@ -100,8 +139,18 @@ export default function PdfPreviewClient({ fileId }) {
           pdfRef={pdfRef}
           pageNumber={pageNumber}
           shouldRender={pageNumber <= renderCount}
+          renderTasksRef={renderTasksRef}
         />
       ))}
+
+      {renderCount < numPages ? (
+        <>
+          <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
+          <button type="button" className="button" onClick={() => setRenderCount((current) => Math.min(current + LOAD_BATCH_SIZE, numPages))}>
+            Load more pages
+          </button>
+        </>
+      ) : null}
     </div>
   );
 }
