@@ -56,7 +56,6 @@ export default function PdfPreviewClient({ fileId }) {
   const pdfRef = useRef(null);
   const loadingTaskRef = useRef(null);
   const renderTasksRef = useRef(new Map());
-  const sentinelRef = useRef(null);
 
   const [numPages, setNumPages] = useState(0);
   const [renderCount, setRenderCount] = useState(0);
@@ -108,25 +107,7 @@ export default function PdfPreviewClient({ fileId }) {
     };
   }, [fileId]);
 
-  useEffect(() => {
-    if (!sentinelRef.current || !numPages || renderCount >= numPages) return;
-
-    const node = sentinelRef.current;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const [entry] = entries;
-        if (entry?.isIntersecting) {
-          setRenderCount((current) => Math.min(current + LOAD_BATCH_SIZE, numPages));
-        }
-      },
-      { rootMargin: "240px 0px" }
-    );
-
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [renderCount, numPages]);
-
-  const pageNumbers = useMemo(() => Array.from({ length: numPages }, (_, i) => i + 1), [numPages]);
+  const pageNumbers = useMemo(() => Array.from({ length: renderCount }, (_, i) => i + 1), [renderCount]);
 
   if (loading) return <div className="detailReadContent withDivider">Loading PDF preview…</div>;
   if (error) return <div className="errorText">{error}</div>;
@@ -144,12 +125,9 @@ export default function PdfPreviewClient({ fileId }) {
       ))}
 
       {renderCount < numPages ? (
-        <>
-          <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />
-          <button type="button" className="button" onClick={() => setRenderCount((current) => Math.min(current + LOAD_BATCH_SIZE, numPages))}>
-            Load more pages
-          </button>
-        </>
+        <button type="button" className="button" onClick={() => setRenderCount((current) => Math.min(current + LOAD_BATCH_SIZE, numPages))}>
+          Load more pages
+        </button>
       ) : null}
     </div>
   );
