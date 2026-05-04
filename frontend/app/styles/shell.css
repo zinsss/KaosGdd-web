@@ -192,7 +192,7 @@
   background: transparent;
   border-top: 0;
   box-shadow: none;
-  padding: 8px 12px max(calc(var(--app-shell-safe-bottom) - 32px), 0px);
+  padding: 6px 12px max(calc(var(--app-shell-safe-bottom) - 34px), 0px);
   pointer-events: none;
   overflow: visible;
 }
@@ -202,7 +202,7 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
   border-radius: 8px;
   pointer-events: auto;
   overflow: visible;
@@ -211,15 +211,15 @@
 .bottomCaptureBar .bottomCaptureInput {
   flex: 0 0 auto;
   width: 100%;
-  min-height: 46px;
+  min-height: 42px;
   height: auto;
   max-height: none;
   line-height: 1.45;
   border: 1px solid rgba(186, 194, 222, 0.24);
   border-radius: 24px;
   background: var(--bottom-capture-surface);
-  padding-top: 8px;
-  padding-bottom: 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
@@ -231,7 +231,7 @@
 }
 
 .bottomCaptureStatus {
-  min-height: 32px;
+  min-height: 30px;
   flex: 1 1 auto;
   min-width: 0;
   font-size: 12px;
@@ -251,14 +251,14 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
   flex: 0 0 auto;
 }
 
 .bottomCaptureBar .bottomCaptureAttachButton {
   width: 34px;
   min-width: 34px;
-  height: 34px;
+  height: 32px;
   padding: 0;
   border-radius: 999px;
   border-color: var(--ctp-lavender);
@@ -270,10 +270,10 @@
 
 .bottomCaptureBar .bottomCaptureCaptureButton {
   width: auto;
-  min-width: 84px;
-  height: 34px;
-  line-height: 34px;
-  padding: 0 14px;
+  min-width: 72px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
   border-radius: 999px;
   border-color: rgba(186, 194, 222, 0.24);
   background: var(--bottom-capture-surface);
@@ -294,9 +294,9 @@
 .bottomCaptureBar .bottomCaptureButton {
   width: auto;
   min-width: 68px;
-  height: 34px;
-  line-height: 34px;
-  padding: 0 14px;
+  height: 32px;
+  line-height: 32px;
+  padding: 0 12px;
   border-radius: 999px;
   border-color: var(--ctp-lavender);
   background: var(--ctp-lavender);
@@ -323,7 +323,7 @@
 .bottomCaptureBar .bottomCaptureCancelButton {
   width: auto;
   min-width: 64px;
-  height: 34px;
+  height: 32px;
   padding: 0 12px;
   border-radius: 999px;
   border-color: rgba(186, 194, 222, 0.24);

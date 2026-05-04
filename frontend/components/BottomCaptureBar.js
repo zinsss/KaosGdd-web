@@ -929,7 +929,7 @@ export default function BottomCaptureBar() {
               />
 
               <button className="button pillButton bottomCaptureCaptureButton" type="button" onClick={onOpenCapturePage} disabled={isSubmitting}>
-                {UI_STRINGS.CAPTURE}
+                G
               </button>
 
               <button className="button pillButton bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
