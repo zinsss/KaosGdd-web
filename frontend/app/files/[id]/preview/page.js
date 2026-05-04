@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getApiBase } from "../../../../lib/api-base";
 import { UI_STRINGS } from "../../../../lib/strings";
+import PdfPreviewClient from "./PdfPreviewClient";
 
 async function getFile(id) {
   const base = getApiBase();
@@ -34,17 +35,13 @@ export default async function FilePreviewPage({ params }) {
           <Link className="taskLink backLink" href={`/files/${file.id}`}>&lt; Back</Link>
           <div className="sectionTitle detailMainTitle" style={{ margin: 0, flex: 1 }}>{title}</div>
           <div className="actionRow" style={{ gap: 8, flexWrap: "wrap" }}>
-            <a className="button" href={`/api/files/${file.id}/open`} target="_blank" rel="noreferrer">Open externally</a>
+            <a className="button" href={`/api/files/${file.id}/open`} target="_blank" rel="noreferrer">Open</a>
             <a className="button" href={`/api/files/${file.id}/preview?download=1`}>Download</a>
           </div>
         </div>
 
         {isPdf ? (
-          <iframe
-            title={title}
-            src={`/api/files/${file.id}/preview`}
-            style={{ width: "100%", minHeight: "70vh", border: "1px solid var(--line)", borderRadius: 8, background: "#fff" }}
-          />
+          <PdfPreviewClient fileId={file.id} title={title} />
         ) : (
           <div className="detailReadBlock">
             <div className="detailReadRow">
