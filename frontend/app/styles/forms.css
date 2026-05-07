@@ -226,6 +226,7 @@ textarea.textInput:focus {
 
 .capturePreview {
   border: 1px solid var(--ui-border);
+  border-radius: var(--group-box-radius);
   background: var(--ui-input);
   padding: 8px 10px;
 }

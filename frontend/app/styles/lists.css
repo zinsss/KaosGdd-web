@@ -166,6 +166,10 @@
   margin-top: 8px;
   margin-left: 34px;
   max-width: 460px;
+  border: 1px solid rgba(186, 194, 222, 0.14);
+  border-radius: var(--group-box-radius);
+  background: rgba(30, 30, 46, 0.36);
+  padding: 8px 10px;
 }
 
 .taskInlineSubtasksState {
@@ -179,8 +183,10 @@
 }
 
 .taskDoneMonthGroup {
-  border-bottom: 1px dotted var(--ui-border);
-  padding-bottom: 2px;
+  border: 1px solid rgba(186, 194, 222, 0.14);
+  border-radius: var(--group-box-radius);
+  background: rgba(30, 30, 46, 0.26);
+  padding: 8px 10px;
 }
 
 .taskDoneMonthHeader {

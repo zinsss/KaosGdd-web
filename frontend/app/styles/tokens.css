@@ -28,6 +28,7 @@
 
   --ui-bg: var(--ctp-crust);
   --ui-panel: var(--ctp-mantle);
+  --ui-panel-elevated: #242536;
   --ui-input: var(--ctp-base);
   --ui-border: var(--ctp-surface0);
   --ui-border-strong: var(--ctp-surface1);
@@ -47,6 +48,8 @@
   --ui-danger: var(--ctp-red);
 
   --ui-title: var(--ctp-yellow);
+
+  --group-box-radius: 14px;
 }
 
 @font-face {

@@ -30,7 +30,7 @@ body.eventsPageActive .appShellMain {
   border: 1px solid var(--ui-border);
   background: transparent;
   min-height: 52px;
-  border-radius: 8px;
+  border-radius: var(--group-box-radius);
   color: var(--ui-text);
   display: flex;
   flex-direction: column;
@@ -74,6 +74,13 @@ body.eventsPageActive .appShellMain {
 .eventMonthGroups {
   display: grid;
   gap: 12px;
+}
+
+.eventMonthGroup {
+  border: 1px solid rgba(186, 194, 222, 0.14);
+  border-radius: var(--group-box-radius);
+  background: rgba(30, 30, 46, 0.26);
+  padding: 8px 10px;
 }
 
 .eventMonthGroupHeading {
