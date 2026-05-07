@@ -8,7 +8,8 @@ export async function GET(request, { params }) {
 
   let contentDisposition = "inline";
   if (isDownload) {
-    contentDisposition = sourceDisposition && sourceDisposition !== "inline" ? sourceDisposition : "attachment";
+    const filenameMatch = sourceDisposition.match(/;\s*filename\*?=(?:"[^"]*"|[^;]+)/i);
+    contentDisposition = filenameMatch ? `attachment${filenameMatch[0]}` : "attachment";
   }
 
   return new Response(source.body, {
