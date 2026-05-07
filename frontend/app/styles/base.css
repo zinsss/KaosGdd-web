@@ -43,6 +43,7 @@ body {
 
 .panel {
   border: 1px solid var(--ui-border);
+  border-radius: var(--group-box-radius);
   padding: 14px;
   margin-bottom: 12px;
   background: var(--ui-panel);

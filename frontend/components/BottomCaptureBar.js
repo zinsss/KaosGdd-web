@@ -302,6 +302,7 @@ export default function BottomCaptureBar() {
     const borderTop = Number.parseFloat(computed.borderTopWidth) || 0;
     const borderBottom = Number.parseFloat(computed.borderBottomWidth) || 0;
     const lineCount = Math.max(node.value.split("\n").length, 1);
+    const maxHeight = Number.parseFloat(computed.maxHeight) || 70;
 
     node.style.height = "auto";
 
@@ -312,8 +313,12 @@ export default function BottomCaptureBar() {
       borderTop +
       borderBottom;
 
-    const targetHeight = Math.max(node.scrollHeight + borderTop + borderBottom, minVisibleHeight, 38);
+    const targetHeight = Math.min(
+      Math.max(node.scrollHeight + borderTop + borderBottom, minVisibleHeight, 34),
+      maxHeight,
+    );
     node.style.height = `${targetHeight}px`;
+    node.style.overflowY = node.scrollHeight + borderTop + borderBottom > maxHeight ? "auto" : "hidden";
   }
 
   useEffect(() => {

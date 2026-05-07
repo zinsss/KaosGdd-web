@@ -164,8 +164,10 @@
 }
 
 .moreMetaBox {
-  border-top: 1px dotted var(--ui-border);
-  padding-top: 12px;
+  border: 1px solid rgba(186, 194, 222, 0.14);
+  border-radius: var(--group-box-radius);
+  background: rgba(30, 30, 46, 0.26);
+  padding: 10px;
 }
 
 
