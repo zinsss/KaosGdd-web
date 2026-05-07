@@ -40,13 +40,13 @@ export default function RootLayout({ children }) {
               <span className="appHeaderSubtitle">{UI_STRINGS.APP_HEADER_SUBTITLE}</span>
             </div>
             <TopNav />
+            <BottomCaptureBar />
           </div>
         </header>
 
         <div className="appShellTopSpacer" />
 
         <main className="appShellMain">
-          <BottomCaptureBar />
           {children}
         </main>
       </body>

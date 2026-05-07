@@ -312,7 +312,7 @@ export default function BottomCaptureBar() {
       borderTop +
       borderBottom;
 
-    const targetHeight = Math.max(node.scrollHeight + borderTop + borderBottom, minVisibleHeight, 46);
+    const targetHeight = Math.max(node.scrollHeight + borderTop + borderBottom, minVisibleHeight, 38);
     node.style.height = `${targetHeight}px`;
   }
 
