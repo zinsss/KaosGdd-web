@@ -10,8 +10,12 @@
   --app-shell-fixed-height: calc(
     var(--app-shell-header-base-height) + var(--app-shell-safe-top)
   );
+  --app-shell-layout-height: var(
+    --app-shell-measured-height,
+    var(--app-shell-fixed-height)
+  );
   --app-shell-content-offset: calc(
-    var(--app-shell-fixed-height) + var(--app-shell-content-gap)
+    var(--app-shell-layout-height) + var(--app-shell-content-gap)
   );
 }
 
@@ -84,7 +88,7 @@
 
 .appShellMain {
   width: 100%;
-  height: calc(100dvh - var(--app-shell-content-offset));
+  height: max(0px, calc(100dvh - var(--app-shell-content-offset)));
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -218,9 +222,9 @@
   width: 100%;
   min-height: 34px;
   height: auto;
-  max-height: 70px;
+  max-height: none;
   line-height: 1.24;
-  overflow-y: auto;
+  overflow-y: hidden;
   border: 1px solid rgba(186, 194, 222, 0.24);
   border-radius: 20px;
   background: var(--bottom-capture-surface);

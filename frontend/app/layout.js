@@ -1,6 +1,7 @@
 import "./globals.css";
 import Link from "next/link";
 import BottomCaptureBar from "../components/BottomCaptureBar";
+import AppShellHeightObserver from "../components/AppShellHeightObserver";
 import TopNav from "../components/TopNav";
 import PwaBootstrap from "../components/pwa/PwaBootstrap";
 import { UI_STRINGS } from "../lib/strings";
@@ -32,6 +33,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <PwaBootstrap />
+        <AppShellHeightObserver />
         <header className="appShellTop">
           <div className="appShellTopInner">
             <div className="appHeaderLine">
