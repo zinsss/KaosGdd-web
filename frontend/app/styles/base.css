@@ -35,9 +35,10 @@ body {
 }
 
 .page {
-  max-width: 760px;
+  width: calc(100% - (var(--app-column-edge-padding) * 2));
+  max-width: var(--app-column-max-width);
   margin: 0 auto;
-  padding: 12px 16px 16px;
+  padding: 12px 0 16px;
   overscroll-behavior: contain;
 }
 
@@ -74,7 +75,7 @@ body {
   }
 
   .page {
-    padding: 8px 12px 12px;
+    padding: 8px 0 12px;
   }
 
   .panel {

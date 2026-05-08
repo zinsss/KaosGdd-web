@@ -1,4 +1,6 @@
 :root {
+  --app-column-max-width: 760px;
+  --app-column-edge-padding: 8px;
   --app-shell-safe-top: env(safe-area-inset-top, 0px);
   --app-shell-safe-bottom: env(safe-area-inset-bottom, 0px);
   --app-shell-bottom-bar-bg: var(--ctp-mantle);
@@ -21,11 +23,11 @@
   z-index: 60;
   background: transparent;
   box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
-  padding: var(--app-shell-safe-top) 8px 8px;
+  padding: var(--app-shell-safe-top) var(--app-column-edge-padding) 8px;
 }
 
 .appShellTopInner {
-  max-width: 760px;
+  max-width: var(--app-column-max-width);
   margin: 0 auto;
   padding: 12px 12px 10px;
   background: var(--ui-panel-elevated);
@@ -201,7 +203,7 @@
 
 .bottomCaptureInner {
   width: 100%;
-  max-width: 760px;
+  max-width: var(--app-column-max-width);
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -403,12 +405,11 @@
 
 @media (max-width: 640px) {
   :root {
+    --app-column-edge-padding: 6px;
     --app-shell-header-base-height: 156px;
   }
 
   .appShellTop {
-    padding-left: 6px;
-    padding-right: 6px;
     padding-bottom: 6px;
   }
 
