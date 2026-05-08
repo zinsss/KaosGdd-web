@@ -4,8 +4,12 @@
   --app-shell-bottom-bar-bg: var(--ctp-mantle);
   --app-shell-bottom-reserve: calc(var(--app-shell-safe-bottom) + 12px);
   --app-shell-header-base-height: 168px;
+  --app-shell-content-gap: 10px;
   --app-shell-fixed-height: calc(
     var(--app-shell-header-base-height) + var(--app-shell-safe-top)
+  );
+  --app-shell-content-offset: calc(
+    var(--app-shell-fixed-height) + var(--app-shell-content-gap)
   );
 }
 
@@ -73,12 +77,12 @@
 }
 
 .appShellTopSpacer {
-  height: var(--app-shell-fixed-height);
+  height: var(--app-shell-content-offset);
 }
 
 .appShellMain {
   width: 100%;
-  height: calc(100dvh - var(--app-shell-fixed-height));
+  height: calc(100dvh - var(--app-shell-content-offset));
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
@@ -186,7 +190,6 @@
 
 .bottomCaptureBar {
   --bottom-capture-surface: #37384a;
-  --bottom-capture-status-surface: #2f3040;
   position: static;
   width: 100%;
   background: transparent;
@@ -197,6 +200,7 @@
 }
 
 .bottomCaptureInner {
+  width: 100%;
   max-width: 760px;
   margin: 0 auto;
   display: flex;
@@ -231,17 +235,11 @@
 }
 
 .bottomCaptureStatus {
-  min-height: 30px;
   flex: 1 1 auto;
   min-width: 0;
   font-size: 12px;
-  border: 1px solid rgba(186, 194, 222, 0.24);
-  border-radius: 999px;
-  background: var(--bottom-capture-status-surface);
-  padding: 0 12px;
-  display: inline-flex;
-  align-items: center;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  line-height: 1.25;
+  padding: 0 2px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
