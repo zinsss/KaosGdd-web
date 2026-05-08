@@ -21,6 +21,7 @@ MODAL_PREFIXES: dict[str, str] = {
     "mail:": "mail",
 }
 
+META_DUE_REMIND = "dr:"
 META_DUE = "d:"
 META_REMIND = "r:"
 META_REPEAT = "R:"
@@ -158,6 +159,7 @@ def parse_capture(raw: str) -> dict:
 
     result = ParseResult(ok=True, action="create_item", item_type=item_type, title=title, is_done=is_done, start_date=start_date, end_date=end_date)
     repeat_seen = False
+    due_remind_seen = False
 
     in_memo = False
     memo_lines: list[str] = []
@@ -197,7 +199,7 @@ def parse_capture(raw: str) -> dict:
             continue
 
         if result.item_type == "journal":
-            if re.search(r"(?:^|\s)(d:|r:|R:)", line):
+            if re.search(r"(?:^|\s)(dr:|d:|r:|R:)", line):
                 return ParseResult(ok=False, error="journal does not support r:, d:, or R:").to_dict()
             if line.startswith("#"):
                 result.tags.extend(TAG_RE.findall(line))
@@ -221,18 +223,39 @@ def parse_capture(raw: str) -> dict:
 
             if not subtask:
                 return ParseResult(ok=False, error="subtask title is required").to_dict()
-            if TAG_RE.search(subtask) or re.search(r"(?:^|\s)(d:|r:|R:)", subtask):
+            if TAG_RE.search(subtask) or re.search(r"(?:^|\s)(dr:|d:|r:|R:)", subtask):
                 return ParseResult(ok=False, error="subtask metadata is not allowed").to_dict()
             result.subtasks.append({"content": subtask, "is_done": subtask_done, "position": len(result.subtasks)})
+            continue
+
+        if line.startswith(META_DUE_REMIND):
+            if result.item_type != "task":
+                return ParseResult(ok=False, error="dr: is only supported for tasks").to_dict()
+            if re.search(r"(?:^|\s)(d:|r:)", line[len(META_DUE_REMIND) :]):
+                return ParseResult(ok=False, error="dr: cannot be combined with d: or r:").to_dict()
+            if result.due_at or result.remind_at:
+                return ParseResult(ok=False, error="dr: cannot be combined with d: or r:").to_dict()
+            due_remind_seen = True
+            due_remind_at = line[len(META_DUE_REMIND) :].strip() or None
+            result.due_at = due_remind_at
+            result.remind_at = due_remind_at
             continue
 
         if line.startswith(META_DUE):
             if result.item_type == "event":
                 return ParseResult(ok=False, error="unsupported extra event grammar").to_dict()
+            if re.search(r"(?:^|\s)dr:", line[len(META_DUE) :]):
+                return ParseResult(ok=False, error="dr: cannot be combined with d: or r:").to_dict()
+            if due_remind_seen:
+                return ParseResult(ok=False, error="dr: cannot be combined with d: or r:").to_dict()
             result.due_at = line[len(META_DUE) :].strip() or None
             continue
 
         if line.startswith(META_REMIND):
+            if re.search(r"(?:^|\s)dr:", line[len(META_REMIND) :]):
+                return ParseResult(ok=False, error="dr: cannot be combined with d: or r:").to_dict()
+            if due_remind_seen:
+                return ParseResult(ok=False, error="dr: cannot be combined with d: or r:").to_dict()
             result.remind_at = line[len(META_REMIND) :].strip() or None
             continue
 
