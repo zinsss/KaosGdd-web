@@ -87,3 +87,29 @@ def test_task_d_and_r_use_same_datetime_normalization(monkeypatch: pytest.Monkey
 
     assert parsed["due_at"] == "2026-04-17T01:30:00+00:00"
     assert parsed["remind_ats"] == ["2026-04-17T01:30:00+00:00"]
+
+
+def test_task_dr_uses_same_datetime_normalization(monkeypatch: pytest.MonkeyPatch) -> None:
+    _freeze_now(monkeypatch, "2026-04-15T00:00:00+00:00")
+    parsed = parse_task_raw("-- Example\ndr:+3d 09:00")
+
+    assert parsed["due_at"] == "2026-04-18T00:00:00+00:00"
+    assert parsed["remind_ats"] == ["2026-04-18T00:00:00+00:00"]
+
+
+def test_task_dr_time_only_defaults_to_today_without_tomorrow_rollover(monkeypatch: pytest.MonkeyPatch) -> None:
+    _freeze_now(monkeypatch, "2026-04-15T00:00:00+00:00")
+    parsed = parse_task_raw("-- Example\ndr:17:00")
+
+    assert parsed["due_at"] == "2026-04-15T08:00:00+00:00"
+    assert parsed["remind_ats"] == ["2026-04-15T08:00:00+00:00"]
+
+
+def test_task_dr_rejects_explicit_due_or_reminder_ambiguity(monkeypatch: pytest.MonkeyPatch) -> None:
+    _freeze_now(monkeypatch, "2026-04-15T00:00:00+00:00")
+
+    with pytest.raises(ValueError, match="dr: cannot be combined with d: or r:"):
+        parse_task_raw("-- Example\ndr:tomorrow\nr:tomorrow")
+
+    with pytest.raises(ValueError, match="dr: cannot be combined with d: or r:"):
+        parse_task_raw("-- Example\nd:tomorrow\ndr:tomorrow")

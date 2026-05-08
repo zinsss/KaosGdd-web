@@ -17,11 +17,13 @@ UNDONE_SUBTASK_PREFIX = "--- "
 DONE_SUBTASK_PREFIX = "--x "
 MEMO_DELIM = '"""'
 
-META_PATTERN = re.compile(r"(?:^|\s)(d:|r:|R:|l:)")
+META_PATTERN = re.compile(r"(?:^|\s)(dr:|d:|r:|R:|l:)")
 TAG_PATTERN = re.compile(r"(?:^|\s)#")
 DATE_ONLY_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 RELATIVE_REMIND_PATTERN = re.compile(r"^-(\d+)([dhwm])$")
 INLINE_DUE_PATTERN = re.compile(r"(?:(?<=^)|(?<=\s))d:(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2})?)")
+DATETIME_META_VALUE_PATTERN = r"([^\s]+(?:\s+\d{2}:\d{2}(?::\d{2})?)?)"
+DR_CONFLICT_MESSAGE = "dr: cannot be combined with d: or r:"
 
 
 def _extract_meta_from_line(line: str) -> tuple[str, dict]:
@@ -29,19 +31,25 @@ def _extract_meta_from_line(line: str) -> tuple[str, dict]:
     meta = {
         "due_at": None,
         "remind_ats": [],
+        "due_remind_at": None,
         "repeat_rule": None,
         "tags": [],
     }
 
-    due_match = re.search(r"(?:(?<=^)|(?<=\s))d:([^\s]+(?:\s+\d{2}:\d{2})?)", working)
+    due_remind_match = re.search(rf"(?:(?<=^)|(?<=\s))dr:{DATETIME_META_VALUE_PATTERN}", working)
+    if due_remind_match:
+        meta["due_remind_at"] = due_remind_match.group(1).strip()
+        working = working.replace(due_remind_match.group(0), " ")
+
+    due_match = re.search(rf"(?:(?<=^)|(?<=\s))d:{DATETIME_META_VALUE_PATTERN}", working)
     if due_match:
         meta["due_at"] = due_match.group(1).strip()
         working = working.replace(due_match.group(0), " ")
 
-    remind_matches = re.findall(r"(?:(?<=^)|(?<=\s))r:([^\s]+(?:\s+\d{2}:\d{2})?)", working)
+    remind_matches = re.findall(rf"(?:(?<=^)|(?<=\s))r:{DATETIME_META_VALUE_PATTERN}", working)
     if remind_matches:
         meta["remind_ats"] = [value.strip() for value in remind_matches]
-        working = re.sub(r"(?:(?<=^)|(?<=\s))r:([^\s]+(?:\s+\d{2}:\d{2})?)", " ", working)
+        working = re.sub(rf"(?:(?<=^)|(?<=\s))r:{DATETIME_META_VALUE_PATTERN}", " ", working)
 
     repeat_match = re.search(r"(?:(?<=^)|(?<=\s))R:([^\s]+)", working)
     if repeat_match:
@@ -57,13 +65,13 @@ def _extract_meta_from_line(line: str) -> tuple[str, dict]:
     return cleaned, meta
 
 
-def _parse_due_value(
-    raw_due: str,
+def _parse_datetime_value(
+    raw_datetime: str,
     *,
     reject_past_datetimes: bool = False,
     timezone_name: str | None = None,
 ) -> str:
-    candidate = str(raw_due or "").strip()
+    candidate = str(raw_datetime or "").strip()
     if not candidate:
         return candidate
     return parse_local_datetime_to_iso(
@@ -71,6 +79,32 @@ def _parse_due_value(
         allow_past=not reject_past_datetimes,
         timezone_name=timezone_name,
     )
+
+
+def _parse_due_reminder_value(
+    raw_due_reminder: str,
+    *,
+    reject_past_datetimes: bool = False,
+    timezone_name: str | None = None,
+) -> str:
+    candidate = str(raw_due_reminder or "").strip()
+    if not candidate:
+        return candidate
+    try:
+        return _parse_datetime_value(
+            candidate,
+            reject_past_datetimes=reject_past_datetimes,
+            timezone_name=timezone_name,
+        )
+    except ValueError as exc:
+        if str(exc) == "resolved datetime is in the past":
+            raise
+        raise ValueError(f"invalid dr format: {candidate}") from exc
+
+
+def _add_reminder_once(remind_ats: list[str], remind_at: str | None) -> None:
+    if remind_at and remind_at not in remind_ats:
+        remind_ats.append(remind_at)
 
 
 def _resolve_relative_reminder(
@@ -204,6 +238,8 @@ def parse_task_raw(
     in_memo = False
     parsed_task_done = False
     relative_remind_tokens: list[str] = []
+    due_remind_seen = False
+    explicit_due_or_reminder_seen = False
 
     first_content_line = next((line.strip() for line in lines if line.strip()), None)
     if not first_content_line:
@@ -226,7 +262,7 @@ def parse_task_raw(
     if inline_due_match:
         inline_due_raw = inline_due_match.group(1).strip()
         try:
-            due_at = _parse_due_value(
+            due_at = _parse_datetime_value(
                 inline_due_raw,
                 reject_past_datetimes=reject_past_datetimes,
                 timezone_name=timezone_name,
@@ -235,6 +271,7 @@ def parse_task_raw(
             if str(exc) == "resolved datetime is in the past":
                 raise ValueError(str(exc)) from exc
             raise ValueError(f"invalid due format: {inline_due_raw}") from exc
+        explicit_due_or_reminder_seen = True
         title = " ".join((title[: inline_due_match.start()] + title[inline_due_match.end() :]).split()) or None
         if not title:
             raise ValueError("title is required")
@@ -280,10 +317,26 @@ def parse_task_raw(
             linked_item_ids.append(parse_link_value(stripped[2:]))
             continue
 
+        if stripped.startswith("dr:"):
+            if explicit_due_or_reminder_seen or re.search(r"(?:^|\s)(d:|r:)", stripped[3:]):
+                raise ValueError(DR_CONFLICT_MESSAGE)
+            due_remind_seen = True
+            normalized = _parse_due_reminder_value(
+                stripped[3:].strip(),
+                reject_past_datetimes=reject_past_datetimes,
+                timezone_name=timezone_name,
+            )
+            due_at = normalized
+            _add_reminder_once(remind_ats, normalized)
+            continue
+
         if stripped.startswith("d:"):
+            if due_remind_seen or re.search(r"(?:^|\s)dr:", stripped[2:]):
+                raise ValueError(DR_CONFLICT_MESSAGE)
+            explicit_due_or_reminder_seen = True
             due_raw = stripped[2:].strip()
             try:
-                due_at = _parse_due_value(
+                due_at = _parse_datetime_value(
                     due_raw,
                     reject_past_datetimes=reject_past_datetimes,
                     timezone_name=timezone_name,
@@ -295,6 +348,9 @@ def parse_task_raw(
             continue
 
         if stripped.startswith("r:"):
+            if due_remind_seen or re.search(r"(?:^|\s)dr:", stripped[2:]):
+                raise ValueError(DR_CONFLICT_MESSAGE)
+            explicit_due_or_reminder_seen = True
             remind_raw = stripped[2:].strip()
             if RELATIVE_REMIND_PATTERN.fullmatch(remind_raw):
                 relative_remind_tokens.append(remind_raw)
@@ -304,15 +360,29 @@ def parse_task_raw(
                 allow_past=not reject_past_datetimes,
                 timezone_name=timezone_name,
             )
-            if normalized not in remind_ats:
-                remind_ats.append(normalized)
+            _add_reminder_once(remind_ats, normalized)
             continue
 
         cleaned, meta = _extract_meta_from_line(original_line)
 
+        if meta["due_remind_at"] is not None:
+            if explicit_due_or_reminder_seen or meta["due_at"] is not None or meta["remind_ats"]:
+                raise ValueError(DR_CONFLICT_MESSAGE)
+            due_remind_seen = True
+            normalized = _parse_due_reminder_value(
+                meta["due_remind_at"],
+                reject_past_datetimes=reject_past_datetimes,
+                timezone_name=timezone_name,
+            )
+            due_at = normalized
+            _add_reminder_once(remind_ats, normalized)
+
         if meta["due_at"] is not None:
+            if due_remind_seen:
+                raise ValueError(DR_CONFLICT_MESSAGE)
+            explicit_due_or_reminder_seen = True
             try:
-                due_at = _parse_due_value(
+                due_at = _parse_datetime_value(
                     meta["due_at"],
                     reject_past_datetimes=reject_past_datetimes,
                     timezone_name=timezone_name,
@@ -322,7 +392,11 @@ def parse_task_raw(
                     raise ValueError(str(exc)) from exc
                 raise ValueError(f"invalid due format: {meta['due_at']}") from exc
 
+        if meta["remind_ats"] and due_remind_seen:
+            raise ValueError(DR_CONFLICT_MESSAGE)
+
         for remind_at in meta["remind_ats"]:
+            explicit_due_or_reminder_seen = True
             if RELATIVE_REMIND_PATTERN.fullmatch(remind_at):
                 relative_remind_tokens.append(remind_at)
                 continue
@@ -331,8 +405,7 @@ def parse_task_raw(
                 allow_past=not reject_past_datetimes,
                 timezone_name=timezone_name,
             )
-            if normalized not in remind_ats:
-                remind_ats.append(normalized)
+            _add_reminder_once(remind_ats, normalized)
 
         if meta["repeat_rule"] is not None:
             if repeat_rule_seen:
