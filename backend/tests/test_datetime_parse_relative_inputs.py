@@ -105,6 +105,34 @@ def test_task_dr_time_only_defaults_to_today_without_tomorrow_rollover(monkeypat
     assert parsed["remind_ats"] == ["2026-04-15T08:00:00+00:00"]
 
 
+def test_task_inline_dr_full_datetime_sets_due_and_reminder(monkeypatch: pytest.MonkeyPatch) -> None:
+    _freeze_now(monkeypatch, "2026-04-15T00:00:00+00:00")
+    parsed = parse_task_raw("-- Call clinic dr:2026-05-08 17:00")
+
+    assert parsed["title"] == "Call clinic"
+    assert parsed["due_at"] == "2026-05-08T08:00:00+00:00"
+    assert parsed["remind_ats"] == ["2026-05-08T08:00:00+00:00"]
+
+
+@pytest.mark.parametrize(
+    ("raw_value", "expected"),
+    [
+        ("2026-05-08", "2026-05-08T01:30:00+00:00"),
+        ("17:00", "2026-04-15T08:00:00+00:00"),
+        ("today", "2026-04-15T01:30:00+00:00"),
+        ("tomorrow", "2026-04-16T01:30:00+00:00"),
+        ("+3d 09:00", "2026-04-18T00:00:00+00:00"),
+    ],
+)
+def test_task_inline_dr_shorthand_forms(raw_value: str, expected: str, monkeypatch: pytest.MonkeyPatch) -> None:
+    _freeze_now(monkeypatch, "2026-04-15T00:00:00+00:00")
+    parsed = parse_task_raw(f"-- Call clinic dr:{raw_value}")
+
+    assert parsed["title"] == "Call clinic"
+    assert parsed["due_at"] == expected
+    assert parsed["remind_ats"] == [expected]
+
+
 def test_task_dr_rejects_explicit_due_or_reminder_ambiguity(monkeypatch: pytest.MonkeyPatch) -> None:
     _freeze_now(monkeypatch, "2026-04-15T00:00:00+00:00")
 
@@ -113,3 +141,9 @@ def test_task_dr_rejects_explicit_due_or_reminder_ambiguity(monkeypatch: pytest.
 
     with pytest.raises(ValueError, match="dr: cannot be combined with d: or r:"):
         parse_task_raw("-- Example\nd:tomorrow\ndr:tomorrow")
+
+    with pytest.raises(ValueError, match="dr: cannot be combined with d: or r:"):
+        parse_task_raw("-- Call clinic dr:tomorrow d:tomorrow")
+
+    with pytest.raises(ValueError, match="dr: cannot be combined with d: or r:"):
+        parse_task_raw("-- Call clinic dr:tomorrow r:tomorrow")

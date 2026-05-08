@@ -21,8 +21,9 @@ META_PATTERN = re.compile(r"(?:^|\s)(dr:|d:|r:|R:|l:)")
 TAG_PATTERN = re.compile(r"(?:^|\s)#")
 DATE_ONLY_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 RELATIVE_REMIND_PATTERN = re.compile(r"^-(\d+)([dhwm])$")
-INLINE_DUE_PATTERN = re.compile(r"(?:(?<=^)|(?<=\s))d:(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2})?)")
 DATETIME_META_VALUE_PATTERN = r"([^\s]+(?:\s+\d{2}:\d{2}(?::\d{2})?)?)"
+INLINE_DUE_PATTERN = re.compile(r"(?:(?<=^)|(?<=\s))d:(\d{4}-\d{2}-\d{2}(?:\s+\d{2}:\d{2})?)")
+INLINE_DUE_REMIND_PATTERN = re.compile(rf"(?:(?<=^)|(?<=\s))dr:{DATETIME_META_VALUE_PATTERN}")
 DR_CONFLICT_MESSAGE = "dr: cannot be combined with d: or r:"
 
 
@@ -258,8 +259,30 @@ def parse_task_raw(
     if not title:
         raise ValueError("title is required")
 
-    inline_due_match = INLINE_DUE_PATTERN.search(title)
+    inline_due_remind_match = INLINE_DUE_REMIND_PATTERN.search(title)
+    if inline_due_remind_match:
+        title_without_due_remind = (
+            title[: inline_due_remind_match.start()] + title[inline_due_remind_match.end() :]
+        )
+        if re.search(r"(?:(?<=^)|(?<=\s))(d:|r:)", title_without_due_remind):
+            raise ValueError(DR_CONFLICT_MESSAGE)
+        inline_due_remind_raw = inline_due_remind_match.group(1).strip()
+        normalized = _parse_due_reminder_value(
+            inline_due_remind_raw,
+            reject_past_datetimes=reject_past_datetimes,
+            timezone_name=timezone_name,
+        )
+        due_at = normalized
+        _add_reminder_once(remind_ats, normalized)
+        due_remind_seen = True
+        title = " ".join(title_without_due_remind.split()) or None
+        if not title:
+            raise ValueError("title is required")
+
+    inline_due_match = INLINE_DUE_PATTERN.search(title or "")
     if inline_due_match:
+        if due_remind_seen:
+            raise ValueError(DR_CONFLICT_MESSAGE)
         inline_due_raw = inline_due_match.group(1).strip()
         try:
             due_at = _parse_datetime_value(

@@ -184,3 +184,41 @@ def test_capture_task_due_reminder_rejects_explicit_due_ambiguity(main_module, m
 
     assert payload["ok"] is False
     assert payload["error"] == "dr: cannot be combined with d: or r:"
+
+
+def test_capture_task_inline_due_reminder_date_shorthand_roundtrip(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-04-15T00:00:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+    raw = "-- Call clinic dr:2026-05-08"
+
+    payload = main_module.capture_item({"raw": raw})
+
+    assert payload["ok"] is True
+    assert payload["kind"] == "task"
+    assert payload.get("id")
+
+    detail = main_module.get_task(payload["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["title"] == "Call clinic"
+    assert detail["item"]["due_at"] == "2026-05-08T01:30:00+00:00"
+    assert len(detail["item"]["reminders"]) == 1
+    assert detail["item"]["reminders"][0]["remind_at"] == "2026-05-08T01:30:00+00:00"
+
+    task_raw = main_module.get_task_raw(payload["id"])
+    assert task_raw["ok"] is True
+    assert task_raw["raw"] == "-- Call clinic\nd:2026-05-08 10:30\nr:2026-05-08 10:30"
+
+
+def test_capture_task_inline_due_reminder_rejects_inline_due_or_reminder_ambiguity(
+    main_module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fixed_now = datetime.fromisoformat("2026-04-15T00:00:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    due_payload = main_module.capture_item({"raw": "-- ambiguous dr:tomorrow d:tomorrow"})
+    reminder_payload = main_module.capture_item({"raw": "-- ambiguous dr:tomorrow r:tomorrow"})
+
+    assert due_payload["ok"] is False
+    assert due_payload["error"] == "dr: cannot be combined with d: or r:"
+    assert reminder_payload["ok"] is False
+    assert reminder_payload["error"] == "dr: cannot be combined with d: or r:"
