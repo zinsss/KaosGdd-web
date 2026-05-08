@@ -2,7 +2,6 @@ from datetime import datetime, timedelta, timezone
 import json
 import logging
 import re
-import threading
 
 from app.config import SETTINGS
 from app.db.repo.event_repo import EventRepo
@@ -11,7 +10,6 @@ from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.task_repo import TaskRepo
 from app.integrations.push_format import build_push_body, build_push_title
-from app.integrations.pushover_client import send_pushover
 from app.strings import ReminderStatusText
 from app.utils.clock import now_iso
 from app.utils.datetime_parse import parse_local_datetime_to_iso
@@ -335,7 +333,6 @@ class ReminderService:
 
             push_payload = self._build_push_payload(row)
             self._send_web_push(row=row, push_payload=push_payload)
-            self._schedule_pushover(row=row, push_payload=push_payload)
 
             fired.append(row)
 
@@ -563,46 +560,10 @@ class ReminderService:
             removed,
         )
 
-    def _schedule_pushover(self, *, row: dict, push_payload: dict) -> None:
-        delay_seconds = max(0.0, float(SETTINGS.PUSHOVER_DELAY_SECONDS))
-        if delay_seconds <= 0:
-            self._send_pushover(row=row, push_payload=push_payload)
-            return
-
-        timer = threading.Timer(
-            delay_seconds,
-            self._send_pushover,
-            kwargs={"row": row, "push_payload": push_payload},
-        )
-        timer.daemon = True
-        timer.start()
-
-    def _send_pushover(self, *, row: dict, push_payload: dict) -> None:
-        send_result = send_pushover(
-            title=push_payload["title"],
-            message=push_payload["message"],
-            url=push_payload["url"],
-            url_title="Open" if push_payload["url"] else None,
-        )
-        self._log_push_result(row=row, send_result=send_result)
-
     def _build_absolute_url(self, path: str) -> str | None:
         if not SETTINGS.APP_BASE_URL:
             return None
         return SETTINGS.APP_BASE_URL.rstrip("/") + path
-
-    def _log_push_result(self, *, row: dict, send_result: dict) -> None:
-        logger.info(
-            (
-                "reminder fired push result: reminder_id=%s parent_item_id=%s "
-                "push_attempted=%s push_succeeded=%s reason=%s"
-            ),
-            row.get("id"),
-            row.get("parent_item_id"),
-            bool(send_result.get("attempted")),
-            bool(send_result.get("succeeded")),
-            send_result.get("reason"),
-        )
 
     def _get_attention_badge_count(self) -> int:
         try:

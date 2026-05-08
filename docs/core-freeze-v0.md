@@ -32,11 +32,13 @@
 - Structured forms are used where helpful.
 - The product is not a fake chat app.
 
-## 6. Reminder delivery
+## 6. Notification routing
 - Reminder transport is not the web page itself.
-- Delivery path is ntfy or Pushover.
-- Browser-only reminders are not the canonical alert system.
-- Backend scheduler reads due reminders and dispatches notifications.
+- App-wise/item-wise workflow notifications are delivered by Web Push and should deep-link into the app where possible.
+- Web Push app events include reminder fired, reminder missed, task became overdue, fax received, and item-level fax send failed.
+- Pushover is reserved for system-wise/admin/out-of-band alarms such as backend startup failure, scheduler crashes, reminder scan crashes, backup or migration failure, disk pressure, repeated Web Push delivery-system failure, fax modem offline, fax daemon crashes, fax temp-file cleanup failure, and other server maintenance alerts.
+- Do not send both Web Push and Pushover for the same ordinary app item event.
+- Backend scheduler reads due reminders and dispatches Web Push notifications.
 
 ## 7. Schema direction
 The temporary scaffold schema in KaosGdd-web is disposable.
@@ -150,7 +152,8 @@ Frozen direction:
 ### scheduler model
 - Scheduler is backend-side.
 - Dispatcher reads due reminders.
-- Dispatcher sends through ntfy or Pushover adapters.
+- Dispatcher sends ordinary app item events through Web Push with app deep links.
+- Pushover is an admin/system alarm channel only and is not used for ordinary reminder, task-overdue, fax-received, or item-level fax-send-failed workflow events.
 - UI reflects DB state; it does not define it.
 
 ### main list behavior
