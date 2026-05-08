@@ -2,25 +2,26 @@ from __future__ import annotations
 
 import importlib
 import json
-import os
 from pathlib import Path
 
 import pytest
 
 
 @pytest.fixture()
-def main_module(tmp_path: Path):
+def main_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     db_path = tmp_path / "push-policy-v0.db"
-    os.environ["DATABASE_URL"] = f"sqlite:///{db_path}"
-    os.environ["REMINDER_MISSED_SCAN_LOOKBACK_HOURS"] = "0"
-    os.environ["APP_BASE_URL"] = "https://kaos.test"
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_path}")
+    monkeypatch.setenv("REMINDER_MISSED_SCAN_LOOKBACK_HOURS", "0")
+    monkeypatch.setenv("APP_BASE_URL", "https://kaos.test")
 
     import app.config as config_module
     import app.core.db as db_module
+    import app.engine.reminder_service as reminder_service_module
     import app.main as main_module
 
     importlib.reload(config_module)
     importlib.reload(db_module)
+    importlib.reload(reminder_service_module)
     importlib.reload(main_module)
     main_module.init_schema_v0(main_module.engine)
     return main_module
