@@ -255,3 +255,75 @@ textarea.textInput:focus {
     width: 100%;
   }
 }
+
+.scribblePanel {
+  display: grid;
+  gap: 12px;
+}
+
+.scribbleHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.scribbleDescription {
+  margin-top: 4px;
+  color: var(--ui-text-dim);
+  font-size: 13px;
+}
+
+.scribbleStatus {
+  flex: 0 0 auto;
+  color: var(--ui-text-dim);
+  font-size: 13px;
+  text-align: right;
+}
+
+.scribbleStatus_saving,
+.scribbleStatus_loading {
+  color: var(--ctp-yellow);
+}
+
+.scribbleStatus_saved {
+  color: var(--ui-success);
+}
+
+.scribbleStatus_error {
+  color: var(--ui-danger);
+}
+
+.scribbleTextarea {
+  min-height: min(58vh, 620px);
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.scribbleActionRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .scribbleHeader {
+    display: grid;
+  }
+
+  .scribbleStatus {
+    text-align: left;
+  }
+
+  .scribbleTextarea {
+    min-height: 48vh;
+  }
+
+  .scribbleActionRow {
+    display: grid;
+  }
+
+  .scribbleActionRow .button {
+    width: 100%;
+  }
+}

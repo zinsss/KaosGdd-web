@@ -140,6 +140,12 @@ CREATE TABLE IF NOT EXISTS {push_event_dedupe} (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS {scribbles} (
+    key TEXT PRIMARY KEY,
+    body TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS {reminder_events} (
     id TEXT PRIMARY KEY,
     reminder_item_id TEXT NOT NULL,
@@ -246,6 +252,9 @@ ON {push_task_overdue_state}(updated_at);
 CREATE INDEX IF NOT EXISTS idx_push_event_dedupe_type_created
 ON {push_event_dedupe}(event_type, created_at);
 
+CREATE INDEX IF NOT EXISTS idx_scribbles_updated_at
+ON {scribbles}(updated_at);
+
 """.format(
     items=DbTables.ITEMS,
     task_items=DbTables.TASK_ITEMS,
@@ -265,6 +274,7 @@ ON {push_event_dedupe}(event_type, created_at);
     push_test_diagnostics=DbTables.PUSH_TEST_DIAGNOSTICS,
     push_task_overdue_state=DbTables.PUSH_TASK_OVERDUE_STATE,
     push_event_dedupe=DbTables.PUSH_EVENT_DEDUPE,
+    scribbles=DbTables.SCRIBBLES,
 )
 
 
