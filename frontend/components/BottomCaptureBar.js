@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { UI_STRINGS } from "../lib/strings";
+import { createdTypesFromCaptureResponse, navigateAfterCreate } from "../lib/post-create-navigation";
 import NewNoteModal from "./NewNoteModal";
 
 const NEW_NOTE_TEMPLATE = ":::\ntitle:\ntags:\nlink:\n:::";
@@ -147,6 +148,7 @@ function attachedFileShortcutKind(rawText) {
   if (firstLine.startsWith("fax:")) return null;
   if (firstLine.startsWith("++")) return null;
   if (firstLine.startsWith("-- ") || firstLine.startsWith("-x ")) return "task";
+  if (firstLine.startsWith("^^")) return "event";
   if (firstLine === "!!" || firstLine.startsWith("!! ")) return "reminder";
   if (firstLine.startsWith(":::")) return "note";
   return null;
@@ -157,6 +159,10 @@ function appendTaskLink(rawText, fileId) {
 }
 
 function appendReminderLink(rawText, fileId) {
+  return `${String(rawText || "").trim()}\nl:${fileId}`;
+}
+
+function appendEventLink(rawText, fileId) {
   return `${String(rawText || "").trim()}\nl:${fileId}`;
 }
 
@@ -577,7 +583,7 @@ export default function BottomCaptureBar() {
     return activeRequestIdRef.current === requestId;
   }
 
-  async function finalizeCreateSuccess({ requestId, clearInput = true, navigate }) {
+  async function finalizeCreateSuccess({ requestId, clearInput = true, createdTypes, navigate }) {
     if (!isActiveCaptureRequest(requestId)) return;
 
     if (clearInput) {
@@ -586,21 +592,17 @@ export default function BottomCaptureBar() {
     setError("");
     setSuccess(UI_STRINGS.SAVED);
 
-    if (typeof navigate === "function") {
-      try {
-        navigate();
-      } catch {
-        if (!isActiveCaptureRequest(requestId)) return;
-        setSuccess(UI_STRINGS.REFRESH_FAILED_AFTER_SAVE);
-      }
-      return;
-    }
-
     try {
+      if (typeof navigate === "function") {
+        navigate();
+        return;
+      }
+
+      if (navigateAfterCreate(router, createdTypes)) {
+        return;
+      }
+
       router.refresh();
-      window.setTimeout(() => {
-        window.location.reload();
-      }, 250);
     } catch {
       if (!isActiveCaptureRequest(requestId)) return;
       setSuccess(UI_STRINGS.REFRESH_FAILED_AFTER_SAVE);
@@ -645,6 +647,7 @@ export default function BottomCaptureBar() {
       setRaw("");
       setSuccess("Sent to Scribble.");
       resizeTextarea();
+      navigateAfterCreate(router, "scribble");
     } catch {
       setError("Could not save Scribble.");
     } finally {
@@ -652,7 +655,7 @@ export default function BottomCaptureBar() {
     }
   }
 
-  async function submitAttachedFile(cleanRaw) {
+  async function submitAttachedFile(cleanRaw, requestId) {
     console.debug("[BottomCaptureBar] attached-file", {
       exists: Boolean(attachedFile),
       name: attachedFile?.name || "",
@@ -715,9 +718,11 @@ export default function BottomCaptureBar() {
       return true;
     }
 
+    let createdKind = "file";
+
     if (shouldAutoCreateLinkedItem) {
       let linkedItemId = "";
-      let createdKind = shortcutKind;
+      createdKind = shortcutKind;
       try {
         if (shortcutKind === "note") {
           const noteRes = await fetch("/api/notes/raw", {
@@ -763,6 +768,12 @@ export default function BottomCaptureBar() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ raw: appendTaskLink(cleanRaw, uploadData.id) }),
         });
+      } else if (shortcutKind === "event") {
+        patchRes = await fetch(`/api/events/${linkedItemId}/raw`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw: appendEventLink(cleanRaw, uploadData.id) }),
+        });
       } else if (shortcutKind === "reminder") {
         patchRes = await fetch(`/api/reminders/${linkedItemId}`, {
           method: "PATCH",
@@ -782,9 +793,11 @@ export default function BottomCaptureBar() {
           const deletePath =
             createdKind === "task"
               ? `/api/tasks/${linkedItemId}`
-              : createdKind === "simple_reminder" || createdKind === "reminder"
-                ? `/api/reminders/${linkedItemId}`
-                : createdKind === "note"
+              : createdKind === "event"
+                ? `/api/events/${linkedItemId}`
+                : createdKind === "simple_reminder" || createdKind === "reminder"
+                  ? `/api/reminders/${linkedItemId}`
+                  : createdKind === "note"
                   ? `/api/notes/${linkedItemId}`
                   : null;
           if (deletePath) {
@@ -798,11 +811,7 @@ export default function BottomCaptureBar() {
     }
 
     clearAttachment();
-    setRaw("");
-    setSuccess(UI_STRINGS.SAVED);
-    window.setTimeout(() => {
-      window.location.reload();
-    }, 250);
+    await finalizeCreateSuccess({ requestId, createdTypes: [createdKind, "file"] });
 
     return true;
   }
@@ -864,7 +873,7 @@ export default function BottomCaptureBar() {
       }
 
       if (attachedFile) {
-        const handled = await submitAttachedFile(clean);
+        const handled = await submitAttachedFile(clean, requestId);
         if (handled) {
           return;
         }
@@ -885,12 +894,7 @@ export default function BottomCaptureBar() {
         }
 
         cancelEdit();
-        await finalizeCreateSuccess({
-          requestId,
-          navigate: () => {
-            window.location.href = `/notes/${data.id}`;
-          },
-        });
+        await finalizeCreateSuccess({ requestId, createdTypes: "note" });
         return;
       }
 
@@ -916,7 +920,7 @@ export default function BottomCaptureBar() {
         return;
       }
 
-      await finalizeCreateSuccess({ requestId });
+      await finalizeCreateSuccess({ requestId, createdTypes: createdTypesFromCaptureResponse(data) });
     } catch {
       if (!isActiveCaptureRequest(requestId)) return;
       setError(editState ? (editState.kind === "journal" ? UI_STRINGS.JOURNAL_SAVE_FAILED : editState.kind === "note" ? UI_STRINGS.NOTE_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED) : UI_STRINGS.CAPTURE_FAILED);
@@ -954,9 +958,7 @@ export default function BottomCaptureBar() {
       closeNewNoteModal();
       setRaw("");
       setSuccess(UI_STRINGS.SAVED);
-      window.setTimeout(() => {
-        window.location.reload();
-      }, 250);
+      navigateAfterCreate(router, "note");
     } catch {
       setNewNoteError(UI_STRINGS.NOTE_SAVE_FAILED);
     } finally {

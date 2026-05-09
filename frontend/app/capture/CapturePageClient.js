@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 
+import { createdTypesFromCaptureResponse, navigateAfterCreate } from "../../lib/post-create-navigation";
 import { UI_STRINGS } from "../../lib/strings";
 
 const ITEM_TYPES = [
@@ -116,6 +118,7 @@ function validate({ type, title, due, remindAt, eventDate, reminderAt, body, raw
 }
 
 export default function CapturePageClient() {
+  const router = useRouter();
   const [type, setType] = useState("task");
   const [title, setTitle] = useState("");
   const [due, setDue] = useState("");
@@ -178,6 +181,7 @@ export default function CapturePageClient() {
         return;
       }
 
+      const createdTypes = createdTypesFromCaptureResponse(data);
       setStatusSuccess(UI_STRINGS.SAVED);
       setErrors({});
       if (type === "journal") {
@@ -192,6 +196,7 @@ export default function CapturePageClient() {
       setReminderAt("");
       setTagsInput("");
       setMemo("");
+      navigateAfterCreate(router, createdTypes.length ? createdTypes : type);
     } catch {
       setStatusError(UI_STRINGS.CAPTURE_FAILED);
     } finally {
