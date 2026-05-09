@@ -316,12 +316,13 @@
 .bottomCaptureStatus {
   flex: 1 1 auto;
   min-width: 0;
+  max-width: 100%;
   font-size: 12px;
-  line-height: 1.25;
+  line-height: 1.35;
   padding: 0 2px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  white-space: normal;
 }
 
 .bottomCaptureActions {
