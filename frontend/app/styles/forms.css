@@ -305,10 +305,10 @@ textarea.textInput:focus {
   gap: 10px;
   align-self: start;
   --scribble-card-accent: var(--ctp-yellow);
-  border: 1px solid color-mix(in srgb, var(--scribble-card-accent) 32%, var(--ui-border));
+  border: 1px solid color-mix(in srgb, var(--scribble-card-accent) 45%, var(--ui-border));
   border-radius: 16px;
-  background: color-mix(in srgb, var(--scribble-card-accent) 14%, var(--ui-panel));
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+  background: color-mix(in srgb, var(--scribble-card-accent) 20%, var(--ctp-base));
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--scribble-card-accent) 10%, rgba(0, 0, 0, 0.5));
   overflow: hidden;
 }
 
@@ -322,7 +322,7 @@ textarea.textInput:focus {
 .scribbleCard_color_7 { --scribble-card-accent: var(--ctp-rosewater); }
 
 .scribbleCard_expanded {
-  background: color-mix(in srgb, var(--scribble-card-accent) 18%, var(--ui-panel));
+  background: color-mix(in srgb, var(--scribble-card-accent) 24%, var(--ctp-base));
 }
 
 .scribbleCardSummary {
@@ -340,11 +340,11 @@ textarea.textInput:focus {
 
 .scribbleCardSummary:hover,
 .scribbleCardSummary:focus-visible {
-  background: rgba(255, 255, 255, 0.04);
+  background: color-mix(in srgb, var(--scribble-card-accent) 10%, transparent);
 }
 
 .scribbleCardLabel {
-  color: var(--ui-text-dim);
+  color: color-mix(in srgb, var(--scribble-card-accent) 82%, var(--ui-text));
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -369,12 +369,44 @@ textarea.textInput:focus {
   min-height: 190px;
   resize: vertical;
   line-height: 1.5;
+  background: color-mix(in srgb, var(--scribble-card-accent) 8%, var(--ctp-mantle));
+  border-color: color-mix(in srgb, var(--scribble-card-accent) 32%, var(--ui-border));
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--scribble-card-accent) 6%, transparent);
+}
+
+.scribbleCardTextarea:focus {
+  border-color: color-mix(in srgb, var(--scribble-card-accent) 52%, var(--ctp-lavender));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--scribble-card-accent) 24%, transparent),
+    inset 0 0 0 1px color-mix(in srgb, var(--scribble-card-accent) 8%, transparent);
 }
 
 .scribbleActionRow {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.scribbleActionRow .button {
+  background: color-mix(in srgb, var(--scribble-card-accent) 12%, var(--ctp-surface0));
+  border-color: color-mix(in srgb, var(--scribble-card-accent) 35%, var(--ui-border));
+  color: var(--ui-text);
+}
+
+.scribbleActionRow .button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--scribble-card-accent) 18%, var(--ctp-surface0));
+  border-color: color-mix(in srgb, var(--scribble-card-accent) 45%, var(--ui-border-strong));
+}
+
+.scribbleActionRow .button:last-child {
+  background: color-mix(in srgb, var(--ctp-red) 10%, var(--ctp-surface0));
+  border-color: color-mix(in srgb, var(--ctp-red) 30%, var(--ui-border));
+  color: color-mix(in srgb, var(--ctp-red) 78%, var(--ui-text));
+}
+
+.scribbleActionRow .button:last-child:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--ctp-red) 14%, var(--ctp-surface0));
+  border-color: color-mix(in srgb, var(--ctp-red) 42%, var(--ui-border-strong));
 }
 
 @media (max-width: 640px) {
