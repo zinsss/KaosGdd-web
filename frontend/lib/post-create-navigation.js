@@ -1,11 +1,11 @@
-const POST_CREATE_PRIORITY = ["task", "event", "reminder", "journal", "note", "file", "fax"];
+const POST_CREATE_PRIORITY = ["task", "event", "reminder", "scribble", "journal", "note", "file", "fax"];
 
 const POST_CREATE_HOME_PATHS = {
   task: "/tasks",
   event: "/events",
   reminder: "/reminders",
+  scribble: "/scribble",
   journal: "/journals",
-  scribble: "/",
   note: "/notes",
   file: "/files",
   fax: "/fax",
@@ -32,10 +32,6 @@ export function primaryCreatedItemType(createdTypes) {
       .map(normalizeCreatedItemType)
       .filter(Boolean),
   );
-
-  if (normalizedTypes.has("scribble") && !normalizedTypes.has("journal")) {
-    return "scribble";
-  }
 
   return POST_CREATE_PRIORITY.find((type) => normalizedTypes.has(type)) || null;
 }

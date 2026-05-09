@@ -1,5 +1,5 @@
 const SW_CACHE = "kaosgdd-app-shell-v0";
-const APP_SHELL_PATHS = ["/", "/tasks", "/reminders", "/events", "/journals", "/notes", "/files"];
+const APP_SHELL_PATHS = ["/", "/scribble", "/tasks", "/reminders", "/events", "/journals", "/notes", "/files"];
 const BADGE_DEBUG_PREFIX = "[sw:badge]";
 
 const canUseBadgeApi = () => typeof self.navigator !== "undefined";

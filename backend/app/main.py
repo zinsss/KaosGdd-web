@@ -118,7 +118,7 @@ def create_scribble(payload: dict):
     if not body:
         return {"ok": False, "error": ApiText.TITLE_REQUIRED}
     item = scribble_repo.create_scribble(body=body)
-    return {"ok": True, "item": item, "id": item["id"]}
+    return {"ok": True, "kind": "scribble", "item": item, "id": item["id"]}
 
 
 @app.patch("/scribbles/{scribble_id}")

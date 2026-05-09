@@ -140,7 +140,7 @@ export default function ScribblePageClient() {
         setActionError((data && data.error) || "Capture failed.");
         return;
       }
-      setActionMessage("Sent to Capture. Scribble card was kept.");
+      setActionMessage("Sent to Capture. Scribble card was kept for now.");
     } catch {
       setActionError("Capture failed.");
     } finally {
@@ -169,7 +169,7 @@ export default function ScribblePageClient() {
         setActionError((data && data.error) || "Note creation failed.");
         return;
       }
-      setActionMessage("Created Note. Scribble card was kept.");
+      setActionMessage("Created Note. Scribble card was kept for now.");
     } catch {
       setActionError("Note creation failed.");
     } finally {
@@ -212,14 +212,14 @@ export default function ScribblePageClient() {
         <div className="scribbleHeader">
           <div>
             <div className="sectionTitle">Scribble</div>
-            <div className="scribbleDescription">Temporary post-it cards for messy text before it becomes a task, journal entry, or note.</div>
+            <div className="scribbleDescription">Transient scratch cards for messy capture before it becomes a task, event, journal entry, note, file, or disappears.</div>
           </div>
           <div className={`scribbleStatus scribbleStatus_${status}`} aria-live="polite">{statusText}</div>
         </div>
 
         {isLoading ? <div className="metaLine">Loading Scribble cards…</div> : null}
         {!isLoading && cards.length === 0 ? (
-          <div className="emptyState">Unknown capture text sent to Scribble will appear here as temporary cards.</div>
+          <div className="emptyState">Unknown capture text sent to Scribble appears here as temporary workspace cards until you classify or delete it.</div>
         ) : null}
 
         <div className="scribbleCardGrid" aria-label="Scribble cards">
