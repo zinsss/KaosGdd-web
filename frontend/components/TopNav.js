@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { UI_STRINGS } from "../lib/strings";
 import { DEFAULT_MODULE_NAV_STATUS, normalizeModuleNavStatus } from "../lib/module-nav-status";
@@ -17,6 +17,8 @@ function attentionClass({ strong = false, calm = false, tone = "" }) {
 export default function TopNav() {
   const pathname = usePathname();
   const [navStatus, setNavStatus] = useState(DEFAULT_MODULE_NAV_STATUS);
+  const navScrollRef = useRef(null);
+  const [scrollHints, setScrollHints] = useState({ left: false, right: false });
 
   const tasksActive = pathname.startsWith("/tasks");
   const remindersActive = pathname.startsWith("/reminders");
@@ -26,6 +28,54 @@ export default function TopNav() {
   const filesActive = pathname.startsWith("/files");
   const faxActive = pathname.startsWith("/fax");
   const suppliesActive = pathname.startsWith("/supplies");
+
+  const updateScrollHints = useCallback(() => {
+    const navScroll = navScrollRef.current;
+    const nextHints = (() => {
+      if (!navScroll) return { left: false, right: false };
+
+      const maxScrollLeft = navScroll.scrollWidth - navScroll.clientWidth;
+      if (maxScrollLeft <= 1) return { left: false, right: false };
+
+      const scrollLeft = navScroll.scrollLeft;
+      return {
+        left: scrollLeft > 1,
+        right: scrollLeft < maxScrollLeft - 1,
+      };
+    })();
+
+    setScrollHints((currentHints) => {
+      if (currentHints.left === nextHints.left && currentHints.right === nextHints.right) {
+        return currentHints;
+      }
+
+      return nextHints;
+    });
+  }, []);
+
+  useEffect(() => {
+    const navScroll = navScrollRef.current;
+    if (!navScroll) return undefined;
+
+    updateScrollHints();
+    navScroll.addEventListener("scroll", updateScrollHints, { passive: true });
+    window.addEventListener("resize", updateScrollHints);
+
+    let resizeObserver;
+    if (typeof ResizeObserver !== "undefined") {
+      resizeObserver = new ResizeObserver(updateScrollHints);
+      resizeObserver.observe(navScroll);
+      if (navScroll.firstElementChild) {
+        resizeObserver.observe(navScroll.firstElementChild);
+      }
+    }
+
+    return () => {
+      navScroll.removeEventListener("scroll", updateScrollHints);
+      window.removeEventListener("resize", updateScrollHints);
+      resizeObserver?.disconnect();
+    };
+  }, [updateScrollHints]);
 
   useEffect(() => {
     let isMounted = true;
@@ -75,45 +125,65 @@ export default function TopNav() {
   );
 
   return (
-    <nav className="topNavScroller" aria-label="Primary">
-      <div className="topNavRow topNavRowFlat">
-        <Link
-          className={"topNavTextLink" + taskAttentionClass + (tasksActive ? " topNavTextLinkActive" : "")}
-          href="/tasks"
-        >
-          {UI_STRINGS.TASKS}
-        </Link>
-        <Link
-          className={"topNavTextLink" + reminderAttentionClass + (remindersActive ? " topNavTextLinkActive" : "")}
-          href="/reminders"
-        >
-          {UI_STRINGS.REMINDERS}
-        </Link>
-        <Link
-          className={"topNavTextLink" + eventAttentionClass + (eventsActive ? " topNavTextLinkActive" : "")}
-          href="/events"
-        >
-          {UI_STRINGS.EVENTS}
-        </Link>
-        <Link className={"topNavTextLink" + (journalActive ? " topNavTextLinkActive" : "")} href="/journals">
-          Journal
-        </Link>
-        <Link
-          className={"topNavTextLink" + suppliesAttentionClass + (suppliesActive ? " topNavTextLinkActive" : "")}
-          href="/supplies"
-        >
-          {UI_STRINGS.SUPPLIES}
-        </Link>
-        <Link className={"topNavTextLink" + noteAttentionClass + (notesActive ? " topNavTextLinkActive" : "")} href="/notes">
-          {UI_STRINGS.NOTES}
-        </Link>
-        <Link className={"topNavTextLink" + fileAttentionClass + (filesActive ? " topNavTextLinkActive" : "")} href="/files">
-          {UI_STRINGS.FILES}
-        </Link>
-        <Link className={"topNavTextLink" + (faxActive ? " topNavTextLinkActive" : "")} href="/fax">
-          {UI_STRINGS.FAX}
-        </Link>
-      </div>
-    </nav>
+    <div
+      className={
+        "topNavWrap" +
+        (scrollHints.left ? " topNavWrapCanScrollLeft" : "") +
+        (scrollHints.right ? " topNavWrapCanScrollRight" : "")
+      }
+    >
+      <nav className="topNavScroller" aria-label="Primary" ref={navScrollRef}>
+        <div className="topNavRow topNavRowFlat">
+          <Link
+            className={"topNavTextLink" + taskAttentionClass + (tasksActive ? " topNavTextLinkActive" : "")}
+            href="/tasks"
+          >
+            {UI_STRINGS.TASKS}
+          </Link>
+          <Link
+            className={"topNavTextLink" + reminderAttentionClass + (remindersActive ? " topNavTextLinkActive" : "")}
+            href="/reminders"
+          >
+            {UI_STRINGS.REMINDERS}
+          </Link>
+          <Link
+            className={"topNavTextLink" + eventAttentionClass + (eventsActive ? " topNavTextLinkActive" : "")}
+            href="/events"
+          >
+            {UI_STRINGS.EVENTS}
+          </Link>
+          <Link className={"topNavTextLink" + (journalActive ? " topNavTextLinkActive" : "")} href="/journals">
+            Journal
+          </Link>
+          <Link
+            className={"topNavTextLink" + suppliesAttentionClass + (suppliesActive ? " topNavTextLinkActive" : "")}
+            href="/supplies"
+          >
+            {UI_STRINGS.SUPPLIES}
+          </Link>
+          <Link
+            className={"topNavTextLink" + noteAttentionClass + (notesActive ? " topNavTextLinkActive" : "")}
+            href="/notes"
+          >
+            {UI_STRINGS.NOTES}
+          </Link>
+          <Link
+            className={"topNavTextLink" + fileAttentionClass + (filesActive ? " topNavTextLinkActive" : "")}
+            href="/files"
+          >
+            {UI_STRINGS.FILES}
+          </Link>
+          <Link className={"topNavTextLink" + (faxActive ? " topNavTextLinkActive" : "")} href="/fax">
+            {UI_STRINGS.FAX}
+          </Link>
+        </div>
+      </nav>
+      <span className="topNavScrollHint topNavScrollHintLeft" aria-hidden="true">
+        ‹
+      </span>
+      <span className="topNavScrollHint topNavScrollHintRight" aria-hidden="true">
+        ›
+      </span>
+    </div>
   );
 }
