@@ -116,6 +116,48 @@
   opacity: 1;
 }
 
+.topNavWrap {
+  position: relative;
+  --top-nav-edge-fade-width: 34px;
+  --top-nav-edge-fade-color: 36, 37, 54;
+}
+
+.topNavWrap::before,
+.topNavWrap::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  width: var(--top-nav-edge-fade-width);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+
+.topNavWrap::before {
+  left: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(var(--top-nav-edge-fade-color), 0.94),
+    rgba(var(--top-nav-edge-fade-color), 0)
+  );
+}
+
+.topNavWrap::after {
+  right: 0;
+  background: linear-gradient(
+    270deg,
+    rgba(var(--top-nav-edge-fade-color), 0.94),
+    rgba(var(--top-nav-edge-fade-color), 0)
+  );
+}
+
+.topNavWrapCanScrollLeft::before,
+.topNavWrapCanScrollRight::after {
+  opacity: 1;
+}
+
 .topNavScroller {
   overflow-x: auto;
   overflow-y: hidden;
@@ -125,6 +167,37 @@
 
 .topNavScroller::-webkit-scrollbar {
   display: none;
+}
+
+.topNavScrollHint {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 18px;
+  color: var(--ui-text-dim);
+  font-size: 18px;
+  line-height: 1;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-55%);
+  transition: opacity 140ms ease;
+}
+
+.topNavScrollHintLeft {
+  left: 0;
+}
+
+.topNavScrollHintRight {
+  right: 0;
+}
+
+.topNavWrapCanScrollLeft .topNavScrollHintLeft,
+.topNavWrapCanScrollRight .topNavScrollHintRight {
+  opacity: 0.72;
 }
 
 .topNavRow {
