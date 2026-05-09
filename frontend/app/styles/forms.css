@@ -304,15 +304,25 @@ textarea.textInput:focus {
   display: grid;
   gap: 10px;
   align-self: start;
-  border: 1px solid var(--ui-border);
+  --scribble-card-accent: var(--ctp-yellow);
+  border: 1px solid color-mix(in srgb, var(--scribble-card-accent) 32%, var(--ui-border));
   border-radius: 16px;
-  background: color-mix(in srgb, var(--ctp-yellow) 11%, var(--ui-panel));
+  background: color-mix(in srgb, var(--scribble-card-accent) 14%, var(--ui-panel));
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
   overflow: hidden;
 }
 
+.scribbleCard_color_0 { --scribble-card-accent: var(--ctp-yellow); }
+.scribbleCard_color_1 { --scribble-card-accent: var(--ctp-peach); }
+.scribbleCard_color_2 { --scribble-card-accent: var(--ctp-green); }
+.scribbleCard_color_3 { --scribble-card-accent: var(--ctp-teal); }
+.scribbleCard_color_4 { --scribble-card-accent: var(--ctp-blue); }
+.scribbleCard_color_5 { --scribble-card-accent: var(--ctp-mauve); }
+.scribbleCard_color_6 { --scribble-card-accent: var(--ctp-pink); }
+.scribbleCard_color_7 { --scribble-card-accent: var(--ctp-rosewater); }
+
 .scribbleCard_expanded {
-  background: color-mix(in srgb, var(--ctp-yellow) 16%, var(--ui-panel));
+  background: color-mix(in srgb, var(--scribble-card-accent) 18%, var(--ui-panel));
 }
 
 .scribbleCardSummary {
@@ -342,13 +352,9 @@ textarea.textInput:focus {
 }
 
 .scribbleCardPreview {
-  display: -webkit-box;
-  overflow: hidden;
   color: var(--ui-text);
   font-size: 14px;
   line-height: 1.45;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 4;
   overflow-wrap: anywhere;
   white-space: pre-wrap;
 }

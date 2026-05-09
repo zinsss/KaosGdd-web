@@ -18,10 +18,7 @@ function noteRawFromBody(body) {
 }
 
 function previewFromBody(body) {
-  return String(body || "")
-    .replace(/\s+/g, " ")
-    .trim()
-    .slice(0, 180);
+  return String(body || "").trim();
 }
 
 export default function ScribblePageClient() {
@@ -226,12 +223,12 @@ export default function ScribblePageClient() {
         ) : null}
 
         <div className="scribbleCardGrid" aria-label="Scribble cards">
-          {cards.map((card) => {
+          {cards.map((card, index) => {
             const isExpanded = expandedId === card.id;
             const preview = previewFromBody(card.body) || "Empty Scribble card";
             const cardBusy = busyAction.endsWith(`:${card.id}`);
             return (
-              <article key={card.id} className={`scribbleCard${isExpanded ? " scribbleCard_expanded" : ""}`}>
+              <article key={card.id} className={`scribbleCard scribbleCard_color_${index % 8}${isExpanded ? " scribbleCard_expanded" : ""}`}>
                 <button
                   className="scribbleCardSummary"
                   type="button"
