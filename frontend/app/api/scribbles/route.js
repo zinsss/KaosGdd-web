@@ -5,15 +5,15 @@ function getBase() {
 }
 
 export async function GET() {
-  const res = await fetch(getBase() + "/scribble", { cache: "no-store" });
+  const res = await fetch(getBase() + "/scribbles", { cache: "no-store" });
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
 }
 
-export async function PATCH(request) {
+export async function POST(request) {
   const payload = await request.json();
-  const res = await fetch(getBase() + "/scribble", {
-    method: "PATCH",
+  const res = await fetch(getBase() + "/scribbles", {
+    method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
     cache: "no-store",

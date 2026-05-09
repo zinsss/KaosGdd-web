@@ -17,66 +17,72 @@ function noteRawFromBody(body) {
   return [":::", `title: ${noteTitleFromBody(body)}`, "tags:", "link:", ":::", "", String(body || "").trimEnd()].join("\n");
 }
 
+function previewFromBody(body) {
+  return String(body || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 180);
+}
+
 export default function ScribblePageClient() {
-  const [body, setBody] = useState("");
-  const [lastSavedBody, setLastSavedBody] = useState("");
+  const [cards, setCards] = useState([]);
+  const [expandedId, setExpandedId] = useState("");
   const [status, setStatus] = useState("loading");
   const [actionMessage, setActionMessage] = useState("");
   const [actionError, setActionError] = useState("");
-  const [isSendingCapture, setIsSendingCapture] = useState(false);
-  const [isCreatingNote, setIsCreatingNote] = useState(false);
-  const didLoadRef = useRef(false);
+  const [busyAction, setBusyAction] = useState("");
   const saveTimeoutRef = useRef(0);
-  const latestBodyRef = useRef("");
-
-  useEffect(() => {
-    latestBodyRef.current = body;
-  }, [body]);
+  const lastSavedBodiesRef = useRef({});
 
   useEffect(() => {
     let isMounted = true;
 
-    async function loadScribble() {
+    async function loadScribbles() {
       setStatus("loading");
       try {
-        const res = await fetch("/api/scribble", { cache: "no-store" });
+        const res = await fetch("/api/scribbles", { cache: "no-store" });
         const data = await res.json().catch(() => null);
         if (!isMounted) return;
         if (!res.ok || !data?.ok) {
           setStatus("error");
           return;
         }
-        const nextBody = data.item?.body || "";
-        setBody(nextBody);
-        setLastSavedBody(nextBody);
+        const nextCards = Array.isArray(data.items) ? data.items : [];
+        lastSavedBodiesRef.current = Object.fromEntries(nextCards.map((card) => [card.id, card.body || ""]));
+        setCards(nextCards);
         setStatus("saved");
-        didLoadRef.current = true;
       } catch {
         if (!isMounted) return;
         setStatus("error");
       }
     }
 
-    loadScribble();
+    loadScribbles();
     return () => {
       isMounted = false;
       window.clearTimeout(saveTimeoutRef.current);
     };
   }, []);
 
+  const expandedCard = useMemo(
+    () => cards.find((card) => card.id === expandedId) || null,
+    [cards, expandedId],
+  );
+
   useEffect(() => {
-    if (!didLoadRef.current) return undefined;
-    if (body === lastSavedBody) {
-      setStatus("saved");
+    if (!expandedCard) return undefined;
+    const savedBody = lastSavedBodiesRef.current[expandedCard.id] ?? "";
+    if ((expandedCard.body || "") === savedBody) {
+      if (status !== "loading" && status !== "error") setStatus("saved");
       return undefined;
     }
 
     setStatus("saving");
     window.clearTimeout(saveTimeoutRef.current);
     saveTimeoutRef.current = window.setTimeout(async () => {
-      const bodyToSave = latestBodyRef.current;
+      const bodyToSave = expandedCard.body || "";
       try {
-        const res = await fetch("/api/scribble", {
+        const res = await fetch(`/api/scribbles/${expandedCard.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ body: bodyToSave }),
@@ -86,7 +92,11 @@ export default function ScribblePageClient() {
           setStatus("error");
           return;
         }
-        setLastSavedBody(bodyToSave);
+        lastSavedBodiesRef.current = {
+          ...lastSavedBodiesRef.current,
+          [expandedCard.id]: bodyToSave,
+        };
+        setCards((current) => current.map((card) => (card.id === expandedCard.id ? { ...card, ...(data.item || {}) } : card)));
         setStatus("saved");
       } catch {
         setStatus("error");
@@ -94,7 +104,7 @@ export default function ScribblePageClient() {
     }, SAVE_DELAY_MS);
 
     return () => window.clearTimeout(saveTimeoutRef.current);
-  }, [body, lastSavedBody]);
+  }, [expandedCard?.id, expandedCard?.body]);
 
   const statusText = useMemo(() => {
     if (status === "loading") return "loading…";
@@ -103,16 +113,22 @@ export default function ScribblePageClient() {
     return "saved";
   }, [status]);
 
-  async function sendToCapture() {
-    const raw = body.trim();
+  function updateCardBody(cardId, body) {
+    setActionMessage("");
+    setActionError("");
+    setCards((current) => current.map((card) => (card.id === cardId ? { ...card, body } : card)));
+  }
+
+  async function sendToCapture(card) {
+    const raw = String(card?.body || "").trim();
     setActionMessage("");
     setActionError("");
     if (!raw) {
-      setActionError("Scribble is empty.");
+      setActionError("Scribble card is empty.");
       return;
     }
 
-    setIsSendingCapture(true);
+    setBusyAction(`capture:${card.id}`);
     try {
       const res = await fetch("/api/capture", {
         method: "POST",
@@ -127,24 +143,24 @@ export default function ScribblePageClient() {
         setActionError((data && data.error) || "Capture failed.");
         return;
       }
-      setActionMessage("Sent to Capture. Scribble was kept.");
+      setActionMessage("Sent to Capture. Scribble card was kept.");
     } catch {
       setActionError("Capture failed.");
     } finally {
-      setIsSendingCapture(false);
+      setBusyAction("");
     }
   }
 
-  async function createNote() {
-    const cleanBody = body.trim();
+  async function createNote(card) {
+    const cleanBody = String(card?.body || "").trim();
     setActionMessage("");
     setActionError("");
     if (!cleanBody) {
-      setActionError("Scribble is empty.");
+      setActionError("Scribble card is empty.");
       return;
     }
 
-    setIsCreatingNote(true);
+    setBusyAction(`note:${card.id}`);
     try {
       const res = await fetch("/api/notes/raw", {
         method: "POST",
@@ -156,45 +172,42 @@ export default function ScribblePageClient() {
         setActionError((data && data.error) || "Note creation failed.");
         return;
       }
-      setActionMessage("Created Note. Scribble was kept.");
+      setActionMessage("Created Note. Scribble card was kept.");
     } catch {
       setActionError("Note creation failed.");
     } finally {
-      setIsCreatingNote(false);
+      setBusyAction("");
     }
   }
 
-  async function clearScribble() {
+  async function deleteCard(card) {
     setActionMessage("");
     setActionError("");
-    if (!body) return;
-    const confirmed = window.confirm("Clear Scribble? This removes the current temporary text.");
+    const confirmed = window.confirm("Delete this Scribble card?");
     if (!confirmed) return;
-    window.clearTimeout(saveTimeoutRef.current);
-    setBody("");
-    setStatus("saving");
+
+    setBusyAction(`delete:${card.id}`);
     try {
-      const res = await fetch("/api/scribble", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: "" }),
-      });
+      const res = await fetch(`/api/scribbles/${card.id}`, { method: "DELETE" });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        setStatus("error");
-        setActionError("Clear failed.");
+        setActionError((data && data.error) || "Delete failed.");
         return;
       }
-      setLastSavedBody("");
-      setStatus("saved");
-      setActionMessage("Scribble cleared.");
+      lastSavedBodiesRef.current = Object.fromEntries(
+        Object.entries(lastSavedBodiesRef.current).filter(([id]) => id !== card.id),
+      );
+      setCards((current) => current.filter((item) => item.id !== card.id));
+      setExpandedId((current) => (current === card.id ? "" : current));
+      setActionMessage("Deleted Scribble card.");
     } catch {
-      setStatus("error");
-      setActionError("Clear failed.");
+      setActionError("Delete failed.");
+    } finally {
+      setBusyAction("");
     }
   }
 
-  const actionsDisabled = status === "loading" || isSendingCapture || isCreatingNote;
+  const isLoading = status === "loading";
 
   return (
     <main className="page scribblePage">
@@ -202,34 +215,58 @@ export default function ScribblePageClient() {
         <div className="scribbleHeader">
           <div>
             <div className="sectionTitle">Scribble</div>
-            <div className="scribbleDescription">Temporary messy text before it becomes a task, journal entry, or note.</div>
+            <div className="scribbleDescription">Temporary post-it cards for messy text before it becomes a task, journal entry, or note.</div>
           </div>
           <div className={`scribbleStatus scribbleStatus_${status}`} aria-live="polite">{statusText}</div>
         </div>
 
-        <textarea
-          className="textInput scribbleTextarea"
-          value={body}
-          onChange={(event) => {
-            setActionMessage("");
-            setActionError("");
-            setBody(event.target.value);
-          }}
-          placeholder="Write messy text here…"
-          aria-label="Scribble text"
-          spellCheck="true"
-        />
+        {isLoading ? <div className="metaLine">Loading Scribble cards…</div> : null}
+        {!isLoading && cards.length === 0 ? (
+          <div className="emptyState">Unknown capture text sent to Scribble will appear here as temporary cards.</div>
+        ) : null}
 
-        <div className="scribbleActionRow">
-          <button className="button" type="button" onClick={sendToCapture} disabled={actionsDisabled || !body.trim()}>
-            {isSendingCapture ? "Sending…" : "Send to Capture"}
-          </button>
-          <button className="button" type="button" onClick={createNote} disabled={actionsDisabled || !body.trim()}>
-            {isCreatingNote ? "Creating…" : "Create Note"}
-          </button>
-          <button className="button" type="button" onClick={clearScribble} disabled={actionsDisabled || !body}>
-            Clear
-          </button>
+        <div className="scribbleCardGrid" aria-label="Scribble cards">
+          {cards.map((card) => {
+            const isExpanded = expandedId === card.id;
+            const preview = previewFromBody(card.body) || "Empty Scribble card";
+            const cardBusy = busyAction.endsWith(`:${card.id}`);
+            return (
+              <article key={card.id} className={`scribbleCard${isExpanded ? " scribbleCard_expanded" : ""}`}>
+                <button
+                  className="scribbleCardSummary"
+                  type="button"
+                  onClick={() => setExpandedId(isExpanded ? "" : card.id)}
+                  aria-expanded={isExpanded}
+                >
+                  <span className="scribbleCardLabel">Scribble</span>
+                  <span className="scribbleCardPreview">{preview}</span>
+                </button>
+
+                {isExpanded ? (
+                  <div className="scribbleCardDetail">
+                    <textarea
+                      className="textInput scribbleCardTextarea"
+                      value={card.body || ""}
+                      onChange={(event) => updateCardBody(card.id, event.target.value)}
+                      aria-label="Scribble card text"
+                      spellCheck="true"
+                    />
+                    <div className="scribbleActionRow">
+                      <button className="button" type="button" onClick={() => sendToCapture(card)} disabled={cardBusy || !(card.body || "").trim()}>
+                        {busyAction === `capture:${card.id}` ? "Sending…" : "Capture"}
+                      </button>
+                      <button className="button" type="button" onClick={() => createNote(card)} disabled={cardBusy || !(card.body || "").trim()}>
+                        {busyAction === `note:${card.id}` ? "Creating…" : "Note"}
+                      </button>
+                      <button className="button" type="button" onClick={() => deleteCard(card)} disabled={cardBusy}>
+                        {busyAction === `delete:${card.id}` ? "Deleting…" : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
         </div>
 
         {actionMessage ? <div className="successText">{actionMessage}</div> : null}

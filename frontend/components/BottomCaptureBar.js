@@ -19,12 +19,6 @@ function isKnownCaptureGrammar(rawText) {
   return Boolean(firstLine && KNOWN_CAPTURE_PREFIX_RE.test(firstLine));
 }
 
-function appendToScribbleBody(existingBody, addedText) {
-  const existing = String(existingBody || "").replace(/\r\n/g, "\n").trimEnd();
-  const addition = String(addedText || "").replace(/\r\n/g, "\n").trim();
-  if (!existing) return addition;
-  return `${existing}\n\n${addition}`;
-}
 
 function readEditState() {
   if (typeof window === "undefined") {
@@ -636,18 +630,10 @@ export default function BottomCaptureBar() {
     setError("");
     setSuccess("");
     try {
-      const loadRes = await fetch("/api/scribble", { cache: "no-store" });
-      const loadData = await loadRes.json().catch(() => null);
-      if (!loadRes.ok || !loadData?.ok) {
-        setError("Could not load Scribble.");
-        return;
-      }
-
-      const nextBody = appendToScribbleBody(loadData.item?.body || "", textToSend);
-      const saveRes = await fetch("/api/scribble", {
-        method: "PATCH",
+      const saveRes = await fetch("/api/scribbles", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body: nextBody }),
+        body: JSON.stringify({ body: textToSend }),
       });
       const saveData = await saveRes.json().catch(() => null);
       if (!saveRes.ok || !saveData?.ok) {

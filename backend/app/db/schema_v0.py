@@ -141,9 +141,11 @@ CREATE TABLE IF NOT EXISTS {push_event_dedupe} (
 );
 
 CREATE TABLE IF NOT EXISTS {scribbles} (
-    key TEXT PRIMARY KEY,
+    id TEXT PRIMARY KEY,
     body TEXT NOT NULL,
-    updated_at TEXT NOT NULL
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    sort_order INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS {reminder_events} (
@@ -251,6 +253,9 @@ ON {push_task_overdue_state}(updated_at);
 
 CREATE INDEX IF NOT EXISTS idx_push_event_dedupe_type_created
 ON {push_event_dedupe}(event_type, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_scribbles_sort_order
+ON {scribbles}(sort_order DESC, created_at DESC);
 
 CREATE INDEX IF NOT EXISTS idx_scribbles_updated_at
 ON {scribbles}(updated_at);
@@ -503,6 +508,13 @@ def _migrate_sqlite_legacy_task_reminder_tables(conn) -> None:
     _sqlite_add_column_if_missing(conn, DbTables.ITEM_REMINDERS, "created_at TEXT")
 
 
+def _migrate_sqlite_scribbles_to_cards(conn) -> None:
+    columns = _sqlite_table_columns(conn, DbTables.SCRIBBLES)
+    if not columns or {"id", "created_at", "sort_order"}.issubset(columns):
+        return
+    conn.execute(text(f"DROP TABLE {DbTables.SCRIBBLES}"))
+
+
 def init_schema_v0(engine) -> None:
     with engine.begin() as conn:
         if engine.dialect.name == "sqlite" and not _sqlite_items_table_allows_supported_types(conn):
@@ -512,6 +524,7 @@ def init_schema_v0(engine) -> None:
             if not _sqlite_reminder_items_allows_completed_state(conn):
                 _migrate_sqlite_reminder_items_add_completed_state(conn)
             _repair_sqlite_items_legacy_references(conn)
+            _migrate_sqlite_scribbles_to_cards(conn)
         for statement in SCHEMA_SQL.split(";\n\n"):
             sql = statement.strip()
             if not sql:

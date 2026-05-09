@@ -107,16 +107,35 @@ def health():
     }
 
 
-@app.get("/scribble")
-def get_scribble():
-    return {"ok": True, "item": scribble_repo.get_scribble()}
+@app.get("/scribbles")
+def list_scribbles():
+    return {"ok": True, "items": scribble_repo.list_scribbles()}
 
 
-@app.patch("/scribble")
-def update_scribble(payload: dict):
+@app.post("/scribbles")
+def create_scribble(payload: dict):
+    body = str(payload.get("body") or "").strip()
+    if not body:
+        return {"ok": False, "error": ApiText.TITLE_REQUIRED}
+    item = scribble_repo.create_scribble(body=body)
+    return {"ok": True, "item": item, "id": item["id"]}
+
+
+@app.patch("/scribbles/{scribble_id}")
+def update_scribble(scribble_id: str, payload: dict):
     body = str(payload.get("body") or "")
-    item = scribble_repo.upsert_scribble(body=body)
+    item = scribble_repo.update_scribble(scribble_id, body=body)
+    if item is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
     return {"ok": True, "item": item}
+
+
+@app.delete("/scribbles/{scribble_id}")
+def delete_scribble(scribble_id: str):
+    ok = scribble_repo.delete_scribble(scribble_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
 
 
 @app.get("/tasks")
