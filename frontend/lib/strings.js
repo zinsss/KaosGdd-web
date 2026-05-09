@@ -40,6 +40,7 @@ export const UI_STRINGS = {
   NOTES: "Notes",
   FILES: "Files",
   FAX: "Fax",
+  SETTINGS: "Settings",
   SUPPLIES: "Supplies",
   CAPTURE: "Capture",
   TASK_DETAIL: "Task Detail",
