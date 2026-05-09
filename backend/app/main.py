@@ -25,6 +25,7 @@ from app.db.repo.push_subscription_repo import PushSubscriptionRepo
 from app.db.repo.push_test_diagnostic_repo import PushTestDiagnosticRepo
 from app.db.repo.push_policy_repo import PushPolicyRepo
 from app.db.repo.supply_repo import SupplyRepo
+from app.db.repo.scribble_repo import ScribbleRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
 from app.engine.journal_service import JournalService
@@ -50,6 +51,7 @@ push_subscription_repo = PushSubscriptionRepo(engine)
 push_test_diagnostic_repo = PushTestDiagnosticRepo(engine)
 push_policy_repo = PushPolicyRepo(engine)
 supply_repo = SupplyRepo(engine)
+scribble_repo = ScribbleRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
 journal_service = JournalService(items_repo, journal_repo)
@@ -103,6 +105,18 @@ def health():
         "mode": SETTINGS.APP_HEALTH_MODE,
         "timezone": SETTINGS.APP_TIMEZONE,
     }
+
+
+@app.get("/scribble")
+def get_scribble():
+    return {"ok": True, "item": scribble_repo.get_scribble()}
+
+
+@app.patch("/scribble")
+def update_scribble(payload: dict):
+    body = str(payload.get("body") or "")
+    item = scribble_repo.upsert_scribble(body=body)
+    return {"ok": True, "item": item}
 
 
 @app.get("/tasks")

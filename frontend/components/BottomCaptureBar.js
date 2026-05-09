@@ -7,6 +7,24 @@ import { UI_STRINGS } from "../lib/strings";
 import NewNoteModal from "./NewNoteModal";
 
 const NEW_NOTE_TEMPLATE = ":::\ntitle:\ntags:\nlink:\n:::";
+const SCRIBBLE_PROMPT = "This does not match capture grammar. Send it to Scribble?";
+const KNOWN_CAPTURE_PREFIX_RE = /^(--\s|-x\s|---\s|--x\s|\^\^|!!|\/\/|:::+|==|\+\+|fax:|mail:|\$\$)/i;
+
+function isKnownCaptureGrammar(rawText) {
+  const firstLine = String(rawText || "")
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .find(Boolean);
+  return Boolean(firstLine && KNOWN_CAPTURE_PREFIX_RE.test(firstLine));
+}
+
+function appendToScribbleBody(existingBody, addedText) {
+  const existing = String(existingBody || "").replace(/\r\n/g, "\n").trimEnd();
+  const addition = String(addedText || "").replace(/\r\n/g, "\n").trim();
+  if (!existing) return addition;
+  return `${existing}\n\n${addition}`;
+}
 
 function readEditState() {
   if (typeof window === "undefined") {
@@ -183,6 +201,7 @@ export default function BottomCaptureBar() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [scribblePromptRaw, setScribblePromptRaw] = useState("");
   const [editState, setEditState] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null);
   const [attachedFilename, setAttachedFilename] = useState("");
@@ -347,6 +366,7 @@ export default function BottomCaptureBar() {
       setRaw(detail.raw);
       setAttachedFile(null);
       setAttachedFilename("");
+      setScribblePromptRaw("");
       setError("");
       setSuccess("");
       writeEditState(next);
@@ -366,6 +386,7 @@ export default function BottomCaptureBar() {
       setRaw(nextRaw);
       setAttachedFile(null);
       setAttachedFilename("");
+      setScribblePromptRaw("");
       setError("");
       setSuccess("");
       writeEditState(null);
@@ -388,6 +409,7 @@ export default function BottomCaptureBar() {
     function onCancelEdit() {
       setEditState(null);
       setRaw("");
+      setScribblePromptRaw("");
       setError("");
       setSuccess("");
       writeEditState(null);
@@ -482,6 +504,7 @@ export default function BottomCaptureBar() {
   function cancelEdit() {
     setEditState(null);
     setRaw("");
+    setScribblePromptRaw("");
     setError("");
     setSuccess("");
     writeEditState(null);
@@ -492,6 +515,7 @@ export default function BottomCaptureBar() {
     setNewNoteRaw(NEW_NOTE_TEMPLATE);
     setNewNoteError("");
     setRaw("");
+    setScribblePromptRaw("");
     setError("");
     setSuccess("");
     clearAttachment();
@@ -524,6 +548,7 @@ export default function BottomCaptureBar() {
 
     setAttachedFile(file);
     setAttachedFilename(file.name || UI_STRINGS.FILE_SELECTED_FALLBACK);
+    setScribblePromptRaw("");
     setError("");
     setSuccess("");
 
@@ -541,11 +566,13 @@ export default function BottomCaptureBar() {
         : UI_STRINGS.EDITING_REMINDER
     : "";
 
-  const statusText = error
-    ? attachedFilename
-      ? `${attachedFilename} · ${error}`
-      : error
-    : success || attachedFilename || modeText;
+  const statusText = scribblePromptRaw
+    ? SCRIBBLE_PROMPT
+    : error
+      ? attachedFilename
+        ? `${attachedFilename} · ${error}`
+        : error
+      : success || attachedFilename || modeText;
 
   function beginCaptureRequest() {
     activeRequestIdRef.current += 1;
@@ -583,6 +610,59 @@ export default function BottomCaptureBar() {
     } catch {
       if (!isActiveCaptureRequest(requestId)) return;
       setSuccess(UI_STRINGS.REFRESH_FAILED_AFTER_SAVE);
+    }
+  }
+
+  function promptForScribble(rawText) {
+    setScribblePromptRaw(String(rawText || "").replace(/\r\n/g, "\n").trim());
+    setError("");
+    setSuccess("");
+    window.setTimeout(() => textareaRef.current?.focus(), 0);
+  }
+
+  function cancelScribblePrompt() {
+    setScribblePromptRaw("");
+    setError("");
+    setSuccess("");
+    window.setTimeout(() => textareaRef.current?.focus(), 0);
+  }
+
+  async function sendPromptToScribble() {
+    const textToSend = String(scribblePromptRaw || raw || "").replace(/\r\n/g, "\n").trim();
+    if (!textToSend || isSubmitting) return;
+
+    setIsSubmitting(true);
+    setScribblePromptRaw("");
+    setError("");
+    setSuccess("");
+    try {
+      const loadRes = await fetch("/api/scribble", { cache: "no-store" });
+      const loadData = await loadRes.json().catch(() => null);
+      if (!loadRes.ok || !loadData?.ok) {
+        setError("Could not load Scribble.");
+        return;
+      }
+
+      const nextBody = appendToScribbleBody(loadData.item?.body || "", textToSend);
+      const saveRes = await fetch("/api/scribble", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body: nextBody }),
+      });
+      const saveData = await saveRes.json().catch(() => null);
+      if (!saveRes.ok || !saveData?.ok) {
+        setError("Could not save Scribble.");
+        return;
+      }
+
+      setScribblePromptRaw("");
+      setRaw("");
+      setSuccess("Sent to Scribble.");
+      resizeTextarea();
+    } catch {
+      setError("Could not save Scribble.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -750,14 +830,21 @@ export default function BottomCaptureBar() {
     const currentRaw = textareaRef.current?.value ?? raw;
     const clean = currentRaw.trim();
     if (!clean) {
+      setScribblePromptRaw("");
       setError(editState ? UI_STRINGS.REMINDER_EMPTY : UI_STRINGS.CAPTURE_EMPTY);
       setSuccess("");
+      return;
+    }
+
+    if (!editState && !attachedFile && !isKnownCaptureGrammar(clean)) {
+      promptForScribble(clean);
       return;
     }
 
     submitLockRef.current = true;
     const requestId = beginCaptureRequest();
     setIsSubmitting(true);
+    setScribblePromptRaw("");
     setError("");
     setSuccess("");
 
@@ -900,6 +987,7 @@ export default function BottomCaptureBar() {
             className="textInput autoTextarea bottomCaptureInput"
             value={raw}
             onChange={(event) => {
+              setScribblePromptRaw("");
               setRaw(event.target.value);
               resizeTextarea(event.currentTarget);
               if (isTextareaFocusedRef.current) {
@@ -938,28 +1026,41 @@ export default function BottomCaptureBar() {
                 aria-label={UI_STRINGS.ATTACH_FILE}
               />
 
-              <button className="button pillButton bottomCaptureCaptureButton" type="button" onClick={onOpenCapturePage} disabled={isSubmitting}>
-                G
-              </button>
+              {scribblePromptRaw ? (
+                <>
+                  <button className="button pillButton bottomCaptureButton" type="button" onClick={sendPromptToScribble} disabled={isSubmitting}>
+                    Scribble
+                  </button>
+                  <button className="button pillButton bottomCaptureCancelButton" type="button" onClick={cancelScribblePrompt} disabled={isSubmitting}>
+                    {UI_STRINGS.CANCEL}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button className="button pillButton bottomCaptureCaptureButton" type="button" onClick={onOpenCapturePage} disabled={isSubmitting}>
+                    G
+                  </button>
 
-              <button className="button pillButton bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
-                {UI_STRINGS.ATTACH_ICON}
-              </button>
+                  <button className="button pillButton bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
+                    {UI_STRINGS.ATTACH_ICON}
+                  </button>
 
-              <button className="button pillButton bottomCaptureButton" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? UI_STRINGS.ELLIPSIS : editState ? UI_STRINGS.SAVE : UI_STRINGS.ADD}
-              </button>
+                  <button className="button pillButton bottomCaptureButton" type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? UI_STRINGS.ELLIPSIS : editState ? UI_STRINGS.SAVE : UI_STRINGS.ADD}
+                  </button>
 
-              {editState ? (
-                <button
-                  className="button pillButton bottomCaptureCancelButton"
-                  type="button"
-                  onClick={cancelEdit}
-                  disabled={isSubmitting}
-                >
-                  {UI_STRINGS.CANCEL}
-                </button>
-              ) : null}
+                  {editState ? (
+                    <button
+                      className="button pillButton bottomCaptureCancelButton"
+                      type="button"
+                      onClick={cancelEdit}
+                      disabled={isSubmitting}
+                    >
+                      {UI_STRINGS.CANCEL}
+                    </button>
+                  ) : null}
+                </>
+              )}
             </div>
           </div>
         </div>
