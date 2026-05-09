@@ -21,33 +21,51 @@ def main_module(tmp_path: Path):
     return main_module
 
 
-def test_scribble_defaults_to_empty_without_item(main_module) -> None:
-    payload = main_module.get_scribble()
+def test_scribble_defaults_to_empty_card_list(main_module) -> None:
+    payload = main_module.list_scribbles()
 
     assert payload["ok"] is True
-    assert payload["item"]["key"] == "default"
-    assert payload["item"]["body"] == ""
-    assert payload["item"]["updated_at"] is None
+    assert payload["items"] == []
 
 
-def test_scribble_update_persists_single_default_record(main_module) -> None:
-    saved = main_module.update_scribble({"body": "messy\ntext"})
+def test_scribble_create_persists_separate_cards(main_module) -> None:
+    first = main_module.create_scribble({"body": "messy\ntext"})
+    second = main_module.create_scribble({"body": "another unknown capture"})
 
-    assert saved["ok"] is True
-    assert saved["item"]["key"] == "default"
-    assert saved["item"]["body"] == "messy\ntext"
-    assert saved["item"]["updated_at"]
+    assert first["ok"] is True
+    assert first["item"]["id"]
+    assert first["item"]["body"] == "messy\ntext"
+    assert first["item"]["created_at"]
+    assert first["item"]["updated_at"]
+    assert first["item"]["sort_order"] == 1
 
-    loaded = main_module.get_scribble()
-    assert loaded["item"]["body"] == "messy\ntext"
+    assert second["ok"] is True
+    assert second["item"]["body"] == "another unknown capture"
+    assert second["item"]["sort_order"] == 2
 
-    cleared = main_module.update_scribble({"body": ""})
-    assert cleared["ok"] is True
-    assert main_module.get_scribble()["item"]["body"] == ""
+    loaded = main_module.list_scribbles()
+    assert [item["body"] for item in loaded["items"]] == ["another unknown capture", "messy\ntext"]
+
+
+def test_scribble_update_and_delete_apply_to_one_card(main_module) -> None:
+    keep = main_module.create_scribble({"body": "keep me"})["item"]
+    edit = main_module.create_scribble({"body": "draft"})["item"]
+
+    updated = main_module.update_scribble(edit["id"], {"body": "edited draft"})
+    assert updated["ok"] is True
+    assert updated["item"]["id"] == edit["id"]
+    assert updated["item"]["body"] == "edited draft"
+    assert updated["item"]["created_at"] == edit["created_at"]
+
+    deleted = main_module.delete_scribble(edit["id"])
+    assert deleted["ok"] is True
+
+    loaded = main_module.list_scribbles()
+    assert [item["id"] for item in loaded["items"]] == [keep["id"]]
 
 
 def test_scribble_does_not_appear_in_notes_journals_or_tasks(main_module) -> None:
-    main_module.update_scribble({"body": "not a normal item"})
+    main_module.create_scribble({"body": "not a normal item"})
 
     assert main_module.list_tasks()["items"] == []
     assert main_module.list_notes()["items"] == []

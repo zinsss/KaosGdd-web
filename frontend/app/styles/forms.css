@@ -294,8 +294,73 @@ textarea.textInput:focus {
   color: var(--ui-danger);
 }
 
-.scribbleTextarea {
-  min-height: min(58vh, 620px);
+.scribbleCardGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr));
+  gap: 12px;
+}
+
+.scribbleCard {
+  display: grid;
+  gap: 10px;
+  align-self: start;
+  border: 1px solid var(--ui-border);
+  border-radius: 16px;
+  background: color-mix(in srgb, var(--ctp-yellow) 11%, var(--ui-panel));
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+}
+
+.scribbleCard_expanded {
+  background: color-mix(in srgb, var(--ctp-yellow) 16%, var(--ui-panel));
+}
+
+.scribbleCardSummary {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  min-height: 118px;
+  padding: 14px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.scribbleCardSummary:hover,
+.scribbleCardSummary:focus-visible {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.scribbleCardLabel {
+  color: var(--ui-text-dim);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.scribbleCardPreview {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--ui-text);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 4;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.scribbleCardDetail {
+  display: grid;
+  gap: 10px;
+  padding: 0 14px 14px;
+}
+
+.scribbleCardTextarea {
+  min-height: 190px;
   resize: vertical;
   line-height: 1.5;
 }
@@ -315,8 +380,12 @@ textarea.textInput:focus {
     text-align: left;
   }
 
-  .scribbleTextarea {
-    min-height: 48vh;
+  .scribbleCardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .scribbleCardSummary {
+    min-height: auto;
   }
 
   .scribbleActionRow {
@@ -326,4 +395,12 @@ textarea.textInput:focus {
   .scribbleActionRow .button {
     width: 100%;
   }
+}
+
+.emptyState {
+  border: 1px dashed var(--ui-border);
+  border-radius: 14px;
+  padding: 18px;
+  color: var(--ui-text-dim);
+  background: rgba(255, 255, 255, 0.03);
 }
