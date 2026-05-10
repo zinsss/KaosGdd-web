@@ -118,8 +118,10 @@
 
 .topNavWrap {
   position: relative;
-  --top-nav-edge-fade-width: 34px;
+  --top-nav-edge-fade-width: 46px;
   --top-nav-edge-fade-color: 36, 37, 54;
+  --top-nav-scroll-hint-color: var(--ctp-yellow);
+  --top-nav-scroll-hint-glow: rgba(249, 226, 175, 0.44);
 }
 
 .topNavWrap::before,
@@ -139,7 +141,8 @@
   left: 0;
   background: linear-gradient(
     90deg,
-    rgba(var(--top-nav-edge-fade-color), 0.94),
+    rgba(var(--top-nav-edge-fade-color), 1),
+    rgba(var(--top-nav-edge-fade-color), 0.78) 46%,
     rgba(var(--top-nav-edge-fade-color), 0)
   );
 }
@@ -148,7 +151,8 @@
   right: 0;
   background: linear-gradient(
     270deg,
-    rgba(var(--top-nav-edge-fade-color), 0.94),
+    rgba(var(--top-nav-edge-fade-color), 1),
+    rgba(var(--top-nav-edge-fade-color), 0.78) 46%,
     rgba(var(--top-nav-edge-fade-color), 0)
   );
 }
@@ -176,28 +180,32 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  height: 18px;
-  color: var(--ui-text-dim);
-  font-size: 18px;
+  width: 24px;
+  height: 24px;
+  color: var(--top-nav-scroll-hint-color);
+  font-size: 28px;
+  font-weight: 800;
   line-height: 1;
   opacity: 0;
   pointer-events: none;
-  transform: translateY(-55%);
-  transition: opacity 140ms ease;
+  text-shadow:
+    0 0 7px var(--top-nav-scroll-hint-glow),
+    0 0 16px rgba(249, 226, 175, 0.28);
+  transform: translateY(-56%);
+  transition: opacity 140ms ease, text-shadow 140ms ease;
 }
 
 .topNavScrollHintLeft {
-  left: 0;
+  left: 1px;
 }
 
 .topNavScrollHintRight {
-  right: 0;
+  right: 1px;
 }
 
 .topNavWrapCanScrollLeft .topNavScrollHintLeft,
 .topNavWrapCanScrollRight .topNavScrollHintRight {
-  opacity: 0.72;
+  opacity: 0.96;
 }
 
 .topNavRow {
