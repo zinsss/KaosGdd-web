@@ -6,6 +6,8 @@ from app.utils.ids import new_id
 
 
 class ScribbleRepo:
+    """Persistence for transient scratch/workspace objects, not canonical journal items."""
+
     def __init__(self, engine) -> None:
         self.engine = engine
 

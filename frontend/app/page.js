@@ -1,5 +1,5 @@
-import ScribblePageClient from "./scribble/ScribblePageClient";
+import { redirect } from "next/navigation";
 
 export default function HomePage() {
-  return <ScribblePageClient />;
+  redirect("/scribble");
 }

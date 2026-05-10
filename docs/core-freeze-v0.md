@@ -191,3 +191,24 @@ The next real backend refactor should move toward:
 - reminder_events
 
 The frontend can continue to evolve, but backend/domain work should follow this freeze.
+
+## 9. Scribble architecture freeze
+Scribble is an independent transient workspace object, not a Journal subtype, Journal alias, lightweight Journal entry, or permanent canonical history item.
+
+Frozen direction:
+- Scribble supports "capture chaos first, classify later".
+- Scribbles are temporary, mutable, disposable staging objects.
+- A Scribble may later convert into or spawn Tasks, Events, Reminders, Journal entries, Notes, Files, or be deleted after use.
+- Journal remains permanent, chronological, reflective/history-oriented, and semantically separate from Scribble.
+
+Post-create navigation priority:
+1. Task
+2. Event
+3. Reminder
+4. Scribble
+5. Journal
+6. Note
+7. File
+8. Fax
+
+Scribble creation must navigate to `/scribble`, not `/journals` or `/`.
