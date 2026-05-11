@@ -101,8 +101,8 @@ self.addEventListener("push", (event) => {
       await self.registration.showNotification(title, {
         body,
         data: { url },
-        icon: "/icons/icon-192.svg",
-        badge: "/icons/icon-192.svg",
+        icon: "/icon-192.png",
+        badge: "/icon-192.png",
       });
     })(),
   );
