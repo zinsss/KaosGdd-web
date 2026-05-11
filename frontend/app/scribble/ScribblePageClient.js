@@ -223,12 +223,12 @@ export default function ScribblePageClient() {
         ) : null}
 
         <div className="scribbleCardGrid" aria-label="Scribble cards">
-          {cards.map((card, index) => {
+          {cards.map((card) => {
             const isExpanded = expandedId === card.id;
             const preview = previewFromBody(card.body) || "Empty Scribble card";
             const cardBusy = busyAction.endsWith(`:${card.id}`);
             return (
-              <article key={card.id} className={`scribbleCard scribbleCard_color_${index % 8}${isExpanded ? " scribbleCard_expanded" : ""}`}>
+              <article key={card.id} className={`scribbleCard${isExpanded ? " scribbleCard_expanded" : ""}`}>
                 <button
                   className="scribbleCardSummary"
                   type="button"

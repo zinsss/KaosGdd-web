@@ -304,25 +304,17 @@ textarea.textInput:focus {
   display: grid;
   gap: 10px;
   align-self: start;
-  --scribble-card-accent: var(--ctp-yellow);
-  border: 1px solid color-mix(in srgb, var(--scribble-card-accent) 45%, var(--ui-border));
+  border: 1px solid var(--ctp-surface1);
   border-radius: 16px;
-  background: color-mix(in srgb, var(--scribble-card-accent) 20%, var(--ctp-base));
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--scribble-card-accent) 10%, rgba(0, 0, 0, 0.5));
+  background: var(--ctp-base);
+  box-shadow: 0 10px 24px var(--ctp-crust);
+  color: var(--ctp-text);
   overflow: hidden;
 }
 
-.scribbleCard_color_0 { --scribble-card-accent: var(--ctp-yellow); }
-.scribbleCard_color_1 { --scribble-card-accent: var(--ctp-peach); }
-.scribbleCard_color_2 { --scribble-card-accent: var(--ctp-green); }
-.scribbleCard_color_3 { --scribble-card-accent: var(--ctp-teal); }
-.scribbleCard_color_4 { --scribble-card-accent: var(--ctp-blue); }
-.scribbleCard_color_5 { --scribble-card-accent: var(--ctp-mauve); }
-.scribbleCard_color_6 { --scribble-card-accent: var(--ctp-pink); }
-.scribbleCard_color_7 { --scribble-card-accent: var(--ctp-rosewater); }
-
 .scribbleCard_expanded {
-  background: color-mix(in srgb, var(--scribble-card-accent) 24%, var(--ctp-base));
+  background: var(--ctp-base);
+  border-color: var(--ctp-surface2);
 }
 
 .scribbleCardSummary {
@@ -340,11 +332,11 @@ textarea.textInput:focus {
 
 .scribbleCardSummary:hover,
 .scribbleCardSummary:focus-visible {
-  background: color-mix(in srgb, var(--scribble-card-accent) 10%, transparent);
+  background: var(--ctp-mantle);
 }
 
 .scribbleCardLabel {
-  color: color-mix(in srgb, var(--scribble-card-accent) 82%, var(--ui-text));
+  color: var(--ctp-yellow);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -352,7 +344,7 @@ textarea.textInput:focus {
 }
 
 .scribbleCardPreview {
-  color: var(--ui-text);
+  color: var(--ctp-text);
   font-size: 14px;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -369,16 +361,17 @@ textarea.textInput:focus {
   min-height: 190px;
   resize: vertical;
   line-height: 1.5;
-  background: color-mix(in srgb, var(--scribble-card-accent) 8%, var(--ctp-mantle));
-  border-color: color-mix(in srgb, var(--scribble-card-accent) 32%, var(--ui-border));
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--scribble-card-accent) 6%, transparent);
+  background: var(--ctp-mantle);
+  border-color: var(--ctp-surface1);
+  color: var(--ctp-text);
+  box-shadow: inset 0 0 0 1px var(--ctp-crust);
 }
 
 .scribbleCardTextarea:focus {
-  border-color: color-mix(in srgb, var(--scribble-card-accent) 52%, var(--ctp-lavender));
+  border-color: var(--ctp-lavender);
   box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--scribble-card-accent) 24%, transparent),
-    inset 0 0 0 1px color-mix(in srgb, var(--scribble-card-accent) 8%, transparent);
+    0 0 0 1px var(--ctp-lavender),
+    inset 0 0 0 1px var(--ctp-crust);
 }
 
 .scribbleActionRow {
@@ -388,25 +381,25 @@ textarea.textInput:focus {
 }
 
 .scribbleActionRow .button {
-  background: color-mix(in srgb, var(--scribble-card-accent) 12%, var(--ctp-surface0));
-  border-color: color-mix(in srgb, var(--scribble-card-accent) 35%, var(--ui-border));
-  color: var(--ui-text);
+  background: var(--ctp-surface0);
+  border-color: var(--ctp-surface1);
+  color: var(--ctp-text);
 }
 
 .scribbleActionRow .button:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--scribble-card-accent) 18%, var(--ctp-surface0));
-  border-color: color-mix(in srgb, var(--scribble-card-accent) 45%, var(--ui-border-strong));
+  background: var(--ctp-surface1);
+  border-color: var(--ctp-surface2);
 }
 
 .scribbleActionRow .button:last-child {
-  background: color-mix(in srgb, var(--ctp-red) 10%, var(--ctp-surface0));
-  border-color: color-mix(in srgb, var(--ctp-red) 30%, var(--ui-border));
-  color: color-mix(in srgb, var(--ctp-red) 78%, var(--ui-text));
+  background: var(--ctp-surface0);
+  border-color: var(--ctp-surface1);
+  color: var(--ctp-maroon);
 }
 
 .scribbleActionRow .button:last-child:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--ctp-red) 14%, var(--ctp-surface0));
-  border-color: color-mix(in srgb, var(--ctp-red) 42%, var(--ui-border-strong));
+  background: var(--ctp-surface1);
+  border-color: var(--ctp-maroon);
 }
 
 @media (max-width: 640px) {
