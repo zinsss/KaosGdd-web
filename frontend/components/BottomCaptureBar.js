@@ -1016,30 +1016,30 @@ export default function BottomCaptureBar() {
 
               {scribblePromptRaw ? (
                 <>
-                  <button className="button pillButton bottomCaptureButton" type="button" onClick={sendPromptToScribble} disabled={isSubmitting}>
+                  <button className="button pillButton buttonToneEdit bottomCaptureButton" type="button" onClick={sendPromptToScribble} disabled={isSubmitting}>
                     Scribble
                   </button>
-                  <button className="button pillButton bottomCaptureCancelButton" type="button" onClick={cancelScribblePrompt} disabled={isSubmitting}>
+                  <button className="button pillButton buttonToneNeutral bottomCaptureCancelButton" type="button" onClick={cancelScribblePrompt} disabled={isSubmitting}>
                     {UI_STRINGS.CANCEL}
                   </button>
                 </>
               ) : (
                 <>
-                  <button className="button pillButton bottomCaptureCaptureButton" type="button" onClick={onOpenCapturePage} disabled={isSubmitting}>
+                  <button className="button pillButton buttonToneNeutral bottomCaptureCaptureButton" type="button" onClick={onOpenCapturePage} disabled={isSubmitting}>
                     G
                   </button>
 
-                  <button className="button pillButton bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
+                  <button className="button pillButton buttonToneEdit bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
                     {UI_STRINGS.ATTACH_ICON}
                   </button>
 
-                  <button className="button pillButton bottomCaptureButton" type="submit" disabled={isSubmitting}>
+                  <button className="button pillButton buttonToneSave bottomCaptureButton" type="submit" disabled={isSubmitting}>
                     {isSubmitting ? UI_STRINGS.ELLIPSIS : editState ? UI_STRINGS.SAVE : UI_STRINGS.ADD}
                   </button>
 
                   {editState ? (
                     <button
-                      className="button pillButton bottomCaptureCancelButton"
+                      className="button pillButton buttonToneNeutral bottomCaptureCancelButton"
                       type="button"
                       onClick={cancelEdit}
                       disabled={isSubmitting}

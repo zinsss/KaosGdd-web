@@ -249,7 +249,7 @@ export default function TaskDetailPanel({ item, raw }) {
 
             <button
               type="button"
-              className={"button" + (openPanel === "reminder" ? " buttonActive" : "")}
+              className={"button buttonToneSave" + (openPanel === "reminder" ? " buttonActive" : "")}
               onClick={() => togglePanel("reminder")}
             >
               {UI_STRINGS.REMINDER_BUTTON}
@@ -257,7 +257,7 @@ export default function TaskDetailPanel({ item, raw }) {
 
             <button
               type="button"
-              className={"button" + (openPanel === "edit" ? " buttonActive" : "")}
+              className={"button buttonToneEdit" + (openPanel === "edit" ? " buttonActive" : "")}
               onClick={() => togglePanel("edit")}
             >
               {UI_STRINGS.EDIT_BUTTON}
@@ -265,7 +265,7 @@ export default function TaskDetailPanel({ item, raw }) {
 
             <button
               type="button"
-              className={"button" + (openPanel === "more" ? " buttonActive" : "")}
+              className={"button buttonToneNeutral" + (openPanel === "more" ? " buttonActive" : "")}
               onClick={() => togglePanel("more")}
             >
               {UI_STRINGS.MORE_BUTTON}
@@ -296,12 +296,12 @@ export default function TaskDetailPanel({ item, raw }) {
             </div>
 
             <div className="moreActionRow">
-              <button type="button" className="button" onClick={onCopyId}>
+              <button type="button" className="button buttonToneCopy" onClick={onCopyId}>
                 {copied ? UI_STRINGS.COPIED : UI_STRINGS.COPY_ID}
               </button>
               <button
                 type="button"
-                className="button"
+                className="button buttonToneDanger"
                 onClick={onRemoveTask}
                 disabled={isRemoving}
               >

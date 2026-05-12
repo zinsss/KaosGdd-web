@@ -82,8 +82,8 @@ export default function FileDetailPanel({ item, raw }) {
             <div className="detailReadLabel">File</div>
             <div className="detailReadContent withDivider">
               <div className="actionRow" style={{ gap: 8, flexWrap: "wrap" }}>
-                <a className="button" href={`/api/files/${item.id}/open`}>Open</a>
-                <a className="button" href={`/api/files/${item.id}/open?download=1`}>Download</a>
+                <a className="button buttonToneNeutral" href={`/api/files/${item.id}/open`}>Open</a>
+                <a className="button buttonToneCopy" href={`/api/files/${item.id}/open?download=1`}>Download</a>
               </div>
             </div>
           </div>
@@ -94,8 +94,8 @@ export default function FileDetailPanel({ item, raw }) {
 
       <section className="panel">
         <div className="actionRow detailActionRow">
-          <button type="button" className={"button" + (showEdit ? " buttonActive" : "")} onClick={() => setShowEdit((v) => !v)}>Edit</button>
-          <button type="button" className={"button" + (showMore ? " buttonActive" : "")} onClick={() => setShowMore((v) => !v)}>More</button>
+          <button type="button" className={"button buttonToneEdit" + (showEdit ? " buttonActive" : "")} onClick={() => setShowEdit((v) => !v)}>Edit</button>
+          <button type="button" className={"button buttonToneNeutral" + (showMore ? " buttonActive" : "")} onClick={() => setShowMore((v) => !v)}>More</button>
         </div>
         {showEdit ? <div className="toggleBody"><FileRawEditor fileId={item.id} initialRaw={raw || ""} /></div> : null}
         {showMore ? (
@@ -105,10 +105,10 @@ export default function FileDetailPanel({ item, raw }) {
               <div>updated: {item.updated_at_display || "-"}</div>
             </div>
             <div className="moreActionRow">
-              <button type="button" className="button" onClick={onCopyId}>
+              <button type="button" className="button buttonToneCopy" onClick={onCopyId}>
                 {copied ? "ID copied" : "Copy ID"}
               </button>
-              <button type="button" className="button" onClick={onRemove} disabled={isRemoving}>{isRemoving ? "..." : "Remove"}</button>
+              <button type="button" className="button buttonToneDanger" onClick={onRemove} disabled={isRemoving}>{isRemoving ? "..." : "Remove"}</button>
             </div>
             {removeError ? <div className="errorText">{removeError}</div> : null}
           </div>

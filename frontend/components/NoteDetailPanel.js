@@ -172,8 +172,8 @@ export default function NoteDetailPanel({ item, raw }) {
 
       <section className="panel">
         <div className="actionRow detailActionRow">
-          <button type="button" className={"button" + (openPanel === "edit" ? " buttonActive" : "")} onClick={() => setOpenPanel((current) => (current === "edit" ? null : "edit"))}>Edit</button>
-          <button type="button" className={"button" + (openPanel === "more" ? " buttonActive" : "")} onClick={() => setOpenPanel((current) => (current === "more" ? null : "more"))}>More</button>
+          <button type="button" className={"button buttonToneEdit" + (openPanel === "edit" ? " buttonActive" : "")} onClick={() => setOpenPanel((current) => (current === "edit" ? null : "edit"))}>Edit</button>
+          <button type="button" className={"button buttonToneNeutral" + (openPanel === "more" ? " buttonActive" : "")} onClick={() => setOpenPanel((current) => (current === "more" ? null : "more"))}>More</button>
         </div>
         {openPanel === "edit" ? <div className="toggleBody"><NoteRawEditor noteId={item.id} initialRaw={raw || ""} /></div> : null}
         {openPanel === "more" ? (
@@ -183,10 +183,10 @@ export default function NoteDetailPanel({ item, raw }) {
               <div>updated: {item.updated_at_display || "-"}</div>
             </div>
             <div className="moreActionRow">
-              <button type="button" className="button" onClick={onCopyId}>
+              <button type="button" className="button buttonToneCopy" onClick={onCopyId}>
                 {copied ? "ID copied" : "Copy ID"}
               </button>
-              <button type="button" className="button" onClick={onRemove} disabled={isRemoving}>{isRemoving ? "..." : "Remove"}</button>
+              <button type="button" className="button buttonToneDanger" onClick={onRemove} disabled={isRemoving}>{isRemoving ? "..." : "Remove"}</button>
             </div>
             {removeError ? <div className="errorText">{removeError}</div> : null}
           </div>

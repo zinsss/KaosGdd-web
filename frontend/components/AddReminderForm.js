@@ -55,7 +55,7 @@ export default function AddReminderForm({ taskId }) {
           disabled={isSubmitting}
           spellCheck={false}
         />
-        <button className="button compactButton" type="submit" disabled={isSubmitting}>
+        <button className="button compactButton buttonToneSave" type="submit" disabled={isSubmitting}>
           {isSubmitting ? UI_STRINGS.ADDING : UI_STRINGS.ADD}
         </button>
       </div>

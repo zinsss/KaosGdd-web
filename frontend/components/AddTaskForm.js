@@ -54,7 +54,7 @@ export default function AddTaskForm() {
           placeholder="- new task"
           disabled={isSubmitting}
         />
-        <button className="button" type="submit" disabled={isSubmitting}>
+        <button className="button buttonToneSave" type="submit" disabled={isSubmitting}>
           {isSubmitting ? UI_STRINGS.ADDING : UI_STRINGS.ADD}
         </button>
       </div>

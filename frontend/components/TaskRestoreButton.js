@@ -44,7 +44,7 @@ export default function TaskRestoreButton({ taskId, onResolved, onNotFound, onEr
   return (
     <button
       type="button"
-      className="button compactButton"
+      className="button compactButton buttonToneSave"
       onClick={onClick}
       disabled={isSubmitting}
     >

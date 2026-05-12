@@ -76,18 +76,35 @@ textarea.textInput:focus {
 }
 
 .button {
-  background: var(--ctp-surface0);
-  color: var(--ui-text);
-  border: 1px solid var(--ui-border-strong);
+  --button-accent: var(--ctp-subtext0);
+  --button-bg-strength: 7%;
+  --button-border-strength: 20%;
+  --button-hover-bg-strength: 11%;
+  --button-hover-border-strength: 32%;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, var(--button-accent) var(--button-bg-strength), transparent);
+  color: var(--button-accent);
+  border: 1px solid color-mix(in srgb, var(--button-accent) var(--button-border-strength), transparent);
   padding: 10px 14px;
   font: inherit;
   cursor: pointer;
-  border-radius: 0;
+  border-radius: 12px;
   white-space: nowrap;
+  text-decoration: none;
 }
 
-.button:hover {
-  background: var(--ctp-surface1);
+.button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--button-accent) var(--button-hover-bg-strength), transparent);
+  border-color: color-mix(in srgb, var(--button-accent) var(--button-hover-border-strength), transparent);
+  color: color-mix(in srgb, var(--button-accent) 88%, var(--ctp-text));
+}
+
+.button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--button-accent) 32%, transparent);
+  outline-offset: 2px;
 }
 
 .button:disabled {
@@ -96,9 +113,30 @@ textarea.textInput:focus {
 }
 
 .buttonActive {
-  border-color: var(--ui-accent);
-  background: var(--ui-accent-soft);
-  color: var(--ui-accent);
+  --button-accent: var(--ctp-lavender);
+  --button-bg-strength: 11%;
+  --button-border-strength: 34%;
+  color: var(--button-accent);
+}
+
+.buttonToneCopy {
+  --button-accent: var(--ctp-green);
+}
+
+.buttonToneDanger {
+  --button-accent: var(--ctp-maroon);
+}
+
+.buttonToneSave {
+  --button-accent: var(--ctp-teal);
+}
+
+.buttonToneEdit {
+  --button-accent: var(--ctp-lavender);
+}
+
+.buttonToneNeutral {
+  --button-accent: var(--ui-text-dim);
 }
 
 .compactInlineButton {
@@ -382,27 +420,6 @@ textarea.textInput:focus {
   gap: 10px;
 }
 
-.scribbleActionRow .button {
-  background: var(--ctp-surface0);
-  border-color: var(--ctp-surface1);
-  color: var(--ctp-text);
-}
-
-.scribbleActionRow .button:hover:not(:disabled) {
-  background: var(--ctp-surface1);
-  border-color: var(--ctp-surface2);
-}
-
-.scribbleActionRow .button:last-child {
-  background: var(--ctp-surface0);
-  border-color: var(--ctp-surface1);
-  color: var(--ctp-maroon);
-}
-
-.scribbleActionRow .button:last-child:hover:not(:disabled) {
-  background: var(--ctp-surface1);
-  border-color: var(--ctp-maroon);
-}
 
 @media (max-width: 640px) {
   .scribbleHeader {

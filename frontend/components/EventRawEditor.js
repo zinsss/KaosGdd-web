@@ -53,7 +53,7 @@ export default function EventRawEditor({ eventId, initialRaw }) {
       />
       <div className="rawHint">^^ YYYY-MM-DD or YYYY-MM-DD~YYYY-MM-DD · one r: only</div>
       <div className="actionRow compactActionRow">
-        <button className="button compactButton" type="submit" disabled={isSubmitting}>
+        <button className="button compactButton buttonToneSave" type="submit" disabled={isSubmitting}>
           {isSubmitting ? UI_STRINGS.SAVING : UI_STRINGS.SAVE}
         </button>
       </div>

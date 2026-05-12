@@ -74,8 +74,8 @@ export default function EventDetailPanel({ item, raw }) {
 
       <section className="panel">
         <div className="actionRow detailActionRow">
-          <button type="button" className={"button" + (showEdit ? " buttonActive" : "")} onClick={() => setShowEdit((v) => !v)}>Edit</button>
-          <button type="button" className={"button" + (showMore ? " buttonActive" : "")} onClick={() => setShowMore((v) => !v)}>More</button>
+          <button type="button" className={"button buttonToneEdit" + (showEdit ? " buttonActive" : "")} onClick={() => setShowEdit((v) => !v)}>Edit</button>
+          <button type="button" className={"button buttonToneNeutral" + (showMore ? " buttonActive" : "")} onClick={() => setShowMore((v) => !v)}>More</button>
         </div>
         {showEdit ? <div className="toggleBody"><EventRawEditor eventId={item.id} initialRaw={raw || ""} /></div> : null}
         {showMore ? (
@@ -85,10 +85,10 @@ export default function EventDetailPanel({ item, raw }) {
               <div>updated: {item.updated_at_display || "-"}</div>
             </div>
             <div className="moreActionRow">
-              <button type="button" className="button" onClick={onCopyId}>
+              <button type="button" className="button buttonToneCopy" onClick={onCopyId}>
                 {copied ? "ID copied" : "Copy ID"}
               </button>
-              <button type="button" className="button" onClick={onRemove} disabled={isRemoving}>{isRemoving ? "..." : "Remove"}</button>
+              <button type="button" className="button buttonToneDanger" onClick={onRemove} disabled={isRemoving}>{isRemoving ? "..." : "Remove"}</button>
             </div>
             {removeError ? <div className="errorText">{removeError}</div> : null}
           </div>

@@ -59,7 +59,7 @@ export default function TaskRawEditor({ taskId, initialRaw }) {
       </div>
 
       <div className="actionRow compactActionRow">
-        <button className="button compactButton" type="submit" disabled={isSubmitting}>
+        <button className="button compactButton buttonToneSave" type="submit" disabled={isSubmitting}>
           {isSubmitting ? UI_STRINGS.SAVING : UI_STRINGS.SAVE}
         </button>
       </div>

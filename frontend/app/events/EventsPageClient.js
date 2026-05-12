@@ -169,8 +169,8 @@ export default function EventsPageClient() {
             <span className="sectionContextMonth">{month}</span>
           </div>
           <div className="actionRow compactActionRow">
-            <button className="button compactButton eventMonthNavButton" onClick={() => shiftMonth(-1)}>◀</button>
-            <button className="button compactButton eventMonthNavButton" onClick={() => shiftMonth(1)}>▶</button>
+            <button className="button compactButton buttonToneNeutral eventMonthNavButton" onClick={() => shiftMonth(-1)}>◀</button>
+            <button className="button compactButton buttonToneNeutral eventMonthNavButton" onClick={() => shiftMonth(1)}>▶</button>
           </div>
         </div>
 

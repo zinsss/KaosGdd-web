@@ -29,7 +29,7 @@ export default function ReminderRestoreButton({ reminderId }) {
   return (
     <button
       type="button"
-      className="button compactButton"
+      className="button compactButton buttonToneSave"
       onClick={onClick}
       disabled={isSubmitting}
     >
