@@ -1,9 +1,10 @@
-const POST_CREATE_PRIORITY = ["task", "event", "reminder", "scribble", "journal", "note", "file", "fax"];
+const POST_CREATE_PRIORITY = ["task", "event", "reminder", "supply", "scribble", "journal", "note", "file", "fax"];
 
 const POST_CREATE_HOME_PATHS = {
   task: "/tasks",
   event: "/events",
   reminder: "/reminders",
+  supply: "/supplies",
   scribble: "/scribble",
   journal: "/journals",
   note: "/notes",
@@ -14,6 +15,7 @@ const POST_CREATE_HOME_PATHS = {
 const KIND_ALIASES = {
   simple_reminder: "reminder",
   reminders: "reminder",
+  supplies: "supply",
   journals: "journal",
   scribbles: "scribble",
   notes: "note",

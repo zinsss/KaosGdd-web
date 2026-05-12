@@ -4,21 +4,36 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 const SAVE_DELAY_MS = 700;
 
-function noteTitleFromBody(body) {
-  const firstLine = String(body || "")
-    .split("\n")
-    .map((line) => line.trim())
-    .find(Boolean);
-  if (!firstLine) return "Scribble note";
-  return firstLine.slice(0, 80);
-}
-
-function noteRawFromBody(body) {
-  return [":::", `title: ${noteTitleFromBody(body)}`, "tags:", "link:", ":::", "", String(body || "").trimEnd()].join("\n");
-}
-
 function previewFromBody(body) {
   return String(body || "").trim();
+}
+
+function scribbleCreatedLabel(card) {
+  return card?.created_at_display || card?.created_at || "Unknown datetime";
+}
+
+function resizeTextareaToContent(textarea) {
+  if (!textarea) return;
+  textarea.style.height = "auto";
+  textarea.style.height = `${textarea.scrollHeight}px`;
+}
+
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.top = "-9999px";
+  document.body.appendChild(textarea);
+  textarea.select();
+  const copied = document.execCommand("copy");
+  document.body.removeChild(textarea);
+  if (!copied) throw new Error("Copy command failed");
 }
 
 export default function ScribblePageClient() {
@@ -65,6 +80,14 @@ export default function ScribblePageClient() {
     () => cards.find((card) => card.id === expandedId) || null,
     [cards, expandedId],
   );
+
+  useEffect(() => {
+    if (!expandedId) return;
+    window.requestAnimationFrame(() => {
+      const textarea = document.querySelector(`[data-scribble-textarea-id="${CSS.escape(expandedId)}"]`);
+      resizeTextareaToContent(textarea);
+    });
+  }, [expandedId, expandedCard?.body]);
 
   useEffect(() => {
     if (!expandedCard) return undefined;
@@ -116,62 +139,21 @@ export default function ScribblePageClient() {
     setCards((current) => current.map((card) => (card.id === cardId ? { ...card, body } : card)));
   }
 
-  async function sendToCapture(card) {
-    const raw = String(card?.body || "").trim();
+  async function copyCardBody(card) {
+    const body = String(card?.body || "");
     setActionMessage("");
     setActionError("");
-    if (!raw) {
+    if (!body.trim()) {
       setActionError("Scribble card is empty.");
       return;
     }
 
-    setBusyAction(`capture:${card.id}`);
+    setBusyAction(`copy:${card.id}`);
     try {
-      const res = await fetch("/api/capture", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          raw,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || undefined,
-        }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) {
-        setActionError((data && data.error) || "Capture failed.");
-        return;
-      }
-      setActionMessage("Sent to Capture. Scribble card was kept for now.");
+      await copyTextToClipboard(body);
+      setActionMessage("Copied Scribble text.");
     } catch {
-      setActionError("Capture failed.");
-    } finally {
-      setBusyAction("");
-    }
-  }
-
-  async function createNote(card) {
-    const cleanBody = String(card?.body || "").trim();
-    setActionMessage("");
-    setActionError("");
-    if (!cleanBody) {
-      setActionError("Scribble card is empty.");
-      return;
-    }
-
-    setBusyAction(`note:${card.id}`);
-    try {
-      const res = await fetch("/api/notes/raw", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ raw: noteRawFromBody(cleanBody) }),
-      });
-      const data = await res.json().catch(() => null);
-      if (!res.ok || !data?.ok) {
-        setActionError((data && data.error) || "Note creation failed.");
-        return;
-      }
-      setActionMessage("Created Note. Scribble card was kept for now.");
-    } catch {
-      setActionError("Note creation failed.");
+      setActionError("Copy failed.");
     } finally {
       setBusyAction("");
     }
@@ -235,7 +217,7 @@ export default function ScribblePageClient() {
                   onClick={() => setExpandedId(isExpanded ? "" : card.id)}
                   aria-expanded={isExpanded}
                 >
-                  <span className="scribbleCardLabel">Scribble</span>
+                  <span className="scribbleCardLabel">{scribbleCreatedLabel(card)}</span>
                   <span className="scribbleCardPreview">{preview}</span>
                 </button>
 
@@ -244,16 +226,19 @@ export default function ScribblePageClient() {
                     <textarea
                       className="textInput scribbleCardTextarea"
                       value={card.body || ""}
-                      onChange={(event) => updateCardBody(card.id, event.target.value)}
+                      onChange={(event) => {
+                        updateCardBody(card.id, event.target.value);
+                        resizeTextareaToContent(event.target);
+                      }}
+                      ref={resizeTextareaToContent}
+                      data-scribble-textarea-id={card.id}
+                      rows={1}
                       aria-label="Scribble card text"
                       spellCheck="true"
                     />
                     <div className="scribbleActionRow">
-                      <button className="button" type="button" onClick={() => sendToCapture(card)} disabled={cardBusy || !(card.body || "").trim()}>
-                        {busyAction === `capture:${card.id}` ? "Sending…" : "Capture"}
-                      </button>
-                      <button className="button" type="button" onClick={() => createNote(card)} disabled={cardBusy || !(card.body || "").trim()}>
-                        {busyAction === `note:${card.id}` ? "Creating…" : "Note"}
+                      <button className="button" type="button" onClick={() => copyCardBody(card)} disabled={cardBusy || !(card.body || "").trim()}>
+                        {busyAction === `copy:${card.id}` ? "Copying…" : "Copy"}
                       </button>
                       <button className="button" type="button" onClick={() => deleteCard(card)} disabled={cardBusy}>
                         {busyAction === `delete:${card.id}` ? "Deleting…" : "Delete"}

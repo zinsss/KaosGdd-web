@@ -3,6 +3,7 @@ from sqlalchemy import text
 from app.config import DbTables
 from app.utils.clock import now_iso
 from app.utils.ids import new_id
+from app.utils.timefmt import format_dt_for_ui
 
 
 class ScribbleRepo:
@@ -10,6 +11,13 @@ class ScribbleRepo:
 
     def __init__(self, engine) -> None:
         self.engine = engine
+
+    @staticmethod
+    def _decorate_scribble(row: dict) -> dict:
+        item = dict(row)
+        item["created_at_display"] = format_dt_for_ui(item.get("created_at"))
+        item["updated_at_display"] = format_dt_for_ui(item.get("updated_at"))
+        return item
 
     def list_scribbles(self) -> list[dict]:
         with self.engine.begin() as conn:
@@ -22,7 +30,7 @@ class ScribbleRepo:
                     """.format(scribbles=DbTables.SCRIBBLES)
                 )
             ).mappings().all()
-        return [dict(row) for row in rows]
+        return [self._decorate_scribble(row) for row in rows]
 
     def create_scribble(self, *, body: str) -> dict:
         now = now_iso()
@@ -51,13 +59,15 @@ class ScribbleRepo:
                     "sort_order": next_sort_order,
                 },
             )
-        return {
-            "id": scribble_id,
-            "body": body,
-            "created_at": now,
-            "updated_at": now,
-            "sort_order": next_sort_order,
-        }
+        return self._decorate_scribble(
+            {
+                "id": scribble_id,
+                "body": body,
+                "created_at": now,
+                "updated_at": now,
+                "sort_order": next_sort_order,
+            }
+        )
 
     def update_scribble(self, scribble_id: str, *, body: str) -> dict | None:
         now = now_iso()
@@ -86,7 +96,7 @@ class ScribbleRepo:
                 ),
                 {"id": scribble_id},
             ).mappings().first()
-        return dict(row) if row else None
+        return self._decorate_scribble(row) if row else None
 
     def delete_scribble(self, scribble_id: str) -> bool:
         with self.engine.begin() as conn:
