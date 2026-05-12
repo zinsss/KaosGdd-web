@@ -358,8 +358,10 @@ textarea.textInput:focus {
 }
 
 .scribbleCardTextarea {
-  min-height: 190px;
-  resize: vertical;
+  min-height: 0;
+  max-height: min(60vh, 520px);
+  overflow-y: auto;
+  resize: none;
   line-height: 1.5;
   background: var(--ctp-mantle);
   border-color: var(--ctp-surface1);

@@ -64,7 +64,7 @@ export default function PushControls() {
             Disable
           </button>
           <button className="button compactButton" disabled={busy} onClick={() => run(() => sendTestPush())}>
-            Send test notification
+            Send Test
           </button>
           <button className="button compactButton" disabled={busy} onClick={() => run(() => Promise.resolve())}>
             Refresh status
