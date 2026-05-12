@@ -162,7 +162,7 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
                   <>
                     <button
                       type="button"
-                      className="button compactButton"
+                      className="button compactButton buttonToneSave"
                       disabled={isSubmitting}
                       onClick={() =>
                         runAction(() => postReminderAction(`/api/reminders/${reminder.id}/ack`))
@@ -173,7 +173,7 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
 
                     <button
                       type="button"
-                      className="button compactButton"
+                      className="button compactButton buttonToneNeutral"
                       disabled={isSubmitting}
                       onClick={() =>
                         runAction(() =>
@@ -186,7 +186,7 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
 
                     <button
                       type="button"
-                      className="button compactButton"
+                      className="button compactButton buttonToneSave"
                       disabled={isSubmitting}
                       onClick={onComplete}
                     >
@@ -196,13 +196,13 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
                 ) : null}
 
                 {isDoneState ? (
-                  <button type="button" className="button compactButton" disabled={isSubmitting} onClick={addAsNew}>
+                  <button type="button" className="button compactButton buttonToneSave" disabled={isSubmitting} onClick={addAsNew}>
                     Add as New
                   </button>
                 ) : null}
 
                 {!isActionableState && !isDoneState && isStandalone && reminder.state !== "removed" ? (
-                  <button type="button" className="button compactButton" disabled={isSubmitting} onClick={startEdit}>
+                  <button type="button" className="button compactButton buttonToneEdit" disabled={isSubmitting} onClick={startEdit}>
                     Edit
                   </button>
                 ) : null}
@@ -210,7 +210,7 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
 
               {hasParent && parentLink ? (
                 <div className="actionRow reminderExpandActions reminderExpandActionsSecondary">
-                  <Link className="button compactButton reminderParentButton" href={parentLink}>
+                  <Link className="button compactButton buttonToneNeutral reminderParentButton" href={parentLink}>
                     Go to Parent
                   </Link>
                 </div>

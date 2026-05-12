@@ -223,7 +223,7 @@ export default function SuppliesPageClient({ initialMode }) {
                           <span className="taskListStateIcon isDone">✓</span>
                           <span className="taskListTitleLink taskLinkDone taskLinkDoneList">{item.title}</span>
                         </div>
-                        <button className="button compactFlatButton compactInlineButton" onClick={() => hardDelete(item.id)}>
+                        <button className="button compactFlatButton compactInlineButton buttonToneDanger" onClick={() => hardDelete(item.id)}>
                           Delete
                         </button>
                       </div>

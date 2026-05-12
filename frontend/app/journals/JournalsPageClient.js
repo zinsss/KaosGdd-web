@@ -84,10 +84,10 @@ function JournalRow({ journal, expanded, onToggle, onDeleted, onActionError }) {
             </div>
           ) : null}
           <div className="actionRow reminderExpandActions">
-            <button type="button" className="button compactButton" onClick={startEdit}>
+            <button type="button" className="button compactButton buttonToneEdit" onClick={startEdit}>
               Raw edit
             </button>
-            <button type="button" className="button compactButton" onClick={removeJournal}>
+            <button type="button" className="button compactButton buttonToneDanger" onClick={removeJournal}>
               Delete
             </button>
           </div>

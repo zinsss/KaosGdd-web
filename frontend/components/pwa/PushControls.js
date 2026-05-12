@@ -52,7 +52,7 @@ export default function PushControls() {
 
       {status.state === "disabled" ? (
         <div className="actionRow">
-          <button className="button compactButton" disabled={busy} onClick={() => run(subscribeToPush)}>
+          <button className="button compactButton buttonToneSave" disabled={busy} onClick={() => run(subscribeToPush)}>
             Enable notifications
           </button>
         </div>
@@ -60,13 +60,13 @@ export default function PushControls() {
 
       {status.state === "enabled" ? (
         <div className="actionRow">
-          <button className="button compactButton" disabled={busy} onClick={() => run(unsubscribeFromPush)}>
+          <button className="button compactButton buttonToneDanger" disabled={busy} onClick={() => run(unsubscribeFromPush)}>
             Disable
           </button>
-          <button className="button compactButton" disabled={busy} onClick={() => run(() => sendTestPush())}>
+          <button className="button compactButton buttonToneSave" disabled={busy} onClick={() => run(() => sendTestPush())}>
             Send Test
           </button>
-          <button className="button compactButton" disabled={busy} onClick={() => run(() => Promise.resolve())}>
+          <button className="button compactButton buttonToneNeutral" disabled={busy} onClick={() => run(() => Promise.resolve())}>
             Refresh status
           </button>
         </div>

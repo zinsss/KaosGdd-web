@@ -50,7 +50,7 @@ export default function ReminderDetailPanel({ item }) {
 
       <section className="panel">
         <div className="actionRow detailActionRow">
-          <button type="button" className={"button" + (showMore ? " buttonActive" : "")} onClick={() => setShowMore((v) => !v)}>
+          <button type="button" className={"button buttonToneNeutral" + (showMore ? " buttonActive" : "")} onClick={() => setShowMore((v) => !v)}>
             {UI_STRINGS.MORE_BUTTON}
           </button>
         </div>
@@ -60,7 +60,7 @@ export default function ReminderDetailPanel({ item }) {
               <div>{UI_STRINGS.CREATED}: {item.created_at_display || "-"}</div>
               <div>{UI_STRINGS.UPDATED}: {item.updated_at_display || "-"}</div>
               <div className="copyRow">
-                <button type="button" className="button" onClick={onCopyId}>
+                <button type="button" className="button buttonToneCopy" onClick={onCopyId}>
                   {copied ? UI_STRINGS.COPIED : UI_STRINGS.COPY_ID}
                 </button>
               </div>

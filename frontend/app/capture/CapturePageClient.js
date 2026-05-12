@@ -330,10 +330,10 @@ export default function CapturePageClient() {
           {statusSuccess ? <div className="successText">{statusSuccess}</div> : null}
 
           <div className="captureActions">
-            <button type="submit" className="button" disabled={isSaving}>
+            <button type="submit" className="button buttonToneSave" disabled={isSaving}>
               {isSaving ? UI_STRINGS.SAVING : UI_STRINGS.SAVE}
             </button>
-            <Link className="button" href="/">
+            <Link className="button buttonToneNeutral" href="/">
               {UI_STRINGS.CANCEL}
             </Link>
           </div>

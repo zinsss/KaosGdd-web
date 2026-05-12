@@ -36,7 +36,7 @@ export default function NoteRawEditor({ noteId, initialRaw }) {
     <div>
       <NoteMarkdownEditor value={raw} onChange={(value) => setRaw(value)} />
       <div className="actionRow" style={{ marginTop: 10 }}>
-        <button className="button" onClick={save}>{UI_STRINGS.SAVE}</button>
+        <button className="button buttonToneSave" onClick={save}>{UI_STRINGS.SAVE}</button>
         {saved ? <span className="metaLine">{UI_STRINGS.SAVED}</span> : null}
       </div>
       {error ? <div className="errorText">{error}</div> : null}

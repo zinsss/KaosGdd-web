@@ -41,7 +41,7 @@ export default function FileRawEditor({ fileId, initialRaw }) {
         spellCheck={false}
       />
       <div className="actionRow">
-        <button className="button" onClick={save}>{UI_STRINGS.SAVE}</button>
+        <button className="button buttonToneSave" onClick={save}>{UI_STRINGS.SAVE}</button>
         {saved ? <span className="metaLine">{UI_STRINGS.SAVED}</span> : null}
       </div>
       {error ? <div className="errorText">{error}</div> : null}

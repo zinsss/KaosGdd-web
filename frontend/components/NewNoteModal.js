@@ -20,10 +20,10 @@ export default function NewNoteModal({ open, value, onChange, onSave, onCancel, 
         {error ? <div className="errorText">{error}</div> : null}
 
         <div className="actionRow newNoteModalActions">
-          <button className="button" type="button" onClick={onSave} disabled={isSaving}>
+          <button className="button buttonToneSave" type="button" onClick={onSave} disabled={isSaving}>
             {isSaving ? UI_STRINGS.SAVING : UI_STRINGS.SAVE}
           </button>
-          <button className="button" type="button" onClick={onCancel} disabled={isSaving}>
+          <button className="button buttonToneNeutral" type="button" onClick={onCancel} disabled={isSaving}>
             {UI_STRINGS.CANCEL}
           </button>
         </div>

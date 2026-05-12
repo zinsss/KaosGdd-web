@@ -44,7 +44,7 @@ export default function ReminderActions({ reminderId, state }) {
       <div className="actionRow compactActionRow">
         <button
           type="button"
-          className="button compactButton"
+          className="button compactButton buttonToneSave"
           disabled={isSubmitting}
           onClick={() => post("/api/reminders/" + reminderId + "/ack")}
         >
@@ -53,7 +53,7 @@ export default function ReminderActions({ reminderId, state }) {
 
         <button
           type="button"
-          className="button compactButton"
+          className="button compactButton buttonToneNeutral"
           disabled={isSubmitting}
           onClick={() => post("/api/reminders/" + reminderId + "/snooze", { minutes: 10 })}
         >
@@ -62,7 +62,7 @@ export default function ReminderActions({ reminderId, state }) {
 
         <button
           type="button"
-          className="button compactButton"
+          className="button compactButton buttonToneNeutral"
           disabled={isSubmitting}
           onClick={() => post("/api/reminders/" + reminderId + "/cancel")}
         >

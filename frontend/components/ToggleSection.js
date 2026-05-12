@@ -11,7 +11,7 @@ export default function ToggleSection({ title, children, defaultOpen = false }) 
         <div className="sectionTitle toggleTitle">{title}</div>
         <button
           type="button"
-          className="button compactButton"
+          className="button compactButton buttonToneNeutral"
           onClick={() => setOpen((v) => !v)}
         >
           {open ? "Hide" : "Show"}

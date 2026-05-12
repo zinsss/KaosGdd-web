@@ -237,10 +237,10 @@ export default function ScribblePageClient() {
                       spellCheck="true"
                     />
                     <div className="scribbleActionRow">
-                      <button className="button" type="button" onClick={() => copyCardBody(card)} disabled={cardBusy || !(card.body || "").trim()}>
+                      <button className="button buttonToneCopy" type="button" onClick={() => copyCardBody(card)} disabled={cardBusy || !(card.body || "").trim()}>
                         {busyAction === `copy:${card.id}` ? "Copying…" : "Copy"}
                       </button>
-                      <button className="button" type="button" onClick={() => deleteCard(card)} disabled={cardBusy}>
+                      <button className="button buttonToneDanger" type="button" onClick={() => deleteCard(card)} disabled={cardBusy}>
                         {busyAction === `delete:${card.id}` ? "Deleting…" : "Delete"}
                       </button>
                     </div>
