@@ -82,7 +82,7 @@ export default function FileDetailPanel({ item, raw }) {
             <div className="detailReadLabel">File</div>
             <div className="detailReadContent withDivider">
               <div className="actionRow" style={{ gap: 8, flexWrap: "wrap" }}>
-                <a className="button" href={`/api/files/${item.id}/open`} target="_blank" rel="noreferrer">Open</a>
+                <a className="button" href={`/api/files/${item.id}/open`}>Open</a>
                 <a className="button" href={`/api/files/${item.id}/open?download=1`}>Download</a>
               </div>
             </div>

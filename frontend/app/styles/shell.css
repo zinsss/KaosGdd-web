@@ -291,8 +291,9 @@
   width: 100%;
   max-width: var(--app-column-max-width);
   margin: 0 auto;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
   gap: 5px;
   border-radius: var(--group-box-radius);
   pointer-events: auto;
@@ -300,8 +301,10 @@
 }
 
 .bottomCaptureBar .bottomCaptureInput {
-  flex: 0 0 auto;
+  display: block;
+  grid-column: 1 / -1;
   width: 100%;
+  min-width: 100%;
   min-height: 34px;
   height: auto;
   max-height: none;
@@ -316,6 +319,7 @@
 }
 
 .bottomCaptureFooter {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -522,6 +526,14 @@
 
   .topNavRowFlat {
     gap: 14px;
+  }
+
+  .bottomCaptureFooter {
+    align-items: flex-start;
+  }
+
+  .bottomCaptureActions {
+    flex-wrap: wrap;
   }
 
   .bottomCaptureAttachButton,
