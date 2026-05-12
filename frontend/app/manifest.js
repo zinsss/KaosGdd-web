@@ -9,8 +9,8 @@ export default function manifest() {
     scope: "/",
     display: "standalone",
     orientation: "portrait",
-    background_color: "#121212",
-    theme_color: "#121212",
+    background_color: "#11111b",
+    theme_color: "#11111b",
     icons: [
       {
         src: "/icon-192.png",

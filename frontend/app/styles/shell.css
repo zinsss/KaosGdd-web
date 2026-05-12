@@ -3,7 +3,7 @@
   --app-column-edge-padding: 8px;
   --app-shell-safe-top: env(safe-area-inset-top, 0px);
   --app-shell-safe-bottom: env(safe-area-inset-bottom, 0px);
-  --app-shell-bottom-bar-bg: var(--ctp-mantle);
+  --app-shell-bottom-bar-bg: var(--ui-bg);
   --app-shell-bottom-reserve: calc(var(--app-shell-safe-bottom) + 12px);
   --app-shell-header-base-height: 168px;
   --app-shell-content-gap: 10px;
@@ -25,8 +25,7 @@
   left: 0;
   right: 0;
   z-index: 60;
-  background: transparent;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  background: var(--ui-bg);
   padding: var(--app-shell-safe-top) var(--app-column-edge-padding) 8px;
 }
 
@@ -84,11 +83,13 @@
 
 .appShellTopSpacer {
   height: var(--app-shell-content-offset);
+  background: var(--ui-bg);
 }
 
 .appShellMain {
   width: 100%;
   height: max(0px, calc(100dvh - var(--app-shell-content-offset)));
+  background: var(--ui-bg);
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
