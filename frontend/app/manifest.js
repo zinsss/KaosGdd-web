@@ -5,7 +5,7 @@ export default function manifest() {
     name: UI_STRINGS.APP_TITLE_WEB,
     short_name: UI_STRINGS.APP_TITLE,
     description: UI_STRINGS.APP_DESCRIPTION,
-    start_url: "/tasks",
+    start_url: "/",
     scope: "/",
     display: "standalone",
     orientation: "portrait",
