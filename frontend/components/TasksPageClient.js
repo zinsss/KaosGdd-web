@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import TaskToggleButton from "./TaskToggleButton";
+import SubtaskToggleButton from "./SubtaskToggleButton";
 import TaskRestoreButton from "./TaskRestoreButton";
 import { UI_STRINGS } from "../lib/strings";
 
@@ -45,7 +46,11 @@ function TaskRow({
   expandedSubtasks,
   subtasksLoading,
   subtaskLoadError,
+  togglingSubtaskIds,
   onTitleClick,
+  onSubtaskToggleStarted,
+  onSubtaskToggleResolved,
+  onSubtaskToggleNotFound,
   onToggleResolved,
   onTaskNotFound,
   onActionError,
@@ -115,9 +120,18 @@ function TaskRow({
             <ul className="subtaskList">
               {expandedSubtasks.map((subtask) => (
                 <li key={subtask.id} className="subtaskRow">
-                  <span className={"taskListStateIcon" + (subtask.is_done ? " isDone" : " isUndone")}>
-                    {subtask.is_done ? "✓" : "○"}
-                  </span>
+                  <SubtaskToggleButton
+                    taskId={task.id}
+                    subtaskId={subtask.id}
+                    isDone={Boolean(subtask.is_done)}
+                    disabled={Boolean(togglingSubtaskIds[subtask.id])}
+                    stopPropagation
+                    refreshOnResolved={false}
+                    onStarted={onSubtaskToggleStarted}
+                    onResolved={onSubtaskToggleResolved}
+                    onNotFound={onSubtaskToggleNotFound}
+                    onError={onActionError}
+                  />
                   <div className={"subtaskText" + (subtask.is_done ? " taskLinkDone taskLinkDoneDetail" : "")}>
                     {subtask.content}
                   </div>
@@ -148,6 +162,7 @@ export default function TasksPageClient({ initialMode }) {
   const [subtasksByTaskId, setSubtasksByTaskId] = useState({});
   const [loadingSubtasksTaskId, setLoadingSubtasksTaskId] = useState("");
   const [subtaskLoadErrors, setSubtaskLoadErrors] = useState({});
+  const [togglingSubtaskIds, setTogglingSubtaskIds] = useState({});
 
   useEffect(() => {
     const suffix = mode === "active" ? "" : `?mode=${encodeURIComponent(mode)}`;
@@ -163,6 +178,7 @@ export default function TasksPageClient({ initialMode }) {
         setExpandedTaskId("");
         setLoadingSubtasksTaskId("");
         setSubtaskLoadErrors({});
+        setTogglingSubtaskIds({});
       })
       .catch((err) => {
         setItems([]);
@@ -170,6 +186,7 @@ export default function TasksPageClient({ initialMode }) {
         setExpandedTaskId("");
         setLoadingSubtasksTaskId("");
         setSubtaskLoadErrors({});
+        setTogglingSubtaskIds({});
       });
   }, [mode]);
 
@@ -191,6 +208,13 @@ export default function TasksPageClient({ initialMode }) {
     if (loadingSubtasksTaskId === taskId) {
       setLoadingSubtasksTaskId("");
     }
+    setTogglingSubtaskIds((current) => {
+      const next = { ...current };
+      for (const subtask of subtasksByTaskId[taskId] || []) {
+        delete next[subtask.id];
+      }
+      return next;
+    });
   }
 
   function handleTaskNotFound(taskId) {
@@ -238,6 +262,72 @@ export default function TasksPageClient({ initialMode }) {
     } finally {
       setLoadingSubtasksTaskId("");
     }
+  }
+
+
+  function updateSubtaskState(taskId, subtaskId, isDone) {
+    const previousSubtask = (subtasksByTaskId[taskId] || []).find((subtask) => subtask.id === subtaskId);
+    const wasDone = Boolean(previousSubtask?.is_done);
+    const doneDelta = isDone === wasDone ? 0 : isDone ? 1 : -1;
+
+    setSubtasksByTaskId((current) => {
+      const subtasks = current[taskId];
+      if (!subtasks) return current;
+      return {
+        ...current,
+        [taskId]: subtasks.map((subtask) =>
+          subtask.id === subtaskId ? { ...subtask, is_done: isDone } : subtask,
+        ),
+      };
+    });
+
+    if (doneDelta === 0) return;
+
+    setItems((current) =>
+      current.map((task) => {
+        if (task.id !== taskId) return task;
+        const total = Number(task.subtask_total || 0);
+        const nextDone = Math.max(0, Math.min(total, Number(task.subtask_done || 0) + doneDelta));
+        return { ...task, subtask_done: nextDone };
+      }),
+    );
+  }
+
+  function handleSubtaskToggleStarted(_taskId, subtaskId) {
+    setTogglingSubtaskIds((current) => ({ ...current, [subtaskId]: true }));
+  }
+
+  function handleSubtaskToggleResolved(taskId, subtaskId, response) {
+    updateSubtaskState(taskId, subtaskId, Boolean(response?.is_done));
+    setTogglingSubtaskIds((current) => {
+      const next = { ...current };
+      delete next[subtaskId];
+      return next;
+    });
+    setLocalError("");
+  }
+
+  function handleSubtaskToggleNotFound(taskId, subtaskId) {
+    setTogglingSubtaskIds((current) => {
+      const next = { ...current };
+      delete next[subtaskId];
+      return next;
+    });
+    setSubtasksByTaskId((current) => {
+      const next = { ...current };
+      delete next[taskId];
+      return next;
+    });
+    setSubtaskLoadErrors((current) => ({ ...current, [taskId]: "Subtask not found." }));
+  }
+
+  function handleSubtaskActionError(message, taskId, subtaskId) {
+    setTogglingSubtaskIds((current) => {
+      const next = { ...current };
+      delete next[subtaskId];
+      return next;
+    });
+    setLocalError(message);
   }
 
   async function handleTaskTitleClick(event, task) {
@@ -373,10 +463,14 @@ export default function TasksPageClient({ initialMode }) {
                       expandedSubtasks={subtasksByTaskId[task.id] || []}
                       subtasksLoading={loadingSubtasksTaskId === task.id}
                       subtaskLoadError={subtaskLoadErrors[task.id] || ""}
+                      togglingSubtaskIds={togglingSubtaskIds}
                       onTitleClick={handleTaskTitleClick}
+                      onSubtaskToggleStarted={handleSubtaskToggleStarted}
+                      onSubtaskToggleResolved={handleSubtaskToggleResolved}
+                      onSubtaskToggleNotFound={handleSubtaskToggleNotFound}
                       onToggleResolved={handleToggleResolved}
                       onTaskNotFound={handleTaskNotFound}
-                      onActionError={setLocalError}
+                      onActionError={handleSubtaskActionError}
                     />
                   ))}
                 </ul>
@@ -394,10 +488,14 @@ export default function TasksPageClient({ initialMode }) {
                 expandedSubtasks={subtasksByTaskId[task.id] || []}
                 subtasksLoading={loadingSubtasksTaskId === task.id}
                 subtaskLoadError={subtaskLoadErrors[task.id] || ""}
+                togglingSubtaskIds={togglingSubtaskIds}
                 onTitleClick={handleTaskTitleClick}
+                onSubtaskToggleStarted={handleSubtaskToggleStarted}
+                onSubtaskToggleResolved={handleSubtaskToggleResolved}
+                onSubtaskToggleNotFound={handleSubtaskToggleNotFound}
                 onToggleResolved={handleToggleResolved}
                 onTaskNotFound={handleTaskNotFound}
-                onActionError={setLocalError}
+                onActionError={handleSubtaskActionError}
               />
             ))}
           </ul>
