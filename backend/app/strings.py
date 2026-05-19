@@ -17,6 +17,7 @@ class ApiText:
     INVALID_NOTE_RAW = "invalid note raw"
     INVALID_EVENT_RAW = "invalid event raw"
     INVALID_FILE_RAW = "invalid file raw"
+    READONLY_EVENT = "event is read-only"
 
     REMINDER_REQUIRES_DATETIME = "!! requires at least one reminder datetime"
     UNSUPPORTED_CAPTURE_KIND = "unsupported capture kind"

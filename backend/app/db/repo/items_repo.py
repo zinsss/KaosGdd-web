@@ -108,6 +108,26 @@ class ItemsRepo:
             )
         return bool(result.rowcount)
 
+    def activate_item(self, item_id: str) -> bool:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            result = conn.execute(
+                text(
+                    """
+                    UPDATE {items}
+                    SET status = 'active',
+                        archived_at = NULL,
+                        deleted_at = NULL,
+                        updated_at = :updated_at
+                    WHERE id = :id
+                      AND status != 'active'
+                    """
+                    .format(items=DbTables.ITEMS)
+                ),
+                {"id": item_id, "updated_at": now},
+            )
+        return bool(result.rowcount)
+
     def hard_delete_deleted_older_than(self, *, item_type: str, cutoff_iso: str) -> int:
         with self.engine.begin() as conn:
             result = conn.execute(

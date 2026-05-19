@@ -31,6 +31,34 @@
   gap: 8px;
 }
 
+.detailBadgeRow {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+.detailBadge {
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  color: var(--ui-text);
+  font-size: 11px;
+  line-height: 1;
+  padding: 4px 7px;
+}
+
+.holidayBadge {
+  border-color: rgba(249, 226, 175, 0.45);
+  background: rgba(249, 226, 175, 0.08);
+  color: var(--ctp-yellow);
+}
+
+.readonlyBadge {
+  border-color: rgba(148, 226, 213, 0.38);
+  background: rgba(148, 226, 213, 0.08);
+  color: var(--ctp-teal);
+}
+
 .metaLine {
   display: flex;
   gap: 14px;

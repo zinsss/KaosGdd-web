@@ -4,10 +4,12 @@ load_dotenv()
 
 from contextlib import asynccontextmanager
 
+import asyncio
 import json
 import logging
 from datetime import datetime, timezone
 from urllib.parse import unquote
+from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
@@ -28,6 +30,7 @@ from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.scribble_repo import ScribbleRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
+from app.engine.holiday_service import HolidaySyncService
 from app.engine.journal_service import JournalService
 from app.engine.note_service import NoteService
 from app.engine.file_service import FileService
@@ -54,6 +57,7 @@ supply_repo = SupplyRepo(engine)
 scribble_repo = ScribbleRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
+holiday_sync_service = HolidaySyncService(items_repo, event_repo)
 journal_service = JournalService(items_repo, journal_repo)
 note_service = NoteService(items_repo, note_repo)
 file_service = FileService(items_repo, file_repo)
@@ -74,12 +78,65 @@ reminder_service = ReminderService(
 )
 supply_service = SupplyService(items_repo, supply_repo)
 logger = logging.getLogger(__name__)
+holiday_sync_task = None
+
+
+async def run_holiday_sync_once(reason: str = "manual") -> dict:
+    try:
+        result = await asyncio.to_thread(holiday_sync_service.sync_current_and_next_year)
+        if not result.get("skipped"):
+            logger.info("Korean holiday sync completed (%s): %s", reason, result)
+        return result
+    except Exception as exc:
+        logger.warning("Korean holiday sync failed (%s): %s", reason, exc)
+        return {"ok": False, "skipped": True, "reason": "sync failed"}
+
+
+def seconds_until_next_month() -> float:
+    try:
+        now = datetime.now(ZoneInfo(SETTINGS.APP_TIMEZONE))
+    except Exception:
+        now = datetime.now(timezone.utc)
+    if now.month == 12:
+        next_month = now.replace(year=now.year + 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    else:
+        next_month = now.replace(month=now.month + 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    return max((next_month - now).total_seconds(), 1.0)
+
+
+async def holiday_sync_loop() -> None:
+    await run_holiday_sync_once("startup")
+    while True:
+        await asyncio.sleep(seconds_until_next_month())
+        await run_holiday_sync_once("monthly")
+
+
+def start_holiday_sync_scheduler(create_task=None) -> bool:
+    global holiday_sync_task
+    if not SETTINGS.KOREAN_HOLIDAY_ICAL_URL:
+        return False
+    if holiday_sync_task is not None and not holiday_sync_task.done():
+        return False
+    create_task = create_task or asyncio.create_task
+    holiday_sync_task = create_task(holiday_sync_loop())
+    return True
+
+
+def stop_holiday_sync_scheduler() -> None:
+    global holiday_sync_task
+    if holiday_sync_task is not None and not holiday_sync_task.done():
+        holiday_sync_task.cancel()
+    holiday_sync_task = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_schema_v0(engine)
-    yield
+    start_holiday_sync_scheduler()
+    try:
+        yield
+    finally:
+        stop_holiday_sync_scheduler()
 
 
 app = FastAPI(title=SETTINGS.APP_NAME, lifespan=lifespan)
@@ -224,6 +281,8 @@ def create_event(payload: dict):
 
 @app.patch("/events/{event_id}")
 def update_event(event_id: str, payload: dict):
+    if event_service.is_readonly_event(event_id):
+        return {"ok": False, "error": ApiText.READONLY_EVENT}
     ok = event_service.update_event(
         event_id,
         title=payload.get("title"),
@@ -246,6 +305,8 @@ def get_event_raw(event_id: str):
 
 @app.patch("/events/{event_id}/raw")
 def update_event_raw(event_id: str, payload: dict):
+    if event_service.is_readonly_event(event_id):
+        return {"ok": False, "error": ApiText.READONLY_EVENT}
     raw_text = str(payload.get("raw") or "")
     ok, error = event_service.update_event_from_raw(event_id, raw_text)
     if not ok:
@@ -255,6 +316,8 @@ def update_event_raw(event_id: str, payload: dict):
 
 @app.delete("/events/{event_id}")
 def remove_event(event_id: str):
+    if event_service.is_readonly_event(event_id):
+        return {"ok": False, "error": ApiText.READONLY_EVENT}
     ok = event_service.remove_event(event_id)
     if not ok:
         return {"ok": False, "error": ApiText.NOT_FOUND}
