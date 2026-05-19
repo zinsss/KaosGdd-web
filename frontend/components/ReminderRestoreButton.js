@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function ReminderRestoreButton({ reminderId }) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function onClick() {
@@ -20,7 +22,7 @@ export default function ReminderRestoreButton({ reminderId }) {
         return;
       }
 
-      window.location.reload();
+      router.refresh();
     } finally {
       setIsSubmitting(false);
     }

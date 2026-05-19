@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { UI_STRINGS } from "../lib/strings";
 
 export default function ReminderActions({ reminderId, state }) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
@@ -27,7 +29,7 @@ export default function ReminderActions({ reminderId, state }) {
         return;
       }
 
-      window.location.reload();
+      router.refresh();
     } catch {
       setError(UI_STRINGS.ACTION_FAILED);
     } finally {

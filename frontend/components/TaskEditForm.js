@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { UI_STRINGS } from "../lib/strings";
 
 function toLocalInputValue(value) {
@@ -14,6 +15,7 @@ function toLocalInputValue(value) {
 }
 
 export default function TaskEditForm({ task }) {
+  const router = useRouter();
   const [title, setTitle] = useState(task.title || "");
   const [dueAt, setDueAt] = useState(toLocalInputValue(task.due_at_display || task.due_at));
   const [memo, setMemo] = useState(task.memo || "");
@@ -56,7 +58,7 @@ export default function TaskEditForm({ task }) {
         return;
       }
 
-      window.location.reload();
+      router.refresh();
     } catch {
       setError(UI_STRINGS.SAVE_FAILED);
     } finally {

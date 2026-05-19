@@ -70,6 +70,7 @@ async function postReminderAction(path, payload) {
 }
 
 function ReminderRow({ reminder, expanded, onToggle, mode }) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState("");
 
@@ -102,7 +103,7 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
 
     try {
       await fn();
-      window.location.reload();
+      router.refresh();
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : "Reminder action failed.");
     } finally {
