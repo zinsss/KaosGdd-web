@@ -6,7 +6,13 @@ from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.utils.repeat import compute_next_due_at
-from app.utils.task_raw import REPEAT_TAG_PREFIX, export_task_raw, parse_task_raw
+from app.utils.task_raw import (
+    REPEAT_TAG_PREFIX,
+    export_task_raw,
+    normalize_relative_reminder_token,
+    parse_task_raw,
+    resolve_relative_reminder,
+)
 from app.utils.timefmt import format_dt_for_ui
 
 
@@ -129,9 +135,10 @@ class TaskService:
         if toggled is None:
             return None
         if (not was_done) and toggled:
+            relative_reminder_templates = self._relative_reminder_templates_for_rollover(item_id)
             if self.reminder_repo is not None:
                 self.reminder_repo.mark_linked_active_completed(item_id)
-            self._rollover_repeat_task_on_completion(detail)
+            self._rollover_repeat_task_on_completion(detail, relative_reminder_templates)
         return toggled
 
     def toggle_subtask(self, task_id: str, subtask_id: str):
@@ -168,12 +175,16 @@ class TaskService:
             else:
                 visible_tags.append(tag)
 
-        remind_ats: list[str] = []
+        remind_ats: list[str | dict] = []
         if self.reminder_repo is not None:
             reminders = self.reminder_repo.list_linked_reminders(item_id)
             editable_states = {"scheduled", "snoozed", "fired", "missed"}
             for reminder in reminders:
                 if reminder.get("state") not in editable_states:
+                    continue
+                relative_token = normalize_relative_reminder_token(reminder.get("relative_token"))
+                if relative_token:
+                    remind_ats.append({"remind_at": reminder.get("remind_at"), "relative_token": relative_token})
                     continue
                 if reminder.get("state") == "snoozed" and reminder.get("snoozed_until"):
                     remind_ats.append(reminder["snoozed_until"])
@@ -245,16 +256,26 @@ class TaskService:
                     self.reminder_repo.mark_cancelled(reminder["id"])
 
             reminder_title = f"Reminder • {parsed.get('title')}"
+            relative_by_remind_at = {
+                item.get("remind_at"): normalize_relative_reminder_token(item.get("relative_token"))
+                for item in parsed.get("relative_reminders") or []
+                if isinstance(item, dict)
+            }
             for remind_at in parsed.get("remind_ats") or []:
                 self.reminder_repo.create_reminder_item(
                     title=reminder_title,
                     remind_at=remind_at,
                     parent_item_id=item_id,
+                    relative_token=relative_by_remind_at.get(remind_at),
                 )
 
         return True, None
 
-    def _rollover_repeat_task_on_completion(self, completed_task_detail: dict) -> None:
+    def _rollover_repeat_task_on_completion(
+        self,
+        completed_task_detail: dict,
+        relative_reminder_templates: list[str] | None = None,
+    ) -> None:
         repeat_rule, visible_tags = self._extract_repeat_and_visible_tags(completed_task_detail["id"])
         if not repeat_rule:
             return
@@ -290,6 +311,36 @@ class TaskService:
         source_subtasks = self.task_repo.list_subtasks(completed_task_detail["id"])
         reset_subtasks = [{"content": st.get("content"), "is_done": False} for st in source_subtasks]
         self.task_repo.replace_subtasks(new_item_id, reset_subtasks)
+
+        if self.reminder_repo is None or not relative_reminder_templates:
+            return
+
+        reminder_title = f"Reminder • {completed_task_detail.get('title')}"
+        for relative_token in relative_reminder_templates:
+            try:
+                remind_at = resolve_relative_reminder(relative_token, next_due_at)
+            except ValueError:
+                continue
+            self.reminder_repo.create_reminder_item(
+                title=reminder_title,
+                remind_at=remind_at,
+                parent_item_id=new_item_id,
+                relative_token=relative_token,
+            )
+
+    def _relative_reminder_templates_for_rollover(self, item_id: str) -> list[str]:
+        if self.reminder_repo is None:
+            return []
+
+        template_states = {"scheduled", "snoozed", "missed", "fired"}
+        templates: list[str] = []
+        for reminder in self.reminder_repo.list_linked_reminders(item_id):
+            if reminder.get("state") not in template_states:
+                continue
+            relative_token = normalize_relative_reminder_token(reminder.get("relative_token"))
+            if relative_token and relative_token not in templates:
+                templates.append(relative_token)
+        return templates
 
     def _extract_repeat_and_visible_tags(self, item_id: str) -> tuple[str | None, list[str]]:
         tags = self.items_repo.list_item_tags(item_id)
