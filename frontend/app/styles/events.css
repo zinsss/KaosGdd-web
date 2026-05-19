@@ -97,14 +97,22 @@ body.eventsPageActive .appShellMain {
 }
 
 .eventHolidayBadge {
-  border: 1px solid rgba(249, 226, 175, 0.38);
+  border: 1px solid rgba(235, 160, 172, 0.42);
   border-radius: 999px;
-  background: rgba(249, 226, 175, 0.08);
-  color: var(--ctp-yellow);
+  background: rgba(235, 160, 172, 0.08);
+  color: var(--ctp-maroon);
   flex: 0 0 auto;
   font-size: 11px;
   line-height: 1;
   padding: 3px 6px;
+}
+
+.eventHolidayTitle {
+  color: var(--ctp-maroon);
+}
+
+.eventHolidayTitle:hover {
+  color: var(--ctp-maroon);
 }
 
 @media (max-width: 640px) {
