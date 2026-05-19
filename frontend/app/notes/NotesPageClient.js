@@ -3,15 +3,29 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { UI_STRINGS } from "../../lib/strings";
+import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
 
 export default function NotesPageClient() {
   const [items, setItems] = useState([]);
 
-  useEffect(() => {
+  function loadNotes() {
     fetch("/api/notes", { cache: "no-store" })
       .then((res) => res.json())
       .then((data) => setItems(data.items || []))
       .catch(() => setItems([]));
+  }
+
+  useEffect(() => {
+    loadNotes();
+  }, []);
+
+  useEffect(() => {
+    function onCaptureCreated(event) {
+      if (captureCreatedEventHasType(event, "note")) loadNotes();
+    }
+
+    window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
+    return () => window.removeEventListener("kaosgdd:capture-created", onCaptureCreated);
   }, []);
 
   return (

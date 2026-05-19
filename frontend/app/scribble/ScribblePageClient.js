@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
 
 const SAVE_DELAY_MS = 700;
 
@@ -70,8 +71,15 @@ export default function ScribblePageClient() {
     }
 
     loadScribbles();
+
+    function onCaptureCreated(event) {
+      if (captureCreatedEventHasType(event, "scribble")) loadScribbles();
+    }
+
+    window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
     return () => {
       isMounted = false;
+      window.removeEventListener("kaosgdd:capture-created", onCaptureCreated);
       window.clearTimeout(saveTimeoutRef.current);
     };
   }, []);

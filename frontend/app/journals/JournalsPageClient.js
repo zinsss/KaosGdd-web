@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { UI_STRINGS } from "../../lib/strings";
+import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
 
 function resolveMonthKey(journal) {
   const raw = String(journal?.created_at || "");
@@ -103,7 +104,7 @@ export default function JournalsPageClient() {
   const [expandedMonths, setExpandedMonths] = useState({});
   const [localError, setLocalError] = useState("");
 
-  useEffect(() => {
+  function loadJournals() {
     setLocalError("");
     fetch("/api/journals", { cache: "no-store" })
       .then(async (res) => {
@@ -125,6 +126,19 @@ export default function JournalsPageClient() {
         setExpandedMonths({});
         setLocalError(err?.message || "Failed to load journals.");
       });
+  }
+
+  useEffect(() => {
+    loadJournals();
+  }, []);
+
+  useEffect(() => {
+    function onCaptureCreated(event) {
+      if (captureCreatedEventHasType(event, "journal")) loadJournals();
+    }
+
+    window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
+    return () => window.removeEventListener("kaosgdd:capture-created", onCaptureCreated);
   }, []);
 
   function removeRow(id) {

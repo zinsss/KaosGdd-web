@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UI_STRINGS } from "../lib/strings";
+import { captureCreatedEventHasType } from "../lib/post-create-navigation";
 
 const SUPPLY_MODES = ["active", "done"];
 
@@ -34,7 +35,7 @@ export default function SuppliesPageClient({ initialMode }) {
   const [presets, setPresets] = useState([]);
   const [localError, setLocalError] = useState("");
 
-  useEffect(() => {
+  function loadSupplies() {
     const suffix = mode === "active" ? "" : `?mode=${encodeURIComponent(mode)}`;
     setLocalError("");
 
@@ -48,6 +49,19 @@ export default function SuppliesPageClient({ initialMode }) {
         setItems([]);
         setLocalError(err?.message || "Failed to load supplies.");
       });
+  }
+
+  useEffect(() => {
+    loadSupplies();
+  }, [mode]);
+
+  useEffect(() => {
+    function onCaptureCreated(event) {
+      if (captureCreatedEventHasType(event, "supply")) loadSupplies();
+    }
+
+    window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
+    return () => window.removeEventListener("kaosgdd:capture-created", onCaptureCreated);
   }, [mode]);
 
   useEffect(() => {

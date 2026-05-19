@@ -7,6 +7,7 @@ import TaskToggleButton from "./TaskToggleButton";
 import SubtaskToggleButton from "./SubtaskToggleButton";
 import TaskRestoreButton from "./TaskRestoreButton";
 import { UI_STRINGS } from "../lib/strings";
+import { captureCreatedEventHasType } from "../lib/post-create-navigation";
 
 const TASK_MODES = ["active", "done", "removed", "archived"];
 
@@ -164,7 +165,7 @@ export default function TasksPageClient({ initialMode }) {
   const [subtaskLoadErrors, setSubtaskLoadErrors] = useState({});
   const [togglingSubtaskIds, setTogglingSubtaskIds] = useState({});
 
-  useEffect(() => {
+  function loadTasks() {
     const suffix = mode === "active" ? "" : `?mode=${encodeURIComponent(mode)}`;
     setLocalError("");
 
@@ -188,6 +189,19 @@ export default function TasksPageClient({ initialMode }) {
         setSubtaskLoadErrors({});
         setTogglingSubtaskIds({});
       });
+  }
+
+  useEffect(() => {
+    loadTasks();
+  }, [mode]);
+
+  useEffect(() => {
+    function onCaptureCreated(event) {
+      if (captureCreatedEventHasType(event, "task")) loadTasks();
+    }
+
+    window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
+    return () => window.removeEventListener("kaosgdd:capture-created", onCaptureCreated);
   }, [mode]);
 
   function removeRow(taskId) {

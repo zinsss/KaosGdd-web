@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
 
 function formatBytes(value) {
   const size = Number(value || 0);
@@ -41,12 +42,21 @@ export default function FilesPageClient() {
     loadFiles();
   }, []);
 
+  useEffect(() => {
+    function onCaptureCreated(event) {
+      if (captureCreatedEventHasType(event, "file")) loadFiles();
+    }
+
+    window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
+    return () => window.removeEventListener("kaosgdd:capture-created", onCaptureCreated);
+  }, []);
+
   return (
     <main className="page">
       <section className="panel">
         <div className="sectionTitle">Files</div>
         <div className="metaLine" style={{ marginBottom: 10 }}>
-          Use the unified bottom bar (📎 + Add) to attach new files.
+          Use the unified top capture bar (📎 + Add) to attach new files.
         </div>
         {shareFeedback ? <div className="subline">{shareFeedback}</div> : null}
 

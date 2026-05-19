@@ -212,7 +212,7 @@ textarea.textInput:focus {
     align-items: stretch;
   }
 
-  .formRow .button:not(.bottomCaptureButton):not(.bottomCaptureCancelButton) {
+  .formRow .button:not(.topCaptureButton):not(.topCaptureCancelButton) {
     width: 100%;
   }
 

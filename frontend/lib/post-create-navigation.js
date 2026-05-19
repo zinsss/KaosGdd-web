@@ -62,11 +62,36 @@ export function createdTypesFromCaptureResponse(data) {
   return types.filter(Boolean);
 }
 
+function normalizedCreatedTypes(createdTypes) {
+  return (Array.isArray(createdTypes) ? createdTypes : [createdTypes])
+    .map(normalizeCreatedItemType)
+    .filter(Boolean);
+}
+
+export function dispatchCaptureCreated(createdTypes) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("kaosgdd:capture-created", {
+      detail: { createdTypes: normalizedCreatedTypes(createdTypes) },
+    }),
+  );
+}
+
+export function captureCreatedEventHasType(event, type) {
+  const wantedType = normalizeCreatedItemType(type);
+  const createdTypes = event?.detail?.createdTypes;
+  return Array.isArray(createdTypes) && createdTypes.some((value) => normalizeCreatedItemType(value) === wantedType);
+}
+
 export function navigateAfterCreate(router, createdTypes) {
   const destination = postCreateDestination(createdTypes);
   if (!destination) return false;
 
   router.push(destination);
-  router.refresh?.();
+  if (typeof window !== "undefined") {
+    window.setTimeout(() => router.refresh?.(), 0);
+  } else {
+    router.refresh?.();
+  }
   return true;
 }
