@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import FileRawEditor from "./FileRawEditor";
 import LinkedItemsBlock from "./LinkedItemsBlock";
+import { UI_STRINGS } from "../lib/strings";
 
 function formatBytes(value) {
   const size = Number(value || 0);
@@ -23,7 +24,7 @@ export default function FileDetailPanel({ item, raw }) {
   const displayTitle = item.title || item.original_filename || "-";
 
   async function onRemove() {
-    if (!window.confirm("Move this file to Removed?")) return;
+    if (!window.confirm(UI_STRINGS.REMOVE_FILE_CONFIRM)) return;
     if (isRemoving) return;
 
     setIsRemoving(true);
@@ -32,13 +33,13 @@ export default function FileDetailPanel({ item, raw }) {
       const res = await fetch(`/api/files/${item.id}`, { method: "DELETE" });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        setRemoveError((data && data.error) || "File remove failed.");
+        setRemoveError((data && data.error) || UI_STRINGS.FILE_REMOVE_FAILED);
         return;
       }
       router.push("/files");
       router.refresh();
     } catch {
-      setRemoveError("File remove failed.");
+      setRemoveError(UI_STRINGS.FILE_REMOVE_FAILED);
     } finally {
       setIsRemoving(false);
     }

@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { UI_STRINGS } from "../lib/strings";
 import NoteMarkdownEditor from "./NoteMarkdownEditor";
 
 export default function NoteRawEditor({ noteId, initialRaw }) {
+  const router = useRouter();
   const [raw, setRaw] = useState(initialRaw || "");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
@@ -29,7 +31,7 @@ export default function NoteRawEditor({ noteId, initialRaw }) {
       return;
     }
     setSaved(true);
-    window.location.reload();
+    router.refresh();
   }
 
   return (

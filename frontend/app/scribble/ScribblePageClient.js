@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
+import { UI_STRINGS } from "../../lib/strings";
 
 const SAVE_DELAY_MS = 700;
 
@@ -10,7 +11,7 @@ function previewFromBody(body) {
 }
 
 function scribbleCreatedLabel(card) {
-  return card?.created_at_display || card?.created_at || "Unknown datetime";
+  return card?.created_at_display || card?.created_at || UI_STRINGS.SCRIBBLE_CREATED_UNKNOWN;
 }
 
 function resizeTextareaToContent(textarea) {
@@ -34,7 +35,7 @@ async function copyTextToClipboard(text) {
   textarea.select();
   const copied = document.execCommand("copy");
   document.body.removeChild(textarea);
-  if (!copied) throw new Error("Copy command failed");
+  if (!copied) throw new Error(UI_STRINGS.SCRIBBLE_COPY_FAILED);
 }
 
 export default function ScribblePageClient() {
@@ -135,10 +136,10 @@ export default function ScribblePageClient() {
   }, [expandedCard?.id, expandedCard?.body]);
 
   const statusText = useMemo(() => {
-    if (status === "loading") return "loading…";
-    if (status === "saving") return "saving";
-    if (status === "error") return "save failed";
-    return "saved";
+    if (status === "loading") return UI_STRINGS.SCRIBBLE_STATUS_LOADING;
+    if (status === "saving") return UI_STRINGS.SCRIBBLE_STATUS_SAVING;
+    if (status === "error") return UI_STRINGS.SCRIBBLE_STATUS_ERROR;
+    return UI_STRINGS.SCRIBBLE_STATUS_SAVED;
   }, [status]);
 
   function updateCardBody(cardId, body) {
@@ -152,16 +153,16 @@ export default function ScribblePageClient() {
     setActionMessage("");
     setActionError("");
     if (!body.trim()) {
-      setActionError("Scribble card is empty.");
+      setActionError(UI_STRINGS.SCRIBBLE_CARD_EMPTY);
       return;
     }
 
     setBusyAction(`copy:${card.id}`);
     try {
       await copyTextToClipboard(body);
-      setActionMessage("Copied Scribble text.");
+      setActionMessage(UI_STRINGS.SCRIBBLE_COPIED);
     } catch {
-      setActionError("Copy failed.");
+      setActionError(UI_STRINGS.SCRIBBLE_COPY_FAILED);
     } finally {
       setBusyAction("");
     }
@@ -170,7 +171,7 @@ export default function ScribblePageClient() {
   async function deleteCard(card) {
     setActionMessage("");
     setActionError("");
-    const confirmed = window.confirm("Delete this Scribble card?");
+    const confirmed = window.confirm(UI_STRINGS.SCRIBBLE_DELETE_CONFIRM);
     if (!confirmed) return;
 
     setBusyAction(`delete:${card.id}`);
@@ -178,7 +179,7 @@ export default function ScribblePageClient() {
       const res = await fetch(`/api/scribbles/${card.id}`, { method: "DELETE" });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        setActionError((data && data.error) || "Delete failed.");
+        setActionError((data && data.error) || UI_STRINGS.SCRIBBLE_DELETE_FAILED);
         return;
       }
       lastSavedBodiesRef.current = Object.fromEntries(
@@ -186,9 +187,9 @@ export default function ScribblePageClient() {
       );
       setCards((current) => current.filter((item) => item.id !== card.id));
       setExpandedId((current) => (current === card.id ? "" : current));
-      setActionMessage("Deleted Scribble card.");
+      setActionMessage(UI_STRINGS.SCRIBBLE_DELETED);
     } catch {
-      setActionError("Delete failed.");
+      setActionError(UI_STRINGS.SCRIBBLE_DELETE_FAILED);
     } finally {
       setBusyAction("");
     }
@@ -201,21 +202,21 @@ export default function ScribblePageClient() {
       <section className="panel scribblePanel">
         <div className="scribbleHeader">
           <div>
-            <div className="sectionTitle">Scribble</div>
-            <div className="scribbleDescription">Transient scratch cards for messy capture before it becomes a task, event, journal entry, note, file, or disappears.</div>
+            <div className="sectionTitle">{UI_STRINGS.SCRIBBLE}</div>
+            <div className="scribbleDescription">{UI_STRINGS.SCRIBBLE_DESCRIPTION}</div>
           </div>
           <div className={`scribbleStatus scribbleStatus_${status}`} aria-live="polite">{statusText}</div>
         </div>
 
-        {isLoading ? <div className="metaLine">Loading Scribble cards…</div> : null}
+        {isLoading ? <div className="metaLine">{UI_STRINGS.SCRIBBLE_LOADING_CARDS}</div> : null}
         {!isLoading && cards.length === 0 ? (
-          <div className="emptyState">Unknown capture text sent to Scribble appears here as temporary workspace cards until you classify or delete it.</div>
+          <div className="emptyState">{UI_STRINGS.SCRIBBLE_EMPTY_STATE}</div>
         ) : null}
 
         <div className="scribbleCardGrid" aria-label="Scribble cards">
           {cards.map((card) => {
             const isExpanded = expandedId === card.id;
-            const preview = previewFromBody(card.body) || "Empty Scribble card";
+            const preview = previewFromBody(card.body) || UI_STRINGS.SCRIBBLE_EMPTY_CARD;
             const cardBusy = busyAction.endsWith(`:${card.id}`);
             return (
               <article key={card.id} className={`scribbleCard${isExpanded ? " scribbleCard_expanded" : ""}`}>

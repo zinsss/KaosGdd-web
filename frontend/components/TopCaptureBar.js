@@ -12,7 +12,7 @@ import {
 import NewNoteModal from "./NewNoteModal";
 
 const NEW_NOTE_TEMPLATE = ":::\ntitle:\ntags:\nlink:\n:::";
-const SCRIBBLE_PROMPT = "This does not match capture grammar. Send it to Scribble?";
+const SCRIBBLE_PROMPT = UI_STRINGS.SCRIBBLE_PROMPT;
 const KNOWN_CAPTURE_PREFIX_RE = /^(--\s|-x\s|---\s|--x\s|\^\^|!!|\/\/|:::+|==|\+\+|fax:|mail:|\$\$)/i;
 
 function isKnownCaptureGrammar(rawText) {
@@ -485,7 +485,7 @@ export default function TopCaptureBar() {
     window.sessionStorage.removeItem("kaosgdd_capture_prefill");
     setRaw(prefillRaw);
     setError("");
-    setSuccess("Shared content ready.");
+    setSuccess(UI_STRINGS.SHARED_CONTENT_READY);
 
     window.setTimeout(() => {
       resizeTextarea();
@@ -645,18 +645,18 @@ export default function TopCaptureBar() {
       });
       const saveData = await saveRes.json().catch(() => null);
       if (!saveRes.ok || !saveData?.ok) {
-        setError("Could not save Scribble.");
+        setError(UI_STRINGS.SCRIBBLE_SAVE_FAILED);
         return;
       }
 
       setScribblePromptRaw("");
       setRaw("");
-      setSuccess("Sent to Scribble.");
+      setSuccess(UI_STRINGS.SCRIBBLE_SENT);
       resizeTextarea();
       dispatchCaptureCreated("scribble");
       navigateAfterCreate(router, "scribble");
     } catch {
-      setError("Could not save Scribble.");
+      setError(UI_STRINGS.SCRIBBLE_SAVE_FAILED);
     } finally {
       setIsSubmitting(false);
     }

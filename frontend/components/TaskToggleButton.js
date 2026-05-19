@@ -34,7 +34,7 @@ export default function TaskToggleButton({
       }
 
       if (!res.ok || !data?.ok) {
-        const message = (data && data.error) || "Task toggle failed.";
+        const message = (data && data.error) || UI_STRINGS.TASK_TOGGLE_FAILED;
         if (onError) onError(message);
         else window.alert(message);
         return;
@@ -43,7 +43,7 @@ export default function TaskToggleButton({
       onResolved?.(taskId, data);
       router.refresh();
     } catch {
-      const message = "Task toggle failed.";
+      const message = UI_STRINGS.TASK_TOGGLE_FAILED;
       if (onError) onError(message);
       else window.alert(message);
     } finally {

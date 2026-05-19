@@ -3,6 +3,9 @@ class ApiText:
     NOT_FOUND = "not found"
 
     TITLE_REQUIRED = "title is required"
+    REMINDER_EMPTY = "reminder is empty"
+    STANDALONE_REMINDER_PREFIX_REQUIRED = "standalone reminder edit must start with !!"
+    REMINDER_BODY_REQUIRED = "reminder body is required after !!"
     REMIND_AT_REQUIRED = "remind_at is required"
     START_DATE_REQUIRED = "start_date is required"
     MISSING_EVENT_DATE = "missing date after ^^"
@@ -17,6 +20,15 @@ class ApiText:
 
     REMINDER_REQUIRES_DATETIME = "!! requires at least one reminder datetime"
     UNSUPPORTED_CAPTURE_KIND = "unsupported capture kind"
+    NO_PUSH_SUBSCRIPTIONS = "No subscriptions found for client"
+
+
+class PushText:
+    TASK_OVERDUE_TITLE = "Task became overdue"
+    TASK_FALLBACK_TITLE = "A task"
+    TASK_OVERDUE_MESSAGE = "A task became overdue."
+    TEST_PUSH_TITLE = "KaosGdd test push"
+    TEST_PUSH_BODY = "Push is connected. Open fired reminders."
 
 
 class ReminderStatusText:

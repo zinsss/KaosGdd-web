@@ -10,7 +10,7 @@ from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.task_repo import TaskRepo
 from app.integrations.push_format import build_push_body, build_push_title
-from app.strings import ReminderStatusText
+from app.strings import ApiText, PushText, ReminderStatusText
 from app.utils.clock import now_iso
 from app.utils.datetime_parse import parse_local_datetime_to_iso
 from app.utils.timefmt import format_dt_for_ui
@@ -69,7 +69,7 @@ class ReminderService:
     ) -> tuple[bool, str, str | None]:
         clean_title = str(title or "").strip()
         if not clean_title:
-            return False, "title is required", None
+            return False, ApiText.TITLE_REQUIRED, None
 
         reminder_id = self.reminder_repo.create_reminder_item(
             title=clean_title,
@@ -105,18 +105,18 @@ class ReminderService:
     def parse_standalone_reminder_raw(self, raw_text: str) -> dict:
         text = str(raw_text or "").replace("\r\n", "\n").strip()
         if not text:
-            raise ValueError("reminder is empty")
+            raise ValueError(ApiText.REMINDER_EMPTY)
 
         if not text.startswith("!!"):
-            raise ValueError("standalone reminder edit must start with !!")
+            raise ValueError(ApiText.STANDALONE_REMINDER_PREFIX_REQUIRED)
 
         body = text[2:].strip()
         if not body:
-            raise ValueError("reminder body is required after !!")
+            raise ValueError(ApiText.REMINDER_BODY_REQUIRED)
 
         lines = [line.strip() for line in body.split("\n") if line.strip()]
         if not lines:
-            raise ValueError("reminder body is required after !!")
+            raise ValueError(ApiText.REMINDER_BODY_REQUIRED)
 
         tags: list[str] = []
         linked_item_ids: list[str] = []
@@ -382,8 +382,9 @@ class ReminderService:
             became_overdue = is_overdue and (not prev_is_overdue or prev_due_at != due_at)
             if became_overdue:
                 push_payload = {
-                    "title": "Task became overdue",
-                    "message": str(task.get("title") or "A task").strip() or "A task became overdue.",
+                    "title": PushText.TASK_OVERDUE_TITLE,
+                    "message": str(task.get("title") or PushText.TASK_FALLBACK_TITLE).strip()
+                    or PushText.TASK_OVERDUE_MESSAGE,
                     "url": self._build_absolute_url(f"/tasks/{task_id}"),
                     "badge_count": self._get_attention_badge_count(),
                     "has_app_attention": True,

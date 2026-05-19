@@ -42,12 +42,12 @@ export default function SuppliesPageClient({ initialMode }) {
     fetch(`/api/supplies${suffix}`)
       .then(async (res) => {
         const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || "Failed to load supplies.");
+        if (!res.ok) throw new Error(data?.error || UI_STRINGS.LOAD_SUPPLIES_FAILED);
         setItems(data.items || []);
       })
       .catch((err) => {
         setItems([]);
-        setLocalError(err?.message || "Failed to load supplies.");
+        setLocalError(err?.message || UI_STRINGS.LOAD_SUPPLIES_FAILED);
       });
   }
 
@@ -70,7 +70,7 @@ export default function SuppliesPageClient({ initialMode }) {
     fetch("/api/supplies/presets")
       .then(async (res) => {
         const data = await res.json();
-        if (!res.ok) throw new Error(data?.error || "Failed to load presets.");
+        if (!res.ok) throw new Error(data?.error || UI_STRINGS.LOAD_PRESETS_FAILED);
         setPresets(data.items || []);
       })
       .catch(() => {

@@ -173,7 +173,7 @@ export default function TasksPageClient({ initialMode }) {
       .then(async (res) => {
         const data = await res.json();
         if (!res.ok) {
-          throw new Error(data?.error || "Failed to load tasks.");
+          throw new Error(data?.error || UI_STRINGS.LOAD_TASKS_FAILED);
         }
         setItems(data.items || []);
         setExpandedTaskId("");
@@ -183,7 +183,7 @@ export default function TasksPageClient({ initialMode }) {
       })
       .catch((err) => {
         setItems([]);
-        setLocalError(err?.message || "Failed to load tasks.");
+        setLocalError(err?.message || UI_STRINGS.LOAD_TASKS_FAILED);
         setExpandedTaskId("");
         setLoadingSubtasksTaskId("");
         setSubtaskLoadErrors({});
@@ -262,7 +262,7 @@ export default function TasksPageClient({ initialMode }) {
       const res = await fetch(`/api/tasks/${taskId}`);
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data?.error || "Failed to load subtasks.");
+        throw new Error(data?.error || UI_STRINGS.LOAD_SUBTASKS_FAILED);
       }
       const subtasks = Array.isArray(data?.item?.subtasks) ? data.item.subtasks : [];
       setSubtasksByTaskId((current) => ({ ...current, [taskId]: subtasks }));
@@ -270,7 +270,7 @@ export default function TasksPageClient({ initialMode }) {
     } catch (err) {
       setSubtaskLoadErrors((current) => ({
         ...current,
-        [taskId]: err?.message || "Failed to load subtasks.",
+        [taskId]: err?.message || UI_STRINGS.LOAD_SUBTASKS_FAILED,
       }));
       return false;
     } finally {
@@ -332,7 +332,7 @@ export default function TasksPageClient({ initialMode }) {
       delete next[taskId];
       return next;
     });
-    setSubtaskLoadErrors((current) => ({ ...current, [taskId]: "Subtask not found." }));
+    setSubtaskLoadErrors((current) => ({ ...current, [taskId]: UI_STRINGS.SUBTASK_NOT_FOUND }));
   }
 
   function handleSubtaskActionError(message, taskId, subtaskId) {

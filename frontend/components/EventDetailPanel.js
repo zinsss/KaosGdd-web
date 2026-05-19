@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import EventRawEditor from "./EventRawEditor";
 import LinkedItemsBlock from "./LinkedItemsBlock";
+import { UI_STRINGS } from "../lib/strings";
 
 export default function EventDetailPanel({ item, raw }) {
   const router = useRouter();
@@ -15,7 +16,7 @@ export default function EventDetailPanel({ item, raw }) {
   const [removeError, setRemoveError] = useState("");
 
   async function onRemove() {
-    if (!window.confirm("Move this event to Removed?")) return;
+    if (!window.confirm(UI_STRINGS.REMOVE_EVENT_CONFIRM)) return;
     if (isRemoving) return;
     setIsRemoving(true);
     setRemoveError("");
@@ -23,13 +24,13 @@ export default function EventDetailPanel({ item, raw }) {
       const res = await fetch(`/api/events/${item.id}`, { method: "DELETE" });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        setRemoveError((data && data.error) || "Event remove failed.");
+        setRemoveError((data && data.error) || UI_STRINGS.EVENT_REMOVE_FAILED);
         return;
       }
       router.push("/events");
       router.refresh();
     } catch {
-      setRemoveError("Event remove failed.");
+      setRemoveError(UI_STRINGS.EVENT_REMOVE_FAILED);
     } finally {
       setIsRemoving(false);
     }

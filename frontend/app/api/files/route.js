@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { UI_STRINGS } from "../../../lib/strings";
 
 function getApiBase() {
   return process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
@@ -60,7 +61,7 @@ export async function POST(request) {
       error: error instanceof Error ? error.message : String(error),
     });
     return NextResponse.json(
-      { ok: false, error: "File upload request failed." },
+      { ok: false, error: UI_STRINGS.FILE_UPLOAD_REQUEST_FAILED },
       { status: 502 },
     );
   }
@@ -82,5 +83,5 @@ export async function POST(request) {
     });
   }
 
-  return NextResponse.json(data || { ok: false, error: "File upload failed." }, { status: res.status });
+  return NextResponse.json(data || { ok: false, error: UI_STRINGS.FILE_UPLOAD_FAILED }, { status: res.status });
 }

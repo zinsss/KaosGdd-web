@@ -1,8 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { UI_STRINGS } from "../lib/strings";
 
 export default function ReminderRestoreButton({ reminderId }) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function onClick() {
@@ -16,11 +19,11 @@ export default function ReminderRestoreButton({ reminderId }) {
 
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        window.alert((data && data.error) || "Reminder restore failed.");
+        window.alert((data && data.error) || UI_STRINGS.REMINDER_RESTORE_FAILED);
         return;
       }
 
-      window.location.reload();
+      router.refresh();
     } finally {
       setIsSubmitting(false);
     }
@@ -33,7 +36,7 @@ export default function ReminderRestoreButton({ reminderId }) {
       onClick={onClick}
       disabled={isSubmitting}
     >
-      {isSubmitting ? "..." : "Restore"}
+      {isSubmitting ? UI_STRINGS.ELLIPSIS : UI_STRINGS.RESTORE}
     </button>
   );
 }

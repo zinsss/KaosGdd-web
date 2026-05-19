@@ -80,7 +80,7 @@ export default function TaskDetailPanel({ item, raw }) {
   }
 
   async function onRemoveTask() {
-    const ok = window.confirm("Move this task to Removed?");
+    const ok = window.confirm(UI_STRINGS.REMOVE_TASK_CONFIRM);
     if (!ok || isRemoving) return;
 
     setIsRemoving(true);
@@ -94,14 +94,14 @@ export default function TaskDetailPanel({ item, raw }) {
       const data = await res.json().catch(() => null);
 
       if (!res.ok || !data?.ok) {
-        setRemoveError((data && data.error) || "Task remove failed.");
+        setRemoveError((data && data.error) || UI_STRINGS.TASK_REMOVE_FAILED);
         return;
       }
 
       router.push("/tasks?mode=removed");
       router.refresh();
     } catch {
-      setRemoveError("Task remove failed.");
+      setRemoveError(UI_STRINGS.TASK_REMOVE_FAILED);
     } finally {
       setIsRemoving(false);
     }
