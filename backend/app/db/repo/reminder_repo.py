@@ -18,6 +18,7 @@ class ReminderRepo:
         remind_at: str,
         parent_item_id: str | None = None,
         alert_policy: str | None = None,
+        relative_token: str | None = None,
     ) -> str:
         reminder_item_id = new_id()
         now = now_iso()
@@ -41,8 +42,17 @@ class ReminderRepo:
             conn.execute(
                 text(
                     """
-                    INSERT INTO {reminder_items}(item_id, remind_at, state, alert_policy, last_fired_at, acked_at, snoozed_until)
-                    VALUES (:item_id, :remind_at, 'scheduled', :alert_policy, NULL, NULL, NULL)
+                    INSERT INTO {reminder_items}(
+                        item_id,
+                        remind_at,
+                        state,
+                        alert_policy,
+                        relative_token,
+                        last_fired_at,
+                        acked_at,
+                        snoozed_until
+                    )
+                    VALUES (:item_id, :remind_at, 'scheduled', :alert_policy, :relative_token, NULL, NULL, NULL)
                     """
                     .format(reminder_items=DbTables.REMINDER_ITEMS)
                 ),
@@ -50,6 +60,7 @@ class ReminderRepo:
                     "item_id": reminder_item_id,
                     "remind_at": remind_at,
                     "alert_policy": alert_policy,
+                    "relative_token": relative_token,
                 },
             )
 
@@ -85,6 +96,7 @@ class ReminderRepo:
                 r.remind_at,
                 r.state,
                 r.alert_policy,
+                r.relative_token,
                 r.last_fired_at,
                 r.acked_at,
                 r.snoozed_until,
@@ -210,6 +222,7 @@ class ReminderRepo:
                         r.remind_at,
                         r.state,
                         r.alert_policy,
+                        r.relative_token,
                         r.last_fired_at,
                         r.acked_at,
                         r.snoozed_until,
@@ -256,6 +269,7 @@ class ReminderRepo:
                         r.remind_at,
                         r.state,
                         r.alert_policy,
+                        r.relative_token,
                         r.last_fired_at,
                         r.acked_at,
                         r.snoozed_until,
@@ -296,6 +310,7 @@ class ReminderRepo:
         title: str,
         remind_at: str,
         alert_policy: str | None = None,
+        relative_token: str | None = None,
     ) -> None:
         now = now_iso()
         with self.engine.begin() as conn:
@@ -318,6 +333,7 @@ class ReminderRepo:
                     SET remind_at = :remind_at,
                         state = 'scheduled',
                         alert_policy = :alert_policy,
+                        relative_token = :relative_token,
                         last_fired_at = NULL,
                         acked_at = NULL,
                         snoozed_until = NULL
@@ -325,7 +341,12 @@ class ReminderRepo:
                     """
                     .format(reminder_items=DbTables.REMINDER_ITEMS)
                 ),
-                {"item_id": reminder_item_id, "remind_at": remind_at, "alert_policy": alert_policy},
+                {
+                    "item_id": reminder_item_id,
+                    "remind_at": remind_at,
+                    "alert_policy": alert_policy,
+                    "relative_token": relative_token,
+                },
             )
 
     def list_due_reminders(self, *, now_iso_value: str):

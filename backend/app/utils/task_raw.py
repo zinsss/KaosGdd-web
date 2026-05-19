@@ -108,7 +108,12 @@ def _add_reminder_once(remind_ats: list[str], remind_at: str | None) -> None:
         remind_ats.append(remind_at)
 
 
-def _resolve_relative_reminder(
+def normalize_relative_reminder_token(remind_raw: str) -> str | None:
+    clean = str(remind_raw or "").strip()
+    return clean if RELATIVE_REMIND_PATTERN.fullmatch(clean) else None
+
+
+def resolve_relative_reminder(
     remind_raw: str,
     due_at: str | None,
     *,
@@ -127,26 +132,34 @@ def _resolve_relative_reminder(
     tz = ZoneInfo(timezone_name or SETTINGS.APP_TIMEZONE)
 
     if DATE_ONLY_PATTERN.fullmatch(due_at):
-        due_midnight_local = datetime.strptime(due_at, "%Y-%m-%d").replace(tzinfo=tz)
+        due_local = datetime.strptime(due_at, "%Y-%m-%d").replace(tzinfo=tz)
+        due_is_date_only = True
     else:
         due_dt = datetime.fromisoformat(str(due_at).replace("Z", "+00:00"))
         if due_dt.tzinfo is None:
             due_dt = due_dt.replace(tzinfo=tz)
-        due_midnight_local = due_dt.astimezone(tz).replace(
-            hour=0,
-            minute=0,
-            second=0,
-            microsecond=0,
+        due_local = due_dt.astimezone(tz)
+        due_is_date_only = (
+            due_local.hour == 0
+            and due_local.minute == 0
+            and due_local.second == 0
+            and due_local.microsecond == 0
         )
 
     if unit == "d":
-        return (due_midnight_local - timedelta(days=amount)).date().isoformat()
+        value = due_local - timedelta(days=amount)
+        if due_is_date_only:
+            return value.date().isoformat()
+        return value.astimezone(timezone.utc).isoformat(timespec="seconds")
     if unit == "w":
-        return (due_midnight_local - timedelta(weeks=amount)).date().isoformat()
+        value = due_local - timedelta(weeks=amount)
+        if due_is_date_only:
+            return value.date().isoformat()
+        return value.astimezone(timezone.utc).isoformat(timespec="seconds")
     if unit == "h":
-        return (due_midnight_local - timedelta(hours=amount)).astimezone(timezone.utc).isoformat(timespec="seconds")
+        return (due_local - timedelta(hours=amount)).astimezone(timezone.utc).isoformat(timespec="seconds")
     if unit == "m":
-        return (due_midnight_local - timedelta(minutes=amount)).astimezone(timezone.utc).isoformat(timespec="seconds")
+        return (due_local - timedelta(minutes=amount)).astimezone(timezone.utc).isoformat(timespec="seconds")
 
     raise ValueError("malformed r:")
 
@@ -183,6 +196,12 @@ def export_task_raw(
             lines.append(f"d:{due_display}")
 
     for remind_at in remind_ats or []:
+        if isinstance(remind_at, dict):
+            relative_token = normalize_relative_reminder_token(remind_at.get("relative_token"))
+            if relative_token:
+                lines.append(f"r:{relative_token}")
+                continue
+            remind_at = remind_at.get("remind_at")
         remind_display = format_dt_for_ui(remind_at)
         if remind_display:
             lines.append(f"r:{remind_display}")
@@ -228,6 +247,7 @@ def parse_task_raw(
 
     title = None
     due_at = None
+    relative_reminder_due_base = None
     remind_ats: list[str] = []
     repeat_rule = None
     repeat_rule_seen = False
@@ -294,6 +314,7 @@ def parse_task_raw(
             if str(exc) == "resolved datetime is in the past":
                 raise ValueError(str(exc)) from exc
             raise ValueError(f"invalid due format: {inline_due_raw}") from exc
+        relative_reminder_due_base = inline_due_raw if DATE_ONLY_PATTERN.fullmatch(inline_due_raw) else None
         explicit_due_or_reminder_seen = True
         title = " ".join((title[: inline_due_match.start()] + title[inline_due_match.end() :]).split()) or None
         if not title:
@@ -368,6 +389,7 @@ def parse_task_raw(
                 if str(exc) == "resolved datetime is in the past":
                     raise ValueError(str(exc)) from exc
                 raise ValueError(f"invalid due format: {due_raw}") from exc
+            relative_reminder_due_base = due_raw if DATE_ONLY_PATTERN.fullmatch(due_raw) else None
             continue
 
         if stripped.startswith("r:"):
@@ -414,6 +436,9 @@ def parse_task_raw(
                 if str(exc) == "resolved datetime is in the past":
                     raise ValueError(str(exc)) from exc
                 raise ValueError(f"invalid due format: {meta['due_at']}") from exc
+            relative_reminder_due_base = (
+                meta["due_at"] if DATE_ONLY_PATTERN.fullmatch(str(meta["due_at"] or "")) else None
+            )
 
         if meta["remind_ats"] and due_remind_seen:
             raise ValueError(DR_CONFLICT_MESSAGE)
@@ -448,7 +473,11 @@ def parse_task_raw(
         raise ValueError("unclosed memo block")
 
     for relative_token in relative_remind_tokens:
-        resolved = _resolve_relative_reminder(relative_token, due_at, timezone_name=timezone_name)
+        resolved = resolve_relative_reminder(
+            relative_token,
+            relative_reminder_due_base or due_at,
+            timezone_name=timezone_name,
+        )
         if resolved not in remind_ats:
             remind_ats.append(resolved)
 
@@ -466,6 +495,17 @@ def parse_task_raw(
         "title": title,
         "due_at": due_at,
         "remind_ats": remind_ats,
+        "relative_reminders": [
+            {
+                "remind_at": resolve_relative_reminder(
+                    relative_token,
+                    relative_reminder_due_base or due_at,
+                    timezone_name=timezone_name,
+                ),
+                "relative_token": relative_token,
+            }
+            for relative_token in relative_remind_tokens
+        ],
         "repeat_rule": repeat_rule,
         "tags": tags,
         "linked_item_ids": dedupe_links(linked_item_ids),

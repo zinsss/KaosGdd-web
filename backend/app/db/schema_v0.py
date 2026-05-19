@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS {reminder_items} (
     remind_at TEXT NOT NULL,
     state TEXT NOT NULL DEFAULT 'scheduled',
     alert_policy TEXT,
+    relative_token TEXT,
     last_fired_at TEXT,
     acked_at TEXT,
     snoozed_until TEXT,
@@ -432,6 +433,7 @@ def _migrate_sqlite_reminder_items_add_completed_state(conn) -> None:
                     remind_at TEXT NOT NULL,
                     state TEXT NOT NULL DEFAULT 'scheduled',
                     alert_policy TEXT,
+                    relative_token TEXT,
                     last_fired_at TEXT,
                     acked_at TEXT,
                     snoozed_until TEXT,
@@ -445,7 +447,7 @@ def _migrate_sqlite_reminder_items_add_completed_state(conn) -> None:
             text(
                 f"""
                 INSERT INTO {DbTables.REMINDER_ITEMS} (
-                    item_id, remind_at, state, alert_policy, last_fired_at, acked_at, snoozed_until
+                    item_id, remind_at, state, alert_policy, relative_token, last_fired_at, acked_at, snoozed_until
                 )
                 SELECT
                     item_id,
@@ -456,6 +458,7 @@ def _migrate_sqlite_reminder_items_add_completed_state(conn) -> None:
                         ELSE 'scheduled'
                     END AS state,
                     alert_policy,
+                    NULL AS relative_token,
                     last_fired_at,
                     acked_at,
                     snoozed_until
@@ -498,6 +501,7 @@ def _migrate_sqlite_legacy_task_reminder_tables(conn) -> None:
 
     _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "state TEXT NOT NULL DEFAULT 'scheduled'")
     _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "alert_policy TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "relative_token TEXT")
     _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "last_fired_at TEXT")
     _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "acked_at TEXT")
     _sqlite_add_column_if_missing(conn, DbTables.REMINDER_ITEMS, "snoozed_until TEXT")
