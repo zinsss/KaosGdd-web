@@ -65,11 +65,12 @@ async function postReminderAction(path, payload) {
 
   const data = await res.json().catch(() => null);
   if (!res.ok || !data?.ok) {
-    throw new Error((data && data.error) || "Reminder action failed.");
+    throw new Error((data && data.error) || UI_STRINGS.REMINDER_ACTION_FAILED);
   }
 }
 
 function ReminderRow({ reminder, expanded, onToggle, mode }) {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [localError, setLocalError] = useState("");
 
@@ -102,9 +103,9 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
 
     try {
       await fn();
-      window.location.reload();
+      router.refresh();
     } catch (err) {
-      setLocalError(err instanceof Error ? err.message : "Reminder action failed.");
+      setLocalError(err instanceof Error ? err.message : UI_STRINGS.REMINDER_ACTION_FAILED);
     } finally {
       setIsSubmitting(false);
     }
@@ -126,9 +127,7 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
 
   function onComplete() {
     if (requiresCompleteConfirm) {
-      const confirmed = window.confirm(
-        "This reminder has not fired yet. Completing it now will prevent it from firing and move it to Fired / Completed.",
-      );
+      const confirmed = window.confirm(UI_STRINGS.COMPLETE_UNFIRED_REMINDER_CONFIRM);
       if (!confirmed) return;
     }
 

@@ -19,7 +19,7 @@ export default async function JournalDetailPage({ params }) {
     <main className="page">
       {!result.ok ? (
         <section className="panel">
-          <div className="errorText">{result.error || "Journal not found."}</div>
+          <div className="errorText">{result.error || UI_STRINGS.JOURNAL_NOT_FOUND}</div>
         </section>
       ) : (
         <JournalDetailPanel item={result.item} />

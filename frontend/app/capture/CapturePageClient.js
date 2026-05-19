@@ -8,10 +8,10 @@ import { createdTypesFromCaptureResponse, navigateAfterCreate } from "../../lib/
 import { UI_STRINGS } from "../../lib/strings";
 
 const ITEM_TYPES = [
-  { value: "task", label: "Task" },
-  { value: "event", label: "Event" },
-  { value: "reminder", label: "Reminder" },
-  { value: "journal", label: "Journal" },
+  { value: "task", label: UI_STRINGS.TASKS },
+  { value: "event", label: UI_STRINGS.EVENTS },
+  { value: "reminder", label: UI_STRINGS.REMINDERS },
+  { value: "journal", label: UI_STRINGS.JOURNALS },
 ];
 
 const DATETIME_RE = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
@@ -77,41 +77,41 @@ function validate({ type, title, due, remindAt, eventDate, reminderAt, body, raw
   const errors = {};
 
   if (type === "task" && !title.trim()) {
-    errors.title = "Title is required.";
+    errors.title = UI_STRINGS.TITLE_REQUIRED_UI;
   }
 
   if (type === "event") {
-    if (!title.trim()) errors.title = "Title is required.";
+    if (!title.trim()) errors.title = UI_STRINGS.TITLE_REQUIRED_UI;
     if (!eventDate.trim()) {
-      errors.eventDate = "Date is required.";
+      errors.eventDate = UI_STRINGS.DATE_REQUIRED;
     } else if (!DATE_RE.test(eventDate.trim())) {
-      errors.eventDate = "Use yyyy-mm-dd format.";
+      errors.eventDate = UI_STRINGS.DATE_FORMAT_HINT;
     }
   }
 
   if (type === "reminder") {
-    if (!title.trim()) errors.title = "Title is required.";
+    if (!title.trim()) errors.title = UI_STRINGS.TITLE_REQUIRED_UI;
     if (!reminderAt.trim()) {
-      errors.reminderAt = "Datetime is required.";
+      errors.reminderAt = UI_STRINGS.DATETIME_REQUIRED;
     } else if (!DATETIME_RE.test(reminderAt.trim())) {
-      errors.reminderAt = "Use yyyy-mm-dd HH:MM format.";
+      errors.reminderAt = UI_STRINGS.DATETIME_FORMAT_HINT;
     }
   }
 
   if (type === "journal" && !body.trim()) {
-    errors.body = "Body is required.";
+    errors.body = UI_STRINGS.BODY_REQUIRED;
   }
 
   if (due.trim() && !DATETIME_RE.test(due.trim())) {
-    errors.due = "Use yyyy-mm-dd HH:MM format.";
+    errors.due = UI_STRINGS.DATETIME_FORMAT_HINT;
   }
 
   if (remindAt.trim() && !DATETIME_RE.test(remindAt.trim())) {
-    errors.remindAt = "Use yyyy-mm-dd HH:MM format.";
+    errors.remindAt = UI_STRINGS.DATETIME_FORMAT_HINT;
   }
 
   if (!raw.trim()) {
-    errors.raw = "Generated raw is empty.";
+    errors.raw = UI_STRINGS.GENERATED_RAW_EMPTY;
   }
 
   return errors;
@@ -207,11 +207,11 @@ export default function CapturePageClient() {
   return (
     <main className="page">
       <section className="panel capturePanel">
-        <div className="sectionTitle">Capture</div>
+        <div className="sectionTitle">{UI_STRINGS.CAPTURE}</div>
 
         <form onSubmit={onSubmit} className="captureForm" noValidate>
           <fieldset className="captureTypeGroup" disabled={isSaving}>
-            <legend className="captureLabel">Type</legend>
+            <legend className="captureLabel">{UI_STRINGS.CAPTURE_TYPE}</legend>
             <div className="captureTypeRow">
               {ITEM_TYPES.map((item) => (
                 <label key={item.value} className="captureTypeOption">

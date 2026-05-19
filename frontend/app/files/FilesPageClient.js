@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
+import { UI_STRINGS } from "../../lib/strings";
 
 function formatBytes(value) {
   const size = Number(value || 0);
@@ -54,10 +55,8 @@ export default function FilesPageClient() {
   return (
     <main className="page">
       <section className="panel">
-        <div className="sectionTitle">Files</div>
-        <div className="metaLine" style={{ marginBottom: 10 }}>
-          Use the unified top capture bar (📎 + Add) to attach new files.
-        </div>
+        <div className="sectionTitle">{UI_STRINGS.FILES}</div>
+        <div className="metaLine" style={{ marginBottom: 10 }}>{UI_STRINGS.TOP_CAPTURE_FILE_HINT}</div>
         {shareFeedback ? <div className="subline">{shareFeedback}</div> : null}
 
         {items.length === 0 ? (

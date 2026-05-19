@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { UI_STRINGS } from "../lib/strings";
 
 export default function EventRawEditor({ eventId, initialRaw }) {
+  const router = useRouter();
   const [raw, setRaw] = useState(initialRaw || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -32,7 +34,7 @@ export default function EventRawEditor({ eventId, initialRaw }) {
         setError((data && data.error) || UI_STRINGS.SAVE_FAILED);
         return;
       }
-      window.location.reload();
+      router.refresh();
     } catch {
       setError(UI_STRINGS.SAVE_FAILED);
     } finally {

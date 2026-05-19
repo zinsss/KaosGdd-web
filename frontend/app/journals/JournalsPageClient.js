@@ -57,7 +57,7 @@ function JournalRow({ journal, expanded, onToggle, onDeleted, onActionError }) {
     const res = await fetch(`/api/journals/${journal.id}`, { method: "DELETE" });
     const data = await res.json().catch(() => null);
     if (!res.ok || !data?.ok) {
-      onActionError((data && data.error) || "Journal remove failed.");
+      onActionError((data && data.error) || UI_STRINGS.JOURNAL_REMOVE_FAILED);
       return;
     }
     onDeleted(journal.id);
@@ -110,7 +110,7 @@ export default function JournalsPageClient() {
       .then(async (res) => {
         const data = await res.json().catch(() => null);
         if (!res.ok) {
-          throw new Error(data?.error || "Failed to load journals.");
+          throw new Error(data?.error || UI_STRINGS.LOAD_JOURNALS_FAILED);
         }
         const nextItems = data?.items || [];
         setItems(nextItems);
@@ -124,7 +124,7 @@ export default function JournalsPageClient() {
       .catch((err) => {
         setItems([]);
         setExpandedMonths({});
-        setLocalError(err?.message || "Failed to load journals.");
+        setLocalError(err?.message || UI_STRINGS.LOAD_JOURNALS_FAILED);
       });
   }
 

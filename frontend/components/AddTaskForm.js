@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { UI_STRINGS } from "../lib/strings";
 
 export default function AddTaskForm() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -34,7 +36,7 @@ export default function AddTaskForm() {
       }
 
       setTitle("");
-      window.location.reload();
+      router.refresh();
     } catch {
       setError(UI_STRINGS.FAILED_CREATE_TASK);
     } finally {

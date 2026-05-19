@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 
 import LinkedItemsBlock from "./LinkedItemsBlock";
 import NoteRawEditor from "./NoteRawEditor";
+import { UI_STRINGS } from "../lib/strings";
 
 function toggleChecklistLine(markdownBody, checklistIndex, nextChecked) {
   const lines = String(markdownBody || "").split("\n");
@@ -50,7 +51,7 @@ export default function NoteDetailPanel({ item, raw }) {
   const [isChecklistSaving, setIsChecklistSaving] = useState(false);
 
   async function onRemove() {
-    if (!window.confirm("Move this note to Removed?")) return;
+    if (!window.confirm(UI_STRINGS.REMOVE_NOTE_CONFIRM)) return;
     if (isRemoving) return;
 
     setIsRemoving(true);
@@ -59,13 +60,13 @@ export default function NoteDetailPanel({ item, raw }) {
       const res = await fetch(`/api/notes/${item.id}`, { method: "DELETE" });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        setRemoveError((data && data.error) || "Note remove failed.");
+        setRemoveError((data && data.error) || UI_STRINGS.NOTE_REMOVE_FAILED);
         return;
       }
       router.push("/notes");
       router.refresh();
     } catch {
-      setRemoveError("Note remove failed.");
+      setRemoveError(UI_STRINGS.NOTE_REMOVE_FAILED);
     } finally {
       setIsRemoving(false);
     }
@@ -94,13 +95,13 @@ export default function NoteDetailPanel({ item, raw }) {
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
-        setChecklistError((data && data.error) || "Checklist update failed.");
+        setChecklistError((data && data.error) || UI_STRINGS.CHECKLIST_UPDATE_FAILED);
         return;
       }
       setBody(nextBody);
       router.refresh();
     } catch {
-      setChecklistError("Checklist update failed.");
+      setChecklistError(UI_STRINGS.CHECKLIST_UPDATE_FAILED);
     } finally {
       setIsChecklistSaving(false);
     }

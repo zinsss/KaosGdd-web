@@ -36,7 +36,7 @@ from app.engine.reminder_service import ReminderService
 from app.engine.supply_service import SupplyService
 from app.integrations.web_push_client import WebPushClient
 from app.schemas.reminders import normalize_minutes
-from app.strings import ApiText
+from app.strings import ApiText, PushText
 from app.utils.capture_parse import parse_capture_input
 
 
@@ -793,7 +793,7 @@ def send_push_test(payload: dict):
         endpoint_match = requested_endpoint in seen_endpoints
 
     if not deduped_subscriptions:
-        return {"ok": False, "error": "No subscriptions found for client"}
+        return {"ok": False, "error": ApiText.NO_PUSH_SUBSCRIPTIONS}
 
     sent = 0
     removed = 0
@@ -805,8 +805,8 @@ def send_push_test(payload: dict):
                 subscription_info=subscription_row.get("subscription") or {},
                 payload_json=json.dumps(
                     {
-                        "title": "KaosGdd test push",
-                        "body": "Push is connected. Open fired reminders.",
+                        "title": PushText.TEST_PUSH_TITLE,
+                        "body": PushText.TEST_PUSH_BODY,
                         "url": "/reminders?mode=fired",
                     }
                 ),

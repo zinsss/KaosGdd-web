@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { UI_STRINGS } from "../lib/strings";
 
 export default function TaskRestoreButton({ taskId, onResolved, onNotFound, onError }) {
   const router = useRouter();
@@ -24,7 +25,7 @@ export default function TaskRestoreButton({ taskId, onResolved, onNotFound, onEr
       }
 
       if (!res.ok || !data?.ok) {
-        const message = (data && data.error) || "Task restore failed.";
+        const message = (data && data.error) || UI_STRINGS.TASK_RESTORE_FAILED;
         if (onError) onError(message);
         else window.alert(message);
         return;
@@ -33,7 +34,7 @@ export default function TaskRestoreButton({ taskId, onResolved, onNotFound, onEr
       onResolved?.(taskId, data);
       router.refresh();
     } catch {
-      const message = "Task restore failed.";
+      const message = UI_STRINGS.TASK_RESTORE_FAILED;
       if (onError) onError(message);
       else window.alert(message);
     } finally {
@@ -48,7 +49,7 @@ export default function TaskRestoreButton({ taskId, onResolved, onNotFound, onEr
       onClick={onClick}
       disabled={isSubmitting}
     >
-      {isSubmitting ? "..." : "Restore"}
+      {isSubmitting ? UI_STRINGS.ELLIPSIS : UI_STRINGS.RESTORE}
     </button>
   );
 }
