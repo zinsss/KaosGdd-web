@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from app.config import DEFAULT_KOREAN_HOLIDAY_ICAL_URL
 from app.engine.holiday_service import HolidaySyncService
 from app.integrations.holiday_ical_provider import Holiday, IcalHolidayProvider
 
@@ -193,6 +194,13 @@ def test_missing_or_unreachable_ical_url_fails_safely(main_module) -> None:
     assert result["ok"] is False
     assert result["skipped"] is True
     assert list_all_2026_events(main_module) == []
+
+
+def test_google_korea_holidays_is_documented_default_source() -> None:
+    assert (
+        DEFAULT_KOREAN_HOLIDAY_ICAL_URL
+        == "https://calendar.google.com/calendar/ical/ko.south_korea%23holiday%40group.v.calendar.google.com/public/basic.ics"
+    )
 
 
 def test_uid_based_identity_works_correctly(main_module) -> None:
