@@ -276,8 +276,8 @@
   --top-nav-active-link-color: var(--ctp-teal);
 }
 
-.bottomCaptureBar {
-  --bottom-capture-surface: #37384a;
+.topCaptureBar {
+  --top-capture-surface: #37384a;
   position: static;
   width: 100%;
   background: transparent;
@@ -287,7 +287,7 @@
   overflow: visible;
 }
 
-.bottomCaptureInner {
+.topCaptureInner {
   width: 100%;
   max-width: var(--app-column-max-width);
   min-width: 0;
@@ -304,7 +304,7 @@
   overflow: visible;
 }
 
-.bottomCaptureBar .bottomCaptureInput {
+.topCaptureBar .topCaptureInput {
   display: block;
   grid-area: input;
   grid-column: 1 / -1;
@@ -320,13 +320,13 @@
   overflow-y: hidden;
   border: 1px solid rgba(186, 194, 222, 0.24);
   border-radius: 20px;
-  background: var(--bottom-capture-surface);
+  background: var(--top-capture-surface);
   padding-top: 5px;
   padding-bottom: 5px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-.bottomCaptureFooter {
+.topCaptureFooter {
   grid-area: footer;
   grid-column: 1 / -1;
   display: flex;
@@ -338,7 +338,7 @@
   max-width: 100%;
 }
 
-.bottomCaptureStatus {
+.topCaptureStatus {
   flex: 1 1 0;
   min-width: 0;
   max-width: 100%;
@@ -350,7 +350,7 @@
   white-space: normal;
 }
 
-.bottomCaptureActions {
+.topCaptureActions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -360,8 +360,8 @@
   max-width: 100%;
 }
 
-.bottomCaptureBar .bottomCaptureAttachButton,
-.bottomCaptureBar .bottomCaptureCaptureButton {
+.topCaptureBar .topCaptureAttachButton,
+.topCaptureBar .topCaptureCaptureButton {
   width: 34px;
   min-width: 34px;
   height: 32px;
@@ -372,8 +372,8 @@
   opacity: 1;
 }
 
-.bottomCaptureBar .bottomCaptureButton,
-.bottomCaptureBar .bottomCaptureCancelButton {
+.topCaptureBar .topCaptureButton,
+.topCaptureBar .topCaptureCancelButton {
   width: auto;
   height: 32px;
   line-height: 32px;
@@ -383,28 +383,28 @@
   opacity: 1;
 }
 
-.bottomCaptureBar .bottomCaptureButton {
+.topCaptureBar .topCaptureButton {
   min-width: 68px;
   align-self: flex-end;
 }
 
-.bottomCaptureBar .bottomCaptureCancelButton {
+.topCaptureBar .topCaptureCancelButton {
   min-width: 64px;
 }
 
-.bottomCaptureBar .bottomCaptureAttachButton:disabled,
-.bottomCaptureBar .bottomCaptureButton:disabled,
-.bottomCaptureBar .bottomCaptureCaptureButton:disabled,
-.bottomCaptureBar .bottomCaptureCancelButton:disabled {
+.topCaptureBar .topCaptureAttachButton:disabled,
+.topCaptureBar .topCaptureButton:disabled,
+.topCaptureBar .topCaptureCaptureButton:disabled,
+.topCaptureBar .topCaptureCancelButton:disabled {
   opacity: 0.6;
 }
 
-.bottomCaptureModeLabel {
+.topCaptureModeLabel {
   color: var(--ui-text-dim);
 }
 
-.bottomCaptureStatus.errorText,
-.bottomCaptureStatus.successText {
+.topCaptureStatus.errorText,
+.topCaptureStatus.successText {
   margin-top: 0;
 }
 
@@ -498,18 +498,18 @@
     gap: 14px;
   }
 
-  .bottomCaptureFooter {
+  .topCaptureFooter {
     align-items: flex-start;
   }
 
-  .bottomCaptureActions {
+  .topCaptureActions {
     flex-wrap: wrap;
   }
 
-  .bottomCaptureAttachButton,
-  .bottomCaptureCaptureButton,
-  .bottomCaptureButton,
-  .bottomCaptureCancelButton {
+  .topCaptureAttachButton,
+  .topCaptureCaptureButton,
+  .topCaptureButton,
+  .topCaptureCancelButton {
     min-width: 0;
   }
 
@@ -534,7 +534,7 @@
     padding-bottom: 0;
   }
 
-  .bottomCaptureBar {
+  .topCaptureBar {
     position: static;
     z-index: auto;
     padding: 10px 12px 6px;

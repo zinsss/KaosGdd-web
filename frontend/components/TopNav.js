@@ -95,8 +95,15 @@ export default function TopNav() {
     }
 
     loadNavStatus();
+
+    function onCaptureCreated() {
+      loadNavStatus();
+    }
+
+    window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
     return () => {
       isMounted = false;
+      window.removeEventListener("kaosgdd:capture-created", onCaptureCreated);
     };
   }, [pathname]);
 

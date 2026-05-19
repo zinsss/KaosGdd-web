@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
 
 function ymd(date) {
   const y = date.getFullYear();
@@ -45,7 +46,7 @@ export default function EventsPageClient() {
 
   const cells = useMemo(() => (month ? eachCalendarCell(month) : []), [month]);
 
-  useEffect(() => {
+  function loadEvents() {
     if (!month) return;
 
     const { start, end } = monthBounds(month);
@@ -53,6 +54,19 @@ export default function EventsPageClient() {
       .then((res) => res.json())
       .then((data) => setItems(data.items || []))
       .catch(() => setItems([]));
+  }
+
+  useEffect(() => {
+    loadEvents();
+  }, [month]);
+
+  useEffect(() => {
+    function onCaptureCreated(event) {
+      if (captureCreatedEventHasType(event, "event")) loadEvents();
+    }
+
+    window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
+    return () => window.removeEventListener("kaosgdd:capture-created", onCaptureCreated);
   }, [month]);
 
   useEffect(() => {

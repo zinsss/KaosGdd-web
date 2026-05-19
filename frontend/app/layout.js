@@ -1,6 +1,6 @@
 import "./globals.css";
 import Link from "next/link";
-import BottomCaptureBar from "../components/BottomCaptureBar";
+import TopCaptureBar from "../components/TopCaptureBar";
 import AppShellHeightObserver from "../components/AppShellHeightObserver";
 import TopNav from "../components/TopNav";
 import PwaBootstrap from "../components/pwa/PwaBootstrap";
@@ -45,7 +45,7 @@ export default function RootLayout({ children }) {
               <span className="appHeaderSubtitle">{UI_STRINGS.APP_HEADER_SUBTITLE}</span>
             </div>
             <TopNav />
-            <BottomCaptureBar />
+            <TopCaptureBar />
           </div>
         </header>
 

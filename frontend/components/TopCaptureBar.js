@@ -4,7 +4,11 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { UI_STRINGS } from "../lib/strings";
-import { createdTypesFromCaptureResponse, navigateAfterCreate } from "../lib/post-create-navigation";
+import {
+  createdTypesFromCaptureResponse,
+  dispatchCaptureCreated,
+  navigateAfterCreate,
+} from "../lib/post-create-navigation";
 import NewNoteModal from "./NewNoteModal";
 
 const NEW_NOTE_TEMPLATE = ":::\ntitle:\ntags:\nlink:\n:::";
@@ -195,7 +199,7 @@ function datetimeSelectionRange(rawText) {
   return { start, end: start + value.length };
 }
 
-export default function BottomCaptureBar() {
+export default function TopCaptureBar() {
   const router = useRouter();
   const [raw, setRaw] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -221,7 +225,7 @@ export default function BottomCaptureBar() {
   const isTextareaFocusedRef = useRef(false);
   const userScrollOverrideRef = useRef(false);
 
-  function isBottomAnchoredMode() {
+  function isWideCaptureAnchoredMode() {
     if (typeof window === "undefined") return true;
     return window.matchMedia("(min-width: 768px)").matches;
   }
@@ -245,7 +249,7 @@ export default function BottomCaptureBar() {
     focusAnchorLoopEndRef.current = 0;
   }
 
-  function captureBottomOverflowPx() {
+  function captureViewportOverflowPx() {
     if (typeof window === "undefined") return 0;
     const node = captureContainerRef.current || textareaRef.current;
     if (!node) return 0;
@@ -258,23 +262,23 @@ export default function BottomCaptureBar() {
 
   function anchorCaptureForFocus({ behavior = "auto" } = {}) {
     if (typeof window === "undefined") return;
-    if (!isBottomAnchoredMode()) return true;
+    if (!isWideCaptureAnchoredMode()) return true;
     const node = textareaRef.current;
     if (!node || !isTextareaFocusedRef.current) return;
     if (userScrollOverrideRef.current) return;
 
-    const overlap = captureBottomOverflowPx();
+    const overlap = captureViewportOverflowPx();
     if (overlap <= 0) return true;
 
     const scroller = getMainScroller();
     if (!scroller) return;
     scroller.scrollTo({ top: scroller.scrollTop + overlap, behavior });
-    return captureBottomOverflowPx() <= 0;
+    return captureViewportOverflowPx() <= 0;
   }
 
   function startFocusAnchorLoop(durationMs = 300) {
     if (typeof window === "undefined") return;
-    if (!isBottomAnchoredMode()) return;
+    if (!isWideCaptureAnchoredMode()) return;
     if (!isTextareaFocusedRef.current) return;
     if (userScrollOverrideRef.current) return;
 
@@ -432,7 +436,7 @@ export default function BottomCaptureBar() {
     if (typeof window === "undefined") return;
 
     const onViewportShift = () => {
-      if (!isBottomAnchoredMode()) return;
+      if (!isWideCaptureAnchoredMode()) return;
       if (!isTextareaFocusedRef.current) return;
       anchorCaptureForFocus({ behavior: "auto" });
     };
@@ -449,7 +453,7 @@ export default function BottomCaptureBar() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!isBottomAnchoredMode()) return;
+    if (!isWideCaptureAnchoredMode()) return;
 
     const onUserScrollIntent = () => {
       if (!isTextareaFocusedRef.current) return;
@@ -593,6 +597,8 @@ export default function BottomCaptureBar() {
     setSuccess(UI_STRINGS.SAVED);
 
     try {
+      dispatchCaptureCreated(createdTypes);
+
       if (typeof navigate === "function") {
         navigate();
         return;
@@ -647,6 +653,7 @@ export default function BottomCaptureBar() {
       setRaw("");
       setSuccess("Sent to Scribble.");
       resizeTextarea();
+      dispatchCaptureCreated("scribble");
       navigateAfterCreate(router, "scribble");
     } catch {
       setError("Could not save Scribble.");
@@ -656,7 +663,7 @@ export default function BottomCaptureBar() {
   }
 
   async function submitAttachedFile(cleanRaw, requestId) {
-    console.debug("[BottomCaptureBar] attached-file", {
+    console.debug("[TopCaptureBar] attached-file", {
       exists: Boolean(attachedFile),
       name: attachedFile?.name || "",
       size: attachedFile?.size || 0,
@@ -686,7 +693,7 @@ export default function BottomCaptureBar() {
         },
       });
     } catch (error) {
-      console.error("[BottomCaptureBar] attached-file stage=file-upload-post failed", error);
+      console.error("[TopCaptureBar] attached-file stage=file-upload-post failed", error);
       setError(UI_STRINGS.FILE_UPLOAD_REQUEST_FAILED);
       return true;
     }
@@ -705,7 +712,7 @@ export default function BottomCaptureBar() {
         body: JSON.stringify({ raw: normalized.normalizedRaw }),
       });
     } catch (error) {
-      console.error("[BottomCaptureBar] attached-file stage=file-raw-patch failed", error);
+      console.error("[TopCaptureBar] attached-file stage=file-raw-patch failed", error);
       await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
       setError(UI_STRINGS.FILE_METADATA_SAVE_REQUEST_FAILED);
       return true;
@@ -958,6 +965,7 @@ export default function BottomCaptureBar() {
       closeNewNoteModal();
       setRaw("");
       setSuccess(UI_STRINGS.SAVED);
+      dispatchCaptureCreated("note");
       navigateAfterCreate(router, "note");
     } catch {
       setNewNoteError(UI_STRINGS.NOTE_SAVE_FAILED);
@@ -968,11 +976,11 @@ export default function BottomCaptureBar() {
 
   return (
     <>
-      <form onSubmit={onSubmit} className="bottomCaptureBar">
-        <div ref={captureContainerRef} className="bottomCaptureInner">
+      <form onSubmit={onSubmit} className="topCaptureBar">
+        <div ref={captureContainerRef} className="topCaptureInner">
           <textarea
             ref={textareaRef}
-            className="textInput autoTextarea bottomCaptureInput"
+            className="textInput autoTextarea topCaptureInput"
             value={raw}
             onChange={(event) => {
               setScribblePromptRaw("");
@@ -997,14 +1005,14 @@ export default function BottomCaptureBar() {
             placeholder=""
             disabled={isSubmitting}
           />
-          <div className="bottomCaptureFooter">
+          <div className="topCaptureFooter">
             <div
-              className={`bottomCaptureStatus${error ? " errorText" : !error && success ? " successText" : " bottomCaptureModeLabel"}`}
+              className={`topCaptureStatus${error ? " errorText" : !error && success ? " successText" : " topCaptureModeLabel"}`}
             >
               {statusText}
             </div>
 
-            <div className="bottomCaptureActions">
+            <div className="topCaptureActions">
               <input
                 ref={fileInputRef}
                 className="visuallyHiddenFileInput"
@@ -1016,30 +1024,30 @@ export default function BottomCaptureBar() {
 
               {scribblePromptRaw ? (
                 <>
-                  <button className="button pillButton buttonToneEdit bottomCaptureButton" type="button" onClick={sendPromptToScribble} disabled={isSubmitting}>
+                  <button className="button pillButton buttonToneEdit topCaptureButton" type="button" onClick={sendPromptToScribble} disabled={isSubmitting}>
                     Scribble
                   </button>
-                  <button className="button pillButton buttonToneNeutral bottomCaptureCancelButton" type="button" onClick={cancelScribblePrompt} disabled={isSubmitting}>
+                  <button className="button pillButton buttonToneNeutral topCaptureCancelButton" type="button" onClick={cancelScribblePrompt} disabled={isSubmitting}>
                     {UI_STRINGS.CANCEL}
                   </button>
                 </>
               ) : (
                 <>
-                  <button className="button pillButton buttonToneNeutral bottomCaptureCaptureButton" type="button" onClick={onOpenCapturePage} disabled={isSubmitting}>
+                  <button className="button pillButton buttonToneNeutral topCaptureCaptureButton" type="button" onClick={onOpenCapturePage} disabled={isSubmitting}>
                     G
                   </button>
 
-                  <button className="button pillButton buttonToneEdit bottomCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
+                  <button className="button pillButton buttonToneEdit topCaptureAttachButton" type="button" onClick={onPickFile} disabled={isSubmitting}>
                     {UI_STRINGS.ATTACH_ICON}
                   </button>
 
-                  <button className="button pillButton buttonToneSave bottomCaptureButton" type="submit" disabled={isSubmitting}>
+                  <button className="button pillButton buttonToneSave topCaptureButton" type="submit" disabled={isSubmitting}>
                     {isSubmitting ? UI_STRINGS.ELLIPSIS : editState ? UI_STRINGS.SAVE : UI_STRINGS.ADD}
                   </button>
 
                   {editState ? (
                     <button
-                      className="button pillButton buttonToneNeutral bottomCaptureCancelButton"
+                      className="button pillButton buttonToneNeutral topCaptureCancelButton"
                       type="button"
                       onClick={cancelEdit}
                       disabled={isSubmitting}
