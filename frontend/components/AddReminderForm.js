@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { UI_STRINGS } from "../lib/strings";
 
 export default function AddReminderForm({ taskId }) {
+  const router = useRouter();
   const [remindAt, setRemindAt] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -35,7 +37,7 @@ export default function AddReminderForm({ taskId }) {
       }
 
       setRemindAt("");
-      window.location.reload();
+      router.refresh();
     } catch {
       setError(UI_STRINGS.FAILED_ADD_REMINDER);
     } finally {
