@@ -237,17 +237,25 @@ export default function EventsPageClient() {
               <div key={date} className="eventMonthGroup">
                 <div className="eventMonthGroupHeading">{date}</div>
                 <ul className="taskList">
-                  {dateEvents.map((event) => (
-                    <li key={event.id} className="taskListRow">
-                      <div className="eventListTitleRow">
-                        <Link className="taskLink taskListTitleLink" href={`/events/${event.id}`}>{event.title}</Link>
-                        {isSystemHoliday(event) ? <span className="eventHolidayBadge">{UI_STRINGS.HOLIDAY_BADGE}</span> : null}
-                      </div>
-                      {event.end_date && event.end_date !== event.start_date ? (
-                        <div className="metaLine">{event.start_date} ~ {event.end_date}</div>
-                      ) : null}
-                    </li>
-                  ))}
+                  {dateEvents.map((event) => {
+                    const holiday = isSystemHoliday(event);
+                    return (
+                      <li key={event.id} className="taskListRow">
+                        <div className="eventListTitleRow">
+                          {holiday ? <span className="eventHolidayBadge">{UI_STRINGS.HOLIDAY_BADGE}</span> : null}
+                          <Link
+                            className={"taskLink taskListTitleLink" + (holiday ? " eventHolidayTitle" : "")}
+                            href={`/events/${event.id}`}
+                          >
+                            {event.title}
+                          </Link>
+                        </div>
+                        {event.end_date && event.end_date !== event.start_date ? (
+                          <div className="metaLine">{event.start_date} ~ {event.end_date}</div>
+                        ) : null}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))}
