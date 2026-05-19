@@ -290,10 +290,14 @@
 .bottomCaptureInner {
   width: 100%;
   max-width: var(--app-column-max-width);
+  min-width: 0;
   margin: 0 auto;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto auto;
+  grid-template-areas:
+    "input"
+    "footer";
   gap: 5px;
   border-radius: var(--group-box-radius);
   pointer-events: auto;
@@ -302,9 +306,13 @@
 
 .bottomCaptureBar .bottomCaptureInput {
   display: block;
+  grid-area: input;
   grid-column: 1 / -1;
+  justify-self: stretch;
+  flex: 0 0 auto;
   width: 100%;
-  min-width: 100%;
+  min-width: 0;
+  max-width: 100%;
   min-height: 34px;
   height: auto;
   max-height: none;
@@ -319,15 +327,19 @@
 }
 
 .bottomCaptureFooter {
+  grid-area: footer;
   grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .bottomCaptureStatus {
-  flex: 1 1 auto;
+  flex: 1 1 0;
   min-width: 0;
   max-width: 100%;
   font-size: 12px;
@@ -343,7 +355,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .bottomCaptureBar .bottomCaptureAttachButton,
