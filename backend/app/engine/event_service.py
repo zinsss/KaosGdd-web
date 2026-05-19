@@ -1,6 +1,7 @@
 from app.db.repo.event_repo import EventRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.reminder_repo import ReminderRepo
+from app.engine.holiday_service import is_system_holiday_tags
 from app.utils.event_raw import export_event_raw, parse_event_raw
 from app.utils.timefmt import format_dt_for_ui
 
@@ -68,6 +69,8 @@ class EventService:
         detail = self.event_repo.get_event_detail(item_id)
         if detail is None or detail.get("status") == "removed":
             return False
+        if self.is_readonly_event(item_id):
+            return False
 
         next_title = title if title is not None else detail["title"]
         next_start = start_date if start_date is not None else detail["start_date"]
@@ -90,6 +93,8 @@ class EventService:
         detail = self.event_repo.get_event_detail(item_id)
         if detail is None:
             return False, "not found"
+        if self.is_readonly_event(item_id):
+            return False, "event is read-only"
 
         try:
             parsed = parse_event_raw(raw_text, reject_past_datetimes=reject_past_datetimes)
@@ -157,12 +162,17 @@ class EventService:
     def remove_event(self, item_id: str) -> bool:
         if self.event_repo.get_event_detail(item_id) is None:
             return False
+        if self.is_readonly_event(item_id):
+            return False
         return self.items_repo.soft_delete_item(item_id)
 
     def restore_event(self, item_id: str) -> bool:
         if self.event_repo.get_event_detail(item_id) is None:
             return False
         return self.items_repo.restore_item(item_id)
+
+    def is_readonly_event(self, item_id: str) -> bool:
+        return is_system_holiday_tags(self.items_repo.list_item_tags(item_id))
 
     def _decorate_event(self, event: dict, *, include_reminders: bool) -> dict:
         item = dict(event)

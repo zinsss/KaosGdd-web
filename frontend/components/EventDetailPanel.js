@@ -7,6 +7,18 @@ import EventRawEditor from "./EventRawEditor";
 import LinkedItemsBlock from "./LinkedItemsBlock";
 import { UI_STRINGS } from "../lib/strings";
 
+function isSystemHoliday(item) {
+  const tags = new Set((item.tags || []).map((tag) => String(tag || "").toLowerCase()));
+  return tags.has("system:kr-holiday") && tags.has("readonly");
+}
+
+function visibleTags(item) {
+  return (item.tags || []).filter((tag) => {
+    const clean = String(tag || "").toLowerCase();
+    return clean !== "system:kr-holiday" && clean !== "readonly" && !clean.startsWith("kr-holiday:");
+  });
+}
+
 export default function EventDetailPanel({ item, raw }) {
   const router = useRouter();
   const [showEdit, setShowEdit] = useState(false);
@@ -14,6 +26,8 @@ export default function EventDetailPanel({ item, raw }) {
   const [copied, setCopied] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [removeError, setRemoveError] = useState("");
+  const readonlyHoliday = isSystemHoliday(item);
+  const displayTags = visibleTags(item);
 
   async function onRemove() {
     if (!window.confirm(UI_STRINGS.REMOVE_EVENT_CONFIRM)) return;
@@ -52,10 +66,18 @@ export default function EventDetailPanel({ item, raw }) {
         <div className="detailPageLabel">• Event Detail</div>
         <div className="detailTitleRow">
           <div className="sectionTitle detailMainTitle">{item.title}</div>
-          <div className="detailStateText">{item.status}</div>
+          <div className="detailStateBox">
+            <div className="detailStateText">{item.status}</div>
+            {readonlyHoliday ? (
+              <div className="detailBadgeRow">
+                <span className="detailBadge holidayBadge">{UI_STRINGS.HOLIDAY_BADGE}</span>
+                <span className="detailBadge readonlyBadge">{UI_STRINGS.READONLY_BADGE}</span>
+              </div>
+            ) : null}
+          </div>
         </div>
 
-        {item.tags?.length ? <div className="metaLine">{item.tags.map((tag) => `#${tag}`).join(" ")}</div> : null}
+        {displayTags.length ? <div className="metaLine">{displayTags.map((tag) => `#${tag}`).join(" ")}</div> : null}
 
         <div className="detailReadBlock">
           <div className="detailReadRow">
@@ -75,12 +97,15 @@ export default function EventDetailPanel({ item, raw }) {
 
       <section className="panel">
         <div className="actionRow detailActionRow">
-          <button type="button" className={"button buttonToneEdit" + (showEdit ? " buttonActive" : "")} onClick={() => setShowEdit((v) => !v)}>Edit</button>
+          {!readonlyHoliday ? (
+            <button type="button" className={"button buttonToneEdit" + (showEdit ? " buttonActive" : "")} onClick={() => setShowEdit((v) => !v)}>Edit</button>
+          ) : null}
           <button type="button" className={"button buttonToneNeutral" + (showMore ? " buttonActive" : "")} onClick={() => setShowMore((v) => !v)}>More</button>
         </div>
-        {showEdit ? <div className="toggleBody"><EventRawEditor eventId={item.id} initialRaw={raw || ""} /></div> : null}
+        {showEdit && !readonlyHoliday ? <div className="toggleBody"><EventRawEditor eventId={item.id} initialRaw={raw || ""} /></div> : null}
         {showMore ? (
           <div className="toggleBody moreMetaBox">
+            {readonlyHoliday ? <div className="metaLine">{UI_STRINGS.READONLY_EVENT_NOTICE}</div> : null}
             <div className="metaStack">
               <div>created: {item.created_at_display || "-"}</div>
               <div>updated: {item.updated_at_display || "-"}</div>
@@ -89,7 +114,9 @@ export default function EventDetailPanel({ item, raw }) {
               <button type="button" className="button buttonToneCopy" onClick={onCopyId}>
                 {copied ? "ID copied" : "Copy ID"}
               </button>
-              <button type="button" className="button buttonToneDanger" onClick={onRemove} disabled={isRemoving}>{isRemoving ? "..." : "Remove"}</button>
+              {!readonlyHoliday ? (
+                <button type="button" className="button buttonToneDanger" onClick={onRemove} disabled={isRemoving}>{isRemoving ? "..." : "Remove"}</button>
+              ) : null}
             </div>
             {removeError ? <div className="errorText">{removeError}</div> : null}
           </div>

@@ -1,6 +1,12 @@
 import os
 
 
+DEFAULT_KOREAN_HOLIDAY_ICAL_URL = (
+    "https://calendar.google.com/calendar/ical/"
+    "ko.south_korea%23holiday%40group.v.calendar.google.com/public/basic.ics"
+)
+
+
 class Settings:
     APP_NAME = os.getenv("APP_NAME", "KaosGdd Web")
     APP_TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Seoul")
@@ -16,6 +22,7 @@ class Settings:
     PUSHOVER_PRIORITY_DEFAULT = int(os.getenv("PUSHOVER_PRIORITY_DEFAULT", "0"))
 
     APP_BASE_URL = os.getenv("APP_BASE_URL", os.getenv("WEB_BASE_URL", ""))
+    KOREAN_HOLIDAY_ICAL_URL = os.getenv("KOREAN_HOLIDAY_ICAL_URL", DEFAULT_KOREAN_HOLIDAY_ICAL_URL).strip()
 
     LIFECYCLE_DONE_RETENTION_DAYS = int(os.getenv("LIFECYCLE_DONE_RETENTION_DAYS", "365"))
     LIFECYCLE_REMOVED_RETENTION_DAYS = int(os.getenv("LIFECYCLE_REMOVED_RETENTION_DAYS", "90"))

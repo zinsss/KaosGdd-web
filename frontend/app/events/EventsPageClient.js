@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
+import { UI_STRINGS } from "../../lib/strings";
 
 function ymd(date) {
   const y = date.getFullYear();
@@ -29,6 +30,11 @@ function eachCalendarCell(monthValue) {
     d.setDate(gridStart.getDate() + i);
     return ymd(d);
   });
+}
+
+function isSystemHoliday(event) {
+  const tags = new Set((event.tags || []).map((tag) => String(tag || "").toLowerCase()));
+  return tags.has("system:kr-holiday") && tags.has("readonly");
 }
 
 export default function EventsPageClient() {
@@ -233,7 +239,10 @@ export default function EventsPageClient() {
                 <ul className="taskList">
                   {dateEvents.map((event) => (
                     <li key={event.id} className="taskListRow">
-                      <Link className="taskLink taskListTitleLink" href={`/events/${event.id}`}>{event.title}</Link>
+                      <div className="eventListTitleRow">
+                        <Link className="taskLink taskListTitleLink" href={`/events/${event.id}`}>{event.title}</Link>
+                        {isSystemHoliday(event) ? <span className="eventHolidayBadge">{UI_STRINGS.HOLIDAY_BADGE}</span> : null}
+                      </div>
                       {event.end_date && event.end_date !== event.start_date ? (
                         <div className="metaLine">{event.start_date} ~ {event.end_date}</div>
                       ) : null}
