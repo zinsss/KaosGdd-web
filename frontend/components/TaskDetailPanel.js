@@ -66,6 +66,7 @@ export default function TaskDetailPanel({ item, raw }) {
     });
   }, [item.reminders]);
   const isRemoved = item.status === "removed";
+  const isRepeating = Boolean(item.repeat_rule);
 
   async function onCopyId() {
     try {
@@ -115,7 +116,7 @@ export default function TaskDetailPanel({ item, raw }) {
         </Link>
       </div>
 
-      <section className="panel">
+      <section className={"panel" + (isRepeating ? " repeatingTaskDetailPanel" : "")}>
         <div className="detailPageLabel">• {UI_STRINGS.TASK_DETAIL}</div>
 
         <div className="detailTitleRow">
@@ -131,6 +132,7 @@ export default function TaskDetailPanel({ item, raw }) {
             <div className="detailStateText">
               {isRemoved ? UI_STRINGS.REMOVED_STATE : item.is_done ? UI_STRINGS.DONE_STATE : UI_STRINGS.ACTIVE}
             </div>
+            {isRepeating ? <span className="detailBadge repeatDetailBadge">{UI_STRINGS.REPEAT_BADGE}</span> : null}
           </div>
         </div>
 
@@ -156,6 +158,7 @@ export default function TaskDetailPanel({ item, raw }) {
               <div className="detailReadLabel">Repeat</div>
               <div className="detailReadContent withDivider">
                 <div className="detailReadInline">{item.repeat_rule}</div>
+                <div className="repeatEditNotice">{UI_STRINGS.REPEATING_TASK_EDIT_NOTICE}</div>
               </div>
             </div>
           ) : null}

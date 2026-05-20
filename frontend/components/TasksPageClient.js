@@ -59,9 +59,10 @@ function TaskRow({
   const metatag = getTaskMetaTag(task);
   const hasSubtasks = Number(task.subtask_total || 0) > 0;
   const showPrefixToggle = mode === "active";
+  const isRepeating = Boolean(task.repeat_rule);
 
   return (
-    <li key={task.id} className="taskListRow">
+    <li key={task.id} className={"taskListRow" + (isRepeating ? " taskListRowRepeating" : "")}>
       <div className="taskListRowMain">
         <div className="taskListTitleBlock">
           <div className="taskListTitleRow taskListTitleRowWithMeta">
@@ -90,6 +91,7 @@ function TaskRow({
               {task.title}
             </Link>
 
+            {isRepeating ? <span className="repeatBadge">{UI_STRINGS.REPEAT_BADGE}</span> : null}
             {metatag ? <span className="taskListMetaTag">{metatag}</span> : null}
             {hasSubtasks ? (
               <span className="taskListSubtaskProgress">[{Number(task.subtask_done || 0)}/{Number(task.subtask_total || 0)}]</span>
@@ -110,7 +112,7 @@ function TaskRow({
       </div>
 
       {isExpanded ? (
-        <div className="taskInlineSubtasks">
+        <div className={"taskInlineSubtasks" + (isRepeating ? " taskInlineSubtasksRepeating" : "")}>
           {subtasksLoading ? (
             <div className="taskInlineSubtasksState">{UI_STRINGS.LOADING}</div>
           ) : subtaskLoadError ? (
