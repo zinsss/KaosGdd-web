@@ -295,6 +295,18 @@ def update_event(event_id: str, payload: dict):
     return {"ok": True}
 
 
+@app.patch("/events/{event_id}/classification")
+def update_event_classification(event_id: str, payload: dict):
+    updated = holiday_sync_service.set_imported_event_public_holiday(
+        event_id,
+        is_public_holiday=bool(payload.get("is_public_holiday")),
+    )
+    if updated is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    item = event_service.get_event(event_id)
+    return {"ok": True, "item": item}
+
+
 @app.get("/events/{event_id}/raw")
 def get_event_raw(event_id: str):
     raw = event_service.export_event_raw(event_id)

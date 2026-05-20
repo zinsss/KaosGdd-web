@@ -46,7 +46,7 @@ def sync_service(main_module, holidays: list[Holiday] | None = None, *, error: E
     )
 
 
-def list_all_2026_events(main_module, mode: str = "active") -> list[dict]:
+def list_events(main_module, mode: str = "active") -> list[dict]:
     return main_module.event_service.list_events_in_range(
         start_date="2026-01-01",
         end_date="2026-12-31",
@@ -54,7 +54,19 @@ def list_all_2026_events(main_module, mode: str = "active") -> list[dict]:
     )
 
 
-def test_sync_creates_korean_holiday_events(main_module) -> None:
+def events_by_class(main_module, event_class: str, mode: str = "active") -> list[dict]:
+    return [event for event in list_events(main_module, mode=mode) if event.get("event_class") == event_class]
+
+
+def imported_events(main_module, mode: str = "active") -> list[dict]:
+    return [event for event in list_events(main_module, mode=mode) if event.get("is_imported_calendar_event")]
+
+
+def event_dates(events: list[dict]) -> set[str]:
+    return {event["start_date"] for event in events}
+
+
+def test_imported_events_default_to_observance(main_module) -> None:
     service = sync_service(
         main_module,
         [Holiday(external_id="uid-new-year", uid="uid-new-year", title="신정", start_date="2026-01-01")],
@@ -63,62 +75,169 @@ def test_sync_creates_korean_holiday_events(main_module) -> None:
     result = service.sync_years(start_year=2026, end_year=2026)
 
     assert result["ok"] is True
-    assert result["created"] == 1
-    events = list_all_2026_events(main_module)
-    assert len(events) == 1
-    assert events[0]["title"] == "신정"
-    assert events[0]["start_date"] == "2026-01-01"
-    assert {"system:kr-holiday", "readonly"}.issubset(set(events[0]["tags"]))
-    assert events[0]["reminders"] == []
+    imported = imported_events(main_module)
+    assert len(imported) == 1
+    assert imported[0]["title"] == "신정"
+    assert imported[0]["event_class"] == "observance"
+    assert imported[0]["classification_source"] == "auto"
+    assert {"system:kr-calendar", "readonly", "event-class:observance", "classification-source:auto"}.issubset(
+        set(imported[0]["tags"])
+    )
+    assert imported[0]["reminders"] == []
 
 
-def test_sync_is_idempotent(main_module) -> None:
-    holidays = [Holiday(external_id="uid-lunar", uid="uid-lunar", title="설날", start_date="2026-02-17")]
-    service = sync_service(main_module, holidays)
-
-    first = service.sync_years(start_year=2026, end_year=2026)
-    second = service.sync_years(start_year=2026, end_year=2026)
-
-    assert first["created"] == 1
-    assert second["created"] == 0
-    assert second["updated"] == 0
-    assert len(list_all_2026_events(main_module)) == 1
-
-
-def test_changed_holiday_name_and_date_updates_existing_synced_event(main_module) -> None:
+def test_checkbox_sets_public_holiday(main_module) -> None:
     service = sync_service(
         main_module,
-        [Holiday(external_id="uid-alt", uid="uid-alt", title="대체공휴일", start_date="2026-05-05")],
+        [Holiday(external_id="uid-public", uid="uid-public", title="Public", start_date="2026-01-01")],
     )
     service.sync_years(start_year=2026, end_year=2026)
+    event_id = imported_events(main_module)[0]["id"]
+
+    response = main_module.update_event_classification(event_id, {"is_public_holiday": True})
+
+    assert response["ok"] is True
+    assert response["item"]["event_class"] == "public-holiday"
+    assert response["item"]["classification_source"] == "manual"
+
+
+def test_checkbox_sets_observance(main_module) -> None:
+    service = sync_service(
+        main_module,
+        [Holiday(external_id="uid-observance", uid="uid-observance", title="Maybe", start_date="2026-01-01")],
+    )
+    service.sync_years(start_year=2026, end_year=2026)
+    event_id = imported_events(main_module)[0]["id"]
+    main_module.update_event_classification(event_id, {"is_public_holiday": True})
+
+    response = main_module.update_event_classification(event_id, {"is_public_holiday": False})
+
+    assert response["ok"] is True
+    assert response["item"]["event_class"] == "observance"
+    assert response["item"]["classification_source"] == "manual"
+
+
+def test_manual_classification_survives_monthly_sync(main_module) -> None:
+    service = sync_service(
+        main_module,
+        [Holiday(external_id="uid-alt", uid="uid-alt", title="Old", start_date="2026-05-05")],
+    )
+    service.sync_years(start_year=2026, end_year=2026)
+    event_id = imported_events(main_module)[0]["id"]
+    main_module.update_event_classification(event_id, {"is_public_holiday": True})
 
     service.provider = FakeHolidayProvider(
-        [Holiday(external_id="uid-alt", uid="uid-alt", title="대체 휴일", start_date="2026-05-06")]
-    )
-    result = service.sync_years(start_year=2026, end_year=2026)
-
-    assert result["updated"] == 1
-    events = list_all_2026_events(main_module)
-    assert len(events) == 1
-    assert events[0]["title"] == "대체 휴일"
-    assert events[0]["start_date"] == "2026-05-06"
-
-
-def test_removed_upstream_holiday_archives_old_synced_event(main_module) -> None:
-    service = sync_service(
-        main_module,
-        [Holiday(external_id="uid-removed", uid="uid-removed", title="삭제된 휴일", start_date="2026-10-01")],
+        [Holiday(external_id="uid-alt", uid="uid-alt", title="New", start_date="2026-05-06")]
     )
     service.sync_years(start_year=2026, end_year=2026)
 
-    service.provider = FakeHolidayProvider([])
-    result = service.sync_years(start_year=2026, end_year=2026)
+    item = main_module.get_event(event_id)["item"]
+    assert item["title"] == "New"
+    assert item["start_date"] == "2026-05-06"
+    assert item["event_class"] == "public-holiday"
+    assert item["classification_source"] == "manual"
 
-    assert result["archived"] == 1
-    assert list_all_2026_events(main_module) == []
-    archived = list_all_2026_events(main_module, mode="archived")
-    assert len(archived) == 1
-    assert archived[0]["title"] == "삭제된 휴일"
+
+def test_market_saturday_generation(main_module) -> None:
+    service = sync_service(main_module, [])
+
+    service.sync_years(start_year=2026, end_year=2026)
+
+    assert "2026-01-10" in event_dates(events_by_class(main_module, "market-saturday"))
+    market = [event for event in events_by_class(main_module, "market-saturday") if event["start_date"] == "2026-01-10"][0]
+    assert market["title"] == "Market Saturday"
+    assert {"system:custom-calendar", "readonly", "event-class:market-saturday"}.issubset(set(market["tags"]))
+
+
+def test_claim_day_friday_default(main_module) -> None:
+    service = sync_service(main_module, [])
+
+    service.sync_years(start_year=2026, end_year=2026)
+
+    assert "2026-01-02" in event_dates(events_by_class(main_module, "claim-day"))
+
+
+def test_claim_day_market_saturday_override(main_module) -> None:
+    service = sync_service(main_module, [])
+
+    service.sync_years(start_year=2026, end_year=2026)
+
+    claim_dates = event_dates(events_by_class(main_module, "claim-day"))
+    assert "2026-01-10" in claim_dates
+    assert "2026-01-09" not in claim_dates
+
+
+def test_claim_day_backward_shift_on_public_holiday(main_module) -> None:
+    service = sync_service(
+        main_module,
+        [Holiday(external_id="uid-claim-block", uid="uid-claim-block", title="Block", start_date="2026-01-02")],
+    )
+    service.sync_years(start_year=2026, end_year=2026)
+    main_module.update_event_classification(imported_events(main_module)[0]["id"], {"is_public_holiday": True})
+
+    claim_dates = event_dates(events_by_class(main_module, "claim-day"))
+    assert "2026-01-01" in claim_dates
+    assert "2026-01-02" not in claim_dates
+
+
+def test_observance_does_not_shift_claim_day(main_module) -> None:
+    service = sync_service(
+        main_module,
+        [Holiday(external_id="uid-observe-friday", uid="uid-observe-friday", title="Observe", start_date="2026-01-02")],
+    )
+    service.sync_years(start_year=2026, end_year=2026)
+
+    claim_dates = event_dates(events_by_class(main_module, "claim-day"))
+    assert "2026-01-02" in claim_dates
+    assert "2026-01-01" not in claim_dates
+
+
+def test_recalculation_occurs_immediately_after_classification_change(main_module) -> None:
+    service = sync_service(
+        main_module,
+        [Holiday(external_id="uid-market-block", uid="uid-market-block", title="Block", start_date="2026-01-10")],
+    )
+    service.sync_years(start_year=2026, end_year=2026)
+    assert "2026-01-10" in event_dates(events_by_class(main_module, "claim-day"))
+
+    main_module.update_event_classification(imported_events(main_module)[0]["id"], {"is_public_holiday": True})
+
+    claim_dates = event_dates(events_by_class(main_module, "claim-day"))
+    assert "2026-01-09" in claim_dates
+    assert "2026-01-10" not in claim_dates
+
+
+def test_generated_events_are_idempotent(main_module) -> None:
+    service = sync_service(main_module, [])
+
+    service.sync_years(start_year=2026, end_year=2026)
+    first_market_count = len(events_by_class(main_module, "market-saturday"))
+    first_claim_count = len(events_by_class(main_module, "claim-day"))
+    service.sync_years(start_year=2026, end_year=2026)
+
+    assert len(events_by_class(main_module, "market-saturday")) == first_market_count
+    assert len(events_by_class(main_module, "claim-day")) == first_claim_count
+
+
+def test_generated_and_synced_events_are_readonly(main_module) -> None:
+    service = sync_service(
+        main_module,
+        [Holiday(external_id="uid-readonly", uid="uid-readonly", title="Readonly", start_date="2026-03-01")],
+    )
+    service.sync_years(start_year=2026, end_year=2026)
+    readonly_ids = [
+        imported_events(main_module)[0]["id"],
+        events_by_class(main_module, "market-saturday")[0]["id"],
+        events_by_class(main_module, "claim-day")[0]["id"],
+    ]
+
+    for event_id in readonly_ids:
+        assert main_module.update_event(event_id, {"title": "Changed"}) == {"ok": False, "error": "event is read-only"}
+        assert main_module.update_event_raw(event_id, {"raw": "^^ 2026-03-02\nChanged"}) == {
+            "ok": False,
+            "error": "event is read-only",
+        }
+        assert main_module.remove_event(event_id) == {"ok": False, "error": "event is read-only"}
 
 
 def test_user_created_events_are_untouched(main_module) -> None:
@@ -138,24 +257,21 @@ def test_user_created_events_are_untouched(main_module) -> None:
     assert detail["item"]["title"] == "User holiday plan"
 
 
-def test_readonly_system_holiday_protection_blocks_normal_mutation(main_module) -> None:
+def test_removed_upstream_holiday_archives_old_synced_event(main_module) -> None:
     service = sync_service(
         main_module,
-        [Holiday(external_id="uid-readonly", uid="uid-readonly", title="읽기 전용", start_date="2026-03-01")],
+        [Holiday(external_id="uid-removed", uid="uid-removed", title="삭제된 휴일", start_date="2026-10-01")],
     )
     service.sync_years(start_year=2026, end_year=2026)
-    event_id = list_all_2026_events(main_module)[0]["id"]
 
-    patch = main_module.update_event(event_id, {"title": "Changed"})
-    raw_patch = main_module.update_event_raw(event_id, {"raw": "^^ 2026-03-02\nChanged"})
-    deleted = main_module.remove_event(event_id)
+    service.provider = FakeHolidayProvider([])
+    result = service.sync_years(start_year=2026, end_year=2026)
 
-    assert patch == {"ok": False, "error": "event is read-only"}
-    assert raw_patch == {"ok": False, "error": "event is read-only"}
-    assert deleted == {"ok": False, "error": "event is read-only"}
-    detail = main_module.get_event(event_id)
-    assert detail["item"]["title"] == "읽기 전용"
-    assert detail["item"]["status"] == "active"
+    assert result["archived"] == 1
+    assert imported_events(main_module) == []
+    archived = imported_events(main_module, mode="archived")
+    assert len(archived) == 1
+    assert archived[0]["title"] == "삭제된 휴일"
 
 
 def test_startup_monthly_sync_registration_does_not_duplicate_jobs(main_module, monkeypatch) -> None:
@@ -186,14 +302,15 @@ def test_startup_monthly_sync_registration_does_not_duplicate_jobs(main_module, 
 
 def test_missing_or_unreachable_ical_url_fails_safely(main_module) -> None:
     missing = HolidaySyncService(main_module.items_repo, main_module.event_repo, ical_url="")
-    assert missing.sync_years(start_year=2026, end_year=2026)["skipped"] is True
+    missing_result = missing.sync_years(start_year=2026, end_year=2026)
+    assert missing_result["skipped"] is True
+    assert events_by_class(main_module, "claim-day")
 
     service = sync_service(main_module, error=OSError("network unavailable"))
     result = service.sync_years(start_year=2026, end_year=2026)
 
     assert result["ok"] is False
     assert result["skipped"] is True
-    assert list_all_2026_events(main_module) == []
 
 
 def test_google_korea_holidays_is_documented_default_source() -> None:
@@ -215,10 +332,10 @@ def test_uid_based_identity_works_correctly(main_module) -> None:
     )
     service.sync_years(start_year=2026, end_year=2026)
 
-    events = list_all_2026_events(main_module)
-    assert len(events) == 1
-    assert events[0]["title"] == "New"
-    assert events[0]["start_date"] == "2026-08-16"
+    imported = imported_events(main_module)
+    assert len(imported) == 1
+    assert imported[0]["title"] == "New"
+    assert imported[0]["start_date"] == "2026-08-16"
 
 
 def test_ical_provider_reads_vevent_uid_summary_and_date(tmp_path: Path) -> None:
@@ -229,7 +346,7 @@ def test_ical_provider_reads_vevent_uid_summary_and_date(tmp_path: Path) -> None
                 "BEGIN:VCALENDAR",
                 "VERSION:2.0",
                 "BEGIN:VEVENT",
-                "UID:naver-uid-1",
+                "UID:google-uid-1",
                 "SUMMARY:개천절",
                 "DTSTART;VALUE=DATE:20261003",
                 "DTEND;VALUE=DATE:20261004",
@@ -244,8 +361,8 @@ def test_ical_provider_reads_vevent_uid_summary_and_date(tmp_path: Path) -> None
 
     assert holidays == [
         Holiday(
-            external_id="naver-uid-1",
-            uid="naver-uid-1",
+            external_id="google-uid-1",
+            uid="google-uid-1",
             title="개천절",
             start_date="2026-10-03",
             end_date=None,

@@ -32,9 +32,20 @@ function eachCalendarCell(monthValue) {
   });
 }
 
-function isSystemHoliday(event) {
-  const tags = new Set((event.tags || []).map((tag) => String(tag || "").toLowerCase()));
-  return tags.has("system:kr-holiday") && tags.has("readonly");
+function systemBadgeForEvent(event) {
+  if (event.event_class === "public-holiday") {
+    return { label: UI_STRINGS.HOLIDAY_BADGE, className: "eventHolidayBadge", titleClass: "eventHolidayTitle" };
+  }
+  if (event.event_class === "market-saturday") {
+    return { label: UI_STRINGS.MARKET_BADGE, className: "eventMarketBadge", titleClass: "eventMarketTitle" };
+  }
+  if (event.event_class === "claim-day") {
+    return { label: UI_STRINGS.CLAIM_BADGE, className: "eventClaimBadge", titleClass: "eventClaimTitle" };
+  }
+  if (event.is_imported_calendar_event) {
+    return { label: UI_STRINGS.EVENT_BADGE, className: "eventObservanceBadge", titleClass: "eventObservanceTitle" };
+  }
+  return null;
 }
 
 export default function EventsPageClient() {
@@ -238,13 +249,13 @@ export default function EventsPageClient() {
                 <div className="eventMonthGroupHeading">{date}</div>
                 <ul className="taskList">
                   {dateEvents.map((event) => {
-                    const holiday = isSystemHoliday(event);
+                    const badge = systemBadgeForEvent(event);
                     return (
                       <li key={event.id} className="taskListRow">
                         <div className="eventListTitleRow">
-                          {holiday ? <span className="eventHolidayBadge">{UI_STRINGS.HOLIDAY_BADGE}</span> : null}
+                          {badge ? <span className={"eventSystemBadge " + badge.className}>{badge.label}</span> : null}
                           <Link
-                            className={"taskLink taskListTitleLink" + (holiday ? " eventHolidayTitle" : "")}
+                            className={"taskLink taskListTitleLink" + (badge ? " " + badge.titleClass : "")}
                             href={`/events/${event.id}`}
                           >
                             {event.title}

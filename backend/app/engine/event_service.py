@@ -1,7 +1,13 @@
 from app.db.repo.event_repo import EventRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.reminder_repo import ReminderRepo
-from app.engine.holiday_service import is_system_holiday_tags
+from app.engine.holiday_service import (
+    classification_source_from_tags,
+    event_class_from_tags,
+    is_custom_calendar_tags,
+    is_imported_calendar_tags,
+    is_readonly_system_event_tags,
+)
 from app.utils.event_raw import export_event_raw, parse_event_raw
 from app.utils.timefmt import format_dt_for_ui
 
@@ -172,7 +178,7 @@ class EventService:
         return self.items_repo.restore_item(item_id)
 
     def is_readonly_event(self, item_id: str) -> bool:
-        return is_system_holiday_tags(self.items_repo.list_item_tags(item_id))
+        return is_readonly_system_event_tags(self.items_repo.list_item_tags(item_id))
 
     def _decorate_event(self, event: dict, *, include_reminders: bool) -> dict:
         item = dict(event)
@@ -182,6 +188,12 @@ class EventService:
         item["updated_at_display"] = format_dt_for_ui(item.get("updated_at"))
         item["removed_at_display"] = format_dt_for_ui(item.get("deleted_at"))
         item["tags"] = self.items_repo.list_item_tags(item["id"])
+        tags = item["tags"]
+        item["is_imported_calendar_event"] = is_imported_calendar_tags(tags)
+        item["is_custom_calendar_event"] = is_custom_calendar_tags(tags)
+        item["is_readonly_system_event"] = is_readonly_system_event_tags(tags)
+        item["event_class"] = event_class_from_tags(tags)
+        item["classification_source"] = classification_source_from_tags(tags)
 
         if include_reminders and self.reminder_repo is not None:
             reminders = self.reminder_repo.list_linked_reminders(item["id"])

@@ -96,7 +96,7 @@ body.eventsPageActive .appShellMain {
   min-width: 0;
 }
 
-.eventHolidayBadge {
+.eventSystemBadge {
   border: 1px solid rgba(235, 160, 172, 0.42);
   border-radius: 999px;
   background: rgba(235, 160, 172, 0.08);
@@ -107,12 +107,51 @@ body.eventsPageActive .appShellMain {
   padding: 3px 6px;
 }
 
+.eventHolidayBadge {
+  border-color: rgba(235, 160, 172, 0.42);
+  background: rgba(235, 160, 172, 0.08);
+  color: var(--ctp-maroon);
+}
+
+.eventObservanceBadge {
+  border-color: rgba(137, 180, 250, 0.42);
+  background: rgba(137, 180, 250, 0.08);
+  color: var(--ctp-blue);
+}
+
+.eventMarketBadge {
+  border-color: rgba(166, 227, 161, 0.4);
+  background: rgba(166, 227, 161, 0.08);
+  color: var(--ctp-green);
+}
+
+.eventClaimBadge {
+  border-color: rgba(250, 179, 135, 0.4);
+  background: rgba(250, 179, 135, 0.08);
+  color: var(--ctp-peach);
+}
+
 .eventHolidayTitle {
   color: var(--ctp-maroon);
 }
 
 .eventHolidayTitle:hover {
   color: var(--ctp-maroon);
+}
+
+.eventObservanceTitle,
+.eventObservanceTitle:hover {
+  color: var(--ctp-blue);
+}
+
+.eventMarketTitle,
+.eventMarketTitle:hover {
+  color: var(--ctp-green);
+}
+
+.eventClaimTitle,
+.eventClaimTitle:hover {
+  color: var(--ctp-peach);
 }
 
 @media (max-width: 640px) {
