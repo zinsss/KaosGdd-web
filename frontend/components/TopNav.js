@@ -27,6 +27,7 @@ export default function TopNav() {
   const notesActive = pathname.startsWith("/notes");
   const filesActive = pathname.startsWith("/files");
   const faxActive = pathname.startsWith("/fax");
+  const scribbleActive = pathname.startsWith("/scribble");
   const settingsActive = pathname.startsWith("/settings");
   const suppliesActive = pathname.startsWith("/supplies");
 
@@ -183,6 +184,9 @@ export default function TopNav() {
           </Link>
           <Link className={"topNavTextLink" + (faxActive ? " topNavTextLinkActive" : "")} href="/fax">
             {UI_STRINGS.FAX}
+          </Link>
+          <Link className={"topNavTextLink" + (scribbleActive ? " topNavTextLinkActive" : "")} href="/scribble">
+            {UI_STRINGS.SCRIBBLE}
           </Link>
           <Link className={"topNavTextLink" + (settingsActive ? " topNavTextLinkActive" : "")} href="/settings">
             {UI_STRINGS.SETTINGS}

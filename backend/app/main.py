@@ -30,6 +30,7 @@ from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.scribble_repo import ScribbleRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
+from app.engine.dashboard_service import DashboardService
 from app.engine.holiday_service import HolidaySyncService
 from app.engine.journal_service import JournalService
 from app.engine.note_service import NoteService
@@ -77,6 +78,11 @@ reminder_service = ReminderService(
     push_policy_repo,
 )
 supply_service = SupplyService(items_repo, supply_repo)
+dashboard_service = DashboardService(
+    event_service=event_service,
+    task_service=task_service,
+    reminder_service=reminder_service,
+)
 logger = logging.getLogger(__name__)
 holiday_sync_task = None
 
@@ -162,6 +168,11 @@ def health():
         "mode": SETTINGS.APP_HEALTH_MODE,
         "timezone": SETTINGS.APP_TIMEZONE,
     }
+
+
+@app.get("/dashboard")
+def get_dashboard():
+    return dashboard_service.get_dashboard()
 
 
 @app.get("/scribbles")

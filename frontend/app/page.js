@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import DashboardPageClient from "./DashboardPageClient";
 
 export default function HomePage() {
-  redirect("/scribble");
+  return <DashboardPageClient />;
 }
