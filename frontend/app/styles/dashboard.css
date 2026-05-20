@@ -1,0 +1,146 @@
+.dashboardPage {
+  display: grid;
+  gap: 0;
+}
+
+.dashboardHero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.dashboardDate {
+  color: var(--ctp-lavender);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.dashboardSubline {
+  color: var(--ui-text-dim);
+  margin-top: 4px;
+}
+
+.dashboardGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.dashboardList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dashboardListRow {
+  border-bottom: 1px dotted var(--ui-border);
+  padding: 8px 0;
+}
+
+.dashboardListRow:first-child {
+  padding-top: 0;
+}
+
+.dashboardListRow:last-child {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.dashboardEventLine,
+.dashboardBadgeRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.dashboardItemTitle {
+  min-width: 0;
+  word-break: break-word;
+}
+
+.dashboardMetaLine {
+  margin-top: 3px;
+}
+
+.dashboardBadge {
+  border: 1px solid var(--ui-border);
+  border-radius: 999px;
+  flex: 0 0 auto;
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 7px;
+}
+
+.dashboardBadgeHoliday {
+  border-color: rgba(235, 160, 172, 0.42);
+  background: rgba(235, 160, 172, 0.08);
+  color: var(--ctp-maroon);
+}
+
+.dashboardBadgeEvent {
+  border-color: rgba(137, 180, 250, 0.42);
+  background: rgba(137, 180, 250, 0.08);
+  color: var(--ctp-blue);
+}
+
+.dashboardBadgeMarket {
+  border-color: rgba(166, 227, 161, 0.4);
+  background: rgba(166, 227, 161, 0.08);
+  color: var(--ctp-green);
+}
+
+.dashboardBadgeClaim {
+  border-color: rgba(250, 179, 135, 0.4);
+  background: rgba(250, 179, 135, 0.08);
+  color: var(--ctp-peach);
+}
+
+.dashboardCounts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dashboardCountTile {
+  border: 1px solid var(--ui-border);
+  border-radius: var(--group-box-radius);
+  color: var(--ui-text);
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 10px;
+  text-decoration: none;
+}
+
+.dashboardCountTile span {
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.dashboardCountTile small {
+  color: var(--ui-text-dim);
+}
+
+.dashboardCountOverdue span {
+  color: var(--ctp-maroon);
+}
+
+.dashboardCountToday span {
+  color: var(--ctp-blue);
+}
+
+@media (max-width: 760px) {
+  .dashboardHero,
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboardHero {
+    display: grid;
+  }
+}
