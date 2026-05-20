@@ -62,6 +62,8 @@ export const UI_STRINGS = {
   SUPPLIES: "Supplies",
   CAPTURE: "Capture",
   TASK_DETAIL: "Task Detail",
+  REPEAT_BADGE: "Repeat",
+  REPEATING_TASK_EDIT_NOTICE: "Repeating task. Edits apply to this task only.",
   REMINDER_DETAIL: "Reminder Detail",
   TASK_LIST: "Task list",
   NO_TASKS: "No tasks yet.",

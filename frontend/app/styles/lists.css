@@ -64,6 +64,11 @@
   border-bottom: 1px dotted var(--ui-border);
 }
 
+.taskListRowRepeating {
+  border-left: 2px solid rgba(180, 190, 254, 0.42);
+  padding-left: 9px;
+}
+
 .taskListRowMain {
   display: flex;
   align-items: flex-start;
@@ -151,6 +156,18 @@
   padding-left: 10px;
 }
 
+.repeatBadge {
+  flex: 0 0 auto;
+  border: 1px solid rgba(148, 226, 213, 0.36);
+  border-radius: 999px;
+  background: rgba(148, 226, 213, 0.07);
+  color: var(--ctp-teal);
+  font-size: 11px;
+  line-height: 1;
+  padding: 3px 7px;
+  white-space: nowrap;
+}
+
 .taskListDueLine {
   margin-top: 8px;
   margin-left: 28px;
@@ -170,6 +187,11 @@
   border-radius: var(--group-box-radius);
   background: rgba(30, 30, 46, 0.36);
   padding: 8px 10px;
+}
+
+.taskInlineSubtasksRepeating {
+  border-color: rgba(180, 190, 254, 0.22);
+  background: rgba(180, 190, 254, 0.045);
 }
 
 .taskInlineSubtasksState {

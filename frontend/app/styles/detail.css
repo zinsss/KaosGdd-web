@@ -47,6 +47,22 @@
   padding: 4px 7px;
 }
 
+.repeatingTaskDetailPanel {
+  border-left-color: rgba(180, 190, 254, 0.46);
+}
+
+.repeatDetailBadge {
+  border-color: rgba(148, 226, 213, 0.36);
+  background: rgba(148, 226, 213, 0.07);
+  color: var(--ctp-teal);
+}
+
+.repeatEditNotice {
+  color: var(--ui-text-dim);
+  font-size: 12px;
+  margin-top: 5px;
+}
+
 .holidayBadge {
   border-color: rgba(235, 160, 172, 0.45);
   background: rgba(235, 160, 172, 0.08);

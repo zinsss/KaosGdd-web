@@ -276,6 +276,8 @@ class TaskService:
         completed_task_detail: dict,
         relative_reminder_templates: list[str] | None = None,
     ) -> None:
+        # TODO: If whole-series editing is needed, introduce a repeat_series_id / repeat_template model.
+        # Current repeat rollover creates independent task occurrences.
         repeat_rule, visible_tags = self._extract_repeat_and_visible_tags(completed_task_detail["id"])
         if not repeat_rule:
             return

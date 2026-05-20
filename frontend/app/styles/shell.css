@@ -325,6 +325,7 @@
 }
 
 .topCaptureBar .topCaptureInput {
+  box-sizing: border-box;
   display: block;
   grid-area: input;
   grid-column: 1 / -1;
@@ -375,7 +376,7 @@
   align-items: center;
   justify-content: flex-end;
   gap: 6px;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   max-width: 100%;
 }
