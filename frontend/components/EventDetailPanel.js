@@ -8,14 +8,30 @@ import LinkedItemsBlock from "./LinkedItemsBlock";
 import { UI_STRINGS } from "../lib/strings";
 
 function isSystemHoliday(item) {
-  const tags = new Set((item.tags || []).map((tag) => String(tag || "").toLowerCase()));
-  return tags.has("system:kr-holiday") && tags.has("readonly");
+  return item.is_readonly_system_event || false;
+}
+
+function badgeForEvent(item) {
+  if (item.event_class === "public-holiday") return { label: UI_STRINGS.HOLIDAY_BADGE, className: "holidayBadge" };
+  if (item.event_class === "market-saturday") return { label: UI_STRINGS.MARKET_BADGE, className: "marketBadge" };
+  if (item.event_class === "claim-day") return { label: UI_STRINGS.CLAIM_BADGE, className: "claimBadge" };
+  if (item.is_imported_calendar_event) return { label: UI_STRINGS.EVENT_BADGE, className: "observanceBadge" };
+  return null;
 }
 
 function visibleTags(item) {
   return (item.tags || []).filter((tag) => {
     const clean = String(tag || "").toLowerCase();
-    return clean !== "system:kr-holiday" && clean !== "readonly" && !clean.startsWith("kr-holiday:");
+    return (
+      clean !== "system:kr-holiday" &&
+      clean !== "system:kr-calendar" &&
+      clean !== "system:custom-calendar" &&
+      clean !== "readonly" &&
+      !clean.startsWith("kr-holiday:") &&
+      !clean.startsWith("custom-calendar:") &&
+      !clean.startsWith("event-class:") &&
+      !clean.startsWith("classification-source:")
+    );
   });
 }
 
@@ -26,7 +42,12 @@ export default function EventDetailPanel({ item, raw }) {
   const [copied, setCopied] = useState(false);
   const [isRemoving, setIsRemoving] = useState(false);
   const [removeError, setRemoveError] = useState("");
+  const [isClassifying, setIsClassifying] = useState(false);
+  const [classificationError, setClassificationError] = useState("");
   const readonlyHoliday = isSystemHoliday(item);
+  const systemBadge = badgeForEvent(item);
+  const isImportedCalendarEvent = item.is_imported_calendar_event || false;
+  const isPublicHoliday = item.event_class === "public-holiday";
   const displayTags = visibleTags(item);
 
   async function onRemove() {
@@ -58,6 +79,29 @@ export default function EventDetailPanel({ item, raw }) {
     } catch {}
   }
 
+  async function onClassificationChange(event) {
+    const checked = event.target.checked;
+    setIsClassifying(true);
+    setClassificationError("");
+    try {
+      const res = await fetch(`/api/events/${item.id}/classification`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ is_public_holiday: checked }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok || !data?.ok) {
+        setClassificationError((data && data.error) || UI_STRINGS.CLASSIFICATION_SAVE_FAILED);
+        return;
+      }
+      router.refresh();
+    } catch {
+      setClassificationError(UI_STRINGS.CLASSIFICATION_SAVE_FAILED);
+    } finally {
+      setIsClassifying(false);
+    }
+  }
+
   return (
     <main className="page">
       <div className="detailBackLinkRow"><Link className="taskLink backLink" href="/events">&lt; Back to Events</Link></div>
@@ -70,7 +114,7 @@ export default function EventDetailPanel({ item, raw }) {
             <div className="detailStateText">{item.status}</div>
             {readonlyHoliday ? (
               <div className="detailBadgeRow">
-                <span className="detailBadge holidayBadge">{UI_STRINGS.HOLIDAY_BADGE}</span>
+                {systemBadge ? <span className={"detailBadge " + systemBadge.className}>{systemBadge.label}</span> : null}
                 <span className="detailBadge readonlyBadge">{UI_STRINGS.READONLY_BADGE}</span>
               </div>
             ) : null}
@@ -89,6 +133,23 @@ export default function EventDetailPanel({ item, raw }) {
             <div className="detailReadRow">
               <div className="detailReadLabel">Reminder</div>
               <div className="detailReadContent withDivider">{item.reminders[0].remind_at_display || item.reminders[0].remind_at} ({item.reminders[0].state})</div>
+            </div>
+          ) : null}
+          {isImportedCalendarEvent ? (
+            <div className="detailReadRow">
+              <div className="detailReadLabel">Class</div>
+              <div className="detailReadContent withDivider">
+                <label className="checkboxLine">
+                  <input
+                    type="checkbox"
+                    checked={isPublicHoliday}
+                    onChange={onClassificationChange}
+                    disabled={isClassifying}
+                  />
+                  <span>{UI_STRINGS.PUBLIC_HOLIDAY_LABEL}</span>
+                </label>
+                {classificationError ? <div className="errorText">{classificationError}</div> : null}
+              </div>
             </div>
           ) : null}
           <LinkedItemsBlock links={item.links} />

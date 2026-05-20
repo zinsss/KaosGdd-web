@@ -48,9 +48,27 @@
 }
 
 .holidayBadge {
-  border-color: rgba(249, 226, 175, 0.45);
-  background: rgba(249, 226, 175, 0.08);
-  color: var(--ctp-yellow);
+  border-color: rgba(235, 160, 172, 0.45);
+  background: rgba(235, 160, 172, 0.08);
+  color: var(--ctp-maroon);
+}
+
+.observanceBadge {
+  border-color: rgba(137, 180, 250, 0.45);
+  background: rgba(137, 180, 250, 0.08);
+  color: var(--ctp-blue);
+}
+
+.marketBadge {
+  border-color: rgba(166, 227, 161, 0.42);
+  background: rgba(166, 227, 161, 0.08);
+  color: var(--ctp-green);
+}
+
+.claimBadge {
+  border-color: rgba(250, 179, 135, 0.42);
+  background: rgba(250, 179, 135, 0.08);
+  color: var(--ctp-peach);
 }
 
 .readonlyBadge {
@@ -116,6 +134,13 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
+}
+
+.checkboxLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ui-text);
 }
 
 .detailReadSubtaskText {
