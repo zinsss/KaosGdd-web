@@ -94,6 +94,26 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding-bottom: var(--app-shell-bottom-reserve);
+  scrollbar-color: #585b70 #11111b;
+  scrollbar-width: thin;
+}
+
+.appShellMain::-webkit-scrollbar {
+  width: 10px;
+}
+
+.appShellMain::-webkit-scrollbar-track {
+  background: #11111b;
+}
+
+.appShellMain::-webkit-scrollbar-thumb {
+  background: #585b70;
+  border: 2px solid #11111b;
+  border-radius: 999px;
+}
+
+.appShellMain::-webkit-scrollbar-thumb:hover {
+  background: #6c7086;
 }
 
 .modeDots {
