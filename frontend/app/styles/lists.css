@@ -64,11 +64,6 @@
   border-bottom: 1px dotted var(--ui-border);
 }
 
-.taskListRowRepeating {
-  border-left: 2px solid rgba(180, 190, 254, 0.42);
-  padding-left: 9px;
-}
-
 .taskListRowMain {
   display: flex;
   align-items: flex-start;
