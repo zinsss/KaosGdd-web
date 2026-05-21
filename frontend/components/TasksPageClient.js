@@ -62,7 +62,7 @@ function TaskRow({
   const isRepeating = Boolean(task.repeat_rule);
 
   return (
-    <li key={task.id} className={"taskListRow" + (isRepeating ? " taskListRowRepeating" : "")}>
+    <li key={task.id} className="taskListRow">
       <div className="taskListRowMain">
         <div className="taskListTitleBlock">
           <div className="taskListTitleRow taskListTitleRowWithMeta">
