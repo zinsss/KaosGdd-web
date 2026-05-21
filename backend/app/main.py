@@ -630,6 +630,7 @@ def update_task_raw(task_id: str, payload: dict):
         task_id,
         raw_text,
         timezone_name=timezone_name,
+        edit_scope=payload.get("edit_scope"),
     )
     if not ok:
         return {"ok": False, "error": error or ApiText.INVALID_RAW_TASK}

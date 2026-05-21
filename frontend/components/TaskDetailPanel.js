@@ -286,7 +286,7 @@ export default function TaskDetailPanel({ item, raw }) {
 
         {openPanel === "edit" ? (
           <div className="toggleBody">
-            <TaskRawEditor taskId={item.id} initialRaw={raw || ""} />
+            <TaskRawEditor taskId={item.id} initialRaw={raw || ""} isRepeating={isRepeating} />
           </div>
         ) : null}
 
@@ -297,6 +297,33 @@ export default function TaskDetailPanel({ item, raw }) {
               {item.updated_at_display ? <div>{UI_STRINGS.UPDATED}: {item.updated_at_display}</div> : null}
 
             </div>
+
+            {item.recurrence_history && item.recurrence_history.length > 0 ? (
+              <div className="recurrenceHistoryBlock">
+                <div className="recurrenceHistoryTitle">{UI_STRINGS.RECURRENCE_HISTORY_TITLE}</div>
+                {item.recurrence_history.map((entry) => (
+                  <details key={entry.id} className="recurrenceHistoryItem">
+                    <summary>
+                      {UI_STRINGS.RECURRENCE_HISTORY_PREFIX} {entry.edited_at_display || entry.edited_at}
+                    </summary>
+                    <div className="recurrenceHistoryMeta">
+                      {UI_STRINGS.REPEAT_SCOPE_THIS_AND_FUTURE} · {Number(entry.affected_future_count || 0)} future
+                    </div>
+                    <div className="recurrenceHistoryDiff">
+                      {entry.previous_values?.title !== entry.new_values?.title ? (
+                        <div>Title: {entry.previous_values?.title || "-"} → {entry.new_values?.title || "-"}</div>
+                      ) : null}
+                      {entry.previous_values?.due_at !== entry.new_values?.due_at ? (
+                        <div>Due: {entry.previous_values?.due_at || "-"} → {entry.new_values?.due_at || "-"}</div>
+                      ) : null}
+                      {entry.previous_values?.repeat_rule !== entry.new_values?.repeat_rule ? (
+                        <div>Repeat: {entry.previous_values?.repeat_rule || "-"} → {entry.new_values?.repeat_rule || "-"}</div>
+                      ) : null}
+                    </div>
+                  </details>
+                ))}
+              </div>
+            ) : null}
 
             <div className="moreActionRow">
               <button type="button" className="button buttonToneCopy" onClick={onCopyId}>

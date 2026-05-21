@@ -26,7 +26,11 @@ CREATE TABLE IF NOT EXISTS {task_items} (
     memo TEXT,
     is_done INTEGER NOT NULL DEFAULT 0,
     done_at TEXT,
+    recurrence_group_id TEXT,
+    recurrence_sequence INTEGER,
+    recurrence_parent_id TEXT,
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE,
+    FOREIGN KEY (recurrence_parent_id) REFERENCES {task_items}(item_id) ON DELETE SET NULL,
     CHECK (is_done IN (0, 1))
 );
 
@@ -55,6 +59,20 @@ CREATE TABLE IF NOT EXISTS {task_subtasks} (
     updated_at TEXT NOT NULL,
     FOREIGN KEY (task_item_id) REFERENCES {task_items}(item_id) ON DELETE CASCADE,
     CHECK (is_done IN (0, 1))
+);
+
+CREATE TABLE IF NOT EXISTS {task_recurrence_history} (
+    id TEXT PRIMARY KEY,
+    recurrence_group_id TEXT NOT NULL,
+    edited_at TEXT NOT NULL,
+    edited_task_id TEXT NOT NULL,
+    edit_scope TEXT NOT NULL,
+    previous_values_json TEXT NOT NULL,
+    new_values_json TEXT NOT NULL,
+    affected_future_count INTEGER NOT NULL DEFAULT 0,
+    affected_task_ids_json TEXT NOT NULL,
+    FOREIGN KEY (edited_task_id) REFERENCES {task_items}(item_id) ON DELETE CASCADE,
+    CHECK (edit_scope IN ('this_and_future'))
 );
 
 
@@ -217,6 +235,12 @@ ON {reminder_items}(state, remind_at, snoozed_until);
 CREATE INDEX IF NOT EXISTS idx_task_items_done_state_time
 ON {task_items}(is_done, done_at);
 
+CREATE INDEX IF NOT EXISTS idx_task_items_recurrence
+ON {task_items}(recurrence_group_id, recurrence_sequence);
+
+CREATE INDEX IF NOT EXISTS idx_task_recurrence_history_group_time
+ON {task_recurrence_history}(recurrence_group_id, edited_at DESC);
+
 CREATE INDEX IF NOT EXISTS idx_supply_items_done_at
 ON {supply_items}(done_at, item_id);
 
@@ -265,6 +289,7 @@ ON {scribbles}(updated_at);
     items=DbTables.ITEMS,
     task_items=DbTables.TASK_ITEMS,
     task_subtasks=DbTables.TASK_SUBTASKS,
+    task_recurrence_history=DbTables.TASK_RECURRENCE_HISTORY,
     reminder_items=DbTables.REMINDER_ITEMS,
     supply_items=DbTables.SUPPLY_ITEMS,
     supply_presets=DbTables.SUPPLY_PRESETS,
@@ -491,6 +516,9 @@ def _migrate_sqlite_legacy_task_reminder_tables(conn) -> None:
     _sqlite_add_column_if_missing(conn, DbTables.TASK_ITEMS, "memo TEXT")
     _sqlite_add_column_if_missing(conn, DbTables.TASK_ITEMS, "is_done INTEGER NOT NULL DEFAULT 0")
     _sqlite_add_column_if_missing(conn, DbTables.TASK_ITEMS, "done_at TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_ITEMS, "recurrence_group_id TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_ITEMS, "recurrence_sequence INTEGER")
+    _sqlite_add_column_if_missing(conn, DbTables.TASK_ITEMS, "recurrence_parent_id TEXT")
 
     _sqlite_add_column_if_missing(conn, DbTables.TASK_SUBTASKS, "position INTEGER NOT NULL DEFAULT 0")
     _sqlite_add_column_if_missing(conn, DbTables.TASK_SUBTASKS, "is_done INTEGER NOT NULL DEFAULT 0")

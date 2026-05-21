@@ -5,6 +5,7 @@ from app.config import SETTINGS
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
+from app.utils.ids import new_id
 from app.utils.repeat import compute_next_due_at
 from app.utils.task_raw import (
     REPEAT_TAG_PREFIX,
@@ -25,6 +26,10 @@ ITEM_TYPE_MARKERS = {
     "fax": "X",
     "mail": "M",
 }
+
+RECURRENCE_SCOPE_CURRENT_ONLY = "current_only"
+RECURRENCE_SCOPE_THIS_AND_FUTURE = "this_and_future"
+_DUE_UNSET = object()
 
 
 def _item_type_path(item_type: str, item_id: str) -> str | None:
@@ -209,6 +214,7 @@ class TaskService:
         *,
         reject_past_datetimes: bool = False,
         timezone_name: str | None = None,
+        edit_scope: str | None = None,
     ) -> tuple[bool, str | None]:
         detail = self.task_repo.get_task_detail(item_id)
         if detail is None:
@@ -228,15 +234,49 @@ class TaskService:
         except ValueError as exc:
             return False, str(exc)
 
+        current_repeat_rule, _ = self._extract_repeat_and_visible_tags(item_id)
+        parsed_repeat_rule = str(parsed.get("repeat_rule") or "").strip() or None
+        normalized_scope = self._normalize_edit_scope(edit_scope)
+
+        if (current_repeat_rule or parsed_repeat_rule) and normalized_scope == RECURRENCE_SCOPE_THIS_AND_FUTURE:
+            ok, error = self._update_recurrence_this_and_future(item_id, detail, parsed)
+            if not ok:
+                return False, error
+            return True, None
+
+        ok = self._apply_parsed_task_update(item_id, parsed, include_links=True, include_reminders=True)
+        if not ok:
+            return False, "not found"
+
+        if parsed_repeat_rule:
+            self._ensure_recurrence_metadata(item_id, detail)
+
+        return True, None
+
+    def _normalize_edit_scope(self, edit_scope: str | None) -> str:
+        scope = str(edit_scope or RECURRENCE_SCOPE_CURRENT_ONLY).strip().lower().replace("-", "_")
+        if scope in {RECURRENCE_SCOPE_CURRENT_ONLY, RECURRENCE_SCOPE_THIS_AND_FUTURE}:
+            return scope
+        return RECURRENCE_SCOPE_CURRENT_ONLY
+
+    def _apply_parsed_task_update(
+        self,
+        item_id: str,
+        parsed: dict,
+        *,
+        due_at=_DUE_UNSET,
+        include_links: bool = False,
+        include_reminders: bool = False,
+    ) -> bool:
         ok = self.update_task(
             item_id,
             title=parsed.get("title"),
-            due_at=parsed.get("due_at"),
+            due_at=parsed.get("due_at") if due_at is _DUE_UNSET else due_at,
             memo=parsed.get("memo"),
             is_done=parsed.get("is_done"),
         )
         if not ok:
-            return False, "not found"
+            return False
 
         self.task_repo.replace_subtasks(item_id, list(parsed.get("subtasks") or []))
 
@@ -245,9 +285,10 @@ class TaskService:
         if repeat_rule:
             tags.append(REPEAT_TAG_PREFIX + repeat_rule)
         self.items_repo.replace_item_tags(item_id, tags)
-        self.items_repo.replace_item_links(item_id, list(parsed.get("linked_item_ids") or []))
+        if include_links:
+            self.items_repo.replace_item_links(item_id, list(parsed.get("linked_item_ids") or []))
 
-        if self.reminder_repo is not None:
+        if include_reminders and self.reminder_repo is not None:
             reminders = self.reminder_repo.list_linked_reminders(item_id)
             editable_states = {"scheduled", "snoozed", "fired", "missed"}
 
@@ -269,15 +310,101 @@ class TaskService:
                     relative_token=relative_by_remind_at.get(remind_at),
                 )
 
+        return True
+
+    def _ensure_recurrence_metadata(self, item_id: str, detail: dict) -> str:
+        group_id = str(detail.get("recurrence_group_id") or "").strip()
+        if group_id:
+            return group_id
+        group_id = new_id()
+        self.task_repo.set_recurrence_metadata(
+            item_id,
+            recurrence_group_id=group_id,
+            recurrence_sequence=int(detail.get("recurrence_sequence") or 0),
+            recurrence_parent_id=detail.get("recurrence_parent_id"),
+        )
+        return group_id
+
+    def _update_recurrence_this_and_future(self, item_id: str, detail: dict, parsed: dict) -> tuple[bool, str | None]:
+        if detail.get("status") != "active" or bool(detail.get("is_done")):
+            return False, "this-and-future edits require an active recurrence task"
+        group_id = str(detail.get("recurrence_group_id") or "").strip()
+        if not group_id:
+            return False, "recurrence metadata is missing"
+
+        current_sequence = int(detail.get("recurrence_sequence") or 0)
+        affected_tasks = self.task_repo.list_active_future_recurrence_tasks(
+            recurrence_group_id=group_id,
+            min_sequence=current_sequence,
+        )
+        affected_ids = [str(task["id"]) for task in affected_tasks]
+        if item_id not in affected_ids:
+            return False, "recurrence metadata is missing"
+
+        previous_values = self._recurrence_snapshot(item_id)
+        due_delta = self._due_delta(detail.get("due_at"), parsed.get("due_at"))
+
+        for task in affected_tasks:
+            target_id = str(task["id"])
+            next_due_at = parsed.get("due_at")
+            if target_id != item_id:
+                shifted_due_at = self._shift_due_at(task.get("due_at"), due_delta)
+                next_due_at = shifted_due_at if shifted_due_at is not None else task.get("due_at")
+            self._apply_parsed_task_update(
+                target_id,
+                parsed,
+                due_at=next_due_at,
+                include_links=target_id == item_id,
+                include_reminders=target_id == item_id,
+            )
+
+        new_values = self._recurrence_snapshot(item_id)
+        self.task_repo.create_recurrence_history(
+            recurrence_group_id=group_id,
+            edited_task_id=item_id,
+            previous_values=previous_values,
+            new_values=new_values,
+            affected_task_ids=affected_ids,
+        )
         return True, None
+
+    def _recurrence_snapshot(self, item_id: str) -> dict:
+        detail = self.task_repo.get_task_detail(item_id) or {}
+        repeat_rule, visible_tags = self._extract_repeat_and_visible_tags(item_id)
+        return {
+            "title": detail.get("title"),
+            "due_at": detail.get("due_at"),
+            "repeat_rule": repeat_rule,
+            "tags": visible_tags,
+            "memo": detail.get("memo"),
+            "subtasks": [
+                {"content": subtask.get("content"), "is_done": bool(subtask.get("is_done"))}
+                for subtask in self.task_repo.list_subtasks(item_id)
+            ],
+        }
+
+    def _due_delta(self, old_due_at: str | None, new_due_at: str | None) -> timedelta | None:
+        if not old_due_at or not new_due_at:
+            return None
+        try:
+            return datetime.fromisoformat(str(new_due_at)) - datetime.fromisoformat(str(old_due_at))
+        except ValueError:
+            return None
+
+    def _shift_due_at(self, due_at: str | None, delta: timedelta | None) -> str | None:
+        if not due_at or delta is None:
+            return None
+        try:
+            shifted = datetime.fromisoformat(str(due_at)) + delta
+        except ValueError:
+            return None
+        return shifted.isoformat(timespec="seconds")
 
     def _rollover_repeat_task_on_completion(
         self,
         completed_task_detail: dict,
         relative_reminder_templates: list[str] | None = None,
     ) -> None:
-        # TODO: If whole-series editing is needed, introduce a repeat_series_id / repeat_template model.
-        # Current repeat rollover creates independent task occurrences.
         repeat_rule, visible_tags = self._extract_repeat_and_visible_tags(completed_task_detail["id"])
         if not repeat_rule:
             return
@@ -291,6 +418,19 @@ class TaskService:
         except ValueError:
             return
 
+        recurrence_group_id = str(completed_task_detail.get("recurrence_group_id") or "").strip()
+        recurrence_sequence = int(completed_task_detail.get("recurrence_sequence") or 0)
+        if recurrence_group_id and self.task_repo.exists_active_recurrence_occurrence(
+            recurrence_group_id=recurrence_group_id,
+            due_at=next_due_at,
+        ):
+            return
+        if not recurrence_group_id:
+            recurrence_group_id = self._ensure_recurrence_metadata(
+                completed_task_detail["id"],
+                completed_task_detail,
+            )
+
         if self.task_repo.exists_active_task_occurrence(
             title=str(completed_task_detail.get("title") or ""),
             due_at=next_due_at,
@@ -303,6 +443,9 @@ class TaskService:
             new_item_id,
             due_at=next_due_at,
             memo=completed_task_detail.get("memo"),
+            recurrence_group_id=recurrence_group_id,
+            recurrence_sequence=recurrence_sequence + 1,
+            recurrence_parent_id=completed_task_detail["id"],
         )
 
         self.items_repo.replace_item_tags(
@@ -391,6 +534,9 @@ class TaskService:
         item["tags"] = visible_tags
         item["repeat_rule"] = repeat_rule
         item["has_tags"] = bool(visible_tags)
+        item["recurrence_group_id"] = item.get("recurrence_group_id")
+        item["recurrence_sequence"] = item.get("recurrence_sequence")
+        item["recurrence_parent_id"] = item.get("recurrence_parent_id")
 
         linked_reminders = []
         if self.reminder_repo is not None:
@@ -413,6 +559,13 @@ class TaskService:
             item["reminders"] = linked_reminders
         else:
             item["reminders"] = []
+
+        item["recurrence_history"] = []
+        if include_subtasks and item.get("recurrence_group_id"):
+            history_rows = self.task_repo.list_recurrence_history(str(item["recurrence_group_id"]))
+            for history in history_rows:
+                history["edited_at_display"] = format_dt_for_ui(history.get("edited_at"))
+            item["recurrence_history"] = history_rows
 
         resolved_links = self.items_repo.list_resolved_item_links(item["id"])
         item["links"] = []

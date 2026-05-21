@@ -108,6 +108,36 @@
   color: var(--ctp-subtext1);
 }
 
+.recurrenceHistoryBlock {
+  display: grid;
+  gap: 7px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px dotted var(--ui-border);
+}
+
+.recurrenceHistoryTitle {
+  color: var(--ui-text-dim);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.recurrenceHistoryItem {
+  color: var(--ctp-subtext1);
+  font-size: 13px;
+}
+
+.recurrenceHistoryItem summary {
+  cursor: pointer;
+}
+
+.recurrenceHistoryMeta,
+.recurrenceHistoryDiff {
+  margin-top: 5px;
+  color: var(--ui-text-dim);
+  font-size: 12px;
+}
+
 .detailReadBlock {
   display: grid;
   gap: 10px;
