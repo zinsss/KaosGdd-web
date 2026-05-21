@@ -67,12 +67,21 @@ textarea.textInput:focus {
 .rawEditor {
   min-height: 44px;
   white-space: pre-wrap;
+  border-radius: 14px;
+  overflow: hidden;
 }
 
 .rawHint {
   margin-top: 8px;
+  margin-bottom: 8px;
   color: var(--ctp-overlay0);
   font-size: 12px;
+}
+
+.rawEditorActions,
+.editorActions {
+  margin-top: 16px;
+  padding-top: 8px;
 }
 
 .repeatEditScope {

@@ -54,7 +54,7 @@ export default function EventRawEditor({ eventId, initialRaw }) {
         placeholder={'^^ 2026-04-28~2026-04-30\nTrip\n#travel\nr:-2d\n"""\npack light\n"""'}
       />
       <div className="rawHint">^^ YYYY-MM-DD or YYYY-MM-DD~YYYY-MM-DD · one r: only</div>
-      <div className="actionRow compactActionRow">
+      <div className="actionRow compactActionRow rawEditorActions">
         <button className="button compactButton buttonToneSave" type="submit" disabled={isSubmitting}>
           {isSubmitting ? UI_STRINGS.SAVING : UI_STRINGS.SAVE}
         </button>

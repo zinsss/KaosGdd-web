@@ -14,13 +14,15 @@ const kaosEditorTheme = EditorView.theme(
       backgroundColor: "var(--ui-input)",
       color: "var(--ui-text)",
       border: "1px solid var(--ui-border)",
-      borderRadius: "8px",
+      borderRadius: "14px",
+      overflow: "hidden",
       fontFamily:
         '"Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace',
       fontSize: "16px",
     },
     ".cm-scroller": {
       backgroundColor: "var(--ui-input)",
+      borderRadius: "14px",
       fontFamily: "inherit",
       fontSize: "16px",
       lineHeight: "1.5",
@@ -51,6 +53,8 @@ const kaosEditorTheme = EditorView.theme(
       backgroundColor: "var(--ui-panel)",
       color: "var(--ui-text-dimmer)",
       borderRight: "1px solid var(--ui-border)",
+      borderTopLeftRadius: "14px",
+      borderBottomLeftRadius: "14px",
     },
     ".cm-lineNumbers .cm-gutterElement": {
       padding: "0 10px",

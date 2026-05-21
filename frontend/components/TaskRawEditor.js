@@ -87,7 +87,7 @@ export default function TaskRawEditor({ taskId, initialRaw, isRepeating = false 
         </fieldset>
       ) : null}
 
-      <div className="actionRow compactActionRow">
+      <div className="actionRow compactActionRow rawEditorActions">
         <button className="button compactButton buttonToneSave" type="submit" disabled={isSubmitting}>
           {isSubmitting ? UI_STRINGS.SAVING : UI_STRINGS.SAVE}
         </button>

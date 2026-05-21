@@ -254,6 +254,11 @@
 .detailActionRow {
   flex-wrap: wrap;
   gap: 8px;
+  margin-bottom: 14px;
+}
+
+.toggleBody {
+  margin-top: 12px;
 }
 
 .compactButton {

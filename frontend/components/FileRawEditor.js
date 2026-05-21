@@ -42,7 +42,7 @@ export default function FileRawEditor({ fileId, initialRaw }) {
         rows={12}
         spellCheck={false}
       />
-      <div className="actionRow">
+      <div className="actionRow editorActions">
         <button className="button buttonToneSave" onClick={save}>{UI_STRINGS.SAVE}</button>
         {saved ? <span className="metaLine">{UI_STRINGS.SAVED}</span> : null}
       </div>
