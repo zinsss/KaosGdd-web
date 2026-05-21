@@ -142,7 +142,7 @@ def test_completion_daily_repeating_task_creates_next_instance(main_module) -> N
 
 def test_completion_daily_repeating_task_recreates_relative_reminder(main_module) -> None:
     created = main_module.capture_item(
-        {"raw": "-- Take medicine\nd:2026-05-20 09:00\nr:-1h\nR:daily"}
+        {"raw": "-- Take medicine\nd:2026-06-20 09:00\nr:-1h\nR:daily"}
     )
     assert created["ok"] is True
 
@@ -158,9 +158,9 @@ def test_completion_daily_repeating_task_recreates_relative_reminder(main_module
     active_items = main_module.list_tasks(mode="active")["items"]
     assert len(active_items) == 1
     new_task = main_module.get_task(active_items[0]["id"])["item"]
-    assert new_task["due_at"] == "2026-05-21T00:00:00+00:00"
+    assert new_task["due_at"] == "2026-06-21T00:00:00+00:00"
     assert len(new_task["reminders"]) == 1
-    assert new_task["reminders"][0]["remind_at"] == "2026-05-20T23:00:00+00:00"
+    assert new_task["reminders"][0]["remind_at"] == "2026-06-20T23:00:00+00:00"
     assert new_task["reminders"][0]["relative_token"] == "-1h"
     assert new_task["reminders"][0]["state"] == "scheduled"
 

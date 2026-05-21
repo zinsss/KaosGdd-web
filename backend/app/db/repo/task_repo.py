@@ -1,3 +1,5 @@
+import json
+
 from sqlalchemy import text
 
 from app.config import DbTables
@@ -9,17 +11,38 @@ class TaskRepo:
     def __init__(self, engine) -> None:
         self.engine = engine
 
-    def create_task(self, item_id: str, due_at: str | None = None, memo: str | None = None) -> None:
+    def create_task(
+        self,
+        item_id: str,
+        due_at: str | None = None,
+        memo: str | None = None,
+        recurrence_group_id: str | None = None,
+        recurrence_sequence: int | None = None,
+        recurrence_parent_id: str | None = None,
+    ) -> None:
         with self.engine.begin() as conn:
             conn.execute(
                 text(
                     """
-                    INSERT INTO {task_items}(item_id, due_at, memo, is_done)
-                    VALUES (:item_id, :due_at, :memo, 0)
+                    INSERT INTO {task_items}(
+                        item_id, due_at, memo, is_done,
+                        recurrence_group_id, recurrence_sequence, recurrence_parent_id
+                    )
+                    VALUES (
+                        :item_id, :due_at, :memo, 0,
+                        :recurrence_group_id, :recurrence_sequence, :recurrence_parent_id
+                    )
                     """
                     .format(task_items=DbTables.TASK_ITEMS)
                 ),
-                {"item_id": item_id, "due_at": due_at, "memo": memo},
+                {
+                    "item_id": item_id,
+                    "due_at": due_at,
+                    "memo": memo,
+                    "recurrence_group_id": recurrence_group_id,
+                    "recurrence_sequence": recurrence_sequence,
+                    "recurrence_parent_id": recurrence_parent_id,
+                },
             )
 
     def list_tasks_active(self):
@@ -39,6 +62,9 @@ class TaskRepo:
                         t.memo,
                         t.is_done,
                         t.done_at,
+                        t.recurrence_group_id,
+                        t.recurrence_sequence,
+                        t.recurrence_parent_id,
                         (
                             SELECT COUNT(*)
                             FROM {task_subtasks} ts
@@ -84,6 +110,9 @@ class TaskRepo:
                         t.memo,
                         t.is_done,
                         t.done_at,
+                        t.recurrence_group_id,
+                        t.recurrence_sequence,
+                        t.recurrence_parent_id,
                         (
                             SELECT COUNT(*)
                             FROM {task_subtasks} ts
@@ -132,6 +161,9 @@ class TaskRepo:
                         t.memo,
                         t.is_done,
                         t.done_at,
+                        t.recurrence_group_id,
+                        t.recurrence_sequence,
+                        t.recurrence_parent_id,
                         (
                             SELECT COUNT(*)
                             FROM {task_subtasks} ts
@@ -176,6 +208,9 @@ class TaskRepo:
                         t.memo,
                         t.is_done,
                         t.done_at,
+                        t.recurrence_group_id,
+                        t.recurrence_sequence,
+                        t.recurrence_parent_id,
                         (
                             SELECT COUNT(*)
                             FROM {task_subtasks} ts
@@ -237,6 +272,9 @@ class TaskRepo:
                         t.memo,
                         t.is_done,
                         t.done_at,
+                        t.recurrence_group_id,
+                        t.recurrence_sequence,
+                        t.recurrence_parent_id,
                         i.created_at,
                         i.updated_at,
                         i.archived_at,
@@ -400,6 +438,159 @@ class TaskRepo:
                 {"item_id": item_id, "updated_at": now},
             )
 
+    def set_recurrence_metadata(
+        self,
+        item_id: str,
+        *,
+        recurrence_group_id: str | None,
+        recurrence_sequence: int | None,
+        recurrence_parent_id: str | None,
+    ) -> None:
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    UPDATE {task_items}
+                    SET recurrence_group_id = :recurrence_group_id,
+                        recurrence_sequence = :recurrence_sequence,
+                        recurrence_parent_id = :recurrence_parent_id
+                    WHERE item_id = :item_id
+                    """.format(task_items=DbTables.TASK_ITEMS)
+                ),
+                {
+                    "item_id": item_id,
+                    "recurrence_group_id": recurrence_group_id,
+                    "recurrence_sequence": recurrence_sequence,
+                    "recurrence_parent_id": recurrence_parent_id,
+                },
+            )
+            conn.execute(
+                text("UPDATE {items} SET updated_at = :updated_at WHERE id = :item_id".format(items=DbTables.ITEMS)),
+                {"item_id": item_id, "updated_at": now},
+            )
+
+    def list_active_future_recurrence_tasks(self, *, recurrence_group_id: str, min_sequence: int) -> list[dict]:
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT
+                        i.id,
+                        i.title,
+                        i.status,
+                        i.created_at,
+                        i.updated_at,
+                        i.archived_at,
+                        i.deleted_at,
+                        t.due_at,
+                        t.memo,
+                        t.is_done,
+                        t.done_at,
+                        t.recurrence_group_id,
+                        t.recurrence_sequence,
+                        t.recurrence_parent_id
+                    FROM {items} i
+                    JOIN {task_items} t ON i.id = t.item_id
+                    WHERE i.item_type = 'task'
+                      AND i.status = 'active'
+                      AND t.is_done = 0
+                      AND t.recurrence_group_id = :recurrence_group_id
+                      AND COALESCE(t.recurrence_sequence, -1) >= :min_sequence
+                    ORDER BY t.recurrence_sequence ASC, t.due_at ASC, i.created_at ASC
+                    """.format(items=DbTables.ITEMS, task_items=DbTables.TASK_ITEMS)
+                ),
+                {"recurrence_group_id": recurrence_group_id, "min_sequence": min_sequence},
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
+    def create_recurrence_history(
+        self,
+        *,
+        recurrence_group_id: str,
+        edited_task_id: str,
+        previous_values: dict,
+        new_values: dict,
+        affected_task_ids: list[str],
+    ) -> str:
+        history_id = new_id()
+        now = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO {task_recurrence_history}(
+                        id,
+                        recurrence_group_id,
+                        edited_at,
+                        edited_task_id,
+                        edit_scope,
+                        previous_values_json,
+                        new_values_json,
+                        affected_future_count,
+                        affected_task_ids_json
+                    )
+                    VALUES (
+                        :id,
+                        :recurrence_group_id,
+                        :edited_at,
+                        :edited_task_id,
+                        'this_and_future',
+                        :previous_values_json,
+                        :new_values_json,
+                        :affected_future_count,
+                        :affected_task_ids_json
+                    )
+                    """.format(task_recurrence_history=DbTables.TASK_RECURRENCE_HISTORY)
+                ),
+                {
+                    "id": history_id,
+                    "recurrence_group_id": recurrence_group_id,
+                    "edited_at": now,
+                    "edited_task_id": edited_task_id,
+                    "previous_values_json": json.dumps(previous_values, sort_keys=True),
+                    "new_values_json": json.dumps(new_values, sort_keys=True),
+                    "affected_future_count": max(len(affected_task_ids) - 1, 0),
+                    "affected_task_ids_json": json.dumps(affected_task_ids),
+                },
+            )
+        return history_id
+
+    def list_recurrence_history(self, recurrence_group_id: str, *, limit: int = 20) -> list[dict]:
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT
+                        id,
+                        recurrence_group_id,
+                        edited_at,
+                        edited_task_id,
+                        edit_scope,
+                        previous_values_json,
+                        new_values_json,
+                        affected_future_count,
+                        affected_task_ids_json
+                    FROM {task_recurrence_history}
+                    WHERE recurrence_group_id = :recurrence_group_id
+                    ORDER BY edited_at DESC, id DESC
+                    LIMIT :limit
+                    """.format(task_recurrence_history=DbTables.TASK_RECURRENCE_HISTORY)
+                ),
+                {"recurrence_group_id": recurrence_group_id, "limit": limit},
+            ).mappings().all()
+
+        history = []
+        for row in rows:
+            item = dict(row)
+            for key in ("previous_values_json", "new_values_json", "affected_task_ids_json"):
+                try:
+                    item[key[:-5] if key.endswith("_json") else key] = json.loads(item.get(key) or "{}")
+                except (TypeError, json.JSONDecodeError):
+                    item[key[:-5] if key.endswith("_json") else key] = [] if key == "affected_task_ids_json" else {}
+            history.append(item)
+        return history
+
     def clear_done_state(self, item_id: str) -> None:
         now = now_iso()
         with self.engine.begin() as conn:
@@ -479,5 +670,30 @@ class TaskRepo:
                     "due_at": due_at,
                     "repeat_tag": repeat_tag,
                 },
+            ).mappings().first()
+        return row is not None
+
+    def exists_active_recurrence_occurrence(
+        self,
+        *,
+        recurrence_group_id: str,
+        due_at: str,
+    ) -> bool:
+        with self.engine.begin() as conn:
+            row = conn.execute(
+                text(
+                    """
+                    SELECT i.id
+                    FROM {items} i
+                    JOIN {task_items} t ON t.item_id = i.id
+                    WHERE i.item_type = 'task'
+                      AND i.status = 'active'
+                      AND t.is_done = 0
+                      AND t.recurrence_group_id = :recurrence_group_id
+                      AND t.due_at = :due_at
+                    LIMIT 1
+                    """.format(items=DbTables.ITEMS, task_items=DbTables.TASK_ITEMS)
+                ),
+                {"recurrence_group_id": recurrence_group_id, "due_at": due_at},
             ).mappings().first()
         return row is not None

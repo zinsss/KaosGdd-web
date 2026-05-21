@@ -4,9 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { UI_STRINGS } from "../lib/strings";
 
-export default function TaskRawEditor({ taskId, initialRaw }) {
+export default function TaskRawEditor({ taskId, initialRaw, isRepeating = false }) {
   const router = useRouter();
   const [raw, setRaw] = useState(initialRaw || "");
+  const [editScope, setEditScope] = useState("current_only");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const textareaRef = useRef(null);
@@ -26,7 +27,7 @@ export default function TaskRawEditor({ taskId, initialRaw }) {
       const res = await fetch("/api/tasks/" + taskId + "/raw", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ raw }),
+        body: JSON.stringify({ raw, edit_scope: isRepeating ? editScope : undefined }),
       });
 
       const data = await res.json().catch(() => null);
@@ -59,6 +60,32 @@ export default function TaskRawEditor({ taskId, initialRaw }) {
       <div className="rawHint">
         -- task / -x task · --- subtask / --x subtask
       </div>
+
+      {isRepeating ? (
+        <fieldset className="repeatEditScope">
+          <legend>{UI_STRINGS.REPEATING_TASK_EDIT_NOTICE}</legend>
+          <label>
+            <input
+              type="radio"
+              name="repeat-edit-scope"
+              value="current_only"
+              checked={editScope === "current_only"}
+              onChange={() => setEditScope("current_only")}
+            />
+            {UI_STRINGS.REPEAT_SCOPE_CURRENT_ONLY}
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="repeat-edit-scope"
+              value="this_and_future"
+              checked={editScope === "this_and_future"}
+              onChange={() => setEditScope("this_and_future")}
+            />
+            {UI_STRINGS.REPEAT_SCOPE_THIS_AND_FUTURE}
+          </label>
+        </fieldset>
+      ) : null}
 
       <div className="actionRow compactActionRow">
         <button className="button compactButton buttonToneSave" type="submit" disabled={isSubmitting}>

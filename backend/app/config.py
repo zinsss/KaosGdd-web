@@ -44,6 +44,7 @@ class DbTables:
     SUPPLY_PRESETS = "supply_presets"
     TASK_ITEMS = "task_items"
     TASK_SUBTASKS = "task_subtasks"
+    TASK_RECURRENCE_HISTORY = "task_recurrence_history"
     REMINDER_ITEMS = "reminder_items"
     EVENT_ITEMS = "event_items"
     JOURNAL_ITEMS = "journal_items"
