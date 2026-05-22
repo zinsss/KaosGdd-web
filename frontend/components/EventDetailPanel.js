@@ -30,7 +30,8 @@ function visibleTags(item) {
       !clean.startsWith("kr-holiday:") &&
       !clean.startsWith("custom-calendar:") &&
       !clean.startsWith("event-class:") &&
-      !clean.startsWith("classification-source:")
+      !clean.startsWith("classification-source:") &&
+      !clean.startsWith("repeat:")
     );
   });
 }
@@ -128,6 +129,12 @@ export default function EventDetailPanel({ item, raw }) {
             <div className="detailReadLabel">Date</div>
             <div className="detailReadContent withDivider">{item.start_date_display}{item.end_date_display ? ` ~ ${item.end_date_display}` : ""}</div>
           </div>
+          {item.repeat_rule ? (
+            <div className="detailReadRow">
+              <div className="detailReadLabel">Repeat</div>
+              <div className="detailReadContent withDivider">↻ {item.repeat_rule}</div>
+            </div>
+          ) : null}
           {item.memo ? <div className="detailReadRow"><div className="detailReadLabel">Memo</div><div className="detailReadContent detailReadMemo withDivider">{item.memo}</div></div> : null}
           {item.reminders?.[0] ? (
             <div className="detailReadRow">

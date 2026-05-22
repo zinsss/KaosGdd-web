@@ -120,7 +120,7 @@ export default function EventsPageClient() {
   const monthEventsByDate = useMemo(() => {
     const unique = new Map();
     items.forEach((event, index) => {
-      unique.set(event.id, { ...event, _index: index });
+      unique.set(event.occurrence_id || event.id, { ...event, _index: index });
     });
     const sorted = Array.from(unique.values()).sort((a, b) => {
       if (a.start_date !== b.start_date) return a.start_date.localeCompare(b.start_date);
@@ -251,9 +251,10 @@ export default function EventsPageClient() {
                   {dateEvents.map((event) => {
                     const badge = systemBadgeForEvent(event);
                     return (
-                      <li key={event.id} className="taskListRow">
+                      <li key={event.occurrence_id || event.id} className="taskListRow">
                         <div className="eventListTitleRow">
                           {badge ? <span className={"eventSystemBadge " + badge.className}>{badge.label}</span> : null}
+                          {event.repeat_rule ? <span className="eventSystemBadge eventObservanceBadge">Repeat</span> : null}
                           <Link
                             className={"taskLink taskListTitleLink" + (badge ? " " + badge.titleClass : "")}
                             href={`/events/${event.id}`}

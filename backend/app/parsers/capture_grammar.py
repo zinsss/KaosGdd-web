@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Literal
 
 from app.utils.repeat import normalize_repeat_rule
+from app.utils.event_raw import normalize_event_repeat_rule
 from app.utils.scribble_raw import parse_scribble_raw
 
 UNDONE_TASK_PREFIX = "-- "
@@ -77,7 +78,7 @@ def _expand_event_inline_tail(inline_tail: str) -> list[str]:
     tail = (inline_tail or "").strip()
     if not tail:
         return []
-    marker = re.search(r'\s(?=(?:#|r:|l:|"""))', tail)
+    marker = re.search(r'\s(?=(?:#|r:|R:|l:|"""))', tail)
     if not marker:
         return [tail]
     title = tail[: marker.start()].strip()
@@ -110,6 +111,7 @@ def parse_capture(raw: str) -> dict:
     start_date = None
     end_date = None
     event_inline_tail = ""
+    event_header_title = None
 
     if first.startswith(UNDONE_TASK_PREFIX):
         item_type = "task"
@@ -133,8 +135,10 @@ def parse_capture(raw: str) -> dict:
             if len(parts) != 2 or not parts[0] or not parts[1]:
                 return ParseResult(ok=False, error="malformed range").to_dict()
             start_date, end_date = parts[0], parts[1]
-        else:
+        elif re.match(r"^\d{4}-\d{2}-\d{2}$", date_part):
             start_date = date_part
+        else:
+            event_header_title = date_part
     elif first == "!!":
         item_type = "reminder"
         title = ""
@@ -186,6 +190,8 @@ def parse_capture(raw: str) -> dict:
         return ParseResult(ok=False, error="unsupported prefix").to_dict()
 
     result = ParseResult(ok=True, action="create_item", item_type=item_type, title=title, is_done=is_done, start_date=start_date, end_date=end_date)
+    if event_header_title:
+        result.title = event_header_title
     repeat_seen = False
     due_remind_seen = False
 
@@ -218,6 +224,17 @@ def parse_capture(raw: str) -> dict:
             if result.item_type == "journal":
                 return ParseResult(ok=False, error="journal does not support memo blocks").to_dict()
             in_memo = True
+            continue
+
+        if result.item_type == "event" and not result.start_date and line.startswith(META_DUE):
+            date_value = line[len(META_DUE) :].strip()
+            if "~" in date_value:
+                parts = [part.strip() for part in date_value.split("~")]
+                if len(parts) != 2 or not parts[0] or not parts[1]:
+                    return ParseResult(ok=False, error="malformed range").to_dict()
+                result.start_date, result.end_date = parts[0], parts[1]
+            else:
+                result.start_date = date_value or None
             continue
 
         if result.item_type == "event" and not result.title:
@@ -271,7 +288,7 @@ def parse_capture(raw: str) -> dict:
 
         if line.startswith(META_DUE):
             if result.item_type == "event":
-                return ParseResult(ok=False, error="unsupported extra event grammar").to_dict()
+                return ParseResult(ok=False, error="multiple event dates are not allowed").to_dict()
             if re.search(r"(?:^|\s)dr:", line[len(META_DUE) :]):
                 return ParseResult(ok=False, error="dr: cannot be combined with d: or r:").to_dict()
             if due_remind_seen:
@@ -289,7 +306,15 @@ def parse_capture(raw: str) -> dict:
 
         if line.startswith(META_REPEAT):
             if result.item_type == "event":
-                return ParseResult(ok=False, error="unsupported extra event grammar").to_dict()
+                if repeat_seen:
+                    return ParseResult(ok=False, error="multiple R: lines are not allowed").to_dict()
+                raw_repeat = line[len(META_REPEAT) :].strip() or None
+                try:
+                    result.repeat_rule = normalize_event_repeat_rule(raw_repeat)
+                except ValueError:
+                    return ParseResult(ok=False, error=f"invalid event repeat rule: {raw_repeat}").to_dict()
+                repeat_seen = True
+                continue
             if repeat_seen:
                 return ParseResult(ok=False, error="multiple R: lines are not allowed").to_dict()
             raw_repeat = line[len(META_REPEAT) :].strip() or None
@@ -330,6 +355,9 @@ def parse_capture(raw: str) -> dict:
 
     if result.item_type == "event" and not result.title:
         return ParseResult(ok=False, error="missing title").to_dict()
+
+    if result.item_type == "event" and not result.start_date:
+        return ParseResult(ok=False, error="missing event date").to_dict()
 
     if memo_lines:
         result.memo = "\n".join(memo_lines).rstrip("\n")

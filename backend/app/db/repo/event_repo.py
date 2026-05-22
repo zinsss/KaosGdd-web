@@ -97,3 +97,45 @@ class EventRepo:
                 {"mode": mode, "range_start": start_date, "range_end": end_date},
             ).mappings().all()
         return [dict(row) for row in rows]
+
+    def list_events_for_range_expansion(self, *, start_date: str, end_date: str, mode: str = "active"):
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT DISTINCT
+                        i.id,
+                        i.item_type,
+                        i.title,
+                        i.status,
+                        i.created_at,
+                        i.updated_at,
+                        i.archived_at,
+                        i.deleted_at,
+                        e.start_date,
+                        e.end_date,
+                        e.memo
+                    FROM {items} i
+                    JOIN {event_items} e ON i.id = e.item_id
+                    LEFT JOIN {item_tags} rt
+                        ON rt.item_id = i.id
+                       AND rt.tag IN ('repeat:weekly', 'repeat:monthly', 'repeat:yearly')
+                    WHERE i.item_type = 'event'
+                      AND i.status = :mode
+                      AND (
+                            (
+                                e.start_date <= :range_end
+                                AND COALESCE(e.end_date, e.start_date) >= :range_start
+                            )
+                            OR (
+                                :mode = 'active'
+                                AND rt.tag IS NOT NULL
+                                AND e.start_date <= :range_end
+                            )
+                      )
+                    ORDER BY e.start_date ASC, i.created_at ASC
+                    """.format(items=DbTables.ITEMS, event_items=DbTables.EVENT_ITEMS, item_tags=DbTables.ITEM_TAGS)
+                ),
+                {"mode": mode, "range_start": start_date, "range_end": end_date},
+            ).mappings().all()
+        return [dict(row) for row in rows]
