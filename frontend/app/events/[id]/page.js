@@ -22,16 +22,17 @@ async function getEventRaw(id) {
   }
 }
 
-export default async function EventDetailPage({ params }) {
+export default async function EventDetailPage({ params, searchParams }) {
   const result = await getEvent(params.id);
   const rawResult = result.ok ? await getEventRaw(params.id) : { ok: false, raw: "" };
+  const occurrenceDate = typeof searchParams?.occurrence === "string" ? searchParams.occurrence : "";
 
   return (
     <main className="page">
       {!result.ok ? (
         <section className="panel"><div className="errorText">{result.error || UI_STRINGS.EVENT_NOT_FOUND}</div></section>
       ) : (
-        <EventDetailPanel item={result.item} raw={rawResult.raw || ""} />
+        <EventDetailPanel item={result.item} raw={rawResult.raw || ""} occurrenceDate={occurrenceDate} />
       )}
     </main>
   );

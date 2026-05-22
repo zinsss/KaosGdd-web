@@ -62,6 +62,15 @@
   word-break: break-word;
 }
 
+.dashboardRecurringMark {
+  color: var(--ctp-lavender);
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  opacity: 0.72;
+}
+
 .dashboardMetaLine {
   margin-top: 3px;
 }

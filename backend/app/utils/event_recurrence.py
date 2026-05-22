@@ -4,6 +4,9 @@ from datetime import date, datetime, timedelta
 
 from app.utils.event_raw import next_event_occurrence_date, normalize_event_repeat_rule
 
+MAX_OCCURRENCE_EXPANSION_STEPS = 1000
+MAX_OCCURRENCES_PER_EVENT = 500
+
 
 def _parse_date(value: str) -> date:
     return datetime.strptime(str(value), "%Y-%m-%d").date()
@@ -20,7 +23,15 @@ def _overlaps(start: date, end: date, range_start: date, range_end: date) -> boo
     return start <= range_end and end >= range_start
 
 
-def expand_recurring_event(event: dict, *, range_start: str, range_end: str, repeat_rule: str) -> list[dict]:
+def expand_recurring_event(
+    event: dict,
+    *,
+    range_start: str,
+    range_end: str,
+    repeat_rule: str,
+    max_steps: int = MAX_OCCURRENCE_EXPANSION_STEPS,
+    max_occurrences: int = MAX_OCCURRENCES_PER_EVENT,
+) -> list[dict]:
     rule = normalize_event_repeat_rule(repeat_rule)
     if rule is None:
         return []
@@ -50,12 +61,15 @@ def expand_recurring_event(event: dict, *, range_start: str, range_end: str, rep
             item["end_date"] = occurrence_end.isoformat() if duration else None
             item["is_recurring_occurrence"] = sequence > 0
             occurrences.append(item)
+            if len(occurrences) >= max_occurrences:
+                break
 
         sequence += 1
+        if sequence >= max_steps:
+            break
         next_date = _parse_date(next_event_occurrence_date(str(event.get("start_date")), rule, sequence))
         if next_date <= cursor:
             break
         cursor = next_date
 
     return occurrences
-

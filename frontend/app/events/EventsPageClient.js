@@ -48,6 +48,14 @@ function systemBadgeForEvent(event) {
   return null;
 }
 
+function eventDetailHref(event) {
+  const eventId = event.canonical_event_id || event.id;
+  if (event.is_recurring_occurrence && event.start_date) {
+    return `/events/${eventId}?occurrence=${encodeURIComponent(event.start_date)}`;
+  }
+  return `/events/${eventId}`;
+}
+
 export default function EventsPageClient() {
   const [todayYmd, setTodayYmd] = useState(null);
   const [month, setMonth] = useState(null);
@@ -216,7 +224,9 @@ export default function EventsPageClient() {
           ))}
           {cells.map((d) => {
             const inMonth = d.startsWith(month);
-            const count = (mapByDate.get(d) || []).length;
+            const dayEvents = mapByDate.get(d) || [];
+            const count = dayEvents.length;
+            const hasRecurringOccurrence = dayEvents.some((event) => event.is_recurring_occurrence);
             const dayOfWeek = new Date(`${d}T00:00:00`).getDay();
             const dayClass = dayOfWeek === 0 ? " eventCalDaySun" : dayOfWeek === 6 ? " eventCalDaySat" : "";
             return (
@@ -231,7 +241,12 @@ export default function EventsPageClient() {
                 onClick={() => setSelectedDate(d)}
               >
                 <span className={"eventCalDayNumber" + dayClass}>{Number(d.slice(-2))}</span>
-                {count ? <span className="eventCalCount">{count}</span> : null}
+                {count ? (
+                  <span className="eventCalCount">
+                    {hasRecurringOccurrence ? <span className="recurringOccurrenceMark" aria-label="recurring occurrence">↻</span> : null}
+                    {count}
+                  </span>
+                ) : null}
               </button>
             );
           })}
@@ -254,10 +269,10 @@ export default function EventsPageClient() {
                       <li key={event.occurrence_id || event.id} className="taskListRow">
                         <div className="eventListTitleRow">
                           {badge ? <span className={"eventSystemBadge " + badge.className}>{badge.label}</span> : null}
-                          {event.repeat_rule ? <span className="eventSystemBadge eventObservanceBadge">Repeat</span> : null}
+                          {event.is_recurring_occurrence ? <span className="recurringOccurrenceMark" aria-label="recurring occurrence">↻</span> : null}
                           <Link
                             className={"taskLink taskListTitleLink" + (badge ? " " + badge.titleClass : "")}
-                            href={`/events/${event.id}`}
+                            href={eventDetailHref(event)}
                           >
                             {event.title}
                           </Link>

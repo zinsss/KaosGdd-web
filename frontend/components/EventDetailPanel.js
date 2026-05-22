@@ -36,7 +36,7 @@ function visibleTags(item) {
   });
 }
 
-export default function EventDetailPanel({ item, raw }) {
+export default function EventDetailPanel({ item, raw, occurrenceDate = "" }) {
   const router = useRouter();
   const [showEdit, setShowEdit] = useState(false);
   const [showMore, setShowMore] = useState(false);
@@ -50,6 +50,7 @@ export default function EventDetailPanel({ item, raw }) {
   const isImportedCalendarEvent = item.is_imported_calendar_event || false;
   const isPublicHoliday = item.event_class === "public-holiday";
   const displayTags = visibleTags(item);
+  const hasOccurrenceContext = Boolean(item.repeat_rule && occurrenceDate && occurrenceDate !== item.start_date);
 
   async function onRemove() {
     if (!window.confirm(UI_STRINGS.REMOVE_EVENT_CONFIRM)) return;
@@ -133,6 +134,12 @@ export default function EventDetailPanel({ item, raw }) {
             <div className="detailReadRow">
               <div className="detailReadLabel">Repeat</div>
               <div className="detailReadContent withDivider">↻ {item.repeat_rule}</div>
+            </div>
+          ) : null}
+          {hasOccurrenceContext ? (
+            <div className="detailReadRow">
+              <div className="detailReadLabel">Occurrence</div>
+              <div className="detailReadContent withDivider">{occurrenceDate}</div>
             </div>
           ) : null}
           {item.memo ? <div className="detailReadRow"><div className="detailReadLabel">Memo</div><div className="detailReadContent detailReadMemo withDivider">{item.memo}</div></div> : null}
