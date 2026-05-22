@@ -300,6 +300,7 @@
   --top-capture-surface: #37384a;
   position: static;
   width: 100%;
+  min-width: 0;
   background: transparent;
   box-shadow: none;
   padding: 7px 0 0;
@@ -521,11 +522,16 @@
   }
 
   .topCaptureFooter {
+    display: flex;
     align-items: flex-start;
+    justify-content: space-between;
+    width: 100%;
+    min-width: 0;
   }
 
   .topCaptureActions {
     flex-wrap: wrap;
+    flex: 0 0 auto;
   }
 
   .topCaptureAttachButton,
@@ -559,7 +565,26 @@
   .topCaptureBar {
     position: static;
     z-index: auto;
-    padding: 10px 12px 6px;
+    width: 100%;
+    min-width: 0;
+    padding: 10px 0 6px;
     pointer-events: auto;
+  }
+
+  .topCaptureInner {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "input"
+      "footer";
+  }
+
+  .topCaptureBar .topCaptureInput {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    grid-area: input;
   }
 }
