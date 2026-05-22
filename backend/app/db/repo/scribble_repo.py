@@ -1,8 +1,11 @@
+import json
+
 from sqlalchemy import text
 
 from app.config import DbTables
 from app.utils.clock import now_iso
 from app.utils.ids import new_id
+from app.utils.scribble_raw import export_scribble_raw
 from app.utils.timefmt import format_dt_for_ui
 
 
@@ -15,6 +18,13 @@ class ScribbleRepo:
     @staticmethod
     def _decorate_scribble(row: dict) -> dict:
         item = dict(row)
+        try:
+            tags = json.loads(item.get("tags_json") or "[]")
+        except (TypeError, json.JSONDecodeError):
+            tags = []
+        item["tags"] = [str(tag) for tag in tags if str(tag or "").strip()]
+        item.pop("tags_json", None)
+        item["raw"] = export_scribble_raw(item.get("body") or "", item["tags"])
         item["created_at_display"] = format_dt_for_ui(item.get("created_at"))
         item["updated_at_display"] = format_dt_for_ui(item.get("updated_at"))
         return item
@@ -24,7 +34,7 @@ class ScribbleRepo:
             rows = conn.execute(
                 text(
                     """
-                    SELECT id, body, created_at, updated_at, sort_order
+                    SELECT id, body, tags_json, created_at, updated_at, sort_order
                     FROM {scribbles}
                     ORDER BY sort_order DESC, created_at DESC
                     """.format(scribbles=DbTables.SCRIBBLES)
@@ -32,9 +42,10 @@ class ScribbleRepo:
             ).mappings().all()
         return [self._decorate_scribble(row) for row in rows]
 
-    def create_scribble(self, *, body: str) -> dict:
+    def create_scribble(self, *, body: str, tags: list[str] | None = None) -> dict:
         now = now_iso()
         scribble_id = new_id()
+        tags_json = json.dumps([str(tag) for tag in tags or []])
         with self.engine.begin() as conn:
             next_sort_order = conn.execute(
                 text(
@@ -47,13 +58,14 @@ class ScribbleRepo:
             conn.execute(
                 text(
                     """
-                    INSERT INTO {scribbles}(id, body, created_at, updated_at, sort_order)
-                    VALUES (:id, :body, :created_at, :updated_at, :sort_order)
+                    INSERT INTO {scribbles}(id, body, tags_json, created_at, updated_at, sort_order)
+                    VALUES (:id, :body, :tags_json, :created_at, :updated_at, :sort_order)
                     """.format(scribbles=DbTables.SCRIBBLES)
                 ),
                 {
                     "id": scribble_id,
                     "body": body,
+                    "tags_json": tags_json,
                     "created_at": now,
                     "updated_at": now,
                     "sort_order": next_sort_order,
@@ -63,32 +75,35 @@ class ScribbleRepo:
             {
                 "id": scribble_id,
                 "body": body,
+                "tags_json": tags_json,
                 "created_at": now,
                 "updated_at": now,
                 "sort_order": next_sort_order,
             }
         )
 
-    def update_scribble(self, scribble_id: str, *, body: str) -> dict | None:
+    def update_scribble(self, scribble_id: str, *, body: str, tags: list[str] | None = None) -> dict | None:
         now = now_iso()
+        tags_json = json.dumps([str(tag) for tag in tags or []])
         with self.engine.begin() as conn:
             result = conn.execute(
                 text(
                     """
                     UPDATE {scribbles}
                     SET body = :body,
+                        tags_json = :tags_json,
                         updated_at = :updated_at
                     WHERE id = :id
                     """.format(scribbles=DbTables.SCRIBBLES)
                 ),
-                {"id": scribble_id, "body": body, "updated_at": now},
+                {"id": scribble_id, "body": body, "tags_json": tags_json, "updated_at": now},
             )
             if result.rowcount == 0:
                 return None
             row = conn.execute(
                 text(
                     """
-                    SELECT id, body, created_at, updated_at, sort_order
+                    SELECT id, body, tags_json, created_at, updated_at, sort_order
                     FROM {scribbles}
                     WHERE id = :id
                     LIMIT 1

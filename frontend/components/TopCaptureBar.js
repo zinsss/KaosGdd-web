@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { UI_STRINGS } from "../lib/strings";
 import {
@@ -13,7 +13,7 @@ import NewNoteModal from "./NewNoteModal";
 
 const NEW_NOTE_TEMPLATE = ":::\ntitle:\ntags:\nlink:\n:::";
 const SCRIBBLE_PROMPT = UI_STRINGS.SCRIBBLE_PROMPT;
-const KNOWN_CAPTURE_PREFIX_RE = /^(--\s|-x\s|---\s|--x\s|\^\^|!!|\/\/|:::+|==|\+\+|fax:|mail:|\$\$)/i;
+const KNOWN_CAPTURE_PREFIX_RE = /^(--\s|-x\s|---\s|--x\s|\^\^|!!|\/\/|\.{3}(?:\s|$)|:::+|==|\+\+|fax:|mail:|\$\$)/i;
 
 function isKnownCaptureGrammar(rawText) {
   const firstLine = String(rawText || "")
@@ -201,6 +201,7 @@ function datetimeSelectionRange(rawText) {
 
 export default function TopCaptureBar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [raw, setRaw] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -224,6 +225,7 @@ export default function TopCaptureBar() {
   const focusAnchorLoopEndRef = useRef(0);
   const isTextareaFocusedRef = useRef(false);
   const userScrollOverrideRef = useRef(false);
+  const isScribblePage = pathname?.startsWith("/scribble");
 
   function isWideCaptureAnchoredMode() {
     if (typeof window === "undefined") return true;
@@ -835,6 +837,40 @@ export default function TopCaptureBar() {
       setScribblePromptRaw("");
       setError(editState ? UI_STRINGS.REMINDER_EMPTY : UI_STRINGS.CAPTURE_EMPTY);
       setSuccess("");
+      return;
+    }
+
+    if (!editState && !attachedFile && isScribblePage && !isKnownCaptureGrammar(clean)) {
+      submitLockRef.current = true;
+      const requestId = beginCaptureRequest();
+      setIsSubmitting(true);
+      setScribblePromptRaw("");
+      setError("");
+      setSuccess("");
+
+      try {
+        const res = await fetch("/api/scribbles", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ body: clean }),
+        });
+        const data = await res.json().catch(() => null);
+        if (!res.ok || !data?.ok) {
+          if (!isActiveCaptureRequest(requestId)) return;
+          setError((data && data.error) || UI_STRINGS.SCRIBBLE_SAVE_FAILED);
+          return;
+        }
+        await finalizeCreateSuccess({ requestId, createdTypes: "scribble" });
+      } catch {
+        if (!isActiveCaptureRequest(requestId)) return;
+        setError(UI_STRINGS.SCRIBBLE_SAVE_FAILED);
+      } finally {
+        if (isActiveCaptureRequest(requestId)) {
+          submitLockRef.current = false;
+          setIsSubmitting(false);
+          textareaRef.current?.focus();
+        }
+      }
       return;
     }
 

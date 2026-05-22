@@ -5,6 +5,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Literal
 
 from app.utils.repeat import normalize_repeat_rule
+from app.utils.scribble_raw import parse_scribble_raw
 
 UNDONE_TASK_PREFIX = "-- "
 DONE_TASK_PREFIX = "-x "
@@ -13,6 +14,7 @@ DONE_SUBTASK_PREFIX = "--x "
 EVENT_PREFIX = "^^ "
 REMINDER_PREFIX = "!! "
 JOURNAL_PREFIX = "// "
+SCRIBBLE_PREFIX = "... "
 MODAL_PREFIXES: dict[str, str] = {
     ":::": "note",
     "==": "list",
@@ -29,7 +31,7 @@ MEMO_DELIM = '"""'
 TAG_RE = re.compile(r"#([^\s#]+)")
 
 ActionType = Literal["create_item", "open_modal"]
-ItemType = Literal["task", "event", "reminder", "journal", "supply"]
+ItemType = Literal["task", "event", "reminder", "journal", "supply", "scribble"]
 ModalType = Literal["note", "list", "file", "fax", "mail"]
 
 
@@ -145,6 +147,32 @@ def parse_capture(raw: str) -> dict:
     elif first.startswith(JOURNAL_PREFIX):
         item_type = "journal"
         title = first[len(JOURNAL_PREFIX) :].strip()
+    elif first == "...":
+        try:
+            scribble = parse_scribble_raw(text, require_prefix=True)
+        except ValueError as exc:
+            return ParseResult(ok=False, error=str(exc)).to_dict()
+        return ParseResult(
+            ok=True,
+            action="create_item",
+            item_type="scribble",
+            title=scribble["body"],
+            tags=scribble["tags"],
+        ).to_dict()
+    elif first.startswith("..."):
+        if not first.startswith(SCRIBBLE_PREFIX):
+            return ParseResult(ok=False, error="scribble line must start with ... ").to_dict()
+        try:
+            scribble = parse_scribble_raw(text, require_prefix=True)
+        except ValueError as exc:
+            return ParseResult(ok=False, error=str(exc)).to_dict()
+        return ParseResult(
+            ok=True,
+            action="create_item",
+            item_type="scribble",
+            title=scribble["body"],
+            tags=scribble["tags"],
+        ).to_dict()
     elif first == "$$":
         return ParseResult(ok=False, error="title is required").to_dict()
     elif first.startswith("$$"):
