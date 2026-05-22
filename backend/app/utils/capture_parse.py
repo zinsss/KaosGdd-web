@@ -181,4 +181,14 @@ def parse_capture_input(raw_text: str, *, timezone_name: str | None = None) -> d
             },
         }
 
+    if item_type == "scribble":
+        return {
+            "kind": "scribble",
+            "raw": normalized_raw,
+            "parsed": {
+                "body": parsed.get("title"),
+                "tags": list(parsed.get("tags") or []),
+            },
+        }
+
     raise ValueError("unsupported capture kind")

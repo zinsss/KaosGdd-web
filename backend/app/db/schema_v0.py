@@ -162,6 +162,7 @@ CREATE TABLE IF NOT EXISTS {push_event_dedupe} (
 CREATE TABLE IF NOT EXISTS {scribbles} (
     id TEXT PRIMARY KEY,
     body TEXT NOT NULL,
+    tags_json TEXT NOT NULL DEFAULT '[]',
     created_at TEXT NOT NULL,
     updated_at TEXT NOT NULL,
     sort_order INTEGER NOT NULL
@@ -538,6 +539,7 @@ def _migrate_sqlite_legacy_task_reminder_tables(conn) -> None:
     _sqlite_add_column_if_missing(conn, DbTables.FILE_ITEMS, "fax_number TEXT")
 
     _sqlite_add_column_if_missing(conn, DbTables.ITEM_REMINDERS, "created_at TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.SCRIBBLES, "tags_json TEXT NOT NULL DEFAULT '[]'")
 
 
 def _migrate_sqlite_scribbles_to_cards(conn) -> None:

@@ -42,6 +42,7 @@ from app.integrations.web_push_client import WebPushClient
 from app.schemas.reminders import normalize_minutes
 from app.strings import ApiText, PushText
 from app.utils.capture_parse import parse_capture_input
+from app.utils.scribble_raw import parse_scribble_raw
 
 
 items_repo = ItemsRepo(engine)
@@ -182,17 +183,23 @@ def list_scribbles():
 
 @app.post("/scribbles")
 def create_scribble(payload: dict):
-    body = str(payload.get("body") or "").strip()
-    if not body:
-        return {"ok": False, "error": ApiText.TITLE_REQUIRED}
-    item = scribble_repo.create_scribble(body=body)
+    raw_text = str(payload.get("raw") or payload.get("body") or "")
+    try:
+        parsed = parse_scribble_raw(raw_text, require_prefix=bool(payload.get("require_prefix")))
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+    item = scribble_repo.create_scribble(body=parsed["body"], tags=parsed["tags"])
     return {"ok": True, "kind": "scribble", "item": item, "id": item["id"]}
 
 
 @app.patch("/scribbles/{scribble_id}")
 def update_scribble(scribble_id: str, payload: dict):
-    body = str(payload.get("body") or "")
-    item = scribble_repo.update_scribble(scribble_id, body=body)
+    raw_text = str(payload.get("raw") or payload.get("body") or "")
+    try:
+        parsed = parse_scribble_raw(raw_text, require_prefix=False)
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+    item = scribble_repo.update_scribble(scribble_id, body=parsed["body"], tags=parsed["tags"])
     if item is None:
         return {"ok": False, "error": ApiText.NOT_FOUND}
     return {"ok": True, "item": item}
@@ -770,6 +777,13 @@ def capture_item(payload: dict):
         if not supply_id:
             return {"ok": False, "error": ApiText.TITLE_REQUIRED}
         return {"ok": True, "kind": kind, "id": supply_id}
+
+    if kind == "scribble":
+        body = str(parsed["parsed"].get("body") or "").strip()
+        if not body:
+            return {"ok": False, "error": "scribble content is required"}
+        item = scribble_repo.create_scribble(body=body, tags=list(parsed["parsed"].get("tags") or []))
+        return {"ok": True, "kind": kind, "id": item["id"]}
 
     return {"ok": False, "error": ApiText.UNSUPPORTED_CAPTURE_KIND}
 

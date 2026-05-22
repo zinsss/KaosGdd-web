@@ -70,3 +70,78 @@ def test_scribble_does_not_appear_in_notes_journals_or_tasks(main_module) -> Non
     assert main_module.list_tasks()["items"] == []
     assert main_module.list_notes()["items"] == []
     assert main_module.list_journals()["items"] == []
+
+
+def test_global_capture_scribble_same_line_creates_scribble(main_module) -> None:
+    payload = main_module.capture_item({"raw": "... Need to figure out insurance thing"})
+
+    assert payload["ok"] is True
+    assert payload["kind"] == "scribble"
+
+    loaded = main_module.list_scribbles()
+    assert loaded["items"][0]["body"] == "Need to figure out insurance thing"
+    assert loaded["items"][0]["raw"] == "... Need to figure out insurance thing"
+
+
+def test_global_capture_scribble_multiline_creates_scribble(main_module) -> None:
+    payload = main_module.capture_item({"raw": "...\nNeed to figure out insurance thing\nCall clinic"})
+
+    assert payload["ok"] is True
+
+    loaded = main_module.list_scribbles()
+    assert loaded["items"][0]["body"] == "Need to figure out insurance thing\nCall clinic"
+    assert loaded["items"][0]["raw"] == "...\nNeed to figure out insurance thing\nCall clinic"
+
+
+def test_global_capture_empty_scribble_fails(main_module) -> None:
+    payload = main_module.capture_item({"raw": "..."})
+
+    assert payload["ok"] is False
+    assert payload["error"] == "scribble content is required"
+
+
+def test_scribble_module_plain_text_creates_scribble(main_module) -> None:
+    payload = main_module.create_scribble({"body": "Need to figure out insurance thing"})
+
+    assert payload["ok"] is True
+    assert payload["kind"] == "scribble"
+    assert payload["item"]["body"] == "Need to figure out insurance thing"
+    assert payload["item"]["raw"] == "... Need to figure out insurance thing"
+
+
+def test_global_capture_plain_text_does_not_create_scribble_implicitly(main_module) -> None:
+    payload = main_module.capture_item({"raw": "Need to figure out insurance thing"})
+
+    assert payload["ok"] is False
+    assert payload["error"] == "unsupported prefix"
+    assert main_module.list_scribbles()["items"] == []
+
+
+def test_scribble_tags_parse_and_store(main_module) -> None:
+    first = main_module.capture_item({"raw": "... Need insurance #insurance #clinic #insurance"})
+    second = main_module.create_scribble({"body": "Need clinic\n#clinic #health"})
+
+    assert first["ok"] is True
+    assert second["ok"] is True
+
+    loaded = main_module.list_scribbles()["items"]
+    assert loaded[1]["body"] == "Need insurance"
+    assert loaded[1]["tags"] == ["insurance", "clinic"]
+    assert loaded[1]["raw"] == "... Need insurance #insurance #clinic"
+    assert loaded[0]["body"] == "Need clinic"
+    assert loaded[0]["tags"] == ["clinic", "health"]
+    assert loaded[0]["raw"] == "... Need clinic #clinic #health"
+
+
+def test_scribble_unsupported_metadata_fails_safely(main_module) -> None:
+    due_payload = main_module.capture_item({"raw": "...\nNeed insurance\nd:2026-06-01"})
+    reminder_payload = main_module.create_scribble({"body": "Need insurance\nr:2026-06-01 10:00"})
+    repeat_payload = main_module.create_scribble({"body": "Need insurance\nR:daily"})
+
+    assert due_payload["ok"] is False
+    assert due_payload["error"] == "scribble does not support d:, r:, or R:"
+    assert reminder_payload["ok"] is False
+    assert reminder_payload["error"] == "scribble does not support d:, r:, or R:"
+    assert repeat_payload["ok"] is False
+    assert repeat_payload["error"] == "scribble does not support d:, r:, or R:"
+    assert main_module.list_scribbles()["items"] == []
