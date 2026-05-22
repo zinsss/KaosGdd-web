@@ -9,21 +9,11 @@ import {
   dispatchCaptureCreated,
   navigateAfterCreate,
 } from "../lib/post-create-navigation";
+import { applyModuleImpliedGrammar, isKnownCaptureGrammar } from "../lib/module-implied-capture";
 import NewNoteModal from "./NewNoteModal";
 
 const NEW_NOTE_TEMPLATE = ":::\ntitle:\ntags:\nlink:\n:::";
 const SCRIBBLE_PROMPT = UI_STRINGS.SCRIBBLE_PROMPT;
-const KNOWN_CAPTURE_PREFIX_RE = /^(--\s|-x\s|---\s|--x\s|\^\^|!!|\/\/|\.{3}(?:\s|$)|:::+|==|\+\+|fax:|mail:|\$\$)/i;
-
-function isKnownCaptureGrammar(rawText) {
-  const firstLine = String(rawText || "")
-    .replace(/\r\n/g, "\n")
-    .split("\n")
-    .map((line) => line.trim())
-    .find(Boolean);
-  return Boolean(firstLine && KNOWN_CAPTURE_PREFIX_RE.test(firstLine));
-}
-
 
 function readEditState() {
   if (typeof window === "undefined") {
@@ -225,7 +215,6 @@ export default function TopCaptureBar() {
   const focusAnchorLoopEndRef = useRef(0);
   const isTextareaFocusedRef = useRef(false);
   const userScrollOverrideRef = useRef(false);
-  const isScribblePage = pathname?.startsWith("/scribble");
 
   function isWideCaptureAnchoredMode() {
     if (typeof window === "undefined") return true;
@@ -840,41 +829,12 @@ export default function TopCaptureBar() {
       return;
     }
 
-    if (!editState && !attachedFile && isScribblePage && !isKnownCaptureGrammar(clean)) {
-      submitLockRef.current = true;
-      const requestId = beginCaptureRequest();
-      setIsSubmitting(true);
-      setScribblePromptRaw("");
-      setError("");
-      setSuccess("");
+    const cleanForSubmit = applyModuleImpliedGrammar(pathname, clean, {
+      isEditing: Boolean(editState),
+      hasAttachedFile: Boolean(attachedFile),
+    });
 
-      try {
-        const res = await fetch("/api/scribbles", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ body: clean }),
-        });
-        const data = await res.json().catch(() => null);
-        if (!res.ok || !data?.ok) {
-          if (!isActiveCaptureRequest(requestId)) return;
-          setError((data && data.error) || UI_STRINGS.SCRIBBLE_SAVE_FAILED);
-          return;
-        }
-        await finalizeCreateSuccess({ requestId, createdTypes: "scribble" });
-      } catch {
-        if (!isActiveCaptureRequest(requestId)) return;
-        setError(UI_STRINGS.SCRIBBLE_SAVE_FAILED);
-      } finally {
-        if (isActiveCaptureRequest(requestId)) {
-          submitLockRef.current = false;
-          setIsSubmitting(false);
-          textareaRef.current?.focus();
-        }
-      }
-      return;
-    }
-
-    if (!editState && !attachedFile && !isKnownCaptureGrammar(clean)) {
+    if (!editState && !attachedFile && cleanForSubmit === clean && !isKnownCaptureGrammar(clean)) {
       promptForScribble(clean);
       return;
     }
@@ -887,7 +847,7 @@ export default function TopCaptureBar() {
     setSuccess("");
 
     try {
-      if (!editState && !attachedFile && clean.startsWith(":::")) {
+      if (!editState && !attachedFile && cleanForSubmit.startsWith(":::")) {
         openNewNoteModal();
         return;
       }
@@ -916,7 +876,7 @@ export default function TopCaptureBar() {
       }
 
       if (attachedFile) {
-        const handled = await submitAttachedFile(clean, requestId);
+        const handled = await submitAttachedFile(cleanForSubmit, requestId);
         if (handled) {
           return;
         }
@@ -926,7 +886,7 @@ export default function TopCaptureBar() {
         const res = await fetch("/api/notes/raw", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ raw: clean }),
+          body: JSON.stringify({ raw: cleanForSubmit }),
         });
 
         const data = await res.json().catch(() => null);
@@ -945,7 +905,7 @@ export default function TopCaptureBar() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          raw: clean,
+          raw: cleanForSubmit,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || undefined,
         }),
       });
