@@ -50,6 +50,8 @@ export const UI_STRINGS = {
   EDITING_REMINDER: "Editing reminder",
   SAVED: "Saved.",
   SHARED_CONTENT_READY: "Shared content ready.",
+  SHARED_FILE_READY: "Shared file attached.",
+  SHARED_FILE_LOAD_FAILED: "Shared file expired or missing.",
   ELLIPSIS: "...",
   TASKS: "Tasks",
   REMINDERS: "Reminders",

@@ -1,4 +1,4 @@
-import { UI_STRINGS } from "../lib/strings";
+import { UI_STRINGS } from "../lib/strings.js";
 
 export default function manifest() {
   return {
@@ -30,13 +30,14 @@ export default function manifest() {
       method: "POST",
       enctype: "multipart/form-data",
       params: {
-        title: "title",
-        text: "text",
-        url: "url",
         files: [
           {
-            name: "files",
-            accept: ["*/*"],
+            name: "file",
+            accept: [
+              "image/*",
+              "application/pdf",
+              "application/octet-stream",
+            ],
           },
         ],
       },

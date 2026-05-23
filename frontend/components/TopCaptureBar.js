@@ -200,6 +200,7 @@ export default function TopCaptureBar() {
   const [editState, setEditState] = useState(null);
   const [attachedFile, setAttachedFile] = useState(null);
   const [attachedFilename, setAttachedFilename] = useState("");
+  const [pendingSharedFileId, setPendingSharedFileId] = useState("");
   const [isNewNoteModalOpen, setIsNewNoteModalOpen] = useState(false);
   const [newNoteRaw, setNewNoteRaw] = useState(NEW_NOTE_TEMPLATE);
   const [newNoteError, setNewNoteError] = useState("");
@@ -484,13 +485,79 @@ export default function TopCaptureBar() {
     }, 0);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const sharedFileId = url.searchParams.get("shared_file") || "";
+    if (!sharedFileId) return;
+
+    let cancelled = false;
+    async function loadSharedFile() {
+      try {
+        const metadataRes = await fetch(`/api/shared-files/${encodeURIComponent(sharedFileId)}`, {
+          cache: "no-store",
+        });
+        const metadataData = await metadataRes.json().catch(() => null);
+        if (!metadataRes.ok || !metadataData?.ok || !metadataData?.item) {
+          throw new Error(metadataData?.error || UI_STRINGS.SHARED_FILE_LOAD_FAILED);
+        }
+
+        const fileRes = await fetch(`/api/shared-files/${encodeURIComponent(sharedFileId)}/file`, {
+          cache: "no-store",
+        });
+        if (!fileRes.ok) {
+          throw new Error(UI_STRINGS.SHARED_FILE_LOAD_FAILED);
+        }
+        const blob = await fileRes.blob();
+        if (cancelled) return;
+
+        const item = metadataData.item;
+        const file = new File(
+          [blob],
+          item.filename || UI_STRINGS.FILE_SELECTED_FALLBACK,
+          { type: item.content_type || blob.type || "application/octet-stream" },
+        );
+        setAttachedFile(file);
+        setAttachedFilename(file.name || UI_STRINGS.FILE_SELECTED_FALLBACK);
+        setPendingSharedFileId(sharedFileId);
+        setRaw("");
+        setScribblePromptRaw("");
+        setError("");
+        setSuccess(UI_STRINGS.SHARED_FILE_READY);
+        window.setTimeout(() => textareaRef.current?.focus(), 0);
+      } catch {
+        if (cancelled) return;
+        setAttachedFile(null);
+        setAttachedFilename("");
+        setPendingSharedFileId("");
+        setError(UI_STRINGS.SHARED_FILE_LOAD_FAILED);
+        setSuccess("");
+      } finally {
+        if (!cancelled) {
+          url.searchParams.delete("shared_file");
+          window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+        }
+      }
+    }
+
+    loadSharedFile();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   useLayoutEffect(() => {
     resizeTextarea();
   }, [raw]);
 
   function clearAttachment() {
+    const sharedFileId = pendingSharedFileId;
     setAttachedFile(null);
     setAttachedFilename("");
+    setPendingSharedFileId("");
+    if (sharedFileId) {
+      fetch(`/api/shared-files/${encodeURIComponent(sharedFileId)}`, { method: "DELETE" }).catch(() => null);
+    }
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -541,8 +608,13 @@ export default function TopCaptureBar() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    const previousSharedFileId = pendingSharedFileId;
     setAttachedFile(file);
     setAttachedFilename(file.name || UI_STRINGS.FILE_SELECTED_FALLBACK);
+    setPendingSharedFileId("");
+    if (previousSharedFileId) {
+      fetch(`/api/shared-files/${encodeURIComponent(previousSharedFileId)}`, { method: "DELETE" }).catch(() => null);
+    }
     setScribblePromptRaw("");
     setError("");
     setSuccess("");
