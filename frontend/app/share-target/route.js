@@ -1,45 +1,33 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server.js";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
+import { createPendingShareFromFile } from "../../lib/pending-share-store.js";
 
-async function uploadSharedFile(file) {
-  const bytes = await file.arrayBuffer();
-  const res = await fetch(`${API_BASE}/files`, {
-    method: "POST",
-    headers: {
-      "Content-Type": file.type || "application/octet-stream",
-      "x-file-name": file.name || "shared-file",
-      "x-file-type": file.type || "",
-    },
-    body: bytes,
-    cache: "no-store",
-  });
-
-  return res.ok;
+function isUploadedFile(value) {
+  return (
+    value &&
+    typeof value === "object" &&
+    typeof value.arrayBuffer === "function" &&
+    typeof value.name === "string"
+  );
 }
 
 export async function POST(request) {
-  const formData = await request.formData();
-  const sharedTitle = String(formData.get("title") || "").trim();
-  const sharedText = String(formData.get("text") || "").trim();
-  const sharedUrl = String(formData.get("url") || "").trim();
-
-  const files = formData
-    .getAll("files")
-    .filter((value) => value instanceof File && value.size > 0);
-
-  let uploadedCount = 0;
-  for (const file of files) {
-    const ok = await uploadSharedFile(file);
-    if (ok) uploadedCount += 1;
+  let formData;
+  try {
+    formData = await request.formData();
+  } catch {
+    return NextResponse.json({ ok: false, error: "shared file upload must use multipart/form-data" }, { status: 400 });
   }
 
-  const params = new URLSearchParams();
-  if (sharedTitle && !sharedText) params.set("text", sharedTitle);
-  if (sharedText) params.set("text", sharedText);
-  if (sharedUrl) params.set("url", sharedUrl);
-  if (uploadedCount > 0) params.set("sharedFiles", String(uploadedCount));
+  const files = formData.getAll("file").filter(isUploadedFile);
+  if (files.length === 0) {
+    return NextResponse.json({ ok: false, error: "one shared file is required" }, { status: 400 });
+  }
+  if (files.length > 1) {
+    return NextResponse.json({ ok: false, error: "only one shared file is supported" }, { status: 400 });
+  }
 
-  const redirectTo = `/share-intake${params.toString() ? `?${params.toString()}` : ""}`;
+  const pending = await createPendingShareFromFile(files[0]);
+  const redirectTo = `/?shared_file=${encodeURIComponent(pending.id)}`;
   return NextResponse.redirect(new URL(redirectTo, request.url), 303);
 }
