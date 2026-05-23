@@ -94,7 +94,9 @@
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding-bottom: var(--app-shell-bottom-reserve);
-  scrollbar-color: #585b70 #11111b;
+  scrollbar-color:
+    color-mix(in srgb, var(--ctp-lavender) 72%, var(--ctp-surface1))
+    var(--ctp-surface0);
   scrollbar-width: thin;
 }
 
@@ -103,17 +105,17 @@
 }
 
 .appShellMain::-webkit-scrollbar-track {
-  background: #11111b;
+  background: var(--ctp-surface0);
 }
 
 .appShellMain::-webkit-scrollbar-thumb {
-  background: #585b70;
-  border: 2px solid #11111b;
+  background: color-mix(in srgb, var(--ctp-lavender) 72%, var(--ctp-surface1));
+  border: 2px solid var(--ctp-surface0);
   border-radius: 999px;
 }
 
 .appShellMain::-webkit-scrollbar-thumb:hover {
-  background: #6c7086;
+  background: var(--ctp-lavender);
 }
 
 .modeDots {
