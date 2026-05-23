@@ -10,6 +10,7 @@ from app.engine.task_service import TaskService
 
 
 UPCOMING_EVENT_DAYS = 7
+WIDGET_EVENT_TITLE_LIMIT = 5
 
 
 def _local_now() -> datetime:
@@ -72,6 +73,19 @@ def _dashboard_reminder(reminder: dict) -> dict:
     }
 
 
+def _task_counts(active_tasks: list[dict], today: date) -> dict:
+    task_counts = {"overdue": 0, "today": 0, "active_total": len(active_tasks)}
+    for task in active_tasks:
+        due_date = _local_date_from_iso(task.get("due_at"))
+        if due_date is None:
+            continue
+        if due_date < today:
+            task_counts["overdue"] += 1
+        elif due_date == today:
+            task_counts["today"] += 1
+    return task_counts
+
+
 class DashboardService:
     def __init__(
         self,
@@ -103,16 +117,7 @@ class DashboardService:
             if event.get("start_date") and event.get("start_date") > today.isoformat()
         ]
 
-        active_tasks = self.task_service.list_tasks(mode="active")
-        task_counts = {"overdue": 0, "today": 0, "active_total": len(active_tasks)}
-        for task in active_tasks:
-            due_date = _local_date_from_iso(task.get("due_at"))
-            if due_date is None:
-                continue
-            if due_date < today:
-                task_counts["overdue"] += 1
-            elif due_date == today:
-                task_counts["today"] += 1
+        task_counts = _task_counts(self.task_service.list_tasks(mode="active"), today)
 
         active_reminders = self.reminder_service.list_reminders(mode="active")
         today_reminders = [
@@ -132,5 +137,59 @@ class DashboardService:
                 "is_public_holiday": "public-holiday" in today_classes,
                 "is_market_saturday": "market-saturday" in today_classes,
                 "is_claim_day": "claim-day" in today_classes,
+            },
+        }
+
+    def get_widget_summary(self) -> dict:
+        now = _local_now()
+        today = now.date()
+        today_iso = today.isoformat()
+
+        events = self.event_service.list_events_in_range(
+            start_date=today_iso,
+            end_date=today_iso,
+            mode="active",
+        )
+        today_events = [
+            event for event in events
+            if event.get("start_date") <= today_iso <= (event.get("end_date") or event.get("start_date"))
+        ]
+        event_titles = [
+            str(event.get("title") or "").strip()
+            for event in today_events
+            if str(event.get("title") or "").strip()
+        ][:WIDGET_EVENT_TITLE_LIMIT]
+
+        active_reminders = self.reminder_service.list_reminders(mode="active")
+        today_reminder_count = sum(
+            1
+            for reminder in active_reminders
+            if _local_date_from_iso(reminder.get("remind_at")) == today
+        )
+        missed_reminder_count = sum(
+            1
+            for reminder in active_reminders
+            if reminder.get("state") == "missed"
+        )
+        fired_reminder_count = sum(
+            1
+            for reminder in self.reminder_service.list_reminders(mode="fired")
+            if reminder.get("state") == "fired"
+        )
+
+        today_classes = {event.get("event_class") for event in today_events}
+        return {
+            "date": now.strftime("%Y.%m.%d %a"),
+            "tasks": _task_counts(self.task_service.list_tasks(mode="active"), today),
+            "reminders": {
+                "today": today_reminder_count,
+                "missed": missed_reminder_count,
+                "fired": fired_reminder_count,
+            },
+            "events_today": event_titles,
+            "flags": {
+                "public_holiday": "public-holiday" in today_classes,
+                "market_day": "market-saturday" in today_classes,
+                "claim_day": "claim-day" in today_classes,
             },
         }

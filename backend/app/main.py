@@ -176,6 +176,11 @@ def get_dashboard():
     return dashboard_service.get_dashboard()
 
 
+@app.get("/widget/summary")
+def get_widget_summary():
+    return dashboard_service.get_widget_summary()
+
+
 @app.get("/scribbles")
 def list_scribbles():
     return {"ok": True, "items": scribble_repo.list_scribbles()}
