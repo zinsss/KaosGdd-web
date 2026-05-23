@@ -10,6 +10,7 @@ import {
   navigateAfterCreate,
 } from "../lib/post-create-navigation";
 import { applyModuleImpliedGrammar, isKnownCaptureGrammar } from "../lib/module-implied-capture";
+import { deriveTitleFromFilename, nextCaptureAttachmentState } from "../lib/capture-file-attach";
 import NewNoteModal from "./NewNoteModal";
 
 const NEW_NOTE_TEMPLATE = ":::\ntitle:\ntags:\nlink:\n:::";
@@ -43,20 +44,6 @@ function writeEditState(value) {
     }
     window.sessionStorage.setItem("kaosgdd_capture_edit", JSON.stringify(value));
   } catch {}
-}
-
-function deriveTitleFromFilename(filename) {
-  const fallback = UI_STRINGS.FILE_TITLE_FALLBACK;
-  const cleanName = String(filename || "").trim();
-  if (!cleanName) return fallback;
-
-  const withoutExt = cleanName.replace(/\.[^/.]+$/, "");
-  const normalized = withoutExt
-    .replace(/[_-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  return normalized || fallback;
 }
 
 function normalizeAttachedFileGrammar(rawText) {
@@ -201,6 +188,7 @@ export default function TopCaptureBar() {
   const [attachedFile, setAttachedFile] = useState(null);
   const [attachedFilename, setAttachedFilename] = useState("");
   const [pendingSharedFileId, setPendingSharedFileId] = useState("");
+  const [isDropActive, setIsDropActive] = useState(false);
   const [isNewNoteModalOpen, setIsNewNoteModalOpen] = useState(false);
   const [newNoteRaw, setNewNoteRaw] = useState(NEW_NOTE_TEMPLATE);
   const [newNoteError, setNewNoteError] = useState("");
@@ -216,6 +204,7 @@ export default function TopCaptureBar() {
   const focusAnchorLoopEndRef = useRef(0);
   const isTextareaFocusedRef = useRef(false);
   const userScrollOverrideRef = useRef(false);
+  const dragDepthRef = useRef(0);
 
   function isWideCaptureAnchoredMode() {
     if (typeof window === "undefined") return true;
@@ -563,6 +552,33 @@ export default function TopCaptureBar() {
     }
   }
 
+  function attachPickedFile(file) {
+    const previousSharedFileId = pendingSharedFileId;
+    const next = nextCaptureAttachmentState({
+      file,
+      raw,
+      isEditing: Boolean(editState),
+      fileCount: file ? 1 : 0,
+    });
+    if (!next.ok) {
+      setError(next.error || UI_STRINGS.FILE_DROP_EMPTY);
+      setSuccess("");
+      return false;
+    }
+
+    setAttachedFile(next.file);
+    setAttachedFilename(next.filename);
+    setPendingSharedFileId("");
+    if (previousSharedFileId) {
+      fetch(`/api/shared-files/${encodeURIComponent(previousSharedFileId)}`, { method: "DELETE" }).catch(() => null);
+    }
+    setScribblePromptRaw("");
+    setError("");
+    setSuccess("");
+    setRaw(next.raw);
+    return true;
+  }
+
   function cancelEdit() {
     setEditState(null);
     setRaw("");
@@ -607,22 +623,80 @@ export default function TopCaptureBar() {
   function onFileSelected(event) {
     const file = event.target.files?.[0];
     if (!file) return;
+    attachPickedFile(file);
+  }
 
-    const previousSharedFileId = pendingSharedFileId;
-    setAttachedFile(file);
-    setAttachedFilename(file.name || UI_STRINGS.FILE_SELECTED_FALLBACK);
-    setPendingSharedFileId("");
-    if (previousSharedFileId) {
-      fetch(`/api/shared-files/${encodeURIComponent(previousSharedFileId)}`, { method: "DELETE" }).catch(() => null);
-    }
-    setScribblePromptRaw("");
-    setError("");
-    setSuccess("");
+  function dragHasFile(event) {
+    return Array.from(event.dataTransfer?.types || []).includes("Files");
+  }
 
-    if (!raw.trim()) {
-      const title = deriveTitleFromFilename(file.name);
-      setRaw(`++ ${title}`);
+  function dropHasDirectory(dataTransfer) {
+    const items = Array.from(dataTransfer?.items || []);
+    return items.some((item) => {
+      if (item.kind !== "file") return false;
+      if (typeof item.webkitGetAsEntry !== "function") return false;
+      const entry = item.webkitGetAsEntry();
+      return Boolean(entry?.isDirectory);
+    });
+  }
+
+  function resetDropState() {
+    dragDepthRef.current = 0;
+    setIsDropActive(false);
+  }
+
+  function onCaptureDragEnter(event) {
+    if (!dragHasFile(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (isSubmitting) return;
+    dragDepthRef.current += 1;
+    if (!editState) {
+      setIsDropActive(true);
     }
+  }
+
+  function onCaptureDragOver(event) {
+    if (!dragHasFile(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = editState || isSubmitting ? "none" : "copy";
+    }
+  }
+
+  function onCaptureDragLeave(event) {
+    if (!dragHasFile(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    dragDepthRef.current = Math.max(dragDepthRef.current - 1, 0);
+    if (dragDepthRef.current === 0) {
+      setIsDropActive(false);
+    }
+  }
+
+  function onCaptureDrop(event) {
+    if (!dragHasFile(event)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    resetDropState();
+    if (isSubmitting) return;
+
+    const files = Array.from(event.dataTransfer?.files || []);
+    const next = nextCaptureAttachmentState({
+      file: files[0],
+      raw,
+      isEditing: Boolean(editState),
+      hasDirectory: dropHasDirectory(event.dataTransfer),
+      fileCount: files.length,
+    });
+    if (!next.ok) {
+      setError(next.error || UI_STRINGS.FILE_DROP_EMPTY);
+      setSuccess("");
+      return;
+    }
+
+    attachPickedFile(next.file);
   }
 
   const modeText = editState
@@ -1045,7 +1119,14 @@ export default function TopCaptureBar() {
   return (
     <>
       <form onSubmit={onSubmit} className="topCaptureBar">
-        <div ref={captureContainerRef} className="topCaptureInner">
+        <div
+          ref={captureContainerRef}
+          className={`topCaptureInner${isDropActive ? " topCaptureDropActive" : ""}`}
+          onDragEnter={onCaptureDragEnter}
+          onDragOver={onCaptureDragOver}
+          onDragLeave={onCaptureDragLeave}
+          onDrop={onCaptureDrop}
+        >
           <textarea
             ref={textareaRef}
             className="textInput autoTextarea topCaptureInput"

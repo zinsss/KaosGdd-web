@@ -350,6 +350,14 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
+.topCaptureBar .topCaptureDropActive .topCaptureInput {
+  border-color: rgba(180, 190, 254, 0.58);
+  background: color-mix(in srgb, var(--top-capture-surface) 88%, var(--ctp-lavender));
+  box-shadow:
+    0 0 0 1px rgba(180, 190, 254, 0.18),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 .topCaptureFooter {
   grid-area: footer;
   grid-column: 1 / -1;
