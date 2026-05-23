@@ -9,6 +9,7 @@ from sqlalchemy import text
 
 from app.config import DbTables
 from app.utils.event_raw import parse_event_raw
+from app.utils.event_recurrence import expand_recurring_event
 
 
 @pytest.fixture()
@@ -86,6 +87,15 @@ def test_jan_31_monthly_recurrence_clamps_safely(main_module) -> None:
     assert [(event["title"], event["start_date"]) for event in events] == [("Billing marker", "2026-02-28")]
 
 
+def test_jan_31_monthly_recurrence_clamps_to_feb_29_in_leap_year(main_module) -> None:
+    module, _, _ = main_module
+    _capture_event(module, "^^ Leap billing marker\nd:2024-01-31\nR:monthly")
+
+    events = _events(module, "2024-02-01", "2024-02-29")
+
+    assert [(event["title"], event["start_date"]) for event in events] == [("Leap billing marker", "2024-02-29")]
+
+
 def test_yearly_leap_day_recurrence_clamps_safely(main_module) -> None:
     module, _, _ = main_module
     _capture_event(module, "^^ Leap marker\nd:2024-02-29\nR:yearly")
@@ -93,6 +103,15 @@ def test_yearly_leap_day_recurrence_clamps_safely(main_module) -> None:
     events = _events(module, "2025-02-01", "2025-02-28")
 
     assert [(event["title"], event["start_date"]) for event in events] == [("Leap marker", "2025-02-28")]
+
+
+def test_yearly_leap_day_recurrence_returns_to_feb_29_in_leap_year(main_module) -> None:
+    module, _, _ = main_module
+    _capture_event(module, "^^ Leap marker\nd:2024-02-29\nR:yearly")
+
+    events = _events(module, "2028-02-01", "2028-02-29")
+
+    assert [(event["title"], event["start_date"]) for event in events] == [("Leap marker", "2028-02-29")]
 
 
 def test_recurring_event_appears_in_month_calendar_ranges(main_module) -> None:
@@ -154,6 +173,21 @@ def test_recurrence_expansion_does_not_create_duplicate_permanent_rows(main_modu
     assert {event["id"] for event in first} == {event_id}
 
 
+def test_recurrence_expansion_has_defensive_occurrence_limit() -> None:
+    event = {"id": "evt-test", "title": "Long weekly", "start_date": "2026-01-01", "end_date": None}
+
+    occurrences = expand_recurring_event(
+        event,
+        range_start="2026-01-01",
+        range_end="2046-01-01",
+        repeat_rule="weekly",
+    )
+
+    assert len(occurrences) == 500
+    assert occurrences[0]["start_date"] == "2026-01-01"
+    assert occurrences[-1]["occurrence_sequence"] == 499
+
+
 def test_event_raw_parses_and_exports_repeat_rule(main_module) -> None:
     module, _, _ = main_module
     parsed = parse_event_raw("^^ Mom birthday\nd:2026-08-14\nR:yearly\n#family")
@@ -179,4 +213,3 @@ def test_daily_event_repeat_is_not_supported(main_module) -> None:
 
     assert payload["ok"] is False
     assert payload["error"] == "invalid event repeat rule: daily"
-

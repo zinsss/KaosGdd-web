@@ -14,11 +14,16 @@ function badgeForEvent(event) {
 
 function EventRow({ event }) {
   const badge = badgeForEvent(event);
+  const eventId = event.canonical_event_id || event.id;
+  const href = event.is_recurring_occurrence && event.start_date
+    ? `/events/${eventId}?occurrence=${encodeURIComponent(event.start_date)}`
+    : `/events/${eventId}`;
   return (
     <li className="dashboardListRow">
       <div className="dashboardEventLine">
         {badge ? <span className={"dashboardBadge " + badge.className}>{badge.label}</span> : null}
-        <Link className="taskLink dashboardItemTitle" href={`/events/${event.id}`}>{event.title}</Link>
+        {event.is_recurring_occurrence ? <span className="dashboardRecurringMark" aria-label="recurring occurrence">↻</span> : null}
+        <Link className="taskLink dashboardItemTitle" href={href}>{event.title}</Link>
       </div>
       <div className="metaLine dashboardMetaLine">
         {event.start_date}{event.end_date && event.end_date !== event.start_date ? ` ~ ${event.end_date}` : ""}
@@ -100,7 +105,7 @@ export default function DashboardPageClient() {
         <div className="panel">
           <div className="sectionTitle">{UI_STRINGS.TODAY_EVENTS}</div>
           {dashboard.today_events.length ? (
-            <ul className="dashboardList">{dashboard.today_events.map((event) => <EventRow key={event.id} event={event} />)}</ul>
+            <ul className="dashboardList">{dashboard.today_events.map((event) => <EventRow key={event.occurrence_id || event.id} event={event} />)}</ul>
           ) : (
             <div className="empty">{UI_STRINGS.NO_TODAY_EVENTS}</div>
           )}
@@ -129,7 +134,7 @@ export default function DashboardPageClient() {
         <div className="panel">
           <div className="sectionTitle">{UI_STRINGS.UPCOMING_EVENTS}</div>
           {dashboard.upcoming_events.length ? (
-            <ul className="dashboardList">{dashboard.upcoming_events.map((event) => <EventRow key={event.id} event={event} />)}</ul>
+            <ul className="dashboardList">{dashboard.upcoming_events.map((event) => <EventRow key={event.occurrence_id || event.id} event={event} />)}</ul>
           ) : (
             <div className="empty">{UI_STRINGS.NO_UPCOMING_EVENTS}</div>
           )}
