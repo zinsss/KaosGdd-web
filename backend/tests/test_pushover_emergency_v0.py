@@ -256,3 +256,59 @@ def test_pushover_failure_is_logged_and_does_not_crash_scheduler(
 
     assert missed["count"] == 1
     assert "pushover emergency escalation failed" in caplog.text
+
+
+def test_pushover_test_endpoint_sends_non_emergency_config_test(
+    main_module,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = []
+
+    def record_pushover(**kwargs):
+        calls.append(kwargs)
+        return {
+            "attempted": True,
+            "succeeded": True,
+            "reason": None,
+            "status": 200,
+            "response": {"status": 1},
+        }
+
+    monkeypatch.setattr(main_module.pushover_client, "send_pushover", record_pushover)
+
+    result = main_module.send_pushover_test()
+
+    assert result == {
+        "ok": True,
+        "attempted": True,
+        "succeeded": True,
+        "reason": None,
+        "status": 200,
+        "response": {"status": 1},
+    }
+    assert calls == [
+        {
+            "title": "KaosGdd Pushover Test",
+            "message": "Pushover is connected.",
+            "url": "https://kaos.test",
+            "url_title": "Open KaosGdd",
+            "priority": 0,
+        }
+    ]
+
+
+def test_pushover_test_endpoint_reports_disabled_config(
+    main_module,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def disabled_pushover(**_kwargs):
+        return {"attempted": False, "succeeded": False, "reason": "disabled"}
+
+    monkeypatch.setattr(main_module.pushover_client, "send_pushover", disabled_pushover)
+
+    result = main_module.send_pushover_test()
+
+    assert result["ok"] is False
+    assert result["attempted"] is False
+    assert result["succeeded"] is False
+    assert result["reason"] == "disabled"

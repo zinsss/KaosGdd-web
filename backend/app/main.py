@@ -38,6 +38,7 @@ from app.engine.file_service import FileService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
 from app.engine.supply_service import SupplyService
+from app.integrations import pushover_client
 from app.integrations.web_push_client import WebPushClient
 from app.schemas.reminders import normalize_minutes
 from app.strings import ApiText, PushText
@@ -1096,6 +1097,25 @@ def send_push_test(payload: dict):
         first_error_summary=first_error_summary,
     )
     return result
+
+
+@app.post("/push/pushover-test")
+def send_pushover_test():
+    result = pushover_client.send_pushover(
+        title="KaosGdd Pushover Test",
+        message="Pushover is connected.",
+        url=SETTINGS.APP_BASE_URL or None,
+        url_title="Open KaosGdd",
+        priority=0,
+    )
+    return {
+        "ok": bool(result.get("succeeded")),
+        "attempted": bool(result.get("attempted")),
+        "succeeded": bool(result.get("succeeded")),
+        "reason": result.get("reason"),
+        "status": result.get("status"),
+        "response": result.get("response"),
+    }
 
 
 @app.get("/push/status")
