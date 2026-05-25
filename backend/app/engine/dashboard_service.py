@@ -5,7 +5,9 @@ from zoneinfo import ZoneInfo
 
 from app.config import SETTINGS
 from app.engine.event_service import EventService
+from app.engine.file_service import FileService
 from app.engine.reminder_service import ReminderService
+from app.engine.supply_service import SupplyService
 from app.engine.task_service import TaskService
 
 
@@ -93,10 +95,14 @@ class DashboardService:
         event_service: EventService,
         task_service: TaskService,
         reminder_service: ReminderService,
+        supply_service: SupplyService | None = None,
+        file_service: FileService | None = None,
     ) -> None:
         self.event_service = event_service
         self.task_service = task_service
         self.reminder_service = reminder_service
+        self.supply_service = supply_service
+        self.file_service = file_service
 
     def get_dashboard(self, *, upcoming_days: int = UPCOMING_EVENT_DAYS) -> dict:
         now = _local_now()
@@ -177,6 +183,10 @@ class DashboardService:
             if reminder.get("state") == "fired"
         )
 
+        active_supplies = self.supply_service.list_supplies(mode="active") if self.supply_service is not None else []
+        active_files = self.file_service.list_files(mode="active") if self.file_service is not None else []
+        active_faxes = [file_item for file_item in active_files if str(file_item.get("fax_number") or "").strip()]
+
         today_classes = {event.get("event_class") for event in today_events}
         return {
             "date": now.strftime("%Y.%m.%d %a"),
@@ -187,6 +197,13 @@ class DashboardService:
                 "fired": fired_reminder_count,
             },
             "events_today": event_titles,
+            "supplies": {
+                "active_total": len(active_supplies),
+            },
+            "fax": {
+                "active_total": len(active_faxes),
+                "attention": 0,
+            },
             "flags": {
                 "public_holiday": "public-holiday" in today_classes,
                 "market_day": "market-saturday" in today_classes,
