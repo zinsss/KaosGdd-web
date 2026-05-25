@@ -1,0 +1,11 @@
+[Unit]
+Description=Run KaosGdd daily summary Web Push (Lunch) at 13:05
+# OnCalendar uses the server local timezone; keep it at Asia/Seoul to match APP_TIMEZONE.
+
+[Timer]
+OnCalendar=*-*-* 13:05:00
+Persistent=true
+Unit=kaosgdd-daily-summary-lunch.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,8 @@
+[Unit]
+Description=KaosGdd Daily Summary Web Push (Before Off)
+After=kaosgdd-backend.service
+Requires=kaosgdd-backend.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/curl --fail --show-error --silent -X POST -H "Content-Type: application/json" --data '{"slot":"before-off"}' http://127.0.0.1:8000/internal/daily-summary/send

@@ -149,6 +149,129 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title=SETTINGS.APP_NAME, lifespan=lifespan)
 
 
+DAILY_SUMMARY_SLOTS = {
+    "morning": "KaosGdd Morning",
+    "lunch": "KaosGdd Lunch",
+    "before-off": "KaosGdd Before Off",
+    "before-sleep": "KaosGdd Night",
+}
+
+
+def _daily_summary_local_date() -> str:
+    try:
+        now = datetime.now(ZoneInfo(SETTINGS.APP_TIMEZONE))
+    except Exception:
+        now = datetime.now(timezone.utc)
+    return now.date().isoformat()
+
+
+def _daily_summary_count(value, *path: str) -> int:
+    current = value
+    for key in path:
+        if not isinstance(current, dict):
+            return 0
+        current = current.get(key)
+    if isinstance(current, bool):
+        return int(current)
+    try:
+        return int(current or 0)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _build_daily_summary_body(summary: dict) -> str:
+    tasks = summary.get("tasks") if isinstance(summary.get("tasks"), dict) else {}
+    reminders = summary.get("reminders") if isinstance(summary.get("reminders"), dict) else {}
+    events_today = summary.get("events_today")
+    flags = summary.get("flags") if isinstance(summary.get("flags"), dict) else {}
+
+    task_count = _daily_summary_count(tasks, "active_total")
+    overdue_count = _daily_summary_count(tasks, "overdue")
+    reminder_count = _daily_summary_count(reminders, "today")
+    event_count = len(events_today) if isinstance(events_today, list) else _daily_summary_count(summary, "events")
+    supply_count = _daily_summary_count(summary, "supplies", "active_total")
+    fax_count = _daily_summary_count(summary, "fax", "active_total")
+
+    lines = [
+        f"Tasks {task_count} · Overdue {overdue_count}",
+        f"Reminders {reminder_count} · Events {event_count}",
+    ]
+    flag_labels = []
+    if flags.get("public_holiday"):
+        flag_labels.append("Public Holiday")
+    if flags.get("market_day"):
+        flag_labels.append("Market Day")
+    if flags.get("claim_day"):
+        flag_labels.append("Claim Day")
+    if flag_labels:
+        lines.append(" · ".join(flag_labels))
+    else:
+        lines.append(f"Supplies {supply_count} · Fax {fax_count}")
+    return "\n".join(lines[:3])
+
+
+def _send_daily_summary_web_push(*, title: str, body: str, url: str) -> dict:
+    if push_subscription_repo is None or web_push_client is None or not web_push_client.is_enabled:
+        return {"sent": 0, "skipped": 0, "removed": 0, "errors": []}
+
+    subscriptions = push_subscription_repo.list_all()
+    sent = 0
+    removed = 0
+    errors = []
+    for subscription_row in subscriptions:
+        endpoint = str(subscription_row.get("endpoint") or "")
+        client_id = str(subscription_row.get("client_id") or "")
+        try:
+            web_push_client.send(
+                subscription_info=subscription_row.get("subscription") or {},
+                payload_json=json.dumps(
+                    {
+                        "title": title,
+                        "body": body,
+                        "url": url,
+                    }
+                ),
+            )
+            sent += 1
+        except Exception as exc:
+            details = web_push_client.summarize_exception(exc)
+            was_removed = False
+            if client_id and endpoint and details["is_invalid_subscription"]:
+                was_removed = push_subscription_repo.remove(client_id=client_id, endpoint=endpoint)
+                if was_removed:
+                    removed += 1
+            errors.append(
+                {
+                    "client_id": client_id,
+                    "endpoint": endpoint,
+                    "exception_type": details["exception_type"],
+                    "message": details["message"],
+                    "summary": details["summary"],
+                    "removed_due_to_invalid": details["is_invalid_subscription"],
+                    "removed": was_removed,
+                }
+            )
+            logger.warning(
+                (
+                    "daily summary web push send failed: client_id=%s endpoint=%s "
+                    "exception_type=%s exception_message=%s invalid_subscription=%s removed=%s"
+                ),
+                client_id,
+                endpoint,
+                details["exception_type"],
+                details["message"],
+                details["is_invalid_subscription"],
+                was_removed,
+            )
+
+    return {
+        "sent": sent,
+        "skipped": 0,
+        "removed": removed,
+        "errors": errors,
+    }
+
+
 def resolve_upload_filename(headers) -> str:
     encoded_filename = str(headers.get("x-file-name-url") or "").strip()
     decoded_filename = ""
@@ -991,6 +1114,78 @@ def get_push_status(client_id: str, endpoint: str | None = None):
         "backend_subscription_saved": has_subscription,
         "endpoint_match": endpoint_match,
         "last_test": push_test_diagnostic_repo.get_for_client(clean_client_id),
+    }
+
+
+@app.post("/internal/daily-summary/send")
+def send_daily_summary(payload: dict):
+    slot = str(payload.get("slot") or "").strip()
+    if slot not in DAILY_SUMMARY_SLOTS:
+        return {
+            "ok": False,
+            "error": "invalid slot",
+            "slot": slot,
+            "supported_slots": list(DAILY_SUMMARY_SLOTS),
+            "sent": 0,
+            "skipped": 0,
+            "errors": [],
+        }
+
+    local_date = _daily_summary_local_date()
+    dedupe_key = f"daily-summary:{local_date}:{slot}"
+    subscriptions = push_subscription_repo.list_all() if push_subscription_repo is not None else []
+    if web_push_client is None or not web_push_client.is_enabled:
+        return {
+            "ok": True,
+            "slot": slot,
+            "dedupe_key": dedupe_key,
+            "sent": 0,
+            "skipped": len(subscriptions),
+            "removed": 0,
+            "errors": [],
+            "error_count": 0,
+        }
+    if not subscriptions:
+        return {
+            "ok": True,
+            "slot": slot,
+            "dedupe_key": dedupe_key,
+            "sent": 0,
+            "skipped": 0,
+            "removed": 0,
+            "errors": [],
+            "error_count": 0,
+        }
+
+    should_send = push_policy_repo.record_event_once(event_key=dedupe_key, event_type="daily-summary")
+    if not should_send:
+        return {
+            "ok": True,
+            "slot": slot,
+            "dedupe_key": dedupe_key,
+            "sent": 0,
+            "skipped": len(subscriptions),
+            "removed": 0,
+            "errors": [],
+            "error_count": 0,
+        }
+
+    summary = dashboard_service.get_widget_summary()
+    title = DAILY_SUMMARY_SLOTS[slot]
+    body = _build_daily_summary_body(summary)
+    url = reminder_service._build_absolute_url("/") or "/"
+    result = _send_daily_summary_web_push(title=title, body=body, url=url)
+    result["skipped"] = int(result.get("skipped") or 0)
+    errors = result.get("errors") or []
+    return {
+        "ok": True,
+        "slot": slot,
+        "dedupe_key": dedupe_key,
+        "sent": result["sent"],
+        "skipped": result["skipped"],
+        "removed": result["removed"],
+        "errors": errors,
+        "error_count": len(errors),
     }
 
 
