@@ -1,6 +1,10 @@
 import os
 
 
+def _env_bool(name: str, default: str = "0") -> bool:
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
 DEFAULT_KOREAN_HOLIDAY_ICAL_URL = (
     "https://calendar.google.com/calendar/ical/"
     "ko.south_korea%23holiday%40group.v.calendar.google.com/public/basic.ics"
@@ -15,11 +19,14 @@ class Settings:
     DEFAULT_SNOOZE_MINUTES = int(os.getenv("DEFAULT_SNOOZE_MINUTES", "10"))
     REMINDER_MISSED_SCAN_LOOKBACK_HOURS = int(os.getenv("REMINDER_MISSED_SCAN_LOOKBACK_HOURS", "2"))
 
-    PUSHOVER_ENABLED = os.getenv("PUSHOVER_ENABLED", "0") == "1"
+    PUSHOVER_ENABLED = _env_bool("PUSHOVER_ENABLED", "false")
     PUSHOVER_APP_TOKEN = os.getenv("PUSHOVER_APP_TOKEN", os.getenv("PUSHOVER_TOKEN", ""))
     PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY", "")
     PUSHOVER_DEVICE = os.getenv("PUSHOVER_DEVICE", "").strip()
     PUSHOVER_PRIORITY_DEFAULT = int(os.getenv("PUSHOVER_PRIORITY_DEFAULT", "0"))
+    PUSHOVER_EMERGENCY_ENABLED = _env_bool("PUSHOVER_EMERGENCY_ENABLED", "false")
+    PUSHOVER_EMERGENCY_RETRY_SECONDS = int(os.getenv("PUSHOVER_EMERGENCY_RETRY_SECONDS", "60"))
+    PUSHOVER_EMERGENCY_EXPIRE_SECONDS = int(os.getenv("PUSHOVER_EMERGENCY_EXPIRE_SECONDS", "1800"))
 
     APP_BASE_URL = os.getenv("APP_BASE_URL", os.getenv("WEB_BASE_URL", ""))
     KOREAN_HOLIDAY_ICAL_URL = os.getenv("KOREAN_HOLIDAY_ICAL_URL", DEFAULT_KOREAN_HOLIDAY_ICAL_URL).strip()

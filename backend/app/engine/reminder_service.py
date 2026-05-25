@@ -9,6 +9,7 @@ from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.task_repo import TaskRepo
+from app.integrations import pushover_client
 from app.integrations.push_format import build_push_body, build_push_title
 from app.strings import ApiText, PushText, ReminderStatusText
 from app.utils.clock import now_iso
@@ -355,6 +356,7 @@ class ReminderService:
             )
             missed_push_payload = self._build_missed_push_payload(row)
             self._send_web_push(row=row, push_payload=missed_push_payload)
+            self._send_missed_reminder_pushover(row)
 
             missed.append(row)
 
@@ -409,13 +411,26 @@ class ReminderService:
             push_title="Fax received",
         )
 
-    def notify_fax_send_failed(self, *, fax_id: str, title: str | None = None, event_id: str | None = None) -> bool:
+    def notify_fax_send_failed(
+        self,
+        *,
+        fax_id: str,
+        title: str | None = None,
+        event_id: str | None = None,
+        target: str | None = None,
+    ) -> bool:
         return self._notify_fax_event(
             fax_id=fax_id,
             title=title,
             event_id=event_id,
             event_type="fax_send_failed",
             push_title="Fax send failed",
+            pushover_title="KaosGdd fax failed",
+            pushover_message=self._build_fax_failed_pushover_message(
+                fax_id=fax_id,
+                title=title,
+                target=target,
+            ),
         )
 
     def _notify_fax_event(
@@ -426,6 +441,8 @@ class ReminderService:
         event_id: str | None,
         event_type: str,
         push_title: str,
+        pushover_title: str | None = None,
+        pushover_message: str | None = None,
     ) -> bool:
         if self.push_policy_repo is None:
             return False
@@ -449,7 +466,58 @@ class ReminderService:
             "has_app_attention": True,
         }
         self._send_web_push(row={"id": clean_fax_id, "parent_item_id": None}, push_payload=push_payload)
+        if pushover_title and pushover_message:
+            self._send_pushover_emergency(title=pushover_title, message=pushover_message, url=push_payload["url"])
         return True
+
+    def _send_missed_reminder_pushover(self, reminder: dict) -> None:
+        item_title = self._resolve_reminder_item_title(reminder)
+        remind_at = format_dt_for_ui(reminder.get("remind_at")) or str(reminder.get("remind_at") or "").strip()
+        message = f"Missed reminder: {item_title}\nReminder: {remind_at}"
+        push_payload = self._build_missed_push_payload(reminder)
+        self._send_pushover_emergency(
+            title="KaosGdd missed reminder",
+            message=message,
+            url=push_payload.get("url"),
+        )
+
+    def _send_pushover_emergency(self, *, title: str, message: str, url: str | None = None) -> None:
+        try:
+            result = pushover_client.send_pushover_emergency(title=title, message=message, url=url)
+        except Exception as exc:
+            logger.warning("pushover emergency escalation exception: %s", exc)
+            return
+        if result.get("attempted") and not result.get("succeeded"):
+            logger.warning("pushover emergency escalation failed: reason=%s", result.get("reason"))
+
+    def _resolve_reminder_item_title(self, reminder: dict) -> str:
+        item_title = str(reminder.get("title") or "").strip()
+        parent_item_id = reminder.get("parent_item_id")
+        if parent_item_id:
+            task = self.task_repo.get_task_detail(parent_item_id)
+            if task is not None:
+                item_title = str(task.get("title") or item_title).strip()
+            elif self.event_repo is not None:
+                event = self.event_repo.get_event_detail(parent_item_id)
+                if event is not None:
+                    item_title = str(event.get("title") or item_title).strip()
+        return item_title or "Reminder"
+
+    def _build_fax_failed_pushover_message(
+        self,
+        *,
+        fax_id: str,
+        title: str | None = None,
+        target: str | None = None,
+    ) -> str:
+        clean_target = str(target or "").strip()
+        clean_title = str(title or "").strip() or str(fax_id or "").strip()
+        lines = ["Fax send failed."]
+        if clean_target:
+            lines.append(f"Target: {clean_target}")
+        if clean_title:
+            lines.append(f"File: {clean_title}")
+        return "\n".join(lines)
 
     def _build_push_payload(self, reminder: dict) -> dict:
         reminder_id = str(reminder.get("id") or "").strip()

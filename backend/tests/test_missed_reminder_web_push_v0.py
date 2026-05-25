@@ -17,10 +17,12 @@ def main_module(tmp_path: Path):
 
     import app.config as config_module
     import app.core.db as db_module
+    import app.engine.reminder_service as reminder_service_module
     import app.main as main_module
 
     importlib.reload(config_module)
     importlib.reload(db_module)
+    importlib.reload(reminder_service_module)
     importlib.reload(main_module)
     main_module.init_schema_v0(main_module.engine)
     return main_module

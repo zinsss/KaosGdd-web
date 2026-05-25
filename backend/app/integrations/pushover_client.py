@@ -18,6 +18,8 @@ def send_pushover(
     url: str | None = None,
     url_title: str | None = None,
     priority: int | None = None,
+    retry: int | None = None,
+    expire: int | None = None,
 ) -> dict:
     if not SETTINGS.PUSHOVER_ENABLED:
         return {
@@ -45,6 +47,10 @@ def send_pushover(
 
     if SETTINGS.PUSHOVER_DEVICE:
         payload["device"] = SETTINGS.PUSHOVER_DEVICE
+    if retry is not None:
+        payload["retry"] = str(int(retry))
+    if expire is not None:
+        payload["expire"] = str(int(expire))
     if url:
         payload["url"] = url
     if url_title:
@@ -65,6 +71,7 @@ def send_pushover(
                     "status": resp.status,
                     "response": parsed,
                 }
+            logger.warning("pushover api error: status=%s response=%s", resp.status, parsed)
             return {
                 "attempted": True,
                 "succeeded": False,
@@ -85,17 +92,43 @@ def send_pushover(
             "response": parsed,
         }
     except URLError as exc:
+        logger.warning("pushover network error: reason=%s", exc.reason)
         return {
             "attempted": True,
             "succeeded": False,
             "reason": f"network error: {exc.reason}",
         }
     except Exception as exc:  # defensive: do not break reminder fire flow
+        logger.warning("pushover send exception: %s", exc)
         return {
             "attempted": True,
             "succeeded": False,
             "reason": f"exception: {exc}",
         }
+
+
+def send_pushover_emergency(
+    *,
+    title: str,
+    message: str,
+    url: str | None = None,
+    url_title: str | None = None,
+) -> dict:
+    if not SETTINGS.PUSHOVER_EMERGENCY_ENABLED:
+        return {
+            "attempted": False,
+            "succeeded": False,
+            "reason": "emergency disabled",
+        }
+    return send_pushover(
+        title=title,
+        message=message,
+        url=url,
+        url_title=url_title,
+        priority=2,
+        retry=SETTINGS.PUSHOVER_EMERGENCY_RETRY_SECONDS,
+        expire=SETTINGS.PUSHOVER_EMERGENCY_EXPIRE_SECONDS,
+    )
 
 
 def _decode_json(raw: str) -> dict | None:
