@@ -43,13 +43,16 @@ export default function PushControls() {
     }
   }
 
-  async function runStandalone(action) {
+  async function runStandalone(action, successMessage = "") {
     if (busy) return;
     setBusy(true);
     setStateText("");
 
     try {
       await action();
+      if (successMessage) {
+        setStateText(successMessage);
+      }
     } catch (error) {
       setStateText(error instanceof Error ? error.message : "Action failed");
     } finally {
@@ -88,7 +91,11 @@ export default function PushControls() {
       ) : null}
 
       <div className="actionRow">
-        <button className="button compactButton buttonToneSave" disabled={busy} onClick={() => runStandalone(sendPushoverTest)}>
+        <button
+          className="button compactButton buttonToneSave"
+          disabled={busy}
+          onClick={() => runStandalone(sendPushoverTest, "Pushover test sent")}
+        >
           Send Pushover Test
         </button>
       </div>

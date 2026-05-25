@@ -292,6 +292,7 @@ def test_pushover_test_endpoint_sends_non_emergency_config_test(
             "message": "Pushover is connected.",
             "url": "https://kaos.test",
             "url_title": "Open KaosGdd",
+            "priority": 0,
         }
     ]
 

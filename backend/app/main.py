@@ -1106,6 +1106,7 @@ def send_pushover_test():
         message="Pushover is connected.",
         url=SETTINGS.APP_BASE_URL or None,
         url_title="Open KaosGdd",
+        priority=0,
     )
     return {
         "ok": bool(result.get("succeeded")),
