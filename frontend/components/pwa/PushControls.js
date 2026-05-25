@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 import { getPushStatus, sendTestPush, subscribeToPush, unsubscribeFromPush } from "../../lib/pwa/push";
+import { sendPushoverTest } from "../../lib/pwa/pushover-test";
 
 export default function PushControls() {
   const [status, setStatus] = useState({ state: "loading", message: "Checking notification status…" });
@@ -42,6 +43,20 @@ export default function PushControls() {
     }
   }
 
+  async function runStandalone(action) {
+    if (busy) return;
+    setBusy(true);
+    setStateText("");
+
+    try {
+      await action();
+    } catch (error) {
+      setStateText(error instanceof Error ? error.message : "Action failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="panel">
       <div className="sectionTitle">Notifications</div>
@@ -71,6 +86,12 @@ export default function PushControls() {
           </button>
         </div>
       ) : null}
+
+      <div className="actionRow">
+        <button className="button compactButton buttonToneSave" disabled={busy} onClick={() => runStandalone(sendPushoverTest)}>
+          Send Pushover Test
+        </button>
+      </div>
 
       {stateText ? <div className="subline">{stateText}</div> : null}
     </section>
