@@ -153,7 +153,7 @@ Frozen direction:
 - Scheduler is backend-side.
 - Dispatcher reads due reminders.
 - Dispatcher sends ordinary app item events through Web Push with app deep links.
-- Pushover is an admin/system alarm channel only and is not used for ordinary reminder, task-overdue, fax-received, or item-level fax-send-failed workflow events.
+- Pushover Emergency is an escalation channel for missed reminders and fax-send-failed events only; ordinary reminder, task-overdue, and fax-received workflow events use Web Push.
 - UI reflects DB state; it does not define it.
 
 ### main list behavior
