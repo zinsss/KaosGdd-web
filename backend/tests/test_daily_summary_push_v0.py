@@ -75,6 +75,8 @@ def _summary(*, flags: dict | None = None) -> dict:
         "tasks": {"active_total": 12, "overdue": 2, "today": 5},
         "reminders": {"today": 3, "missed": 1, "fired": 0},
         "events_today": ["Clinic", "Call"],
+        "supplies": {"active_total": 4},
+        "fax": {"active_total": 0, "attention": 0},
         "flags": flags or {"public_holiday": False, "market_day": False, "claim_day": False},
     }
 
@@ -123,7 +125,7 @@ def test_body_formatting_includes_counts_and_omits_flags_when_false(main_module,
     result = main_module.send_daily_summary({"slot": "morning"})
 
     assert result["ok"] is True
-    assert web_push.payloads[0]["body"] == "Tasks 12 · Overdue 2\nReminders 3 · Events 2\nSupplies 0 · Fax 0"
+    assert web_push.payloads[0]["body"] == "Tasks 12 · Overdue 2\nReminders 3 · Events 2\nSupplies 4 · Fax 0"
 
 
 def test_body_formatting_includes_flags_line_when_true(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -135,7 +137,7 @@ def test_body_formatting_includes_flags_line_when_true(main_module, monkeypatch:
     result = main_module.send_daily_summary({"slot": "morning"})
 
     assert result["ok"] is True
-    assert web_push.payloads[0]["body"] == "Tasks 12 · Overdue 2\nReminders 3 · Events 2\nMarket Day · Claim Day"
+    assert web_push.payloads[0]["body"] == "Market Day · Claim Day\nTasks 12 · Overdue 2\nReminders 3 · Events 2 · Supplies 4 · Fax 0"
 
 
 def test_same_slot_dedupes_on_same_local_date(main_module, monkeypatch: pytest.MonkeyPatch) -> None:

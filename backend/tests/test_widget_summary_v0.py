@@ -12,13 +12,18 @@ import pytest
 def main_module(tmp_path: Path, monkeypatch):
     db_path = tmp_path / "widget-summary-test.db"
     os.environ["DATABASE_URL"] = f"sqlite:///{db_path}"
+    os.environ["FILE_STORAGE_DIR"] = str(tmp_path / "uploads")
     os.environ.pop("KOREAN_HOLIDAY_ICAL_URL", None)
 
+    import app.config as config_module
     import app.core.db as db_module
     import app.engine.dashboard_service as dashboard_module
+    import app.engine.file_service as file_service_module
     import app.main as main_module
 
+    importlib.reload(config_module)
     importlib.reload(db_module)
+    importlib.reload(file_service_module)
     importlib.reload(dashboard_module)
     importlib.reload(main_module)
     main_module.init_schema_v0(main_module.engine)
@@ -48,6 +53,10 @@ def test_widget_summary_returns_compact_schema_and_counts(main_module) -> None:
     main_module.task_service.create_task("Overdue task", due_at="2026-01-09T10:00:00+09:00")
     main_module.task_service.create_task("Today task", due_at="2026-01-10T10:00:00+09:00")
     main_module.task_service.create_task("Floating task")
+    main_module.supply_service.create_supply("Gloves")
+    main_module.supply_service.create_supply("Gauze")
+    fax_id = main_module.file_service.create_file(original_filename="fax.pdf", mime_type="application/pdf", content=b"fax")
+    assert main_module.update_file_raw(fax_id, {"raw": "++ Referral fax\nx:02-1234-5678"})["ok"] is True
 
     ok, _, today_id = main_module.reminder_service.create_standalone_reminder(
         title="Today reminder",
@@ -72,10 +81,12 @@ def test_widget_summary_returns_compact_schema_and_counts(main_module) -> None:
 
     payload = main_module.get_widget_summary()
 
-    assert set(payload) == {"date", "tasks", "reminders", "events_today", "flags"}
+    assert set(payload) == {"date", "tasks", "reminders", "events_today", "supplies", "fax", "flags"}
     assert payload["date"] == "2026.01.10 Sat"
     assert payload["tasks"] == {"overdue": 1, "today": 1, "active_total": 3}
     assert payload["reminders"] == {"today": 1, "missed": 1, "fired": 1}
+    assert payload["supplies"] == {"active_total": 2}
+    assert payload["fax"] == {"active_total": 1, "attention": 0}
     assert payload["flags"] == {
         "public_holiday": True,
         "market_day": True,
@@ -83,7 +94,7 @@ def test_widget_summary_returns_compact_schema_and_counts(main_module) -> None:
     }
     assert {"Public Day", "Market Saturday", "Claim Day"}.issubset(set(payload["events_today"]))
 
-    for group in (payload["tasks"], payload["reminders"]):
+    for group in (payload["tasks"], payload["reminders"], payload["supplies"], payload["fax"]):
         assert all(type(value) is int for value in group.values())
     assert all(type(value) is bool for value in payload["flags"].values())
     assert "today_events" not in payload

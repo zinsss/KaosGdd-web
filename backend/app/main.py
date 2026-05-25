@@ -83,6 +83,8 @@ dashboard_service = DashboardService(
     event_service=event_service,
     task_service=task_service,
     reminder_service=reminder_service,
+    supply_service=supply_service,
+    file_service=file_service,
 )
 logger = logging.getLogger(__name__)
 holiday_sync_task = None
@@ -192,10 +194,9 @@ def _build_daily_summary_body(summary: dict) -> str:
     supply_count = _daily_summary_count(summary, "supplies", "active_total")
     fax_count = _daily_summary_count(summary, "fax", "active_total")
 
-    lines = [
-        f"Tasks {task_count} · Overdue {overdue_count}",
-        f"Reminders {reminder_count} · Events {event_count}",
-    ]
+    task_line = f"Tasks {task_count} · Overdue {overdue_count}"
+    reminder_line = f"Reminders {reminder_count} · Events {event_count}"
+    supply_fax_line = f"Supplies {supply_count} · Fax {fax_count}"
     flag_labels = []
     if flags.get("public_holiday"):
         flag_labels.append("Public Holiday")
@@ -204,10 +205,14 @@ def _build_daily_summary_body(summary: dict) -> str:
     if flags.get("claim_day"):
         flag_labels.append("Claim Day")
     if flag_labels:
-        lines.append(" · ".join(flag_labels))
-    else:
-        lines.append(f"Supplies {supply_count} · Fax {fax_count}")
-    return "\n".join(lines[:3])
+        return "\n".join(
+            [
+                " · ".join(flag_labels),
+                task_line,
+                f"{reminder_line} · {supply_fax_line}",
+            ]
+        )
+    return "\n".join([task_line, reminder_line, supply_fax_line])
 
 
 def _send_daily_summary_web_push(*, title: str, body: str, url: str) -> dict:
