@@ -320,6 +320,18 @@ class TaskRepo:
             ).mappings().all()
         return [dict(row) for row in rows]
 
+    def hard_delete_task_item(self, item_id: str) -> bool:
+        with self.engine.begin() as conn:
+            conn.execute(
+                text("DELETE FROM {task_subtasks} WHERE task_item_id = :item_id".format(task_subtasks=DbTables.TASK_SUBTASKS)),
+                {"item_id": item_id},
+            )
+            result = conn.execute(
+                text("DELETE FROM {task_items} WHERE item_id = :item_id".format(task_items=DbTables.TASK_ITEMS)),
+                {"item_id": item_id},
+            )
+        return bool(result.rowcount)
+
     def replace_subtasks(self, item_id: str, subtasks: list[dict]) -> None:
         # v0 tradeoff: raw-edit sync is implemented as replace-all to keep behavior simple and durable.
         # This intentionally prioritizes correctness of content/order/is_done over stable subtask ids.

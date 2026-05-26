@@ -119,6 +119,13 @@ class TaskService:
             return False
         return self.items_repo.soft_delete_item(item_id)
 
+    def remove_task_hard(self, item_id: str) -> bool:
+        detail = self.task_repo.get_task_detail(item_id)
+        if detail is None:
+            return False
+        self.task_repo.hard_delete_task_item(item_id)
+        return self.items_repo.hard_delete_item(item_id)
+
     def restore_task(self, item_id: str) -> bool:
         detail = self.task_repo.get_task_detail(item_id)
         if detail is None:

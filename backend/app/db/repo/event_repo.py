@@ -20,6 +20,14 @@ class EventRepo:
                 {"item_id": item_id, "start_date": start_date, "end_date": end_date, "memo": memo},
             )
 
+    def hard_delete_event_item(self, item_id: str) -> bool:
+        with self.engine.begin() as conn:
+            result = conn.execute(
+                text("DELETE FROM {event_items} WHERE item_id = :item_id".format(event_items=DbTables.EVENT_ITEMS)),
+                {"item_id": item_id},
+            )
+        return bool(result.rowcount)
+
     def get_event_detail(self, item_id: str):
         with self.engine.begin() as conn:
             row = conn.execute(

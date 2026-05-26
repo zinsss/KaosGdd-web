@@ -845,7 +845,7 @@ def capture_item(payload: dict):
             timezone_name=timezone_name,
         )
         if not ok:
-            task_service.remove_task(item_id)
+            task_service.remove_task_hard(item_id)
             return {"ok": False, "error": error or ApiText.INVALID_RAW_TASK}
         return {"ok": True, "kind": kind, "id": item_id}
 
@@ -869,7 +869,7 @@ def capture_item(payload: dict):
             reject_past_datetimes=True,
         )
         if not ok:
-            event_service.remove_event(item_id)
+            event_service.remove_event_hard(item_id)
             return {"ok": False, "error": error or ApiText.INVALID_EVENT_RAW}
         return {"ok": True, "kind": kind, "id": item_id}
 

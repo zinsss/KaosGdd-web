@@ -132,13 +132,31 @@ def test_capture_task_relative_reminder_multiline(main_module) -> None:
     assert detail["item"]["reminders"][0]["remind_at"] == "2026-06-19"
 
 
-def test_capture_task_rejects_past_resolved_datetime(main_module) -> None:
+def test_capture_task_rejects_past_resolved_datetime_without_removed_ghost(main_module) -> None:
     payload = main_module.capture_item({"raw": "-- old task\nd:2020-01-01"})
     assert payload["ok"] is False
     assert payload["error"] == "resolved datetime is in the past"
 
-    listed = main_module.list_tasks()
-    assert listed["items"] == []
+    active = main_module.list_tasks(mode="active")
+    removed = main_module.list_tasks(mode="removed")
+    assert active["items"] == []
+    assert removed["items"] == []
+
+
+def test_valid_task_capture_still_appears_active_and_user_delete_is_removed(main_module) -> None:
+    created = main_module.capture_item({"raw": "-- valid task capture"})
+    assert created["ok"] is True
+
+    active_ids = {item["id"] for item in main_module.list_tasks(mode="active")["items"]}
+    assert created["id"] in active_ids
+
+    deleted = main_module.remove_task(created["id"])
+    assert deleted["ok"] is True
+
+    active_ids = {item["id"] for item in main_module.list_tasks(mode="active")["items"]}
+    removed_ids = {item["id"] for item in main_module.list_tasks(mode="removed")["items"]}
+    assert created["id"] not in active_ids
+    assert created["id"] in removed_ids
 
 
 def test_raw_edit_task_allows_existing_past_datetime(main_module) -> None:
