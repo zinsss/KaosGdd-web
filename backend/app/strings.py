@@ -44,6 +44,7 @@ class DailySummaryText:
     MARKET_DAY = "Market Day"
     CLAIM_DAY = "Claim Day"
     INVALID_SLOT = "invalid slot"
+    DISABLED = "daily summary disabled"
 
 
 class PushoverText:

@@ -99,6 +99,10 @@ def test_daily_summary_config_defaults_and_invalid_hhmm_fallback(monkeypatch: py
     monkeypatch.delenv("DAILY_SUMMARY_BEFORE_SLEEP_TIME", raising=False)
     monkeypatch.delenv("DAILY_SUMMARY_BODY_MAX_LINES", raising=False)
     monkeypatch.delenv("DAILY_SUMMARY_FLAGS_FIRST", raising=False)
+    monkeypatch.setenv("DAILY_SUMMARY_SLOT_MORNING", "renamed-morning")
+    monkeypatch.setenv("DAILY_SUMMARY_SLOT_LUNCH", "renamed-lunch")
+    monkeypatch.setenv("DAILY_SUMMARY_SLOT_BEFORE_OFF", "renamed-before-off")
+    monkeypatch.setenv("DAILY_SUMMARY_SLOT_BEFORE_SLEEP", "renamed-before-sleep")
 
     import app.config as config_module
 
@@ -110,6 +114,11 @@ def test_daily_summary_config_defaults_and_invalid_hhmm_fallback(monkeypatch: py
     assert config_module.SETTINGS.DAILY_SUMMARY_BEFORE_SLEEP_TIME == "22:00"
     assert config_module.SETTINGS.DAILY_SUMMARY_BODY_MAX_LINES == 3
     assert config_module.SETTINGS.DAILY_SUMMARY_FLAGS_FIRST is True
+    assert config_module.SETTINGS.DAILY_SUMMARY_SLOT_MORNING == "morning"
+    assert config_module.SETTINGS.DAILY_SUMMARY_SLOT_LUNCH == "lunch"
+    assert config_module.SETTINGS.DAILY_SUMMARY_SLOT_BEFORE_OFF == "before-off"
+    assert config_module.SETTINGS.DAILY_SUMMARY_SLOT_BEFORE_SLEEP == "before-sleep"
+    assert set(config_module.SETTINGS.DAILY_SUMMARY_SLOTS) == {"morning", "lunch", "before-off", "before-sleep"}
 
     monkeypatch.setenv("DAILY_SUMMARY_MORNING_TIME", "25:99")
     monkeypatch.setenv("DAILY_SUMMARY_LUNCH_TIME", "not-time")
@@ -122,6 +131,30 @@ def test_daily_summary_config_defaults_and_invalid_hhmm_fallback(monkeypatch: py
     assert config_module.SETTINGS.DAILY_SUMMARY_LUNCH_TIME == "13:05"
     assert config_module.SETTINGS.DAILY_SUMMARY_BEFORE_OFF_TIME == "17:15"
     assert config_module.SETTINGS.DAILY_SUMMARY_BEFORE_SLEEP_TIME == "22:00"
+
+
+def test_daily_summary_disabled_skips_without_push_or_dedupe(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    repo, web_push = _setup(main_module, monkeypatch, subscriptions=2)
+    recorded = []
+    monkeypatch.setattr(main_module.SETTINGS, "DAILY_SUMMARY_ENABLED", False)
+    monkeypatch.setattr(
+        main_module.push_policy_repo,
+        "record_event_once",
+        lambda **kwargs: recorded.append(kwargs) or True,
+    )
+
+    result = main_module.send_daily_summary({"slot": "morning"})
+
+    assert result["ok"] is True
+    assert result["sent"] == 0
+    assert result["skipped"] == 2
+    assert result["reason"] == "daily summary disabled"
+    assert result["error"] == "daily summary disabled"
+    assert web_push.payloads == []
+    assert repo.removed == []
+    assert recorded == []
+
+    monkeypatch.setattr(main_module.SETTINGS, "DAILY_SUMMARY_ENABLED", True)
 
 
 def test_valid_slots_accepted_and_titles_differ(main_module, monkeypatch: pytest.MonkeyPatch) -> None:

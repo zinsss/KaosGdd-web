@@ -1161,6 +1161,19 @@ def send_daily_summary(payload: dict):
     local_date = _daily_summary_local_date()
     dedupe_key = f"daily-summary:{local_date}:{slot}"
     subscriptions = push_subscription_repo.list_all() if push_subscription_repo is not None else []
+    if not SETTINGS.DAILY_SUMMARY_ENABLED:
+        return {
+            "ok": True,
+            "slot": slot,
+            "dedupe_key": dedupe_key,
+            "sent": 0,
+            "skipped": len(subscriptions),
+            "removed": 0,
+            "errors": [],
+            "error_count": 0,
+            "reason": DailySummaryText.DISABLED,
+            "error": DailySummaryText.DISABLED,
+        }
     if web_push_client is None or not web_push_client.is_enabled:
         return {
             "ok": True,
