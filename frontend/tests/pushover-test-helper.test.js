@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
+import { UI_STRINGS } from "../lib/strings.js";
 import { sendPushoverTest } from "../lib/pwa/pushover-test.js";
 
 test("sendPushoverTest posts to the separate pushover test route", async () => {
@@ -36,7 +37,22 @@ test("sendPushoverTest reports backend failure reason", async () => {
     });
 
   try {
-    await assert.rejects(sendPushoverTest(), /Pushover test failed \(missing credentials\)/);
+    await assert.rejects(sendPushoverTest(), new RegExp(`${UI_STRINGS.PUSHOVER_TEST_FAILED} \\(missing credentials\\)`));
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+
+test("sendPushoverTest reports request failures with centralized string", async () => {
+  const originalFetch = globalThis.fetch;
+
+  globalThis.fetch = async () => {
+    throw new Error("network down");
+  };
+
+  try {
+    await assert.rejects(sendPushoverTest(), new RegExp(UI_STRINGS.PUSHOVER_TEST_REQUEST_FAILED));
   } finally {
     globalThis.fetch = originalFetch;
   }

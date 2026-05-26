@@ -1,8 +1,35 @@
 import os
+import re
+
+from app.strings import DailySummaryText
 
 
-def _env_bool(name: str, default: str = "0") -> bool:
-    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+def _env_bool(name: str, default: bool | str = False) -> bool:
+    raw_default = "true" if default is True else "false" if default is False else str(default)
+    return os.getenv(name, raw_default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _env_int(name: str, default: int, min_value: int | None = None, max_value: int | None = None) -> int:
+    try:
+        value = int(str(os.getenv(name, str(default))).strip())
+    except (TypeError, ValueError):
+        return default
+    if min_value is not None and value < min_value:
+        return default
+    if max_value is not None and value > max_value:
+        return default
+    return value
+
+
+def _env_str(name: str, default: str = "") -> str:
+    return os.getenv(name, default).strip()
+
+
+def _env_hhmm(name: str, default: str) -> str:
+    value = _env_str(name, default)
+    if not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", value):
+        return default
+    return value
 
 
 DEFAULT_KOREAN_HOLIDAY_ICAL_URL = (
@@ -12,34 +39,53 @@ DEFAULT_KOREAN_HOLIDAY_ICAL_URL = (
 
 
 class Settings:
-    APP_NAME = os.getenv("APP_NAME", "KaosGdd Web")
-    APP_TIMEZONE = os.getenv("APP_TIMEZONE", "Asia/Seoul")
-    APP_HEALTH_MODE = os.getenv("APP_HEALTH_MODE", "frozen-v0-raw-edit")
+    APP_NAME = _env_str("APP_NAME", "KaosGdd Web")
+    APP_TIMEZONE = _env_str("APP_TIMEZONE", "Asia/Seoul")
+    APP_HEALTH_MODE = _env_str("APP_HEALTH_MODE", "frozen-v0-raw-edit")
 
-    DEFAULT_SNOOZE_MINUTES = int(os.getenv("DEFAULT_SNOOZE_MINUTES", "10"))
-    REMINDER_MISSED_SCAN_LOOKBACK_HOURS = int(os.getenv("REMINDER_MISSED_SCAN_LOOKBACK_HOURS", "2"))
+    DEFAULT_SNOOZE_MINUTES = _env_int("DEFAULT_SNOOZE_MINUTES", 10)
+    REMINDER_MISSED_SCAN_LOOKBACK_HOURS = _env_int("REMINDER_MISSED_SCAN_LOOKBACK_HOURS", 2)
 
-    PUSHOVER_ENABLED = _env_bool("PUSHOVER_ENABLED", "false")
-    PUSHOVER_APP_TOKEN = os.getenv("PUSHOVER_APP_TOKEN", os.getenv("PUSHOVER_TOKEN", ""))
-    PUSHOVER_USER_KEY = os.getenv("PUSHOVER_USER_KEY", "")
-    PUSHOVER_DEVICE = os.getenv("PUSHOVER_DEVICE", "").strip()
-    PUSHOVER_PRIORITY_DEFAULT = int(os.getenv("PUSHOVER_PRIORITY_DEFAULT", "0"))
-    PUSHOVER_EMERGENCY_ENABLED = _env_bool("PUSHOVER_EMERGENCY_ENABLED", "false")
-    PUSHOVER_EMERGENCY_RETRY_SECONDS = int(os.getenv("PUSHOVER_EMERGENCY_RETRY_SECONDS", "60"))
-    PUSHOVER_EMERGENCY_EXPIRE_SECONDS = int(os.getenv("PUSHOVER_EMERGENCY_EXPIRE_SECONDS", "1800"))
+    DAILY_SUMMARY_ENABLED = _env_bool("DAILY_SUMMARY_ENABLED", True)
+    DAILY_SUMMARY_SLOT_MORNING = _env_str("DAILY_SUMMARY_SLOT_MORNING", "morning")
+    DAILY_SUMMARY_SLOT_LUNCH = _env_str("DAILY_SUMMARY_SLOT_LUNCH", "lunch")
+    DAILY_SUMMARY_SLOT_BEFORE_OFF = _env_str("DAILY_SUMMARY_SLOT_BEFORE_OFF", "before-off")
+    DAILY_SUMMARY_SLOT_BEFORE_SLEEP = _env_str("DAILY_SUMMARY_SLOT_BEFORE_SLEEP", "before-sleep")
+    DAILY_SUMMARY_MORNING_TIME = _env_hhmm("DAILY_SUMMARY_MORNING_TIME", "08:30")
+    DAILY_SUMMARY_LUNCH_TIME = _env_hhmm("DAILY_SUMMARY_LUNCH_TIME", "13:05")
+    DAILY_SUMMARY_BEFORE_OFF_TIME = _env_hhmm("DAILY_SUMMARY_BEFORE_OFF_TIME", "17:15")
+    DAILY_SUMMARY_BEFORE_SLEEP_TIME = _env_hhmm("DAILY_SUMMARY_BEFORE_SLEEP_TIME", "22:00")
+    DAILY_SUMMARY_BODY_MAX_LINES = _env_int("DAILY_SUMMARY_BODY_MAX_LINES", 3, min_value=1)
+    DAILY_SUMMARY_FLAGS_FIRST = _env_bool("DAILY_SUMMARY_FLAGS_FIRST", True)
 
-    APP_BASE_URL = os.getenv("APP_BASE_URL", os.getenv("WEB_BASE_URL", ""))
-    KOREAN_HOLIDAY_ICAL_URL = os.getenv("KOREAN_HOLIDAY_ICAL_URL", DEFAULT_KOREAN_HOLIDAY_ICAL_URL).strip()
+    DAILY_SUMMARY_SLOTS = {
+        DAILY_SUMMARY_SLOT_MORNING: DailySummaryText.MORNING_TITLE,
+        DAILY_SUMMARY_SLOT_LUNCH: DailySummaryText.LUNCH_TITLE,
+        DAILY_SUMMARY_SLOT_BEFORE_OFF: DailySummaryText.BEFORE_OFF_TITLE,
+        DAILY_SUMMARY_SLOT_BEFORE_SLEEP: DailySummaryText.BEFORE_SLEEP_TITLE,
+    }
 
-    LIFECYCLE_DONE_RETENTION_DAYS = int(os.getenv("LIFECYCLE_DONE_RETENTION_DAYS", "365"))
-    LIFECYCLE_REMOVED_RETENTION_DAYS = int(os.getenv("LIFECYCLE_REMOVED_RETENTION_DAYS", "90"))
-    LIFECYCLE_FIRED_RETENTION_DAYS = int(os.getenv("LIFECYCLE_FIRED_RETENTION_DAYS", "30"))
+    PUSHOVER_ENABLED = _env_bool("PUSHOVER_ENABLED", False)
+    PUSHOVER_APP_TOKEN = _env_str("PUSHOVER_APP_TOKEN", os.getenv("PUSHOVER_TOKEN", ""))
+    PUSHOVER_USER_KEY = _env_str("PUSHOVER_USER_KEY", "")
+    PUSHOVER_DEVICE = _env_str("PUSHOVER_DEVICE", "")
+    PUSHOVER_PRIORITY_DEFAULT = _env_int("PUSHOVER_PRIORITY_DEFAULT", 0)
+    PUSHOVER_EMERGENCY_ENABLED = _env_bool("PUSHOVER_EMERGENCY_ENABLED", False)
+    PUSHOVER_EMERGENCY_RETRY_SECONDS = _env_int("PUSHOVER_EMERGENCY_RETRY_SECONDS", 60)
+    PUSHOVER_EMERGENCY_EXPIRE_SECONDS = _env_int("PUSHOVER_EMERGENCY_EXPIRE_SECONDS", 1800)
 
-    FILE_STORAGE_DIR = os.getenv("FILE_STORAGE_DIR", "/data/uploads")
+    APP_BASE_URL = _env_str("APP_BASE_URL", os.getenv("WEB_BASE_URL", ""))
+    KOREAN_HOLIDAY_ICAL_URL = _env_str("KOREAN_HOLIDAY_ICAL_URL", DEFAULT_KOREAN_HOLIDAY_ICAL_URL)
 
-    WEB_PUSH_VAPID_PUBLIC_KEY = os.getenv("WEB_PUSH_VAPID_PUBLIC_KEY", "")
-    WEB_PUSH_VAPID_PRIVATE_KEY = os.getenv("WEB_PUSH_VAPID_PRIVATE_KEY", "")
-    WEB_PUSH_SUBJECT = os.getenv("WEB_PUSH_SUBJECT", "mailto:admin@localhost")
+    LIFECYCLE_DONE_RETENTION_DAYS = _env_int("LIFECYCLE_DONE_RETENTION_DAYS", 365)
+    LIFECYCLE_REMOVED_RETENTION_DAYS = _env_int("LIFECYCLE_REMOVED_RETENTION_DAYS", 90)
+    LIFECYCLE_FIRED_RETENTION_DAYS = _env_int("LIFECYCLE_FIRED_RETENTION_DAYS", 30)
+
+    FILE_STORAGE_DIR = _env_str("FILE_STORAGE_DIR", "/data/uploads")
+
+    WEB_PUSH_VAPID_PUBLIC_KEY = _env_str("WEB_PUSH_VAPID_PUBLIC_KEY", "")
+    WEB_PUSH_VAPID_PRIVATE_KEY = _env_str("WEB_PUSH_VAPID_PRIVATE_KEY", "")
+    WEB_PUSH_SUBJECT = _env_str("WEB_PUSH_SUBJECT", "mailto:admin@localhost")
 
 
 SETTINGS = Settings()

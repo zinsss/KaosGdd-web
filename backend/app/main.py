@@ -41,7 +41,7 @@ from app.engine.supply_service import SupplyService
 from app.integrations import pushover_client
 from app.integrations.web_push_client import WebPushClient
 from app.schemas.reminders import normalize_minutes
-from app.strings import ApiText, PushText
+from app.strings import ApiText, DailySummaryText, PushText, PushoverText
 from app.utils.capture_parse import parse_capture_input
 from app.utils.scribble_raw import parse_scribble_raw
 
@@ -152,12 +152,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title=SETTINGS.APP_NAME, lifespan=lifespan)
 
 
-DAILY_SUMMARY_SLOTS = {
-    "morning": "KaosGdd Morning",
-    "lunch": "KaosGdd Lunch",
-    "before-off": "KaosGdd Before Off",
-    "before-sleep": "KaosGdd Night",
-}
+DAILY_SUMMARY_SLOTS = SETTINGS.DAILY_SUMMARY_SLOTS
 
 
 def _daily_summary_local_date() -> str:
@@ -195,25 +190,32 @@ def _build_daily_summary_body(summary: dict) -> str:
     supply_count = _daily_summary_count(summary, "supplies", "active_total")
     fax_count = _daily_summary_count(summary, "fax", "active_total")
 
-    task_line = f"Tasks {task_count} · Overdue {overdue_count}"
-    reminder_line = f"Reminders {reminder_count} · Events {event_count}"
-    supply_fax_line = f"Supplies {supply_count} · Fax {fax_count}"
+    task_line = DailySummaryText.TASK_LINE.format(task_count=task_count, overdue_count=overdue_count)
+    reminder_line = DailySummaryText.REMINDER_EVENT_LINE.format(
+        reminder_count=reminder_count,
+        event_count=event_count,
+    )
+    supply_fax_line = DailySummaryText.SUPPLY_FAX_LINE.format(supply_count=supply_count, fax_count=fax_count)
     flag_labels = []
     if flags.get("public_holiday"):
-        flag_labels.append("Public Holiday")
+        flag_labels.append(DailySummaryText.PUBLIC_HOLIDAY)
     if flags.get("market_day"):
-        flag_labels.append("Market Day")
+        flag_labels.append(DailySummaryText.MARKET_DAY)
     if flags.get("claim_day"):
-        flag_labels.append("Claim Day")
-    if flag_labels:
-        return "\n".join(
-            [
-                " · ".join(flag_labels),
-                task_line,
-                f"{reminder_line} · {supply_fax_line}",
-            ]
-        )
-    return "\n".join([task_line, reminder_line, supply_fax_line])
+        flag_labels.append(DailySummaryText.CLAIM_DAY)
+
+    max_lines = max(1, int(SETTINGS.DAILY_SUMMARY_BODY_MAX_LINES or 3))
+    if flag_labels and SETTINGS.DAILY_SUMMARY_FLAGS_FIRST:
+        lines = [
+            " · ".join(flag_labels),
+            task_line,
+            f"{reminder_line} · {supply_fax_line}",
+        ]
+    elif flag_labels:
+        lines = [task_line, reminder_line, supply_fax_line, " · ".join(flag_labels)]
+    else:
+        lines = [task_line, reminder_line, supply_fax_line]
+    return "\n".join(lines[:max_lines])
 
 
 def _send_daily_summary_web_push(*, title: str, body: str, url: str) -> dict:
@@ -1102,10 +1104,10 @@ def send_push_test(payload: dict):
 @app.post("/push/pushover-test")
 def send_pushover_test():
     result = pushover_client.send_pushover(
-        title="KaosGdd Pushover Test",
-        message="Pushover is connected.",
+        title=PushoverText.TEST_TITLE,
+        message=PushoverText.TEST_MESSAGE,
         url=SETTINGS.APP_BASE_URL or None,
-        url_title="Open KaosGdd",
+        url_title=PushoverText.TEST_URL_TITLE,
         priority=0,
     )
     return {
@@ -1148,7 +1150,7 @@ def send_daily_summary(payload: dict):
     if slot not in DAILY_SUMMARY_SLOTS:
         return {
             "ok": False,
-            "error": "invalid slot",
+            "error": DailySummaryText.INVALID_SLOT,
             "slot": slot,
             "supported_slots": list(DAILY_SUMMARY_SLOTS),
             "sent": 0,
