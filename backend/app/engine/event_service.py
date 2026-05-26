@@ -201,6 +201,12 @@ class EventService:
             return False
         return self.items_repo.soft_delete_item(item_id)
 
+    def remove_event_hard(self, item_id: str) -> bool:
+        if self.event_repo.get_event_detail(item_id) is None:
+            return False
+        self.event_repo.hard_delete_event_item(item_id)
+        return self.items_repo.hard_delete_item(item_id)
+
     def restore_event(self, item_id: str) -> bool:
         if self.event_repo.get_event_detail(item_id) is None:
             return False
