@@ -191,6 +191,8 @@ export const UI_STRINGS = {
   COPY_ID: "Copy ID",
   COPIED: "ID copied",
   TASKS_ACTIVE_TITLE: "Tasks • Active",
+  TASK_ROUTINES_TITLE: "Routines",
+  TASK_ONE_OFF_TITLE: "Tasks",
   TASKS_DONE_TITLE: "Tasks • Done",
   TASKS_REMOVED_TITLE: "Tasks • Removed",
   TASKS_ARCHIVED_TITLE: "Tasks • Archived",

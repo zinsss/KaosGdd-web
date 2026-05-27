@@ -8,6 +8,7 @@ import SubtaskToggleButton from "./SubtaskToggleButton";
 import TaskRestoreButton from "./TaskRestoreButton";
 import { UI_STRINGS } from "../lib/strings";
 import { captureCreatedEventHasType } from "../lib/post-create-navigation";
+import { localYmd, splitActiveTasksForRoutineBox } from "../lib/tasks/routine-grouping";
 
 const TASK_MODES = ["active", "done", "removed", "archived"];
 
@@ -427,10 +428,37 @@ export default function TasksPageClient({ initialMode }) {
     switchModeByStep(deltaX < 0 ? 1 : -1);
   }
 
+  const { routineTasks, normalTasks } = useMemo(
+    () => splitActiveTasksForRoutineBox(items, localYmd(), mode),
+    [items, mode],
+  );
+
   function clearTouchTracking() {
     touchStateRef.current.tracking = false;
     touchStateRef.current.lock = "";
     touchStateRef.current.switched = false;
+  }
+
+  function renderTaskRows(tasks) {
+    return tasks.map((task) => (
+      <TaskRow
+        key={task.id}
+        task={task}
+        mode={mode}
+        isExpanded={expandedTaskId === task.id}
+        expandedSubtasks={subtasksByTaskId[task.id] || []}
+        subtasksLoading={loadingSubtasksTaskId === task.id}
+        subtaskLoadError={subtaskLoadErrors[task.id] || ""}
+        togglingSubtaskIds={togglingSubtaskIds}
+        onTitleClick={handleTaskTitleClick}
+        onSubtaskToggleStarted={handleSubtaskToggleStarted}
+        onSubtaskToggleResolved={handleSubtaskToggleResolved}
+        onSubtaskToggleNotFound={handleSubtaskToggleNotFound}
+        onToggleResolved={handleToggleResolved}
+        onTaskNotFound={handleTaskNotFound}
+        onActionError={handleSubtaskActionError}
+      />
+    ));
   }
 
   return (
@@ -469,52 +497,28 @@ export default function TasksPageClient({ initialMode }) {
             {doneGroups.map(([month, monthTasks]) => (
               <details key={month} className="taskDoneMonthGroup">
                 <summary className="taskDoneMonthHeader">{month} ({monthTasks.length})</summary>
-                <ul className="taskList">
-                  {monthTasks.map((task) => (
-                    <TaskRow
-                      key={task.id}
-                      task={task}
-                      mode={mode}
-                      isExpanded={expandedTaskId === task.id}
-                      expandedSubtasks={subtasksByTaskId[task.id] || []}
-                      subtasksLoading={loadingSubtasksTaskId === task.id}
-                      subtaskLoadError={subtaskLoadErrors[task.id] || ""}
-                      togglingSubtaskIds={togglingSubtaskIds}
-                      onTitleClick={handleTaskTitleClick}
-                      onSubtaskToggleStarted={handleSubtaskToggleStarted}
-                      onSubtaskToggleResolved={handleSubtaskToggleResolved}
-                      onSubtaskToggleNotFound={handleSubtaskToggleNotFound}
-                      onToggleResolved={handleToggleResolved}
-                      onTaskNotFound={handleTaskNotFound}
-                      onActionError={handleSubtaskActionError}
-                    />
-                  ))}
-                </ul>
+                <ul className="taskList">{renderTaskRows(monthTasks)}</ul>
               </details>
             ))}
           </div>
+        ) : mode === "active" ? (
+          <div className="activeTaskSections">
+            {routineTasks.length > 0 ? (
+              <section className="taskRoutineBox" aria-label={UI_STRINGS.TASK_ROUTINES_TITLE}>
+                <div className="taskSubsectionTitle">{UI_STRINGS.TASK_ROUTINES_TITLE}</div>
+                <ul className="taskList">{renderTaskRows(routineTasks)}</ul>
+              </section>
+            ) : null}
+
+            {normalTasks.length > 0 ? (
+              <section className="taskNormalSection" aria-label={UI_STRINGS.TASK_ONE_OFF_TITLE}>
+                {routineTasks.length > 0 ? <div className="taskSubsectionTitle">{UI_STRINGS.TASK_ONE_OFF_TITLE}</div> : null}
+                <ul className="taskList">{renderTaskRows(normalTasks)}</ul>
+              </section>
+            ) : null}
+          </div>
         ) : (
-          <ul className="taskList">
-            {items.map((task) => (
-              <TaskRow
-                key={task.id}
-                task={task}
-                mode={mode}
-                isExpanded={expandedTaskId === task.id}
-                expandedSubtasks={subtasksByTaskId[task.id] || []}
-                subtasksLoading={loadingSubtasksTaskId === task.id}
-                subtaskLoadError={subtaskLoadErrors[task.id] || ""}
-                togglingSubtaskIds={togglingSubtaskIds}
-                onTitleClick={handleTaskTitleClick}
-                onSubtaskToggleStarted={handleSubtaskToggleStarted}
-                onSubtaskToggleResolved={handleSubtaskToggleResolved}
-                onSubtaskToggleNotFound={handleSubtaskToggleNotFound}
-                onToggleResolved={handleToggleResolved}
-                onTaskNotFound={handleTaskNotFound}
-                onActionError={handleSubtaskActionError}
-              />
-            ))}
-          </ul>
+          <ul className="taskList">{renderTaskRows(items)}</ul>
         )}
       </section>
     </main>
