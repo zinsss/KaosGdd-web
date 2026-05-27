@@ -17,10 +17,12 @@ def main_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
     import app.config as config_module
     import app.core.db as db_module
+    import app.engine.reminder_service as reminder_service_module
     import app.main as main_module
 
     importlib.reload(config_module)
     importlib.reload(db_module)
+    importlib.reload(reminder_service_module)
     importlib.reload(main_module)
     main_module.init_schema_v0(main_module.engine)
     monkeypatch.setattr(main_module, "_daily_summary_local_date", lambda: "2026-05-24")
@@ -90,6 +92,71 @@ def _setup(main_module, monkeypatch: pytest.MonkeyPatch, *, summary: dict | None
     return repo, web_push
 
 
+def test_daily_summary_config_defaults_and_invalid_hhmm_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("DAILY_SUMMARY_MORNING_TIME", raising=False)
+    monkeypatch.delenv("DAILY_SUMMARY_LUNCH_TIME", raising=False)
+    monkeypatch.delenv("DAILY_SUMMARY_BEFORE_OFF_TIME", raising=False)
+    monkeypatch.delenv("DAILY_SUMMARY_BEFORE_SLEEP_TIME", raising=False)
+    monkeypatch.delenv("DAILY_SUMMARY_BODY_MAX_LINES", raising=False)
+    monkeypatch.delenv("DAILY_SUMMARY_FLAGS_FIRST", raising=False)
+    monkeypatch.setenv("DAILY_SUMMARY_SLOT_MORNING", "renamed-morning")
+    monkeypatch.setenv("DAILY_SUMMARY_SLOT_LUNCH", "renamed-lunch")
+    monkeypatch.setenv("DAILY_SUMMARY_SLOT_BEFORE_OFF", "renamed-before-off")
+    monkeypatch.setenv("DAILY_SUMMARY_SLOT_BEFORE_SLEEP", "renamed-before-sleep")
+
+    import app.config as config_module
+
+    importlib.reload(config_module)
+
+    assert config_module.SETTINGS.DAILY_SUMMARY_MORNING_TIME == "08:30"
+    assert config_module.SETTINGS.DAILY_SUMMARY_LUNCH_TIME == "13:05"
+    assert config_module.SETTINGS.DAILY_SUMMARY_BEFORE_OFF_TIME == "17:15"
+    assert config_module.SETTINGS.DAILY_SUMMARY_BEFORE_SLEEP_TIME == "22:00"
+    assert config_module.SETTINGS.DAILY_SUMMARY_BODY_MAX_LINES == 3
+    assert config_module.SETTINGS.DAILY_SUMMARY_FLAGS_FIRST is True
+    assert config_module.SETTINGS.DAILY_SUMMARY_SLOT_MORNING == "morning"
+    assert config_module.SETTINGS.DAILY_SUMMARY_SLOT_LUNCH == "lunch"
+    assert config_module.SETTINGS.DAILY_SUMMARY_SLOT_BEFORE_OFF == "before-off"
+    assert config_module.SETTINGS.DAILY_SUMMARY_SLOT_BEFORE_SLEEP == "before-sleep"
+    assert set(config_module.SETTINGS.DAILY_SUMMARY_SLOTS) == {"morning", "lunch", "before-off", "before-sleep"}
+
+    monkeypatch.setenv("DAILY_SUMMARY_MORNING_TIME", "25:99")
+    monkeypatch.setenv("DAILY_SUMMARY_LUNCH_TIME", "not-time")
+    monkeypatch.setenv("DAILY_SUMMARY_BEFORE_OFF_TIME", "7:15")
+    monkeypatch.setenv("DAILY_SUMMARY_BEFORE_SLEEP_TIME", "22:60")
+
+    importlib.reload(config_module)
+
+    assert config_module.SETTINGS.DAILY_SUMMARY_MORNING_TIME == "08:30"
+    assert config_module.SETTINGS.DAILY_SUMMARY_LUNCH_TIME == "13:05"
+    assert config_module.SETTINGS.DAILY_SUMMARY_BEFORE_OFF_TIME == "17:15"
+    assert config_module.SETTINGS.DAILY_SUMMARY_BEFORE_SLEEP_TIME == "22:00"
+
+
+def test_daily_summary_disabled_skips_without_push_or_dedupe(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    repo, web_push = _setup(main_module, monkeypatch, subscriptions=2)
+    recorded = []
+    monkeypatch.setattr(main_module.SETTINGS, "DAILY_SUMMARY_ENABLED", False)
+    monkeypatch.setattr(
+        main_module.push_policy_repo,
+        "record_event_once",
+        lambda **kwargs: recorded.append(kwargs) or True,
+    )
+
+    result = main_module.send_daily_summary({"slot": "morning"})
+
+    assert result["ok"] is True
+    assert result["sent"] == 0
+    assert result["skipped"] == 2
+    assert result["reason"] == "daily summary disabled"
+    assert result["error"] == "daily summary disabled"
+    assert web_push.payloads == []
+    assert repo.removed == []
+    assert recorded == []
+
+    monkeypatch.setattr(main_module.SETTINGS, "DAILY_SUMMARY_ENABLED", True)
+
+
 def test_valid_slots_accepted_and_titles_differ(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
     expected = {
         "morning": "KaosGdd Morning",
@@ -116,6 +183,7 @@ def test_invalid_slot_rejected(main_module) -> None:
     assert result["ok"] is False
     assert result["sent"] == 0
     assert result["skipped"] == 0
+    assert result["error"] == "invalid slot"
     assert "brunch" == result["slot"]
     assert set(result["supported_slots"]) == set(main_module.DAILY_SUMMARY_SLOTS)
 

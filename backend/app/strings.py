@@ -32,6 +32,27 @@ class PushText:
     TEST_PUSH_BODY = "Push is connected. Open fired reminders."
 
 
+class DailySummaryText:
+    MORNING_TITLE = "KaosGdd Morning"
+    LUNCH_TITLE = "KaosGdd Lunch"
+    BEFORE_OFF_TITLE = "KaosGdd Before Off"
+    BEFORE_SLEEP_TITLE = "KaosGdd Night"
+    TASK_LINE = "Tasks {task_count} · Overdue {overdue_count}"
+    REMINDER_EVENT_LINE = "Reminders {reminder_count} · Events {event_count}"
+    SUPPLY_FAX_LINE = "Supplies {supply_count} · Fax {fax_count}"
+    PUBLIC_HOLIDAY = "Public Holiday"
+    MARKET_DAY = "Market Day"
+    CLAIM_DAY = "Claim Day"
+    INVALID_SLOT = "invalid slot"
+    DISABLED = "daily summary disabled"
+
+
+class PushoverText:
+    TEST_TITLE = "KaosGdd Pushover Test"
+    TEST_MESSAGE = "Pushover is connected."
+    TEST_URL_TITLE = "Open KaosGdd"
+
+
 class ReminderStatusText:
     SAVED = "saved"
     ACKED = "acked"

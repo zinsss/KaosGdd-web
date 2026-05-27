@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { UI_STRINGS } from "../../lib/strings";
 import { getPushStatus, sendTestPush, subscribeToPush, unsubscribeFromPush } from "../../lib/pwa/push";
 import { sendPushoverTest } from "../../lib/pwa/pushover-test";
 
@@ -37,7 +38,7 @@ export default function PushControls() {
       await action(registration);
       await refreshStatus();
     } catch (error) {
-      setStateText(error instanceof Error ? error.message : "Action failed");
+      setStateText(error instanceof Error ? error.message : UI_STRINGS.ACTION_FAILED);
     } finally {
       setBusy(false);
     }
@@ -54,7 +55,7 @@ export default function PushControls() {
         setStateText(successMessage);
       }
     } catch (error) {
-      setStateText(error instanceof Error ? error.message : "Action failed");
+      setStateText(error instanceof Error ? error.message : UI_STRINGS.ACTION_FAILED);
     } finally {
       setBusy(false);
     }
@@ -94,9 +95,9 @@ export default function PushControls() {
         <button
           className="button compactButton buttonToneSave"
           disabled={busy}
-          onClick={() => runStandalone(sendPushoverTest, "Pushover test sent")}
+          onClick={() => runStandalone(sendPushoverTest, UI_STRINGS.PUSHOVER_TEST_SENT)}
         >
-          Send Pushover Test
+          {UI_STRINGS.PUSHOVER_TEST_BUTTON}
         </button>
       </div>
 
