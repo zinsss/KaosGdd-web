@@ -8,7 +8,7 @@ import SubtaskToggleButton from "./SubtaskToggleButton";
 import TaskRestoreButton from "./TaskRestoreButton";
 import { UI_STRINGS } from "../lib/strings";
 import { captureCreatedEventHasType } from "../lib/post-create-navigation";
-import { splitActiveTasksForRoutineBox } from "../lib/tasks/routine-grouping";
+import { localYmd, splitActiveTasksForRoutineBox } from "../lib/tasks/routine-grouping";
 
 const TASK_MODES = ["active", "done", "removed", "archived"];
 
@@ -39,10 +39,6 @@ function groupDoneTasksByMonth(tasks) {
     groups.get(key).push(task);
   }
   return Array.from(groups.entries()).sort((a, b) => b[0].localeCompare(a[0]));
-}
-
-function todayYmd() {
-  return new Date().toLocaleDateString("en-CA");
 }
 
 function TaskRow({
@@ -433,7 +429,7 @@ export default function TasksPageClient({ initialMode }) {
   }
 
   const { routineTasks, normalTasks } = useMemo(
-    () => splitActiveTasksForRoutineBox(items, todayYmd(), mode),
+    () => splitActiveTasksForRoutineBox(items, localYmd(), mode),
     [items, mode],
   );
 

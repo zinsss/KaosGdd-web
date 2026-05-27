@@ -1,9 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { splitActiveTasksForRoutineBox } from "../lib/tasks/routine-grouping.js";
+import { localYmd, splitActiveTasksForRoutineBox } from "../lib/tasks/routine-grouping.js";
 
 const today = "2026-05-27";
+
+test("localYmd formats local Date constructor values as yyyy-mm-dd", () => {
+  assert.equal(localYmd(new Date(2026, 4, 7)), "2026-05-07");
+});
 
 function task(id, fields = {}) {
   return { id, title: id, ...fields };
