@@ -1,4 +1,4 @@
-const POST_CREATE_PRIORITY = ["task", "event", "reminder", "supply", "scribble", "journal", "note", "file", "fax"];
+const POST_CREATE_PRIORITY = ["task", "event", "reminder", "supply", "scribble", "journal", "note", "fax", "file"];
 
 const POST_CREATE_HOME_PATHS = {
   task: "/tasks",
