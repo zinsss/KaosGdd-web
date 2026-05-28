@@ -57,6 +57,7 @@ export const UI_STRINGS = {
   SHARED_FILE_READY: "Shared file attached.",
   SHARED_FILE_LOAD_FAILED: "Shared file expired or missing.",
   FILE_DROP_EMPTY: "Drop one file to attach.",
+  ATTACH_FILE_FIRST: "Attach a file first.",
   FILE_DROP_SINGLE_FILE_ONLY: "Only one file can be attached.",
   FILE_DROP_EDIT_MODE_UNAVAILABLE: "File drop is unavailable while editing.",
   FILE_DROP_FOLDER_UNSUPPORTED: "Dropped folders are not supported.",

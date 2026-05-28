@@ -9,7 +9,11 @@ import {
   dispatchCaptureCreated,
   navigateAfterCreate,
 } from "../lib/post-create-navigation";
-import { applyModuleImpliedGrammar, isKnownCaptureGrammar } from "../lib/module-implied-capture";
+import {
+  applyModuleImpliedGrammar,
+  isKnownCaptureGrammar,
+  moduleCaptureBehaviorFromPathname,
+} from "../lib/module-implied-capture";
 import { deriveTitleFromFilename, nextCaptureAttachmentState } from "../lib/capture-file-attach";
 import NewNoteModal from "./NewNoteModal";
 
@@ -117,6 +121,36 @@ function normalizeAttachedFileGrammar(rawText) {
     ok: true,
     normalizedRaw: output.join("\n").trim(),
   };
+}
+
+function normalizeAttachedFaxGrammar(rawText, filename) {
+  const firstLine = String(rawText || "")
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .map((line) => line.trim())
+    .find(Boolean);
+  if (!firstLine || !firstLine.toLowerCase().startsWith("fax:")) {
+    return null;
+  }
+
+  const faxNumber = firstLine.slice(4).trim();
+  if (!faxNumber) {
+    return { ok: false, error: UI_STRINGS.FILE_GRAMMAR_INVALID_LINE };
+  }
+
+  return {
+    ok: true,
+    kind: "fax",
+    normalizedRaw: `++ ${deriveTitleFromFilename(filename || "")}\nx:${faxNumber}`,
+  };
+}
+
+function isImplicitNoteCreate(pathname, originalRaw, rawForSubmit) {
+  return (
+    moduleCaptureBehaviorFromPathname(pathname)?.kind === "note" &&
+    rawForSubmit.startsWith(":::") &&
+    !isKnownCaptureGrammar(originalRaw)
+  );
 }
 
 function attachedFileShortcutKind(rawText) {
@@ -810,9 +844,10 @@ export default function TopCaptureBar() {
 
     const shortcutKind = attachedFileShortcutKind(cleanRaw);
     const shouldAutoCreateLinkedItem = Boolean(shortcutKind);
+    const faxNormalized = normalizeAttachedFaxGrammar(cleanRaw, attachedFile?.name || "");
     const normalized = shouldAutoCreateLinkedItem
       ? { ok: true, normalizedRaw: `++ ${deriveTitleFromFilename(attachedFile?.name || "")}` }
-      : normalizeAttachedFileGrammar(cleanRaw);
+      : faxNormalized || normalizeAttachedFileGrammar(cleanRaw);
     if (!normalized.ok) {
       setError(normalized.error || UI_STRINGS.FILE_GRAMMAR_INVALID);
       return true;
@@ -862,7 +897,7 @@ export default function TopCaptureBar() {
       return true;
     }
 
-    let createdKind = "file";
+    let createdKind = normalized.kind || "file";
 
     if (shouldAutoCreateLinkedItem) {
       let linkedItemId = "";
@@ -975,12 +1010,26 @@ export default function TopCaptureBar() {
       return;
     }
 
+    const moduleCaptureBehavior = moduleCaptureBehaviorFromPathname(pathname);
+    const cleanHasKnownGrammar = isKnownCaptureGrammar(clean);
     const cleanForSubmit = applyModuleImpliedGrammar(pathname, clean, {
       isEditing: Boolean(editState),
       hasAttachedFile: Boolean(attachedFile),
     });
 
-    if (!editState && !attachedFile && cleanForSubmit === clean && !isKnownCaptureGrammar(clean)) {
+    if (
+      !editState &&
+      !attachedFile &&
+      !cleanHasKnownGrammar &&
+      moduleCaptureBehavior?.requiresAttachedFile
+    ) {
+      setScribblePromptRaw("");
+      setError(UI_STRINGS.ATTACH_FILE_FIRST);
+      setSuccess("");
+      return;
+    }
+
+    if (!editState && !attachedFile && cleanForSubmit === clean && !cleanHasKnownGrammar) {
       promptForScribble(clean);
       return;
     }
@@ -993,7 +1042,7 @@ export default function TopCaptureBar() {
     setSuccess("");
 
     try {
-      if (!editState && !attachedFile && cleanForSubmit.startsWith(":::")) {
+      if (!editState && !attachedFile && cleanForSubmit.startsWith(":::") && !isImplicitNoteCreate(pathname, clean, cleanForSubmit)) {
         openNewNoteModal();
         return;
       }
@@ -1028,7 +1077,7 @@ export default function TopCaptureBar() {
         }
       }
 
-      if (editState?.kind === "note" && !editState?.id) {
+      if ((editState?.kind === "note" && !editState?.id) || isImplicitNoteCreate(pathname, clean, cleanForSubmit)) {
         const res = await fetch("/api/notes/raw", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
