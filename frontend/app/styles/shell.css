@@ -558,6 +558,7 @@
   overflow: hidden;
 }
 
+.noteFocusEditorBody .cm-theme,
 .noteFocusEditorBody .cm-editor {
   height: 100%;
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 
 import { UI_STRINGS } from "../lib/strings";
@@ -13,9 +14,14 @@ export default function NoteRawEditor({ noteId, initialRaw, noteTitle = "" }) {
   const [error, setError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isFocusOpen, setIsFocusOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   const title = String(noteTitle || "").trim() || UI_STRINGS.UNTITLED_NOTE;
   const saveStatus = isSaving ? UI_STRINGS.SAVING : saved ? UI_STRINGS.SAVED : "";
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!saved) return;
@@ -84,51 +90,56 @@ export default function NoteRawEditor({ noteId, initialRaw, noteTitle = "" }) {
     };
   }, [isFocusOpen]);
 
-  return (
-    <div>
-      <NoteMarkdownEditor value={raw} onChange={(value) => setRaw(value)} />
-      <div className="actionRow editorActions">
-        <button className="button buttonToneSave" type="button" onClick={save} disabled={isSaving}>
-          {isSaving ? UI_STRINGS.SAVING : UI_STRINGS.SAVE}
-        </button>
-        <button className="button buttonToneNeutral" type="button" onClick={() => setIsFocusOpen(true)}>
-          {UI_STRINGS.NOTE_FOCUS_BUTTON}
-        </button>
-        {saveStatus ? <span className="metaLine" aria-live="polite">{saveStatus}</span> : null}
-      </div>
-      {error ? <div className="errorText">{error}</div> : null}
-
-      {isFocusOpen ? (
-        <div className="noteFocusEditorOverlay" role="dialog" aria-modal="true" aria-labelledby="note-focus-editor-title">
-          <div className="noteFocusEditorPanel">
-            <div className="noteFocusEditorTopBar">
-              <div className="noteFocusEditorTitle" id="note-focus-editor-title" title={title}>{title}</div>
-              <div className="actionRow noteFocusEditorActions">
-                <button className="button buttonToneSave" type="button" onClick={save} disabled={isSaving}>
-                  {isSaving ? UI_STRINGS.SAVING : UI_STRINGS.SAVE}
-                </button>
-                <button
-                  className="button buttonToneNeutral"
-                  type="button"
-                  onClick={() => setIsFocusOpen(false)}
-                  aria-label={UI_STRINGS.CLOSE}
-                >
-                  {UI_STRINGS.CLOSE}
-                </button>
-              </div>
-            </div>
-            <div className="noteFocusEditorBody">
-              <NoteMarkdownEditor value={raw} onChange={(value) => setRaw(value)} height="100%" autoFocus />
-            </div>
-            {saveStatus || error ? (
-              <div className="noteFocusEditorStatus" aria-live="polite">
-                {saveStatus ? <span className="metaLine">{saveStatus}</span> : null}
-                {error ? <span className="errorText">{error}</span> : null}
-              </div>
-            ) : null}
+  const focusEditor = isFocusOpen ? (
+    <div className="noteFocusEditorOverlay" role="dialog" aria-modal="true" aria-labelledby="note-focus-editor-title">
+      <div className="noteFocusEditorPanel">
+        <div className="noteFocusEditorTopBar">
+          <div className="noteFocusEditorTitle" id="note-focus-editor-title" title={title}>{title}</div>
+          <div className="actionRow noteFocusEditorActions">
+            <button className="button buttonToneSave" type="button" onClick={save} disabled={isSaving}>
+              {isSaving ? UI_STRINGS.SAVING : UI_STRINGS.SAVE}
+            </button>
+            <button
+              className="button buttonToneNeutral"
+              type="button"
+              onClick={() => setIsFocusOpen(false)}
+              aria-label={UI_STRINGS.CLOSE}
+            >
+              {UI_STRINGS.CLOSE}
+            </button>
           </div>
         </div>
+        <div className="noteFocusEditorBody">
+          <NoteMarkdownEditor value={raw} onChange={setRaw} height="100%" autoFocus />
+        </div>
+        {saveStatus || error ? (
+          <div className="noteFocusEditorStatus" aria-live="polite">
+            {saveStatus ? <span className="metaLine">{saveStatus}</span> : null}
+            {error ? <span className="errorText">{error}</span> : null}
+          </div>
+        ) : null}
+      </div>
+    </div>
+  ) : null;
+
+  return (
+    <div>
+      {!isFocusOpen ? (
+        <>
+          <NoteMarkdownEditor value={raw} onChange={setRaw} />
+          <div className="actionRow editorActions">
+            <button className="button buttonToneSave" type="button" onClick={save} disabled={isSaving}>
+              {isSaving ? UI_STRINGS.SAVING : UI_STRINGS.SAVE}
+            </button>
+            <button className="button buttonToneNeutral" type="button" onClick={() => setIsFocusOpen(true)}>
+              {UI_STRINGS.NOTE_FOCUS_BUTTON}
+            </button>
+            {saveStatus ? <span className="metaLine" aria-live="polite">{saveStatus}</span> : null}
+          </div>
+          {error ? <div className="errorText">{error}</div> : null}
+        </>
       ) : null}
+      {isMounted && focusEditor ? createPortal(focusEditor, document.body) : null}
     </div>
   );
 }
