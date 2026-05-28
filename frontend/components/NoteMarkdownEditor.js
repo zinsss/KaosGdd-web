@@ -87,11 +87,12 @@ const kaosHighlightStyle = HighlightStyle.define([
   { tag: tags.invalid, color: "var(--ctp-red)" },
 ]);
 
-export default function NoteMarkdownEditor({ value, onChange, height = "360px" }) {
+export default function NoteMarkdownEditor({ value, onChange, height = "360px", autoFocus = false }) {
   return (
     <CodeMirror
       value={value}
       height={height}
+      autoFocus={autoFocus}
       theme="dark"
       extensions={[markdown(), kaosEditorTheme, syntaxHighlighting(kaosHighlightStyle)]}
       onChange={onChange}

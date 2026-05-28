@@ -176,7 +176,7 @@ export default function NoteDetailPanel({ item, raw }) {
           <button type="button" className={"button buttonToneEdit" + (openPanel === "edit" ? " buttonActive" : "")} onClick={() => setOpenPanel((current) => (current === "edit" ? null : "edit"))}>Edit</button>
           <button type="button" className={"button buttonToneNeutral" + (openPanel === "more" ? " buttonActive" : "")} onClick={() => setOpenPanel((current) => (current === "more" ? null : "more"))}>More</button>
         </div>
-        {openPanel === "edit" ? <div className="toggleBody"><NoteRawEditor noteId={item.id} initialRaw={raw || ""} /></div> : null}
+        {openPanel === "edit" ? <div className="toggleBody"><NoteRawEditor noteId={item.id} initialRaw={raw || ""} noteTitle={item.title || ""} /></div> : null}
         {openPanel === "more" ? (
           <div className="toggleBody moreMetaBox">
             <div className="metaStack">
