@@ -100,7 +100,9 @@ export default function SuppliesPageClient({ initialMode }) {
 
   useEffect(() => {
     function onCaptureCreated(event) {
-      if (captureCreatedEventHasType(event, "supply")) loadSupplies();
+      if (!captureCreatedEventHasType(event, "supply")) return;
+      loadSupplies();
+      showUndoNotice(event?.detail?.captureResponse, "Marked pending.");
     }
 
     window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
