@@ -16,13 +16,18 @@ function buildTaskModeHref(mode) {
   return mode === "active" ? "/tasks" : `/tasks?mode=${mode}`;
 }
 
-function getTaskMetaTag(task) {
+function getTaskAuxMetaTag(task) {
   const parts = [];
-  if (task.metatag_due) parts.push(task.metatag_due);
-  if (task.repeat_rule) parts.push("↻");
   if (task.has_reminders) parts.push("R");
   if (task.has_tags) parts.push("#");
   return parts.join("");
+}
+
+function getTaskDueTone(task) {
+  const metatagDue = String(task.metatag_due || "").trim();
+  if (metatagDue.startsWith("+")) return "overdue";
+  if (metatagDue === "t") return "today";
+  return "";
 }
 
 function doneMonthKey(task) {
@@ -57,10 +62,24 @@ function TaskRow({
   onTaskNotFound,
   onActionError,
 }) {
-  const metatag = getTaskMetaTag(task);
+  const auxMetatag = getTaskAuxMetaTag(task);
+  const dueMetatag = String(task.metatag_due || "").trim();
   const hasSubtasks = Number(task.subtask_total || 0) > 0;
   const showPrefixToggle = mode === "active";
   const isRepeating = Boolean(task.repeat_rule);
+  const dueTone = mode === "active" ? getTaskDueTone(task) : "";
+  const titleToneClass =
+    dueTone === "overdue"
+      ? " taskListTitleOverdue"
+      : dueTone === "today"
+      ? " taskListTitleToday"
+      : "";
+  const dueToneClass =
+    dueTone === "overdue"
+      ? " taskListDueOverdue"
+      : dueTone === "today"
+      ? " taskListDueToday"
+      : "";
 
   return (
     <li key={task.id} className="taskListRow">
@@ -84,7 +103,7 @@ function TaskRow({
 
             <Link
               className={
-                "taskLink taskListTitleLink" + (task.is_done ? " taskLinkDone taskLinkDoneList" : "")
+                "taskLink taskListTitleLink" + titleToneClass + (task.is_done ? " taskLinkDone taskLinkDoneList" : "")
               }
               href={"/tasks/" + task.id}
               onClick={(event) => onTitleClick(event, task)}
@@ -92,8 +111,13 @@ function TaskRow({
               {task.title}
             </Link>
 
-            {isRepeating ? <span className="repeatBadge">{UI_STRINGS.REPEAT_BADGE}</span> : null}
-            {metatag ? <span className="taskListMetaTag">{metatag}</span> : null}
+            {isRepeating ? <span className="taskListRepeatMarker">↻</span> : null}
+            {dueMetatag || auxMetatag ? (
+              <span className="taskListMetaTag">
+                {dueMetatag ? <span className={dueToneClass.trim() || undefined}>{dueMetatag}</span> : null}
+                {auxMetatag}
+              </span>
+            ) : null}
             {hasSubtasks ? (
               <span className="taskListSubtaskProgress">[{Number(task.subtask_done || 0)}/{Number(task.subtask_total || 0)}]</span>
             ) : null}
