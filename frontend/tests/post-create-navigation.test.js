@@ -41,7 +41,7 @@ test("createdTypesFromCaptureResponse only extracts created type metadata", () =
       ok: true,
       kind: "supply",
       created_types: ["supply"],
-      undo: { undo_token: "undo-token-1" },
+      ignored_metadata: { value: "not-a-created-type" },
     }),
     ["supply"],
   );

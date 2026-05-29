@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UI_STRINGS } from "../lib/strings";
 import { captureCreatedEventHasType } from "../lib/post-create-navigation";
-import { supplyUndoNoticeFromCaptureCreatedEvent } from "../lib/supply-capture-undo";
 
 const SUPPLY_MODES = ["active", "done"];
 
@@ -31,12 +30,10 @@ export default function SuppliesPageClient({ initialMode }) {
   const router = useRouter();
   const mode = SUPPLY_MODES.includes(initialMode) ? initialMode : "active";
   const touchStateRef = useRef({ tracking: false, lock: "", switched: false, startX: 0, startY: 0 });
-  const undoTimeoutRef = useRef(null);
 
   const [items, setItems] = useState([]);
   const [presets, setPresets] = useState([]);
   const [localError, setLocalError] = useState("");
-  const [undoNotice, setUndoNotice] = useState(null);
 
   function loadSupplies() {
     const suffix = mode === "active" ? "" : `?mode=${encodeURIComponent(mode)}`;
@@ -54,65 +51,13 @@ export default function SuppliesPageClient({ initialMode }) {
       });
   }
 
-  function showUndoNotice(data, message) {
-    const undoToken = data?.undo?.undo_token;
-    if (!undoToken) {
-      setUndoNotice(null);
-      return;
-    }
-    if (undoTimeoutRef.current) window.clearTimeout(undoTimeoutRef.current);
-    setUndoNotice({ message, undoToken });
-    undoTimeoutRef.current = window.setTimeout(() => setUndoNotice(null), 12000);
-  }
-
-  function showUndoNoticeObject(notice) {
-    if (!notice?.undoToken) {
-      setUndoNotice(null);
-      return;
-    }
-    if (undoTimeoutRef.current) window.clearTimeout(undoTimeoutRef.current);
-    setUndoNotice(notice);
-    undoTimeoutRef.current = window.setTimeout(() => setUndoNotice(null), 12000);
-  }
-
-  async function undoLastSupplyAction() {
-    if (!undoNotice?.undoToken) return;
-    const token = undoNotice.undoToken;
-    if (undoTimeoutRef.current) window.clearTimeout(undoTimeoutRef.current);
-
-    const res = await fetch("/api/supplies", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ undo_token: token }),
-    });
-    const data = await res.json().catch(() => null);
-    if (!res.ok || !data?.ok) {
-      setUndoNotice(null);
-      setLocalError((data && data.error) || UI_STRINGS.ACTION_FAILED);
-      loadSupplies();
-      return;
-    }
-
-    setLocalError("");
-    setUndoNotice({ message: "Undone.", undoToken: "" });
-    undoTimeoutRef.current = window.setTimeout(() => setUndoNotice(null), 3000);
-    loadSupplies();
-  }
-
   useEffect(() => {
     loadSupplies();
   }, [mode]);
 
   useEffect(() => {
-    return () => {
-      if (undoTimeoutRef.current) window.clearTimeout(undoTimeoutRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
     function onCaptureCreated(event) {
       if (!captureCreatedEventHasType(event, "supply")) return;
-      showUndoNoticeObject(supplyUndoNoticeFromCaptureCreatedEvent(event));
       loadSupplies();
     }
 
@@ -141,8 +86,20 @@ export default function SuppliesPageClient({ initialMode }) {
       setLocalError((data && data.error) || UI_STRINGS.ACTION_FAILED);
       return;
     }
+    setLocalError("");
     setItems((current) => current.filter((item) => item.id !== supplyId));
-    showUndoNotice(data, "Marked stocked.");
+  }
+
+  async function markActive(supplyId) {
+    if (!window.confirm("Move this supply back to Active?")) return;
+    const res = await fetch(`/api/supplies/${supplyId}/active`, { method: "POST" });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.ok) {
+      setLocalError((data && data.error) || UI_STRINGS.ACTION_FAILED);
+      return;
+    }
+    setLocalError("");
+    setItems((current) => current.filter((item) => item.id !== supplyId));
   }
 
   async function hardDelete(supplyId) {
@@ -152,8 +109,8 @@ export default function SuppliesPageClient({ initialMode }) {
       setLocalError((data && data.error) || UI_STRINGS.ACTION_FAILED);
       return;
     }
+    setLocalError("");
     setItems((current) => current.filter((item) => item.id !== supplyId));
-    showUndoNotice(data, "Removed.");
   }
 
   async function usePreset(name) {
@@ -174,9 +131,9 @@ export default function SuppliesPageClient({ initialMode }) {
     ]);
     const activeData = await activeRes.json().catch(() => ({ items: [] }));
     const presetData = await presetRes.json().catch(() => ({ items: [] }));
+    setLocalError("");
     setItems(activeData.items || []);
     setPresets(presetData.items || []);
-    showUndoNotice(data, "Marked pending.");
   }
 
   const doneGroups = useMemo(() => (mode === "done" ? groupDoneByDate(items || []) : []), [items, mode]);
@@ -256,15 +213,6 @@ export default function SuppliesPageClient({ initialMode }) {
         </div>
 
         {localError ? <div className="errorText">{localError}</div> : null}
-        {undoNotice ? (
-          <div className="formHint">
-            {undoNotice.message}
-            {undoNotice.undoToken ? (
-              <> <button className="button compactFlatButton compactInlineButton" type="button" onClick={undoLastSupplyAction}>Undo</button></>
-            ) : null}
-          </div>
-        ) : null}
-
         {mode === "active" ? (
           <>
             {items.length === 0 ? <div className="empty">No supplies queued.</div> : null}
@@ -298,13 +246,19 @@ export default function SuppliesPageClient({ initialMode }) {
                 <summary className="taskDoneMonthHeader">{date} ({dateItems.length})</summary>
                 <ul className="taskList">
                   {dateItems.map((item) => (
-                    <li key={item.id} className="taskListRow">
+                    <li key={item.id} className="taskListRow supplyRow" onClick={() => markActive(item.id)}>
                       <div className="taskListRowMain">
                         <div className="taskListTitleRow">
                           <span className="taskListStateIcon isDone">✓</span>
                           <span className="taskListTitleLink taskLinkDone taskLinkDoneList">{item.title}</span>
                         </div>
-                        <button className="button compactFlatButton compactInlineButton buttonToneDanger" onClick={() => hardDelete(item.id)}>
+                        <button
+                          className="button compactFlatButton compactInlineButton buttonToneDanger"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            hardDelete(item.id);
+                          }}
+                        >
                           Delete
                         </button>
                       </div>
