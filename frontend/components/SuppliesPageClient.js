@@ -30,10 +30,12 @@ export default function SuppliesPageClient({ initialMode }) {
   const router = useRouter();
   const mode = SUPPLY_MODES.includes(initialMode) ? initialMode : "active";
   const touchStateRef = useRef({ tracking: false, lock: "", switched: false, startX: 0, startY: 0 });
+  const undoTimeoutRef = useRef(null);
 
   const [items, setItems] = useState([]);
   const [presets, setPresets] = useState([]);
   const [localError, setLocalError] = useState("");
+  const [undoNotice, setUndoNotice] = useState(null);
 
   function loadSupplies() {
     const suffix = mode === "active" ? "" : `?mode=${encodeURIComponent(mode)}`;
@@ -51,9 +53,50 @@ export default function SuppliesPageClient({ initialMode }) {
       });
   }
 
+  function showUndoNotice(data, message) {
+    const undoToken = data?.undo?.undo_token;
+    if (!undoToken) {
+      setUndoNotice(null);
+      return;
+    }
+    if (undoTimeoutRef.current) window.clearTimeout(undoTimeoutRef.current);
+    setUndoNotice({ message, undoToken });
+    undoTimeoutRef.current = window.setTimeout(() => setUndoNotice(null), 12000);
+  }
+
+  async function undoLastSupplyAction() {
+    if (!undoNotice?.undoToken) return;
+    const token = undoNotice.undoToken;
+    if (undoTimeoutRef.current) window.clearTimeout(undoTimeoutRef.current);
+
+    const res = await fetch("/api/supplies", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ undo_token: token }),
+    });
+    const data = await res.json().catch(() => null);
+    if (!res.ok || !data?.ok) {
+      setUndoNotice(null);
+      setLocalError((data && data.error) || UI_STRINGS.ACTION_FAILED);
+      loadSupplies();
+      return;
+    }
+
+    setLocalError("");
+    setUndoNotice({ message: "Undone.", undoToken: "" });
+    undoTimeoutRef.current = window.setTimeout(() => setUndoNotice(null), 3000);
+    loadSupplies();
+  }
+
   useEffect(() => {
     loadSupplies();
   }, [mode]);
+
+  useEffect(() => {
+    return () => {
+      if (undoTimeoutRef.current) window.clearTimeout(undoTimeoutRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     function onCaptureCreated(event) {
@@ -86,6 +129,7 @@ export default function SuppliesPageClient({ initialMode }) {
       return;
     }
     setItems((current) => current.filter((item) => item.id !== supplyId));
+    showUndoNotice(data, "Marked stocked.");
   }
 
   async function hardDelete(supplyId) {
@@ -96,6 +140,7 @@ export default function SuppliesPageClient({ initialMode }) {
       return;
     }
     setItems((current) => current.filter((item) => item.id !== supplyId));
+    showUndoNotice(data, "Removed.");
   }
 
   async function usePreset(name) {
@@ -118,6 +163,7 @@ export default function SuppliesPageClient({ initialMode }) {
     const presetData = await presetRes.json().catch(() => ({ items: [] }));
     setItems(activeData.items || []);
     setPresets(presetData.items || []);
+    showUndoNotice(data, "Marked pending.");
   }
 
   const doneGroups = useMemo(() => (mode === "done" ? groupDoneByDate(items || []) : []), [items, mode]);
@@ -197,6 +243,14 @@ export default function SuppliesPageClient({ initialMode }) {
         </div>
 
         {localError ? <div className="errorText">{localError}</div> : null}
+        {undoNotice ? (
+          <div className="formHint">
+            {undoNotice.message}
+            {undoNotice.undoToken ? (
+              <> <button className="button compactFlatButton compactInlineButton" type="button" onClick={undoLastSupplyAction}>Undo</button></>
+            ) : null}
+          </div>
+        ) : null}
 
         {mode === "active" ? (
           <>
