@@ -104,6 +104,29 @@ def test_repeated_call_same_claim_day_creates_no_duplicate(main_module, monkeypa
     assert [task["title"] for task in _task_items(main_module)] == ["청구하기"]
 
 
+def test_raw_edit_preserves_hidden_dedupe_marker(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    _create_claim_day(main_module, "2026-05-31")
+    monkeypatch.setattr(claim_module, "_local_today", lambda: date.fromisoformat("2026-05-31"))
+    first = main_module.internal_ensure_claim_day_task()
+
+    ok, error = main_module.task_service.update_task_from_raw(
+        first["id"],
+        "-- 청구하기 updated\nd:2026-05-31 22:00\nr:2026-05-31 20:00\n#claim-day #auto #edited",
+        timezone_name="Asia/Seoul",
+    )
+    second = main_module.internal_ensure_claim_day_task()
+
+    assert ok is True
+    assert error is None
+    internal_tags = main_module.items_repo.list_item_tags(first["id"])
+    assert internal_tags.count("claim-day-task:2026-05-31") == 1
+    assert not any(tag.startswith("claim-day-task:") for tag in _claim_task(main_module, first["id"])["tags"])
+    assert "claim-day-task:" not in main_module.get_task_raw(first["id"])["raw"]
+    assert second["created"] is False
+    assert second["reason"] == "already exists"
+    assert second["id"] == first["id"]
+
+
 def test_next_claim_day_can_create_new_task(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
     _create_claim_day(main_module, "2026-05-31")
     _create_claim_day(main_module, "2026-06-05")

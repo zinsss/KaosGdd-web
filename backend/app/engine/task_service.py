@@ -290,11 +290,20 @@ class TaskService:
 
         self.task_repo.replace_subtasks(item_id, list(parsed.get("subtasks") or []))
 
-        tags = list(parsed.get("tags") or [])
+        hidden_tags = [
+            tag
+            for tag in self.items_repo.list_item_tags(item_id)
+            if tag.startswith(CLAIM_DAY_TASK_DEDUPE_PREFIX)
+        ]
+        tags = [
+            tag
+            for tag in list(parsed.get("tags") or [])
+            if not tag.startswith(CLAIM_DAY_TASK_DEDUPE_PREFIX)
+        ]
         repeat_rule = str(parsed.get("repeat_rule") or "").strip()
         if repeat_rule:
             tags.append(REPEAT_TAG_PREFIX + repeat_rule)
-        self.items_repo.replace_item_tags(item_id, tags)
+        self.items_repo.replace_item_tags(item_id, [*tags, *dict.fromkeys(hidden_tags)])
         if include_links:
             self.items_repo.replace_item_links(item_id, list(parsed.get("linked_item_ids") or []))
 

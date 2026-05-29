@@ -9,11 +9,11 @@ from app.config import DbTables, SETTINGS
 from app.engine.event_service import EventService
 from app.engine.holiday_service import EVENT_CLASS_CLAIM_DAY
 from app.engine.task_service import TaskService
+from app.utils.task_raw import CLAIM_DAY_TASK_DEDUPE_PREFIX
 
 CLAIM_DAY_TASK_TITLE = "청구하기"
 CLAIM_DAY_TASK_TAG = "claim-day"
 AUTO_TASK_TAG = "auto"
-CLAIM_DAY_TASK_DEDUPE_PREFIX = "claim-day-task:"
 
 
 def _local_today() -> date:
@@ -74,7 +74,7 @@ class ClaimDayTaskService:
             }
 
         tags = self.task_service.items_repo.list_item_tags(item_id)
-        self.task_service.items_repo.replace_item_tags(item_id, [*tags, dedupe_tag])
+        self.task_service.items_repo.replace_item_tags(item_id, [*tags, dedupe_tag] if dedupe_tag not in tags else tags)
         return {"ok": True, "created": True, "skipped": False, "id": item_id}
 
     def is_claim_day(self, claim_date: date) -> bool:
