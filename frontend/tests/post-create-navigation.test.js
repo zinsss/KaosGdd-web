@@ -43,7 +43,15 @@ test("createdTypesFromCaptureResponse only extracts created type metadata", () =
       created_types: ["supply"],
       undo: { undo_token: "undo-token-1" },
     }),
-    ["supply", "supply"],
+    ["supply"],
+  );
+
+  assert.deepEqual(
+    createdTypesFromCaptureResponse({
+      created_types: ["supplies"],
+      kind: "supply",
+    }),
+    ["supply"],
   );
 });
 
