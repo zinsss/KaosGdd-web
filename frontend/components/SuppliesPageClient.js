@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UI_STRINGS } from "../lib/strings";
 import { captureCreatedEventHasType } from "../lib/post-create-navigation";
+import { supplyUndoNoticeFromCaptureCreatedEvent } from "../lib/supply-capture-undo";
 
 const SUPPLY_MODES = ["active", "done"];
 
@@ -64,6 +65,16 @@ export default function SuppliesPageClient({ initialMode }) {
     undoTimeoutRef.current = window.setTimeout(() => setUndoNotice(null), 12000);
   }
 
+  function showUndoNoticeObject(notice) {
+    if (!notice?.undoToken) {
+      setUndoNotice(null);
+      return;
+    }
+    if (undoTimeoutRef.current) window.clearTimeout(undoTimeoutRef.current);
+    setUndoNotice(notice);
+    undoTimeoutRef.current = window.setTimeout(() => setUndoNotice(null), 12000);
+  }
+
   async function undoLastSupplyAction() {
     if (!undoNotice?.undoToken) return;
     const token = undoNotice.undoToken;
@@ -101,8 +112,8 @@ export default function SuppliesPageClient({ initialMode }) {
   useEffect(() => {
     function onCaptureCreated(event) {
       if (!captureCreatedEventHasType(event, "supply")) return;
+      showUndoNoticeObject(supplyUndoNoticeFromCaptureCreatedEvent(event));
       loadSupplies();
-      showUndoNotice(event?.detail?.captureResponse, "Marked pending.");
     }
 
     window.addEventListener("kaosgdd:capture-created", onCaptureCreated);

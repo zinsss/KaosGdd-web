@@ -27,6 +27,12 @@ def test_capture_supply_creates_item(main_module) -> None:
     payload = main_module.capture_item({"raw": "$$ gauze"})
     assert payload["ok"] is True
     assert payload["kind"] == "supply"
+    assert payload["created"] is True
+    assert payload["created_types"] == ["supply"]
+    assert payload["undo"]["action"] == "mark_pending"
+    assert payload["undo"]["supply_id"] == payload["id"]
+    assert payload["undo"]["undo_token"]
+    assert payload["undo"]["expires_at"]
 
     active = main_module.list_supplies(mode="active")
     assert len(active["items"]) == 1
@@ -196,6 +202,27 @@ def test_create_supply_returns_pending_undo_opportunity(main_module) -> None:
     assert created["created"] is True
     assert created["undo"]["action"] == "mark_pending"
     assert created["undo"]["supply_id"] == created["id"]
+
+
+def test_capture_supply_returns_pending_undo_opportunity(main_module) -> None:
+    created = main_module.capture_item({"raw": "$$ gauze"})
+
+    assert created["ok"] is True
+    assert created["kind"] == "supply"
+    assert created["created"] is True
+    assert created["created_types"] == ["supply"]
+    assert created["undo"]["action"] == "mark_pending"
+    assert created["undo"]["supply_id"] == created["id"]
+
+
+def test_capture_supply_undo_token_removes_created_supply(main_module) -> None:
+    created = main_module.capture_item({"raw": "$$ gauze"})
+
+    undone = main_module.undo_supply({"undo_token": created["undo"]["undo_token"]})
+
+    assert undone["ok"] is True
+    assert undone["undo"]["action"] == "mark_pending"
+    assert main_module.list_supplies(mode="active")["items"] == []
 
 
 def test_undo_after_pending_removes_created_supply(main_module) -> None:

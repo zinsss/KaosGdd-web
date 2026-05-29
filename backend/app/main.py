@@ -919,10 +919,17 @@ def capture_item(payload: dict):
         title = str(parsed["parsed"].get("title") or "").strip()
         if not title:
             return {"ok": False, "error": ApiText.TITLE_REQUIRED}
-        supply_id, _created = supply_service.create_supply(title)
+        supply_id, created, undo = supply_service.create_supply_with_undo(title)
         if not supply_id:
             return {"ok": False, "error": ApiText.TITLE_REQUIRED}
-        return {"ok": True, "kind": kind, "id": supply_id}
+        return {
+            "ok": True,
+            "kind": kind,
+            "id": supply_id,
+            "created": created,
+            "created_types": ["supply"],
+            "undo": undo,
+        }
 
     if kind == "scribble":
         body = str(parsed["parsed"].get("body") or "").strip()

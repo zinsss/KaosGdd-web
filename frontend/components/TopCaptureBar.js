@@ -758,7 +758,7 @@ export default function TopCaptureBar() {
     return activeRequestIdRef.current === requestId;
   }
 
-  async function finalizeCreateSuccess({ requestId, clearInput = true, createdTypes, navigate }) {
+  async function finalizeCreateSuccess({ requestId, clearInput = true, createdTypes, response, navigate }) {
     if (!isActiveCaptureRequest(requestId)) return;
 
     if (clearInput) {
@@ -768,7 +768,7 @@ export default function TopCaptureBar() {
     setSuccess(UI_STRINGS.SAVED);
 
     try {
-      dispatchCaptureCreated(createdTypes);
+      dispatchCaptureCreated(createdTypes, response);
 
       if (typeof navigate === "function") {
         navigate();
@@ -1118,7 +1118,7 @@ export default function TopCaptureBar() {
         return;
       }
 
-      await finalizeCreateSuccess({ requestId, createdTypes: createdTypesFromCaptureResponse(data) });
+      await finalizeCreateSuccess({ requestId, createdTypes: createdTypesFromCaptureResponse(data), response: data });
     } catch {
       if (!isActiveCaptureRequest(requestId)) return;
       setError(editState ? (editState.kind === "journal" ? UI_STRINGS.JOURNAL_SAVE_FAILED : editState.kind === "note" ? UI_STRINGS.NOTE_SAVE_FAILED : UI_STRINGS.REMINDER_SAVE_FAILED) : UI_STRINGS.CAPTURE_FAILED);

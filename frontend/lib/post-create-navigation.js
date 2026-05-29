@@ -23,8 +23,6 @@ const KIND_ALIASES = {
   faxes: "fax",
 };
 
-let pendingCaptureResponse = null;
-
 export function normalizeCreatedItemType(value) {
   const normalized = String(value || "").trim().toLowerCase();
   return KIND_ALIASES[normalized] || normalized;
@@ -47,7 +45,6 @@ export function postCreateDestination(createdTypes) {
 
 export function createdTypesFromCaptureResponse(data) {
   if (!data || typeof data !== "object") return [];
-  pendingCaptureResponse = data;
 
   const types = [];
   if (Array.isArray(data.created_types)) types.push(...data.created_types);
@@ -71,13 +68,11 @@ function normalizedCreatedTypes(createdTypes) {
     .filter(Boolean);
 }
 
-export function dispatchCaptureCreated(createdTypes) {
+export function dispatchCaptureCreated(createdTypes, response = null) {
   if (typeof window === "undefined") return;
-  const captureResponse = pendingCaptureResponse;
-  pendingCaptureResponse = null;
   window.dispatchEvent(
     new CustomEvent("kaosgdd:capture-created", {
-      detail: { createdTypes: normalizedCreatedTypes(createdTypes), captureResponse },
+      detail: { createdTypes: normalizedCreatedTypes(createdTypes), response },
     }),
   );
 }
