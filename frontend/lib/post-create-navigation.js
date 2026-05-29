@@ -59,20 +59,26 @@ export function createdTypesFromCaptureResponse(data) {
     }
   }
   types.push(data.primary_kind || data.primaryType || data.kind || data.type || data.item_type);
-  return types.filter(Boolean);
+  return normalizedCreatedTypes(types);
 }
 
 function normalizedCreatedTypes(createdTypes) {
-  return (Array.isArray(createdTypes) ? createdTypes : [createdTypes])
-    .map(normalizeCreatedItemType)
-    .filter(Boolean);
+  const seen = new Set();
+  const normalized = [];
+  for (const type of Array.isArray(createdTypes) ? createdTypes : [createdTypes]) {
+    const value = normalizeCreatedItemType(type);
+    if (!value || seen.has(value)) continue;
+    seen.add(value);
+    normalized.push(value);
+  }
+  return normalized;
 }
 
-export function dispatchCaptureCreated(createdTypes) {
+export function dispatchCaptureCreated(createdTypes, response = null) {
   if (typeof window === "undefined") return;
   window.dispatchEvent(
     new CustomEvent("kaosgdd:capture-created", {
-      detail: { createdTypes: normalizedCreatedTypes(createdTypes) },
+      detail: { createdTypes: normalizedCreatedTypes(createdTypes), response },
     }),
   );
 }

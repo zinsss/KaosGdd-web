@@ -95,6 +95,7 @@ class DbTables:
     ITEMS = "items"
     SUPPLY_ITEMS = "supply_items"
     SUPPLY_PRESETS = "supply_presets"
+    SUPPLY_UNDO_LOG = "supply_undo_log"
     TASK_ITEMS = "task_items"
     TASK_SUBTASKS = "task_subtasks"
     TASK_RECURRENCE_HISTORY = "task_recurrence_history"

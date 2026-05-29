@@ -27,6 +27,12 @@ def test_capture_supply_creates_item(main_module) -> None:
     payload = main_module.capture_item({"raw": "$$ gauze"})
     assert payload["ok"] is True
     assert payload["kind"] == "supply"
+    assert payload["created"] is True
+    assert payload["created_types"] == ["supply"]
+    assert payload["undo"]["action"] == "mark_pending"
+    assert payload["undo"]["supply_id"] == payload["id"]
+    assert payload["undo"]["undo_token"]
+    assert payload["undo"]["expires_at"]
 
     active = main_module.list_supplies(mode="active")
     assert len(active["items"]) == 1
@@ -188,3 +194,124 @@ def test_done_grouping_uses_local_app_timezone_date_key(main_module) -> None:
     target = next(item for item in done if item["id"] == created["id"])
     assert str(target["done_at"]).startswith("2026-04-22")
     assert target["done_date_key"] == "2026-04-23"
+
+def test_create_supply_returns_pending_undo_opportunity(main_module) -> None:
+    created = main_module.create_supply({"title": "gauze"})
+
+    assert created["ok"] is True
+    assert created["created"] is True
+    assert created["undo"]["action"] == "mark_pending"
+    assert created["undo"]["supply_id"] == created["id"]
+
+
+def test_capture_supply_returns_pending_undo_opportunity(main_module) -> None:
+    created = main_module.capture_item({"raw": "$$ gauze"})
+
+    assert created["ok"] is True
+    assert created["kind"] == "supply"
+    assert created["created"] is True
+    assert created["created_types"] == ["supply"]
+    assert created["undo"]["action"] == "mark_pending"
+    assert created["undo"]["supply_id"] == created["id"]
+
+
+def test_capture_supply_undo_token_removes_created_supply(main_module) -> None:
+    created = main_module.capture_item({"raw": "$$ gauze"})
+
+    undone = main_module.undo_supply({"undo_token": created["undo"]["undo_token"]})
+
+    assert undone["ok"] is True
+    assert undone["undo"]["action"] == "mark_pending"
+    assert main_module.list_supplies(mode="active")["items"] == []
+
+
+def test_undo_after_pending_removes_created_supply(main_module) -> None:
+    created = main_module.create_supply({"title": "gauze"})
+
+    undone = main_module.undo_supply({"undo_token": created["undo"]["undo_token"]})
+
+    assert undone["ok"] is True
+    assert undone["undo"]["action"] == "mark_pending"
+    assert main_module.list_supplies(mode="active")["items"] == []
+
+
+def test_mark_stocked_returns_undo_opportunity(main_module) -> None:
+    created = main_module.create_supply({"title": "gloves"})
+
+    marked = main_module.mark_supply_done(created["id"])
+
+    assert marked["ok"] is True
+    assert marked["undo"]["action"] == "mark_stocked"
+    assert marked["undo"]["supply_id"] == created["id"]
+
+
+def test_undo_after_stocked_restores_active_supply(main_module) -> None:
+    created = main_module.create_supply({"title": "gloves"})
+    marked = main_module.mark_supply_done(created["id"])
+
+    undone = main_module.undo_supply({"undo_token": marked["undo"]["undo_token"]})
+
+    assert undone["ok"] is True
+    active = main_module.list_supplies(mode="active")["items"]
+    done = main_module.list_supplies(mode="done")["items"]
+    assert [item["title"] for item in active] == ["gloves"]
+    assert done == []
+
+
+def test_removing_supply_can_be_undone(main_module) -> None:
+    created = main_module.create_supply({"title": "alcohol"})
+    assert main_module.mark_supply_done(created["id"])["ok"] is True
+    deleted = main_module.delete_supply(created["id"])
+
+    undone = main_module.undo_supply({"undo_token": deleted["undo"]["undo_token"]})
+
+    assert undone["ok"] is True
+    done = main_module.list_supplies(mode="done")["items"]
+    assert len(done) == 1
+    assert done[0]["title"] == "alcohol"
+
+
+def test_expired_undo_token_fails_clearly(main_module) -> None:
+    created = main_module.create_supply({"title": "mask"})
+    token = created["undo"]["undo_token"]
+    with main_module.engine.begin() as conn:
+        conn.execute(text("UPDATE supply_undo_log SET expires_at = :expires_at WHERE token = :token"), {"expires_at": "2000-01-01T00:00:00+00:00", "token": token})
+
+    undone = main_module.undo_supply({"undo_token": token})
+
+    assert undone == {"ok": False, "error": "undo token expired"}
+    assert len(main_module.list_supplies(mode="active")["items"]) == 1
+
+
+def test_used_undo_token_cannot_be_reused(main_module) -> None:
+    created = main_module.create_supply({"title": "mask"})
+    token = created["undo"]["undo_token"]
+
+    first = main_module.undo_supply({"undo_token": token})
+    second = main_module.undo_supply({"undo_token": token})
+
+    assert first["ok"] is True
+    assert second == {"ok": False, "error": "undo token was already used"}
+
+
+def test_newer_supply_mutation_replaces_previous_undo(main_module) -> None:
+    first = main_module.create_supply({"title": "gauze"})
+    second = main_module.create_supply({"title": "swab"})
+
+    old_undo = main_module.undo_supply({"undo_token": first["undo"]["undo_token"]})
+    new_undo = main_module.undo_supply({"undo_token": second["undo"]["undo_token"]})
+
+    assert old_undo == {"ok": False, "error": "undo token was replaced by a newer supply action"}
+    assert new_undo["ok"] is True
+    assert [item["title"] for item in main_module.list_supplies(mode="active")["items"]] == ["gauze"]
+
+
+def test_failed_undo_does_not_corrupt_supply_state(main_module) -> None:
+    created = main_module.create_supply({"title": "gauze"})
+
+    failed = main_module.undo_supply({"undo_token": "missing-token"})
+
+    assert failed == {"ok": False, "error": "undo token not found"}
+    active = main_module.list_supplies(mode="active")["items"]
+    assert len(active) == 1
+    assert active[0]["id"] == created["id"]
