@@ -1,0 +1,11 @@
+[Unit]
+Description=Run KaosGdd Claim Day task ensure daily at 00:10
+# OnCalendar uses the server local timezone; keep it at Asia/Seoul to match APP_TIMEZONE.
+
+[Timer]
+OnCalendar=*-*-* 00:10:00
+Persistent=true
+Unit=kaosgdd-claim-day-task.service
+
+[Install]
+WantedBy=timers.target

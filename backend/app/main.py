@@ -32,6 +32,7 @@ from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
 from app.engine.dashboard_service import DashboardService
 from app.engine.holiday_service import HolidaySyncService
+from app.engine.claim_day_task_service import ClaimDayTaskService
 from app.engine.journal_service import JournalService
 from app.engine.note_service import NoteService
 from app.engine.file_service import FileService
@@ -87,6 +88,7 @@ dashboard_service = DashboardService(
     supply_service=supply_service,
     file_service=file_service,
 )
+claim_day_task_service = ClaimDayTaskService(event_service=event_service, task_service=task_service)
 logger = logging.getLogger(__name__)
 holiday_sync_task = None
 
@@ -1252,6 +1254,11 @@ def scan_missed_reminders():
 def scan_overdue_pushes():
     rows = reminder_service.scan_task_overdue_pushes()
     return {"ok": True, "count": len(rows), "items": rows}
+
+
+@app.post("/internal/claim-day/ensure-task")
+def internal_ensure_claim_day_task():
+    return claim_day_task_service.ensure_today_task()
 
 
 @app.post("/internal/fax/received")

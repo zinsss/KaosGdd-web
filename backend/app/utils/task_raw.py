@@ -11,6 +11,7 @@ from app.utils.repeat import normalize_repeat_rule
 from app.utils.timefmt import format_dt_for_ui
 
 REPEAT_TAG_PREFIX = "repeat:"
+CLAIM_DAY_TASK_DEDUPE_PREFIX = "claim-day-task:"
 UNDONE_TASK_PREFIX = "-- "
 DONE_TASK_PREFIX = "-x "
 UNDONE_SUBTASK_PREFIX = "--- "
@@ -209,7 +210,13 @@ def export_task_raw(
     if repeat_rule:
         lines.append(f"R:{repeat_rule}")
 
-    visible_tags = [tag for tag in (tags or []) if tag and not str(tag).startswith(REPEAT_TAG_PREFIX)]
+    visible_tags = [
+        tag
+        for tag in (tags or [])
+        if tag
+        and not str(tag).startswith(REPEAT_TAG_PREFIX)
+        and not str(tag).startswith(CLAIM_DAY_TASK_DEDUPE_PREFIX)
+    ]
     if visible_tags:
         lines.append(" ".join(f"#{tag}" for tag in visible_tags))
 
