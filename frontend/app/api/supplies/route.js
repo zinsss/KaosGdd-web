@@ -12,8 +12,7 @@ export async function GET(request) {
 export async function POST(request) {
   const payload = await request.json();
   const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
-  const targetPath = payload && payload.undo_token ? "/supplies/undo" : "/supplies";
-  const res = await fetch(base + targetPath, {
+  const res = await fetch(base + "/supplies", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),

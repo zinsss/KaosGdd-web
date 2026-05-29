@@ -41,17 +41,6 @@ CREATE TABLE IF NOT EXISTS {supply_items} (
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS {supply_undo_log} (
-    token TEXT PRIMARY KEY,
-    action TEXT NOT NULL,
-    supply_id TEXT NOT NULL,
-    previous_state_json TEXT,
-    created_at TEXT NOT NULL,
-    expires_at TEXT NOT NULL,
-    used_at TEXT,
-    invalidated_at TEXT
-);
-
 CREATE TABLE IF NOT EXISTS {supply_presets} (
     name TEXT PRIMARY KEY,
     normalized_name TEXT NOT NULL UNIQUE,
@@ -260,9 +249,6 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_supply_items_active_normalized
 ON {supply_items}(normalized_title)
 WHERE done_at IS NULL;
 
-CREATE INDEX IF NOT EXISTS idx_supply_undo_log_active
-ON {supply_undo_log}(used_at, invalidated_at, expires_at);
-
 CREATE INDEX IF NOT EXISTS idx_supply_presets_last_used_at
 ON {supply_presets}(last_used_at DESC);
 
@@ -308,7 +294,6 @@ ON {scribbles}(updated_at);
     reminder_items=DbTables.REMINDER_ITEMS,
     supply_items=DbTables.SUPPLY_ITEMS,
     supply_presets=DbTables.SUPPLY_PRESETS,
-    supply_undo_log=DbTables.SUPPLY_UNDO_LOG,
     event_items=DbTables.EVENT_ITEMS,
     journal_items=DbTables.JOURNAL_ITEMS,
     note_items=DbTables.NOTE_ITEMS,

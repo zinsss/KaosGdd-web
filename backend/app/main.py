@@ -366,34 +366,34 @@ def create_supply(payload: dict):
     title = str(payload.get("title") or "").strip()
     if not title:
         return {"ok": False, "error": ApiText.TITLE_REQUIRED}
-    supply_id, created, undo = supply_service.create_supply_with_undo(title)
+    supply_id, created = supply_service.create_supply(title)
     if not supply_id:
         return {"ok": False, "error": ApiText.TITLE_REQUIRED}
-    return {"ok": True, "id": supply_id, "created": created, "undo": undo}
+    return {"ok": True, "id": supply_id, "created": created}
 
 
 @app.post("/supplies/{supply_id}/done")
 def mark_supply_done(supply_id: str):
-    ok, undo = supply_service.mark_supply_done(supply_id)
+    ok = supply_service.mark_supply_done(supply_id)
     if not ok:
         return {"ok": False, "error": ApiText.NOT_FOUND}
-    return {"ok": True, "undo": undo}
+    return {"ok": True}
+
+
+@app.post("/supplies/{supply_id}/active")
+def mark_supply_active(supply_id: str):
+    ok = supply_service.mark_supply_active(supply_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
 
 
 @app.delete("/supplies/{supply_id}")
 def delete_supply(supply_id: str):
-    ok, undo = supply_service.delete_supply(supply_id)
+    ok = supply_service.delete_supply(supply_id)
     if not ok:
         return {"ok": False, "error": ApiText.NOT_FOUND}
-    return {"ok": True, "undo": undo}
-
-
-@app.post("/supplies/undo")
-def undo_supply(payload: dict):
-    ok, error, undo = supply_service.undo_supply(str(payload.get("undo_token") or ""))
-    if not ok:
-        return {"ok": False, "error": error or "undo failed"}
-    return {"ok": True, "undo": undo}
+    return {"ok": True}
 
 
 @app.get("/supplies/presets")
@@ -406,10 +406,10 @@ def use_supply_preset(payload: dict):
     name = str(payload.get("name") or "").strip()
     if not name:
         return {"ok": False, "error": ApiText.TITLE_REQUIRED}
-    supply_id, created, undo = supply_service.use_preset_with_undo(name)
+    supply_id, created = supply_service.use_preset(name)
     if not supply_id:
         return {"ok": False, "error": ApiText.TITLE_REQUIRED}
-    return {"ok": True, "id": supply_id, "created": created, "undo": undo}
+    return {"ok": True, "id": supply_id, "created": created}
 
 
 @app.get("/events")
@@ -919,7 +919,7 @@ def capture_item(payload: dict):
         title = str(parsed["parsed"].get("title") or "").strip()
         if not title:
             return {"ok": False, "error": ApiText.TITLE_REQUIRED}
-        supply_id, created, undo = supply_service.create_supply_with_undo(title)
+        supply_id, created = supply_service.create_supply(title)
         if not supply_id:
             return {"ok": False, "error": ApiText.TITLE_REQUIRED}
         return {
@@ -928,7 +928,6 @@ def capture_item(payload: dict):
             "id": supply_id,
             "created": created,
             "created_types": ["supply"],
-            "undo": undo,
         }
 
     if kind == "scribble":
