@@ -84,12 +84,6 @@ function TaskRow({
       : titleTone === "repeating"
       ? " taskListTitleRepeating"
       : "";
-  const dueToneClass =
-    dueTone === "overdue"
-      ? " taskListDueOverdue"
-      : dueTone === "today"
-      ? " taskListDueToday"
-      : "";
 
   return (
     <li key={task.id} className="taskListRow">
@@ -123,10 +117,7 @@ function TaskRow({
 
             {isRepeating ? <span className="taskListRepeatMarker">↻</span> : null}
             {dueMetatag || auxMetatag ? (
-              <span className="taskListMetaTag">
-                {dueMetatag ? <span className={dueToneClass.trim() || undefined}>{dueMetatag}</span> : null}
-                {auxMetatag ? <span className="taskListAuxMetaTag">{auxMetatag}</span> : null}
-              </span>
+              <span className="taskListMetaTag">{dueMetatag}{auxMetatag}</span>
             ) : null}
             {hasSubtasks ? (
               <span className="taskListSubtaskProgress">[{Number(task.subtask_done || 0)}/{Number(task.subtask_total || 0)}]</span>

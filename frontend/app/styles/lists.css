@@ -172,22 +172,10 @@
 .taskListMetaTag {
   margin-left: auto;
   flex: 0 0 auto;
-  color: var(--ui-text-dim);
+  color: var(--ctp-lavender);
   font-size: 12px;
   white-space: nowrap;
   padding-left: 10px;
-}
-
-.taskListAuxMetaTag {
-  color: var(--ctp-lavender);
-}
-
-.taskListDueToday {
-  color: var(--ctp-rosewater);
-}
-
-.taskListDueOverdue {
-  color: var(--ctp-maroon);
 }
 
 .taskListRepeatMarker {
