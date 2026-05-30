@@ -125,7 +125,7 @@ function TaskRow({
             {dueMetatag || auxMetatag ? (
               <span className="taskListMetaTag">
                 {dueMetatag ? <span className={dueToneClass.trim() || undefined}>{dueMetatag}</span> : null}
-                {auxMetatag}
+                {auxMetatag ? <span className="taskListAuxMetaTag">{auxMetatag}</span> : null}
               </span>
             ) : null}
             {hasSubtasks ? (
@@ -539,14 +539,14 @@ export default function TasksPageClient({ initialMode }) {
           <div className="activeTaskSections">
             {routineTasks.length > 0 ? (
               <section className="taskRoutineBox" aria-label={UI_STRINGS.TASK_ROUTINES_TITLE}>
-                <div className="taskSubsectionTitle">{UI_STRINGS.TASK_ROUTINES_TITLE}</div>
+                <div className="taskListSubsectionTitle taskListSubsectionTitleRoutine">{UI_STRINGS.TASK_ROUTINES_TITLE}</div>
                 <ul className="taskList">{renderTaskRows(routineTasks)}</ul>
               </section>
             ) : null}
 
             {normalTasks.length > 0 ? (
               <section className="taskNormalSection" aria-label={UI_STRINGS.TASK_ONE_OFF_TITLE}>
-                {routineTasks.length > 0 ? <div className="taskSubsectionTitle">{UI_STRINGS.TASK_ONE_OFF_TITLE}</div> : null}
+                <div className="taskListSubsectionTitle taskListSubsectionTitleTask">{UI_STRINGS.TASK_ONE_OFF_TITLE}</div>
                 <ul className="taskList">{renderTaskRows(normalTasks)}</ul>
               </section>
             ) : null}
