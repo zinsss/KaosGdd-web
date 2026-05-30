@@ -178,6 +178,10 @@
   padding-left: 10px;
 }
 
+.taskListAuxMetaTag {
+  color: var(--ctp-lavender);
+}
+
 .taskListDueToday {
   color: var(--ctp-rosewater);
 }
@@ -306,9 +310,17 @@
   gap: 8px;
 }
 
-.taskSubsectionTitle {
-  margin: 0 0 8px;
-  color: var(--ui-text-dim);
-  font-size: 13px;
+.taskListSubsectionTitle {
+  margin: 12px 0 6px;
+  font-size: 0.78rem;
   font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.taskListSubsectionTitleRoutine {
+  color: var(--ctp-teal);
+}
+
+.taskListSubsectionTitleTask {
+  color: var(--ctp-lavender);
 }
