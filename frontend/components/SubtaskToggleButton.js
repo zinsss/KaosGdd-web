@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { dispatchAppStatusChanged } from "../lib/app-status-events";
 import { UI_STRINGS } from "../lib/strings";
 
 export default function SubtaskToggleButton({
@@ -48,6 +49,7 @@ export default function SubtaskToggleButton({
       }
 
       onResolved?.(taskId, subtaskId, data);
+      dispatchAppStatusChanged({ source: "task", action: "subtask-toggle", taskId, subtaskId });
       if (refreshOnResolved) router.refresh();
     } catch {
       const message = UI_STRINGS.SUBTASK_TOGGLE_FAILED;

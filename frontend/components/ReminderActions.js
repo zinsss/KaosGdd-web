@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { dispatchAppStatusChanged } from "../lib/app-status-events";
 import { UI_STRINGS } from "../lib/strings";
 
 export default function ReminderActions({ reminderId, state }) {
@@ -29,6 +30,7 @@ export default function ReminderActions({ reminderId, state }) {
         return;
       }
 
+      dispatchAppStatusChanged({ source: "reminder", action: "state-change", reminderId });
       router.refresh();
     } catch {
       setError(UI_STRINGS.ACTION_FAILED);

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { dispatchAppStatusChanged } from "../lib/app-status-events";
 import { UI_STRINGS } from "../lib/strings";
 
 export default function ReminderRestoreButton({ reminderId }) {
@@ -23,6 +24,7 @@ export default function ReminderRestoreButton({ reminderId }) {
         return;
       }
 
+      dispatchAppStatusChanged({ source: "reminder", action: "restore", reminderId });
       router.refresh();
     } finally {
       setIsSubmitting(false);

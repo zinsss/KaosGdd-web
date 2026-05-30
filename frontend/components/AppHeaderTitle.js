@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
 import { getAppHeaderTitleClassName } from "../lib/app-title-attention";
+import { KAOSGDD_STATUS_CHANGED_EVENT } from "../lib/app-status-events";
 import { DEFAULT_MODULE_NAV_STATUS, normalizeModuleNavStatus } from "../lib/module-nav-status";
 import { UI_STRINGS } from "../lib/strings";
 
@@ -34,6 +35,10 @@ export default function AppHeaderTitle() {
       loadTitleStatus();
     }
 
+    function onStatusChanged() {
+      loadTitleStatus();
+    }
+
     function onVisibilityChange() {
       if (document.visibilityState === "visible") {
         loadTitleStatus();
@@ -43,11 +48,13 @@ export default function AppHeaderTitle() {
     const intervalId = window.setInterval(loadTitleStatus, TITLE_STATUS_REFRESH_MS);
 
     window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
+    window.addEventListener(KAOSGDD_STATUS_CHANGED_EVENT, onStatusChanged);
     document.addEventListener("visibilitychange", onVisibilityChange);
 
     return () => {
       window.clearInterval(intervalId);
       window.removeEventListener("kaosgdd:capture-created", onCaptureCreated);
+      window.removeEventListener(KAOSGDD_STATUS_CHANGED_EVENT, onStatusChanged);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [loadTitleStatus]);
