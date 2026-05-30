@@ -150,6 +150,10 @@
   color: var(--ctp-maroon);
 }
 
+.taskListTitleRepeating {
+  color: var(--ctp-teal);
+}
+
 .taskLink.taskListTitleToday,
 .taskLink.taskListTitleToday:visited {
   color: var(--ctp-rosewater);
@@ -158,6 +162,11 @@
 .taskLink.taskListTitleOverdue,
 .taskLink.taskListTitleOverdue:visited {
   color: var(--ctp-maroon);
+}
+
+.taskLink.taskListTitleRepeating,
+.taskLink.taskListTitleRepeating:visited {
+  color: var(--ctp-teal);
 }
 
 .taskListMetaTag {

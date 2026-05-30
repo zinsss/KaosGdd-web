@@ -68,11 +68,21 @@ function TaskRow({
   const showPrefixToggle = mode === "active";
   const isRepeating = Boolean(task.repeat_rule);
   const dueTone = mode === "active" ? getTaskDueTone(task) : "";
-  const titleToneClass =
+  const titleTone =
     dueTone === "overdue"
-      ? " taskListTitleOverdue"
+      ? "overdue"
       : dueTone === "today"
+      ? "today"
+      : mode === "active" && isRepeating
+      ? "repeating"
+      : "";
+  const titleToneClass =
+    titleTone === "overdue"
+      ? " taskListTitleOverdue"
+      : titleTone === "today"
       ? " taskListTitleToday"
+      : titleTone === "repeating"
+      ? " taskListTitleRepeating"
       : "";
   const dueToneClass =
     dueTone === "overdue"
