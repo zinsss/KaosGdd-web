@@ -71,6 +71,12 @@
   opacity: 0.92;
 }
 
+.appHeaderTitleAttention,
+.appHeaderTitleAttention:hover,
+.appHeaderTitleAttention:visited {
+  color: var(--ctp-maroon);
+}
+
 .appHeaderDot {
   color: var(--ui-text-dim);
 }
