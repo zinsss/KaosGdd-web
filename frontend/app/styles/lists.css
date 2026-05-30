@@ -150,6 +150,16 @@
   color: var(--ctp-maroon);
 }
 
+.taskLink.taskListTitleToday,
+.taskLink.taskListTitleToday:visited {
+  color: var(--ctp-rosewater);
+}
+
+.taskLink.taskListTitleOverdue,
+.taskLink.taskListTitleOverdue:visited {
+  color: var(--ctp-maroon);
+}
+
 .taskListMetaTag {
   margin-left: auto;
   flex: 0 0 auto;
