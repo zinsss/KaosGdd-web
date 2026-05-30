@@ -54,7 +54,7 @@ function TaskRow({
   subtasksLoading,
   subtaskLoadError,
   togglingSubtaskIds,
-  onTitleClick,
+  onExpandTask,
   onSubtaskToggleStarted,
   onSubtaskToggleResolved,
   onSubtaskToggleNotFound,
@@ -110,7 +110,6 @@ function TaskRow({
                 "taskLink taskListTitleLink" + titleToneClass + (task.is_done ? " taskLinkDone taskLinkDoneList" : "")
               }
               href={"/tasks/" + task.id}
-              onClick={(event) => onTitleClick(event, task)}
             >
               {task.title}
             </Link>
@@ -119,7 +118,11 @@ function TaskRow({
             {dueMetatag || auxMetatag ? (
               <span className="taskListMetaTag">{dueMetatag}{auxMetatag}</span>
             ) : null}
-            {hasSubtasks ? (
+            {hasSubtasks && mode === "active" ? (
+              <button type="button" className="taskListSubtaskProgress" onClick={() => onExpandTask(task)}>
+                {isExpanded ? "▼" : "▶"} [{Number(task.subtask_done || 0)}/{Number(task.subtask_total || 0)}]
+              </button>
+            ) : hasSubtasks ? (
               <span className="taskListSubtaskProgress">[{Number(task.subtask_done || 0)}/{Number(task.subtask_total || 0)}]</span>
             ) : null}
           </div>
@@ -372,7 +375,7 @@ export default function TasksPageClient({ initialMode }) {
     setLocalError(message);
   }
 
-  async function handleTaskTitleClick(event, task) {
+  async function handleTaskExpand(task) {
     if (mode !== "active") return;
 
     const hasSubtasks = Number(task.subtask_total || 0) > 0;
@@ -382,7 +385,6 @@ export default function TasksPageClient({ initialMode }) {
       return;
     }
 
-    event.preventDefault();
     const loaded = await ensureTaskSubtasksLoaded(task.id);
     if (!loaded) return;
     setExpandedTaskId(task.id);
@@ -475,7 +477,7 @@ export default function TasksPageClient({ initialMode }) {
         subtasksLoading={loadingSubtasksTaskId === task.id}
         subtaskLoadError={subtaskLoadErrors[task.id] || ""}
         togglingSubtaskIds={togglingSubtaskIds}
-        onTitleClick={handleTaskTitleClick}
+        onExpandTask={handleTaskExpand}
         onSubtaskToggleStarted={handleSubtaskToggleStarted}
         onSubtaskToggleResolved={handleSubtaskToggleResolved}
         onSubtaskToggleNotFound={handleSubtaskToggleNotFound}

@@ -25,10 +25,22 @@
 }
 
 .taskListSubtaskProgress {
+  border: 0;
+  background: transparent;
   flex: 0 0 auto;
   color: var(--ui-text-dim);
+  cursor: default;
+  font: inherit;
   font-size: 12px;
-  padding-left: 6px;
+  padding: 0 0 0 6px;
+}
+
+button.taskListSubtaskProgress {
+  cursor: pointer;
+}
+
+button.taskListSubtaskProgress:hover {
+  color: var(--ctp-lavender);
 }
 
 .subtaskList {
