@@ -4,9 +4,7 @@
 }
 
 .dashboardHero {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  display: grid;
   gap: 14px;
 }
 
@@ -48,8 +46,7 @@
   padding-bottom: 0;
 }
 
-.dashboardEventLine,
-.dashboardBadgeRow {
+.dashboardEventLine {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -73,6 +70,16 @@
 
 .dashboardMetaLine {
   margin-top: 3px;
+}
+
+.dashboardHeroEventList {
+  display: grid;
+  gap: 7px;
+}
+
+.dashboardHeroEventRow {
+  border-bottom: 0;
+  padding: 0;
 }
 
 .dashboardBadge {
@@ -147,9 +154,5 @@
   .dashboardHero,
   .dashboardGrid {
     grid-template-columns: 1fr;
-  }
-
-  .dashboardHero {
-    display: grid;
   }
 }
