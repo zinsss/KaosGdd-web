@@ -9,6 +9,7 @@ import TaskRawEditor from "./TaskRawEditor";
 import TaskToggleButton from "./TaskToggleButton";
 import SubtaskToggleButton from "./SubtaskToggleButton";
 import LinkedItemsBlock from "./LinkedItemsBlock";
+import { dispatchAppStatusChanged } from "../lib/app-status-events";
 import { UI_STRINGS } from "../lib/strings";
 
 function reminderPriority(state) {
@@ -99,6 +100,7 @@ export default function TaskDetailPanel({ item, raw }) {
         return;
       }
 
+      dispatchAppStatusChanged({ source: "task", action: "remove", taskId: item.id });
       router.push("/tasks?mode=removed");
       router.refresh();
     } catch {

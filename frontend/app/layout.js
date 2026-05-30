@@ -1,5 +1,5 @@
 import "./globals.css";
-import Link from "next/link";
+import AppHeaderTitle from "../components/AppHeaderTitle";
 import TopCaptureBar from "../components/TopCaptureBar";
 import AppShellHeightObserver from "../components/AppShellHeightObserver";
 import TopNav from "../components/TopNav";
@@ -40,7 +40,7 @@ export default function RootLayout({ children }) {
         <header className="appShellTop">
           <div className="appShellTopInner">
             <div className="appHeaderLine">
-              <Link className="appHeaderTitle appHeaderTitleLink" href="/">{UI_STRINGS.APP_TITLE}</Link>
+              <AppHeaderTitle />
               <span className="appHeaderDot"> • </span>
               <span className="appHeaderSubtitle">{UI_STRINGS.APP_HEADER_SUBTITLE}</span>
             </div>

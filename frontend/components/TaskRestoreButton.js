@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { dispatchAppStatusChanged } from "../lib/app-status-events";
 import { UI_STRINGS } from "../lib/strings";
 
 export default function TaskRestoreButton({ taskId, onResolved, onNotFound, onError }) {
@@ -32,6 +33,7 @@ export default function TaskRestoreButton({ taskId, onResolved, onNotFound, onEr
       }
 
       onResolved?.(taskId, data);
+      dispatchAppStatusChanged({ source: "task", action: "restore", taskId });
       router.refresh();
     } catch {
       const message = UI_STRINGS.TASK_RESTORE_FAILED;

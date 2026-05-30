@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { dispatchAppStatusChanged } from "../lib/app-status-events";
 import { UI_STRINGS } from "../lib/strings";
 
 export default function TaskToggleButton({
@@ -41,6 +42,7 @@ export default function TaskToggleButton({
       }
 
       onResolved?.(taskId, data);
+      dispatchAppStatusChanged({ source: "task", action: isDone ? "undo" : "done", taskId });
       router.refresh();
     } catch {
       const message = UI_STRINGS.TASK_TOGGLE_FAILED;

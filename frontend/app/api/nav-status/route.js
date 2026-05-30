@@ -1,10 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server.js";
 
-import { APP_TIMEZONE } from "../../../lib/config";
-import { DEFAULT_MODULE_NAV_STATUS } from "../../../lib/module-nav-status";
+import { APP_TIMEZONE } from "../../../lib/config.js";
+import { DEFAULT_MODULE_NAV_STATUS } from "../../../lib/module-nav-status.js";
 
-function isOverdueTask(task, nowMs) {
+const ATTENTION_REMINDER_STATES = new Set(["fired", "missed"]);
+const INACTIVE_TASK_STATUSES = new Set(["archived", "removed"]);
+
+function isActiveTask(task) {
   if (!task || typeof task !== "object") return false;
+  if (task.is_done) return false;
+
+  const status = String(task.status || "active").toLowerCase();
+  return !INACTIVE_TASK_STATUSES.has(status);
+}
+
+export function isOverdueTask(task, nowMs) {
+  if (!task || typeof task !== "object") return false;
+  if (!isActiveTask(task)) return false;
+
   const dueAt = task.due_at;
   if (!dueAt) return false;
 
@@ -12,6 +25,16 @@ function isOverdueTask(task, nowMs) {
   if (Number.isNaN(dueAtMs)) return false;
 
   return dueAtMs < nowMs;
+}
+
+function getReminderState(reminder) {
+  return String(reminder?.state || "").toLowerCase();
+}
+
+export function isAttentionReminder(reminder) {
+  if (!reminder || typeof reminder !== "object") return false;
+
+  return ATTENTION_REMINDER_STATES.has(getReminderState(reminder));
 }
 
 function getTodayYmdInAppTimezone() {
@@ -39,30 +62,38 @@ export async function GET() {
   const today = getTodayYmdInAppTimezone();
 
   try {
-    const [tasksRes, eventsRes, remindersRes, suppliesRes] = await Promise.all([
+    const [tasksRes, eventsRes, activeRemindersRes, firedRemindersRes, suppliesRes] = await Promise.all([
       fetch(base + "/tasks", { cache: "no-store" }),
       fetch(base + `/events?start_date=${today}&end_date=${today}&mode=active`, { cache: "no-store" }),
       fetch(base + "/reminders?mode=active", { cache: "no-store" }),
+      fetch(base + "/reminders?mode=fired", { cache: "no-store" }),
       fetch(base + "/supplies?mode=active", { cache: "no-store" }),
     ]);
 
-    const [tasksData, eventsData, remindersData, suppliesData] = await Promise.all([
+    const [tasksData, eventsData, activeRemindersData, firedRemindersData, suppliesData] = await Promise.all([
       tasksRes.json().catch(() => ({ items: [] })),
       eventsRes.json().catch(() => ({ items: [] })),
-      remindersRes.json().catch(() => ({ items: [] })),
+      activeRemindersRes.json().catch(() => ({ items: [] })),
+      firedRemindersRes.json().catch(() => ({ items: [] })),
       suppliesRes.json().catch(() => ({ items: [] })),
     ]);
 
     const nowMs = Date.now();
     const tasks = Array.isArray(tasksData?.items) ? tasksData.items : [];
     const events = Array.isArray(eventsData?.items) ? eventsData.items : [];
-    const reminders = Array.isArray(remindersData?.items) ? remindersData.items : [];
+    const activeReminders = Array.isArray(activeRemindersData?.items) ? activeRemindersData.items : [];
+    const firedReminders = Array.isArray(firedRemindersData?.items) ? firedRemindersData.items : [];
+    const reminders = [...activeReminders, ...firedReminders];
     const supplies = Array.isArray(suppliesData?.items) ? suppliesData.items : [];
+    const hasOverdueTasks = tasks.some((task) => isOverdueTask(task, nowMs));
+    const hasUnackedReminders = reminders.some((reminder) => isAttentionReminder(reminder));
 
     return NextResponse.json({
-      has_overdue_tasks: tasks.some((task) => isOverdueTask(task, nowMs)),
+      has_overdue_tasks: hasOverdueTasks,
       has_today_events: events.length > 0,
-      has_missed_reminders: reminders.some((reminder) => reminder?.state === "missed"),
+      has_missed_reminders: reminders.some((reminder) => getReminderState(reminder) === "missed"),
+      has_unacked_reminders: hasUnackedReminders,
+      has_strong_attention: hasOverdueTasks || hasUnackedReminders,
       has_pending_supplies: supplies.length > 0,
       has_note_draft: false,
       has_file_draft: false,

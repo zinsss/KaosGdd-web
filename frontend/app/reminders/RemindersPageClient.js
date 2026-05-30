@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import ReminderRestoreButton from "../../components/ReminderRestoreButton";
+import { dispatchAppStatusChanged } from "../../lib/app-status-events";
 import { UI_STRINGS } from "../../lib/strings";
 
 const REMINDER_MODES = ["active", "fired", "removed"];
@@ -103,6 +104,7 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
 
     try {
       await fn();
+      dispatchAppStatusChanged({ source: "reminder", action: "state-change", reminderId: reminder.id });
       router.refresh();
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : UI_STRINGS.REMINDER_ACTION_FAILED);

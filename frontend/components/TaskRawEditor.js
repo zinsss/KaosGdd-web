@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { dispatchAppStatusChanged } from "../lib/app-status-events";
 import { UI_STRINGS } from "../lib/strings";
 
 export default function TaskRawEditor({ taskId, initialRaw, isRepeating = false }) {
@@ -37,6 +38,7 @@ export default function TaskRawEditor({ taskId, initialRaw, isRepeating = false 
         return;
       }
 
+      dispatchAppStatusChanged({ source: "task", action: "raw-edit", taskId });
       router.refresh();
     } catch {
       setError(UI_STRINGS.SAVE_FAILED);
