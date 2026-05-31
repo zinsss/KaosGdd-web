@@ -168,6 +168,22 @@ CREATE TABLE IF NOT EXISTS {scribbles} (
     sort_order INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS {weather_daily_snapshots} (
+    id TEXT PRIMARY KEY,
+    location_id TEXT NOT NULL,
+    location_label TEXT NOT NULL,
+    date TEXT NOT NULL,
+    condition_bucket TEXT NOT NULL,
+    weather_glyph TEXT NOT NULL,
+    weather_code INTEGER NOT NULL,
+    min_c INTEGER NOT NULL,
+    max_c INTEGER NOT NULL,
+    source TEXT NOT NULL,
+    fetched_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE (location_id, date)
+);
+
 CREATE TABLE IF NOT EXISTS {reminder_events} (
     id TEXT PRIMARY KEY,
     reminder_item_id TEXT NOT NULL,
@@ -286,6 +302,12 @@ ON {scribbles}(sort_order DESC, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_scribbles_updated_at
 ON {scribbles}(updated_at);
 
+CREATE INDEX IF NOT EXISTS idx_weather_daily_snapshots_location_date
+ON {weather_daily_snapshots}(location_id, date);
+
+CREATE INDEX IF NOT EXISTS idx_weather_daily_snapshots_location_fetched
+ON {weather_daily_snapshots}(location_id, fetched_at);
+
 """.format(
     items=DbTables.ITEMS,
     task_items=DbTables.TASK_ITEMS,
@@ -307,6 +329,7 @@ ON {scribbles}(updated_at);
     push_task_overdue_state=DbTables.PUSH_TASK_OVERDUE_STATE,
     push_event_dedupe=DbTables.PUSH_EVENT_DEDUPE,
     scribbles=DbTables.SCRIBBLES,
+    weather_daily_snapshots=DbTables.WEATHER_DAILY_SNAPSHOTS,
 )
 
 

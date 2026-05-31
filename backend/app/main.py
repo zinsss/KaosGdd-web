@@ -28,6 +28,7 @@ from app.db.repo.push_test_diagnostic_repo import PushTestDiagnosticRepo
 from app.db.repo.push_policy_repo import PushPolicyRepo
 from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.scribble_repo import ScribbleRepo
+from app.db.repo.weather_repo import WeatherRepo
 from app.db.schema_v0 import init_schema_v0
 from app.engine.event_service import EventService
 from app.engine.dashboard_service import DashboardService
@@ -39,6 +40,7 @@ from app.engine.file_service import FileService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
 from app.engine.supply_service import SupplyService
+from app.engine.weather_service import WeatherService
 from app.integrations import pushover_client
 from app.integrations.web_push_client import WebPushClient
 from app.schemas.reminders import normalize_minutes
@@ -59,6 +61,7 @@ push_test_diagnostic_repo = PushTestDiagnosticRepo(engine)
 push_policy_repo = PushPolicyRepo(engine)
 supply_repo = SupplyRepo(engine)
 scribble_repo = ScribbleRepo(engine)
+weather_repo = WeatherRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
 holiday_sync_service = HolidaySyncService(items_repo, event_repo)
@@ -81,6 +84,7 @@ reminder_service = ReminderService(
     push_policy_repo,
 )
 supply_service = SupplyService(items_repo, supply_repo)
+weather_service = WeatherService(weather_repo)
 dashboard_service = DashboardService(
     event_service=event_service,
     task_service=task_service,
@@ -415,6 +419,11 @@ def use_supply_preset(payload: dict):
 @app.get("/events")
 def list_events(start_date: str, end_date: str, mode: str = "active"):
     return {"items": event_service.list_events_in_range(start_date=start_date, end_date=end_date, mode=mode)}
+
+
+@app.get("/weather/daily")
+def get_daily_weather(location: str = "daegu", start_date: str = "", end_date: str = ""):
+    return weather_service.get_daily(location_id=location, start_date=start_date, end_date=end_date)
 
 
 @app.get("/events/{event_id}")
