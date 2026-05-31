@@ -38,6 +38,39 @@ body.eventsPageActive .appShellMain {
   align-items: flex-start;
   padding: 6px;
 }
+
+.eventMonthHeaderActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.eventWeatherControlWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.eventWeatherSelect {
+  border: 1px solid rgba(180, 190, 254, 0.42);
+  border-radius: 999px;
+  background: rgba(180, 190, 254, 0.08);
+  color: var(--ctp-lavender);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1;
+  min-width: 72px;
+  padding: 5px 24px 5px 10px;
+}
+
+.eventWeatherError {
+  color: var(--ctp-maroon);
+  font-size: 11px;
+  white-space: nowrap;
+}
 .eventCalCellMuted { opacity: 0.5; }
 .eventCalCellSelected { border-color: var(--ui-border-strong); background: var(--ui-panel); }
 .eventCalCellToday {
@@ -46,6 +79,21 @@ body.eventsPageActive .appShellMain {
 .eventCalDayNumber { color: var(--ui-text); }
 .eventCalDaySun { color: var(--ctp-maroon); }
 .eventCalDaySat { color: var(--ctp-blue); }
+.calendarDayWeather {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  color: var(--ctp-lavender);
+  font-size: 0.72rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.calendarDayWeatherGlyph {
+  color: var(--ctp-sky);
+}
+
 .eventCalCount {
   align-self: flex-end;
   display: inline-flex;
@@ -167,6 +215,10 @@ body.eventsPageActive .appShellMain {
 }
 
 @media (max-width: 640px) {
+  .eventMonthHeaderActions {
+    justify-content: flex-start;
+  }
+
   .eventMonthNavButton {
     flex: 0 0 auto;
   }

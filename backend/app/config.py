@@ -112,3 +112,4 @@ class DbTables:
     PUSH_TASK_OVERDUE_STATE = "push_task_overdue_state"
     PUSH_EVENT_DEDUPE = "push_event_dedupe"
     SCRIBBLES = "scribbles"
+    WEATHER_DAILY_SNAPSHOTS = "weather_daily_snapshots"
