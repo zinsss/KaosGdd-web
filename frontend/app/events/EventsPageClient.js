@@ -322,19 +322,25 @@ export default function EventsPageClient() {
                 }
                 onClick={() => setSelectedDate(d)}
               >
-                <span className={"eventCalDayNumber" + dayClass}>{Number(d.slice(-2))}</span>
-                {weather ? (
-                  <span className="calendarDayWeather" aria-label={`Weather ${weather.min_c} to ${weather.max_c} Celsius`}>
+                <span className="calendarDayTop">
+                  <span className={"calendarDayDate eventCalDayNumber" + dayClass}>{Number(d.slice(-2))}</span>
+                  {weather ? (
                     <span className="calendarDayWeatherGlyph" aria-hidden="true">{weather.glyph}</span>
+                  ) : null}
+                </span>
+                <span className="calendarDayWeather" aria-label={weather ? `Weather ${weather.min_c} to ${weather.max_c} Celsius` : undefined}>
+                  {weather ? (
                     <span className="calendarDayWeatherTemp">{weather.min_c}–{weather.max_c}</span>
-                  </span>
-                ) : null}
-                {count ? (
-                  <span className="eventCalCount">
-                    {hasRecurringOccurrence ? <span className="recurringOccurrenceMark" aria-label="recurring occurrence">↻</span> : null}
-                    {count}
-                  </span>
-                ) : null}
+                  ) : null}
+                </span>
+                <span className="calendarDayFooter">
+                  {count ? (
+                    <span className="eventCalCount">
+                      {hasRecurringOccurrence ? <span className="recurringOccurrenceMark" aria-label="recurring occurrence">↻</span> : null}
+                      {count}
+                    </span>
+                  ) : null}
+                </span>
               </button>
             );
           })}
