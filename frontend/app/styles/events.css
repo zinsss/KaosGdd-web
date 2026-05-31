@@ -29,13 +29,12 @@ body.eventsPageActive .appShellMain {
 .eventCalCell {
   border: 1px solid var(--ui-border);
   background: transparent;
-  min-height: 52px;
+  min-height: 68px;
   border-radius: var(--group-box-radius);
   color: var(--ui-text);
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: flex-start;
+  display: grid;
+  grid-template-rows: 1fr 15px 18px;
+  align-items: stretch;
   padding: 6px;
 }
 
@@ -79,11 +78,26 @@ body.eventsPageActive .appShellMain {
 .eventCalDayNumber { color: var(--ui-text); }
 .eventCalDaySun { color: var(--ctp-maroon); }
 .eventCalDaySat { color: var(--ctp-blue); }
+
+.calendarDayTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
+}
+
+.calendarDayDate {
+  flex: 0 0 auto;
+  line-height: 1;
+}
+
 .calendarDayWeather {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 4px;
-  margin-top: 4px;
+  justify-content: flex-end;
+  width: 100%;
   color: var(--ctp-lavender);
   font-size: 0.72rem;
   line-height: 1;
@@ -92,10 +106,20 @@ body.eventsPageActive .appShellMain {
 
 .calendarDayWeatherGlyph {
   color: var(--ctp-sky);
+  flex: 0 0 auto;
+  font-size: 1.08rem;
+  line-height: 1;
+}
+
+.calendarDayFooter {
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-end;
+  width: 100%;
+  min-width: 0;
 }
 
 .eventCalCount {
-  align-self: flex-end;
   display: inline-flex;
   align-items: center;
   gap: 3px;
