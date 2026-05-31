@@ -54,7 +54,7 @@
 
 @font-face {
   font-family: "Sarasa Gothic Mono";
-  src: url("/fonts/sarasa-mono-k-regular-nerd-font.ttf") format("truetype");
+  src: url("/fonts/sarasa-mono-k-regular.woff2") format("woff2");
   font-weight: 400;
   font-style: normal;
   font-display: swap;
@@ -62,7 +62,15 @@
 
 @font-face {
   font-family: "Sarasa Gothic Mono";
-  src: url("/fonts/sarasa-mono-k-bold-nerd-font.ttf") format("truetype");
+  src: url("/fonts/sarasa-mono-k-semibold.woff2") format("woff2");
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Sarasa Gothic Mono";
+  src: url("/fonts/sarasa-mono-k-bold.woff2") format("woff2");
   font-weight: 700;
   font-style: normal;
   font-display: swap;
