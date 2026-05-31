@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import RemindersPageClient from "./RemindersPageClient";
 
 const REMINDER_MODES = ["active", "fired", "removed"];
@@ -23,10 +24,12 @@ export default async function RemindersPage({ searchParams }) {
   const initialExpandedReminderId = reminderIdParam ? String(reminderIdParam) : null;
 
   return (
-    <RemindersPageClient
-      initialMode={mode}
-      items={result.items || []}
-      initialExpandedReminderId={initialExpandedReminderId}
-    />
+    <Suspense fallback={null}>
+      <RemindersPageClient
+        initialMode={mode}
+        items={result.items || []}
+        initialExpandedReminderId={initialExpandedReminderId}
+      />
+    </Suspense>
   );
 }
