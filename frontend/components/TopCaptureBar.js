@@ -141,6 +141,7 @@ function normalizeAttachedFaxGrammar(rawText, filename) {
   return {
     ok: true,
     kind: "fax",
+    faxNumber,
     normalizedRaw: `++ ${deriveTitleFromFilename(filename || "")}\nx:${faxNumber}`,
   };
 }
@@ -873,6 +874,31 @@ export default function TopCaptureBar() {
     const uploadData = await uploadRes.json().catch(() => null);
     if (!uploadRes.ok || !uploadData?.ok || !uploadData?.id) {
       setError((uploadData && uploadData.error) || UI_STRINGS.FILE_UPLOAD_FAILED);
+      return true;
+    }
+
+    if (normalized.kind === "fax") {
+      let faxRes;
+      try {
+        faxRes = await fetch("/api/fax/send-from-file", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ file_id: uploadData.id, fax_number: normalized.faxNumber }),
+        });
+      } catch {
+        await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
+        setError(UI_STRINGS.SAVE_FAILED);
+        return true;
+      }
+
+      const faxData = await faxRes.json().catch(() => null);
+      if (!faxRes.ok || !faxData?.ok) {
+        setError((faxData && (faxData.status || faxData.error)) || UI_STRINGS.SAVE_FAILED);
+        return true;
+      }
+
+      clearAttachment();
+      await finalizeCreateSuccess({ requestId, createdTypes: ["fax"], response: faxData });
       return true;
     }
 

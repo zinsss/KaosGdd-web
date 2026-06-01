@@ -21,6 +21,7 @@ from app.db.repo.journal_repo import JournalRepo
 from app.db.repo.note_repo import NoteRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.file_repo import FileRepo
+from app.db.repo.fax_repo import FaxRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.push_subscription_repo import PushSubscriptionRepo
@@ -37,6 +38,8 @@ from app.engine.claim_day_task_service import ClaimDayTaskService
 from app.engine.journal_service import JournalService
 from app.engine.note_service import NoteService
 from app.engine.file_service import FileService
+from app.engine.fax_pdf_conversion_service import FaxPdfConversionService
+from app.engine.fax_service import FaxService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
 from app.engine.supply_service import SupplyService
@@ -55,6 +58,7 @@ event_repo = EventRepo(engine)
 journal_repo = JournalRepo(engine)
 note_repo = NoteRepo(engine)
 file_repo = FileRepo(engine)
+fax_repo = FaxRepo(engine)
 reminder_repo = ReminderRepo(engine)
 push_subscription_repo = PushSubscriptionRepo(engine)
 push_test_diagnostic_repo = PushTestDiagnosticRepo(engine)
@@ -68,6 +72,7 @@ holiday_sync_service = HolidaySyncService(items_repo, event_repo)
 journal_service = JournalService(items_repo, journal_repo)
 note_service = NoteService(items_repo, note_repo)
 file_service = FileService(items_repo, file_repo)
+fax_conversion_service = FaxPdfConversionService(storage_dir=SETTINGS.FAX_STORAGE_DIR)
 web_push_client = WebPushClient(
     public_key=SETTINGS.WEB_PUSH_VAPID_PUBLIC_KEY,
     private_key=SETTINGS.WEB_PUSH_VAPID_PRIVATE_KEY,
@@ -82,6 +87,13 @@ reminder_service = ReminderService(
     push_subscription_repo,
     web_push_client,
     push_policy_repo,
+)
+fax_service = FaxService(
+    items_repo=items_repo,
+    fax_repo=fax_repo,
+    file_repo=file_repo,
+    conversion_service=fax_conversion_service,
+    reminder_service=reminder_service,
 )
 supply_service = SupplyService(items_repo, supply_repo)
 weather_service = WeatherService(weather_repo)
@@ -637,6 +649,59 @@ def remove_file(file_id: str):
     return {"ok": True}
 
 
+@app.get("/fax")
+def list_faxes(mode: str = "active"):
+    return {"items": fax_service.list_faxes(mode=mode)}
+
+
+@app.get("/fax/{fax_id}")
+def get_fax(fax_id: str):
+    item = fax_service.get_fax(fax_id)
+    if item is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True, "item": item}
+
+
+@app.get("/fax/{fax_id}/open")
+def open_fax_pdf(fax_id: str):
+    result = fax_service.get_fax_pdf(fax_id)
+    if result is None:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    detail, path = result
+    return FileResponse(
+        path=path,
+        media_type="application/pdf",
+        filename=(detail.get("title") or "fax") + ".pdf",
+    )
+
+
+@app.post("/fax/send-from-file")
+def send_fax_from_file(payload: dict):
+    file_id = str(payload.get("file_id") or "").strip()
+    fax_number = str(payload.get("fax_number") or "").strip()
+    if not file_id:
+        return {"ok": False, "error": "file_id is required"}
+    if not fax_number:
+        return {"ok": False, "error": "fax number is required"}
+    ok, status, fax_id = fax_service.send_file_as_fax(file_id=file_id, fax_number=fax_number)
+    return {"ok": ok, "status": status, "id": fax_id, "kind": "fax"}
+
+
+@app.post("/fax/incoming")
+def receive_incoming_fax(payload: dict):
+    source_file_path = str(payload.get("source_file_path") or "").strip()
+    if not source_file_path:
+        return {"ok": False, "error": "source_file_path is required"}
+    ok, status, fax_id = fax_service.receive_incoming_raw(
+        source_file_path=source_file_path,
+        remote_number=str(payload.get("remote_number") or "").strip() or None,
+        local_device=str(payload.get("local_device") or "").strip() or None,
+        original_filename=str(payload.get("original_filename") or "").strip() or None,
+        original_mime_type=str(payload.get("original_mime_type") or "").strip() or None,
+    )
+    return {"ok": ok, "status": status, "id": fax_id, "kind": "fax"}
+
+
 @app.delete("/files/{file_id}/hard")
 def remove_file_hard(file_id: str):
     ok = file_service.remove_file_hard(file_id)
@@ -845,6 +910,8 @@ def capture_item(payload: dict):
 
     if kind == "modal":
         modal_type = str(parsed["parsed"].get("modal_type") or "").strip()
+        if modal_type == "fax":
+            return {"ok": False, "error": "file is required for fax"}
         title = str(parsed["parsed"].get("title") or "").strip() or None
         return {
             "ok": True,
