@@ -82,6 +82,9 @@ class Settings:
     LIFECYCLE_FIRED_RETENTION_DAYS = _env_int("LIFECYCLE_FIRED_RETENTION_DAYS", 30)
 
     FILE_STORAGE_DIR = _env_str("FILE_STORAGE_DIR", "/data/uploads")
+    FAX_STORAGE_DIR = _env_str("FAX_STORAGE_DIR", os.path.join(FILE_STORAGE_DIR, "fax"))
+    FAX_SEND_ENABLED = _env_bool("FAX_SEND_ENABLED", True)
+    FAX_RECV_DIR = _env_str("FAX_RECV_DIR", "/var/spool/hylafax/recvq")
 
     WEB_PUSH_VAPID_PUBLIC_KEY = _env_str("WEB_PUSH_VAPID_PUBLIC_KEY", "")
     WEB_PUSH_VAPID_PRIVATE_KEY = _env_str("WEB_PUSH_VAPID_PRIVATE_KEY", "")
@@ -103,6 +106,7 @@ class DbTables:
     JOURNAL_ITEMS = "journal_items"
     NOTE_ITEMS = "note_items"
     FILE_ITEMS = "file_items"
+    FAX_ITEMS = "fax_items"
     REMINDER_EVENTS = "reminder_events"
     ITEM_REMINDERS = "item_reminders"
     ITEM_TAGS = "item_tags"

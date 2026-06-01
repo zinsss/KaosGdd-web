@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS {items} (
     updated_at TEXT NOT NULL,
     archived_at TEXT,
     deleted_at TEXT,
-    CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'note', 'file', 'supply')),
+    CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'note', 'file', 'supply', 'fax')),
     CHECK (status IN ('active', 'removed', 'archived'))
 );
 
@@ -105,6 +105,25 @@ CREATE TABLE IF NOT EXISTS {file_items} (
     memo TEXT,
     fax_number TEXT,
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS {fax_items} (
+    item_id TEXT PRIMARY KEY,
+    direction TEXT NOT NULL,
+    fax_status TEXT NOT NULL,
+    remote_number TEXT,
+    local_device TEXT,
+    original_filename TEXT,
+    original_mime_type TEXT,
+    pdf_file_path TEXT,
+    source_file_path TEXT,
+    received_at TEXT,
+    sent_at TEXT,
+    failed_at TEXT,
+    error_message TEXT,
+    FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE,
+    CHECK (direction IN ('incoming', 'outgoing')),
+    CHECK (fax_status IN ('received', 'queued', 'sending', 'sent', 'failed', 'conversion_failed'))
 );
 
 CREATE TABLE IF NOT EXISTS {reminder_items} (
@@ -280,6 +299,12 @@ ON {items}(item_type, status, created_at);
 CREATE INDEX IF NOT EXISTS idx_file_items_created
 ON {items}(item_type, status, created_at);
 
+CREATE INDEX IF NOT EXISTS idx_fax_items_created
+ON {items}(item_type, status, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_fax_items_direction_status
+ON {fax_items}(direction, fax_status);
+
 CREATE INDEX IF NOT EXISTS idx_reminder_items_state_last_fired
 ON {reminder_items}(state, last_fired_at);
 
@@ -320,6 +345,7 @@ ON {weather_daily_snapshots}(location_id, fetched_at);
     journal_items=DbTables.JOURNAL_ITEMS,
     note_items=DbTables.NOTE_ITEMS,
     file_items=DbTables.FILE_ITEMS,
+    fax_items=DbTables.FAX_ITEMS,
     reminder_events=DbTables.REMINDER_EVENTS,
     item_reminders=DbTables.ITEM_REMINDERS,
     item_tags=DbTables.ITEM_TAGS,
@@ -341,7 +367,14 @@ def _sqlite_items_table_allows_supported_types(conn) -> bool:
     if not row or not row[0]:
         return True
     ddl = str(row[0]).lower()
-    return "'event'" in ddl and "'journal'" in ddl and "'note'" in ddl and "'file'" in ddl and "'supply'" in ddl
+    return (
+        "'event'" in ddl
+        and "'journal'" in ddl
+        and "'note'" in ddl
+        and "'file'" in ddl
+        and "'supply'" in ddl
+        and "'fax'" in ddl
+    )
 
 
 def _sqlite_reminder_items_allows_completed_state(conn) -> bool:
@@ -371,7 +404,7 @@ def _migrate_sqlite_items_table_add_supported_types(conn) -> None:
                     updated_at TEXT NOT NULL,
                     archived_at TEXT,
                     deleted_at TEXT,
-                    CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'note', 'file', 'supply')),
+                    CHECK (item_type IN ('task', 'reminder', 'event', 'journal', 'note', 'file', 'supply', 'fax')),
                     CHECK (status IN ('active', 'removed', 'archived'))
                 )
                 """
