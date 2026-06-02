@@ -18,6 +18,14 @@ test("missed unacked reminder makes title attention strong", () => {
   assert.match(getAppHeaderTitleClassName({ has_missed_reminders: true }), /\bappHeaderTitleAttention\b/);
 });
 
+test("fax attention count makes title attention strong", () => {
+  assert.equal(hasStrongTitleAttention({ has_attention_fax: true, strong_attention_count: 1 }), true);
+  assert.match(
+    getAppHeaderTitleClassName({ has_attention_fax: true, strong_attention_count: 1 }),
+    /\bappHeaderTitleAttention\b/,
+  );
+});
+
 test("resolved reminders do not make title attention strong", () => {
   for (const state of ["acked", "snoozed", "completed", "cancelled"]) {
     assert.equal(hasStrongTitleAttention({ reminder_state: state }), false);

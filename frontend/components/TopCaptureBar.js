@@ -9,6 +9,7 @@ import {
   dispatchCaptureCreated,
   navigateAfterCreate,
 } from "../lib/post-create-navigation";
+import { dispatchAppStatusChanged } from "../lib/app-status-events";
 import {
   applyModuleImpliedGrammar,
   isKnownCaptureGrammar,
@@ -893,6 +894,9 @@ export default function TopCaptureBar() {
 
       const faxData = await faxRes.json().catch(() => null);
       if (!faxRes.ok || !faxData?.ok) {
+        if (faxData?.id) {
+          dispatchAppStatusChanged({ source: "fax", action: "send-failed", faxId: faxData.id });
+        }
         setError((faxData && (faxData.status || faxData.error)) || UI_STRINGS.SAVE_FAILED);
         return true;
       }

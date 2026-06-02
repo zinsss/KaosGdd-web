@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
+import { updateAppBadge } from "../lib/app-badge";
 import { getAppHeaderTitleClassName } from "../lib/app-title-attention";
 import { KAOSGDD_STATUS_CHANGED_EVENT } from "../lib/app-status-events";
 import { DEFAULT_MODULE_NAV_STATUS, normalizeModuleNavStatus } from "../lib/module-nav-status";
@@ -20,9 +21,12 @@ export default function AppHeaderTitle() {
       const res = await fetch("/api/nav-status", { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
-      setStatus(normalizeModuleNavStatus(data));
+      const nextStatus = normalizeModuleNavStatus(data);
+      setStatus(nextStatus);
+      await updateAppBadge(nextStatus.strong_attention_count);
     } catch {
       setStatus({ ...DEFAULT_MODULE_NAV_STATUS });
+      await updateAppBadge(0);
     }
   }, []);
 
