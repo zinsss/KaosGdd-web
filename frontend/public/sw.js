@@ -1,4 +1,4 @@
-const SW_CACHE = "kaosgdd-app-shell-v0";
+const SW_CACHE = "kaosgdd-app-shell-v1";
 const APP_SHELL_PATHS = ["/", "/scribble", "/tasks", "/reminders", "/events", "/journals", "/notes", "/files"];
 
 const normalizeBadgeCount = (count) => {
@@ -54,7 +54,7 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(
     fetch(event.request).catch(async () => {
       const cache = await caches.open(SW_CACHE);
-      return (await cache.match(requestUrl.pathname)) || (await cache.match("/tasks"));
+      return (await cache.match(requestUrl.pathname)) || (await cache.match("/"));
     }),
   );
 });

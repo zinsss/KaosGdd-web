@@ -8,6 +8,10 @@ import { UI_STRINGS } from "../../lib/strings";
 
 const DEFAULT_WEATHER_LOCATION = "pohang";
 
+function isInteractiveTarget(target) {
+  return Boolean(target?.closest?.("a, button, input, textarea, select, option"));
+}
+
 function ymd(date) {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -224,6 +228,10 @@ export default function EventsPageClient() {
   }
 
   function handleMonthSwipeTouchStart(event) {
+    if (isInteractiveTarget(event.target)) {
+      resetSwipeTracking();
+      return;
+    }
     if (event.touches.length !== 1) {
       resetSwipeTracking();
       return;

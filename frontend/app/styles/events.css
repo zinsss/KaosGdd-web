@@ -101,6 +101,7 @@ body.eventsPageActive .appShellMain {
   color: var(--ctp-lavender);
   font-size: 0.72rem;
   line-height: 1;
+  pointer-events: none;
   white-space: nowrap;
 }
 
@@ -109,6 +110,7 @@ body.eventsPageActive .appShellMain {
   flex: 0 0 auto;
   font-size: 1.34rem;
   line-height: 1;
+  pointer-events: none;
 }
 
 .calendarDayFooter {

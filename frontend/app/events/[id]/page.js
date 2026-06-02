@@ -23,9 +23,11 @@ async function getEventRaw(id) {
 }
 
 export default async function EventDetailPage({ params, searchParams }) {
-  const result = await getEvent(params.id);
-  const rawResult = result.ok ? await getEventRaw(params.id) : { ok: false, raw: "" };
-  const occurrenceDate = typeof searchParams?.occurrence === "string" ? searchParams.occurrence : "";
+  const { id } = await params;
+  const query = await searchParams;
+  const result = await getEvent(id);
+  const rawResult = result.ok ? await getEventRaw(id) : { ok: false, raw: "" };
+  const occurrenceDate = typeof query?.occurrence === "string" ? query.occurrence : "";
 
   return (
     <main className="page">

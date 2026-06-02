@@ -1,0 +1,37 @@
+#!/bin/sh
+
+LOG=/tmp/kaosgdd-faxrcvd.log
+
+FILE_ARG="$1"
+DEVICE="${2:-ttyACM0}"
+COMMID="${3:-}"
+ERROR_MSG="${4:-}"
+SENDER="${5:-unknown}"
+
+case "$FILE_ARG" in
+  /*) FILE="$FILE_ARG" ;;
+  *) FILE="/var/spool/hylafax/$FILE_ARG" ;;
+esac
+
+{
+  echo "---- $(date -Is) kaosgdd-faxrcvd called ----"
+  echo "args=$*"
+  echo "FILE_ARG=$FILE_ARG"
+  echo "FILE=$FILE"
+  echo "DEVICE=$DEVICE"
+  echo "COMMID=$COMMID"
+  echo "ERROR_MSG=$ERROR_MSG"
+  echo "SENDER=$SENDER"
+  ls -lah "$FILE" 2>&1
+
+  KAOSGDD_API_BASE=http://127.0.0.1:8000 \
+    /srv/KaosGdd-web/backend/.venv/bin/python \
+    /srv/KaosGdd-web/backend/scripts/hylafax_recv_hook.py \
+    "$FILE" \
+    "$SENDER" \
+    "$DEVICE"
+
+  echo "hook exit=$?"
+} >> "$LOG" 2>&1
+
+exit 0

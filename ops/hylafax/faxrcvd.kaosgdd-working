@@ -1,0 +1,23 @@
+#!/bin/sh
+
+LOG=/tmp/kaosgdd-faxrcvd-auto.log
+
+{
+  echo "---- $(date -Is) faxrcvd wrapper called ----"
+  echo "args=$*"
+  echo "user=$(id)"
+  echo "pwd=$(pwd)"
+} >> "$LOG" 2>&1
+
+# First send to KaosGdd.
+/var/spool/hylafax/bin/kaosgdd-faxrcvd "$@" >> "$LOG" 2>&1
+echo "kaosgdd exit=$?" >> "$LOG" 2>&1
+
+# Then run original HylaFAX faxrcvd if present.
+ORIG=$(ls -1 /var/spool/hylafax/bin/faxrcvd.orig.* 2>/dev/null | sort | tail -1)
+if [ -n "$ORIG" ] && [ -x "$ORIG" ]; then
+  "$ORIG" "$@" >> "$LOG" 2>&1
+  echo "original faxrcvd exit=$?" >> "$LOG" 2>&1
+fi
+
+exit 0
