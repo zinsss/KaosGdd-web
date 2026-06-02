@@ -22,8 +22,9 @@ async function getTaskRaw(id) {
 }
 
 export default async function TaskDetailPage({ params }) {
-  const result = await getTask(params.id);
-  const rawResult = result.ok ? await getTaskRaw(params.id) : { ok: false, raw: "" };
+  const { id } = await params;
+  const result = await getTask(id);
+  const rawResult = result.ok ? await getTaskRaw(id) : { ok: false, raw: "" };
 
   return (
     <main className="page">
