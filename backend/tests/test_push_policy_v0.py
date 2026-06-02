@@ -54,6 +54,7 @@ class FakeWebPushClient:
 
 def _setup_push(main_module):
     web_push = FakeWebPushClient()
+    main_module.update_notification_preferences({"mode": "web_push_only"})
     main_module.reminder_service.push_subscription_repo = FakePushSubscriptionRepo()
     main_module.reminder_service.web_push_client = web_push
     return web_push

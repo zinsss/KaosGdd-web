@@ -27,6 +27,12 @@ from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.push_subscription_repo import PushSubscriptionRepo
 from app.db.repo.push_test_diagnostic_repo import PushTestDiagnosticRepo
 from app.db.repo.push_policy_repo import PushPolicyRepo
+from app.db.repo.push_policy_repo import (
+    NOTIFICATION_MODE_HYBRID,
+    NOTIFICATION_MODE_PUSHOVER_ONLY,
+    NOTIFICATION_MODE_WEB_PUSH_ONLY,
+    NOTIFICATION_MODES,
+)
 from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.scribble_repo import ScribbleRepo
 from app.db.repo.weather_repo import WeatherRepo
@@ -296,6 +302,30 @@ def _send_daily_summary_web_push(*, title: str, body: str, url: str) -> dict:
         "removed": removed,
         "errors": errors,
     }
+
+
+def _send_daily_summary_pushover(*, title: str, body: str, url: str) -> dict:
+    result = pushover_client.send_pushover_emergency(title=title, message=body, url=url)
+    return {
+        "sent": 1 if result.get("succeeded") else 0,
+        "skipped": 0 if result.get("attempted") else 1,
+        "removed": 0,
+        "errors": [] if result.get("succeeded") else [{"summary": result.get("reason") or "Pushover send failed"}],
+    }
+
+
+def _notification_mode() -> str:
+    try:
+        return str(push_policy_repo.get_notification_preferences().get("mode") or NOTIFICATION_MODE_HYBRID)
+    except Exception:
+        return NOTIFICATION_MODE_HYBRID
+
+
+def _notification_route_for_daily_summary() -> str:
+    mode = _notification_mode()
+    if mode == NOTIFICATION_MODE_PUSHOVER_ONLY:
+        return "pushover"
+    return "web_push"
 
 
 def resolve_upload_filename(headers) -> str:
@@ -1233,6 +1263,32 @@ def get_push_status(client_id: str, endpoint: str | None = None):
         "backend_subscription_saved": has_subscription,
         "endpoint_match": endpoint_match,
         "last_test": push_test_diagnostic_repo.get_for_client(clean_client_id),
+        "notification_preferences": push_policy_repo.get_notification_preferences(),
+    }
+
+
+@app.get("/push/notification-preferences")
+def get_notification_preferences():
+    return {
+        "ok": True,
+        "preferences": push_policy_repo.get_notification_preferences(),
+        "supported_modes": sorted(NOTIFICATION_MODES),
+    }
+
+
+@app.patch("/push/notification-preferences")
+def update_notification_preferences(payload: dict):
+    mode = str(payload.get("mode") or "").strip()
+    if mode not in NOTIFICATION_MODES:
+        return {
+            "ok": False,
+            "error": "invalid notification mode",
+            "supported_modes": sorted(NOTIFICATION_MODES),
+        }
+    return {
+        "ok": True,
+        "preferences": push_policy_repo.set_notification_mode(mode),
+        "supported_modes": sorted(NOTIFICATION_MODES),
     }
 
 
@@ -1266,7 +1322,8 @@ def send_daily_summary(payload: dict):
             "reason": DailySummaryText.DISABLED,
             "error": DailySummaryText.DISABLED,
         }
-    if web_push_client is None or not web_push_client.is_enabled:
+    delivery_route = _notification_route_for_daily_summary()
+    if delivery_route == "web_push" and (web_push_client is None or not web_push_client.is_enabled):
         return {
             "ok": True,
             "slot": slot,
@@ -1277,17 +1334,33 @@ def send_daily_summary(payload: dict):
             "errors": [],
             "error_count": 0,
         }
-    if not subscriptions:
+    if delivery_route == "pushover" and not SETTINGS.PUSHOVER_EMERGENCY_ENABLED:
         return {
             "ok": True,
             "slot": slot,
             "dedupe_key": dedupe_key,
             "sent": 0,
-            "skipped": 0,
+            "skipped": 1,
             "removed": 0,
             "errors": [],
             "error_count": 0,
+            "reason": "Pushover emergency disabled",
+            "error": "Pushover emergency disabled",
         }
+    if not subscriptions:
+        if delivery_route == "pushover":
+            subscriptions = [{"client_id": "pushover", "endpoint": "pushover"}]
+        else:
+            return {
+                "ok": True,
+                "slot": slot,
+                "dedupe_key": dedupe_key,
+                "sent": 0,
+                "skipped": 0,
+                "removed": 0,
+                "errors": [],
+                "error_count": 0,
+            }
 
     should_send = push_policy_repo.record_event_once(event_key=dedupe_key, event_type="daily-summary")
     if not should_send:
@@ -1306,7 +1379,10 @@ def send_daily_summary(payload: dict):
     title = DAILY_SUMMARY_SLOTS[slot]
     body = _build_daily_summary_body(summary)
     url = reminder_service._build_absolute_url("/") or "/"
-    result = _send_daily_summary_web_push(title=title, body=body, url=url)
+    if delivery_route == "pushover":
+        result = _send_daily_summary_pushover(title=title, body=body, url=url)
+    else:
+        result = _send_daily_summary_web_push(title=title, body=body, url=url)
     result["skipped"] = int(result.get("skipped") or 0)
     errors = result.get("errors") or []
     return {
