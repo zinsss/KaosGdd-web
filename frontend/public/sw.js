@@ -1,40 +1,25 @@
 const SW_CACHE = "kaosgdd-app-shell-v0";
 const APP_SHELL_PATHS = ["/", "/scribble", "/tasks", "/reminders", "/events", "/journals", "/notes", "/files"];
-const BADGE_DEBUG_PREFIX = "[sw:badge]";
 
-const canUseBadgeApi = () => typeof self.navigator !== "undefined";
+const normalizeBadgeCount = (count) => {
+  const numericCount = Number(count);
+  return Number.isFinite(numericCount) ? Math.max(0, numericCount) : 0;
+};
 
-const tryUpdateBadge = async (hasAttention) => {
-  const hasNavigator = canUseBadgeApi();
-  const hasSetAppBadge = hasNavigator && "setAppBadge" in self.navigator;
-  const hasClearAppBadge = hasNavigator && "clearAppBadge" in self.navigator;
-
-  console.debug(
-    `${BADGE_DEBUG_PREFIX} api=${hasSetAppBadge || hasClearAppBadge} attention=${hasAttention}`,
-  );
-
-  if (typeof hasAttention !== "boolean") return;
+const tryUpdateBadge = async (count) => {
+  const safeCount = normalizeBadgeCount(count);
 
   try {
-    if (hasAttention) {
-      if (!hasSetAppBadge) {
-        console.debug(`${BADGE_DEBUG_PREFIX} set skipped (unsupported)`);
-        return;
-      }
-      await self.navigator.setAppBadge();
-      console.debug(`${BADGE_DEBUG_PREFIX} set ok`);
+    if (safeCount > 0 && "setAppBadge" in self.registration) {
+      await self.registration.setAppBadge(safeCount);
       return;
     }
 
-    if (!hasClearAppBadge) {
-      console.debug(`${BADGE_DEBUG_PREFIX} clear skipped (unsupported)`);
-      return;
+    if (safeCount <= 0 && "clearAppBadge" in self.registration) {
+      await self.registration.clearAppBadge();
     }
-    await self.navigator.clearAppBadge();
-    console.debug(`${BADGE_DEBUG_PREFIX} clear ok`);
-  } catch (error) {
-    const errorText = error instanceof Error ? error.message : String(error);
-    console.debug(`${BADGE_DEBUG_PREFIX} failed ${errorText}`);
+  } catch {
+    // App badging is best-effort and unsupported on some browsers/PWA contexts.
   }
 };
 
@@ -88,14 +73,15 @@ self.addEventListener("push", (event) => {
   const url = payload.url || "/reminders?mode=fired";
   const hasAppAttention =
     typeof payload.has_app_attention === "boolean" ? payload.has_app_attention : null;
-  const badgeCount = Number.isFinite(payload.badge_count) ? Number(payload.badge_count) : null;
+  const numericBadgeCount = Number(payload.badge_count);
+  const badgeCount = Number.isFinite(numericBadgeCount) ? numericBadgeCount : null;
 
   event.waitUntil(
     (async () => {
-      if (hasAppAttention !== null) {
-        await tryUpdateBadge(hasAppAttention);
-      } else if (badgeCount !== null) {
-        await tryUpdateBadge(badgeCount > 0);
+      if (badgeCount !== null) {
+        await tryUpdateBadge(badgeCount);
+      } else if (hasAppAttention !== null) {
+        await tryUpdateBadge(hasAppAttention ? 1 : 0);
       }
 
       await self.registration.showNotification(title, {
@@ -133,10 +119,10 @@ self.addEventListener("message", (event) => {
   if (self.location.hostname !== "localhost") return;
 
   if (data.action === "set") {
-    void tryUpdateBadge(true);
+    void tryUpdateBadge(1);
     return;
   }
   if (data.action === "clear") {
-    void tryUpdateBadge(false);
+    void tryUpdateBadge(0);
   }
 });

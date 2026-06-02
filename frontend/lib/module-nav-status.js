@@ -4,6 +4,7 @@ export const DEFAULT_MODULE_NAV_STATUS = {
   has_missed_reminders: false,
   has_unacked_reminders: false,
   has_strong_attention: false,
+  strong_attention_count: 0,
   has_pending_supplies: false,
   has_note_draft: false,
   has_file_draft: false,
@@ -30,7 +31,15 @@ export function normalizeModuleNavStatus(payload) {
   const hasOverdueTasks = Boolean(payload.has_overdue_tasks);
   const hasMissedReminders = Boolean(payload.has_missed_reminders);
   const hasUnackedReminders = Boolean(payload.has_unacked_reminders) || hasMissedReminders;
-  const hasStrongAttention = Boolean(payload.has_strong_attention) || hasOverdueTasks || hasUnackedReminders;
+  const hasAttentionFax = Boolean(payload.has_attention_fax);
+  const payloadStrongAttentionCount = Number(payload.strong_attention_count);
+  const fallbackStrongAttentionCount =
+    (hasOverdueTasks ? 1 : 0) + (hasUnackedReminders ? 1 : 0) + (hasAttentionFax ? 1 : 0);
+  const strongAttentionCount = Number.isFinite(payloadStrongAttentionCount)
+    ? Math.max(0, payloadStrongAttentionCount)
+    : fallbackStrongAttentionCount;
+  const hasStrongAttention =
+    Boolean(payload.has_strong_attention) || hasOverdueTasks || hasUnackedReminders || hasAttentionFax || strongAttentionCount > 0;
 
   return {
     has_overdue_tasks: hasOverdueTasks,
@@ -38,9 +47,10 @@ export function normalizeModuleNavStatus(payload) {
     has_missed_reminders: hasMissedReminders,
     has_unacked_reminders: hasUnackedReminders,
     has_strong_attention: hasStrongAttention,
+    strong_attention_count: strongAttentionCount,
     has_pending_supplies: Boolean(payload.has_pending_supplies),
     has_note_draft: Boolean(payload.has_note_draft),
     has_file_draft: Boolean(payload.has_file_draft),
-    has_attention_fax: Boolean(payload.has_attention_fax),
+    has_attention_fax: hasAttentionFax,
   };
 }

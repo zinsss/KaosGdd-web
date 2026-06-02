@@ -4,6 +4,7 @@ import { APP_TIMEZONE } from "../../../lib/config.js";
 import { DEFAULT_MODULE_NAV_STATUS } from "../../../lib/module-nav-status.js";
 
 const ATTENTION_REMINDER_STATES = new Set(["fired", "missed"]);
+const ATTENTION_OUTGOING_FAX_STATUSES = new Set(["failed", "conversion_failed"]);
 const INACTIVE_TASK_STATUSES = new Set(["archived", "removed"]);
 
 function isActiveTask(task) {
@@ -37,6 +38,26 @@ export function isAttentionReminder(reminder) {
   return ATTENTION_REMINDER_STATES.has(getReminderState(reminder));
 }
 
+function getFaxStatus(fax) {
+  return String(fax?.fax_status || fax?.status || "").toLowerCase();
+}
+
+function getFaxDirection(fax) {
+  return String(fax?.direction || "").toLowerCase();
+}
+
+export function isAttentionFax(fax) {
+  if (!fax || typeof fax !== "object") return false;
+  if (String(fax.status || "active").toLowerCase() !== "active") return false;
+
+  const direction = getFaxDirection(fax);
+  const status = getFaxStatus(fax);
+
+  if (direction === "incoming") return status === "received";
+  if (direction === "outgoing") return ATTENTION_OUTGOING_FAX_STATUSES.has(status);
+  return false;
+}
+
 function getTodayYmdInAppTimezone() {
   const formatter = new Intl.DateTimeFormat("en-CA", {
     timeZone: APP_TIMEZONE,
@@ -62,20 +83,22 @@ export async function GET() {
   const today = getTodayYmdInAppTimezone();
 
   try {
-    const [tasksRes, eventsRes, activeRemindersRes, firedRemindersRes, suppliesRes] = await Promise.all([
+    const [tasksRes, eventsRes, activeRemindersRes, firedRemindersRes, suppliesRes, faxRes] = await Promise.all([
       fetch(base + "/tasks", { cache: "no-store" }),
       fetch(base + `/events?start_date=${today}&end_date=${today}&mode=active`, { cache: "no-store" }),
       fetch(base + "/reminders?mode=active", { cache: "no-store" }),
       fetch(base + "/reminders?mode=fired", { cache: "no-store" }),
       fetch(base + "/supplies?mode=active", { cache: "no-store" }),
+      fetch(base + "/fax?mode=active", { cache: "no-store" }),
     ]);
 
-    const [tasksData, eventsData, activeRemindersData, firedRemindersData, suppliesData] = await Promise.all([
+    const [tasksData, eventsData, activeRemindersData, firedRemindersData, suppliesData, faxData] = await Promise.all([
       tasksRes.json().catch(() => ({ items: [] })),
       eventsRes.json().catch(() => ({ items: [] })),
       activeRemindersRes.json().catch(() => ({ items: [] })),
       firedRemindersRes.json().catch(() => ({ items: [] })),
       suppliesRes.json().catch(() => ({ items: [] })),
+      faxRes.json().catch(() => ({ items: [] })),
     ]);
 
     const nowMs = Date.now();
@@ -85,19 +108,26 @@ export async function GET() {
     const firedReminders = Array.isArray(firedRemindersData?.items) ? firedRemindersData.items : [];
     const reminders = [...activeReminders, ...firedReminders];
     const supplies = Array.isArray(suppliesData?.items) ? suppliesData.items : [];
-    const hasOverdueTasks = tasks.some((task) => isOverdueTask(task, nowMs));
-    const hasUnackedReminders = reminders.some((reminder) => isAttentionReminder(reminder));
+    const faxes = Array.isArray(faxData?.items) ? faxData.items : [];
+    const overdueTaskCount = tasks.filter((task) => isOverdueTask(task, nowMs)).length;
+    const attentionReminderCount = reminders.filter((reminder) => isAttentionReminder(reminder)).length;
+    const attentionFaxCount = faxes.filter((fax) => isAttentionFax(fax)).length;
+    const hasOverdueTasks = overdueTaskCount > 0;
+    const hasUnackedReminders = attentionReminderCount > 0;
+    const hasAttentionFax = attentionFaxCount > 0;
+    const strongAttentionCount = overdueTaskCount + attentionReminderCount + attentionFaxCount;
 
     return NextResponse.json({
       has_overdue_tasks: hasOverdueTasks,
       has_today_events: events.length > 0,
       has_missed_reminders: reminders.some((reminder) => getReminderState(reminder) === "missed"),
       has_unacked_reminders: hasUnackedReminders,
-      has_strong_attention: hasOverdueTasks || hasUnackedReminders,
+      has_strong_attention: strongAttentionCount > 0,
+      strong_attention_count: strongAttentionCount,
       has_pending_supplies: supplies.length > 0,
       has_note_draft: false,
       has_file_draft: false,
-      has_attention_fax: false,
+      has_attention_fax: hasAttentionFax,
     });
   } catch {
     return NextResponse.json({ ...DEFAULT_MODULE_NAV_STATUS });
