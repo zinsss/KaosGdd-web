@@ -3,18 +3,28 @@
 import { useEffect, useState } from "react";
 
 import { UI_STRINGS } from "../../lib/strings";
+import {
+  NOTIFICATION_MODE_DESCRIPTIONS,
+  NOTIFICATION_MODE_LABELS,
+  getNotificationPreferences,
+  saveNotificationMode,
+} from "../../lib/pwa/notification-preferences";
 import { getPushStatus, sendTestPush, subscribeToPush, unsubscribeFromPush } from "../../lib/pwa/push";
 import { sendPushoverTest } from "../../lib/pwa/pushover-test";
 
 export default function PushControls() {
   const [status, setStatus] = useState({ state: "loading", message: "Checking notification status…" });
+  const [preferences, setPreferences] = useState({ mode: "hybrid" });
+  const [supportedModes, setSupportedModes] = useState(["hybrid", "pushover_only", "web_push_only"]);
   const [stateText, setStateText] = useState("");
   const [busy, setBusy] = useState(false);
 
   async function refreshStatus() {
     try {
-      const next = await getPushStatus();
+      const [next, preferenceData] = await Promise.all([getPushStatus(), getNotificationPreferences()]);
       setStatus(next);
+      setPreferences(preferenceData.preferences || { mode: "hybrid" });
+      setSupportedModes(preferenceData.supported_modes || ["hybrid", "pushover_only", "web_push_only"]);
     } catch {
       setStatus({ state: "unsupported", message: "Push not supported on this device/browser" });
     }
@@ -61,9 +71,46 @@ export default function PushControls() {
     }
   }
 
+  async function updateMode(mode) {
+    if (busy || mode === preferences.mode) return;
+    setBusy(true);
+    setStateText("");
+
+    try {
+      const data = await saveNotificationMode(mode);
+      setPreferences(data.preferences || { mode });
+      setSupportedModes(data.supported_modes || supportedModes);
+      setStateText("Notification preference saved.");
+      await refreshStatus();
+    } catch (error) {
+      setStateText(error instanceof Error ? error.message : UI_STRINGS.ACTION_FAILED);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <section className="panel">
       <div className="sectionTitle">Notifications</div>
+      <div className="subline">Delivery mode: {NOTIFICATION_MODE_LABELS[preferences.mode] || preferences.mode}</div>
+      <div className="actionRow">
+        {supportedModes.map((mode) => (
+          <button
+            key={mode}
+            className={
+              "button compactButton " +
+              (preferences.mode === mode ? "buttonToneSave" : "buttonToneNeutral")
+            }
+            disabled={busy}
+            onClick={() => updateMode(mode)}
+            type="button"
+          >
+            {NOTIFICATION_MODE_LABELS[mode] || mode}
+          </button>
+        ))}
+      </div>
+      <div className="subline">{NOTIFICATION_MODE_DESCRIPTIONS[preferences.mode] || ""}</div>
+
       <div className="subline">{status.message}</div>
       {status.localStatus ? <div className="subline">{status.localStatus}</div> : null}
       {status.backendStatus ? <div className="subline">{status.backendStatus}</div> : null}

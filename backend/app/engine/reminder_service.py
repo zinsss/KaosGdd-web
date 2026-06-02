@@ -4,6 +4,12 @@ import logging
 import re
 
 from app.config import SETTINGS
+from app.db.repo.push_policy_repo import (
+    DEFAULT_NOTIFICATION_MODE,
+    NOTIFICATION_MODE_HYBRID,
+    NOTIFICATION_MODE_PUSHOVER_ONLY,
+    NOTIFICATION_MODE_WEB_PUSH_ONLY,
+)
 from app.db.repo.event_repo import EventRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.reminder_repo import ReminderRepo
@@ -333,7 +339,13 @@ class ReminderService:
             )
 
             push_payload = self._build_push_payload(row)
-            self._send_web_push(row=row, push_payload=push_payload)
+            self._send_notification(
+                channel="normal",
+                row=row,
+                push_payload=push_payload,
+                pushover_title=push_payload["title"],
+                pushover_message=push_payload["message"],
+            )
 
             fired.append(row)
 
@@ -355,8 +367,13 @@ class ReminderService:
                 payload={"parent_item_id": row.get("parent_item_id")},
             )
             missed_push_payload = self._build_missed_push_payload(row)
-            self._send_web_push(row=row, push_payload=missed_push_payload)
-            self._send_missed_reminder_pushover(row)
+            self._send_notification(
+                channel="urgent",
+                row=row,
+                push_payload=missed_push_payload,
+                pushover_title="KaosGdd missed reminder",
+                pushover_message=self._build_missed_reminder_pushover_message(row),
+            )
 
             missed.append(row)
 
@@ -391,7 +408,13 @@ class ReminderService:
                     "badge_count": self._get_attention_badge_count(),
                     "has_app_attention": True,
                 }
-                self._send_web_push(row={"id": task_id, "parent_item_id": task_id}, push_payload=push_payload)
+                self._send_notification(
+                    channel="urgent",
+                    row={"id": task_id, "parent_item_id": task_id},
+                    push_payload=push_payload,
+                    pushover_title="KaosGdd task overdue",
+                    pushover_message=push_payload["message"],
+                )
                 pushed.append({"task_id": task_id, "due_at": due_at})
 
             self.push_policy_repo.upsert_task_overdue_state(
@@ -408,6 +431,7 @@ class ReminderService:
             title=title,
             event_id=event_id,
             event_type="fax_received",
+            channel="normal",
             push_title="Fax received",
         )
 
@@ -424,6 +448,7 @@ class ReminderService:
             title=title,
             event_id=event_id,
             event_type="fax_send_failed",
+            channel="system",
             push_title="Fax send failed",
             pushover_title="KaosGdd fax failed",
             pushover_message=self._build_fax_failed_pushover_message(
@@ -440,6 +465,7 @@ class ReminderService:
         title: str | None,
         event_id: str | None,
         event_type: str,
+        channel: str,
         push_title: str,
         pushover_title: str | None = None,
         pushover_message: str | None = None,
@@ -465,21 +491,19 @@ class ReminderService:
             "badge_count": self._get_attention_badge_count(),
             "has_app_attention": True,
         }
-        self._send_web_push(row={"id": clean_fax_id, "parent_item_id": None}, push_payload=push_payload)
-        if pushover_title and pushover_message:
-            self._send_pushover_emergency(title=pushover_title, message=pushover_message, url=push_payload["url"])
+        self._send_notification(
+            channel=channel,
+            row={"id": clean_fax_id, "parent_item_id": None},
+            push_payload=push_payload,
+            pushover_title=pushover_title or f"KaosGdd {push_title.lower()}",
+            pushover_message=pushover_message or display_title,
+        )
         return True
 
-    def _send_missed_reminder_pushover(self, reminder: dict) -> None:
+    def _build_missed_reminder_pushover_message(self, reminder: dict) -> str:
         item_title = self._resolve_reminder_item_title(reminder)
         remind_at = format_dt_for_ui(reminder.get("remind_at")) or str(reminder.get("remind_at") or "").strip()
-        message = f"Missed reminder: {item_title}\nReminder: {remind_at}"
-        push_payload = self._build_missed_push_payload(reminder)
-        self._send_pushover_emergency(
-            title="KaosGdd missed reminder",
-            message=message,
-            url=push_payload.get("url"),
-        )
+        return f"Missed reminder: {item_title}\nReminder: {remind_at}"
 
     def _send_pushover_emergency(self, *, title: str, message: str, url: str | None = None) -> None:
         try:
@@ -489,6 +513,54 @@ class ReminderService:
             return
         if result.get("attempted") and not result.get("succeeded"):
             logger.warning("pushover emergency escalation failed: reason=%s", result.get("reason"))
+
+    def _notification_mode(self) -> str:
+        if self.push_policy_repo is None:
+            return DEFAULT_NOTIFICATION_MODE
+        try:
+            preferences = self.push_policy_repo.get_notification_preferences()
+        except Exception as exc:
+            logger.warning("notification preferences unavailable: %s", exc)
+            return DEFAULT_NOTIFICATION_MODE
+        return str(preferences.get("mode") or DEFAULT_NOTIFICATION_MODE)
+
+    def _notification_should_send_web_push(self, *, channel: str) -> bool:
+        mode = self._notification_mode()
+        if mode == NOTIFICATION_MODE_WEB_PUSH_ONLY:
+            return True
+        if mode == NOTIFICATION_MODE_PUSHOVER_ONLY:
+            return False
+        if mode == NOTIFICATION_MODE_HYBRID:
+            return channel == "normal"
+        return True
+
+    def _notification_should_send_pushover(self, *, channel: str) -> bool:
+        mode = self._notification_mode()
+        if mode == NOTIFICATION_MODE_WEB_PUSH_ONLY:
+            return False
+        if mode == NOTIFICATION_MODE_PUSHOVER_ONLY:
+            return True
+        if mode == NOTIFICATION_MODE_HYBRID:
+            return channel in {"urgent", "system"}
+        return False
+
+    def _send_notification(
+        self,
+        *,
+        channel: str,
+        row: dict,
+        push_payload: dict,
+        pushover_title: str,
+        pushover_message: str,
+    ) -> None:
+        if self._notification_should_send_web_push(channel=channel):
+            self._send_web_push(row=row, push_payload=push_payload)
+        if self._notification_should_send_pushover(channel=channel):
+            self._send_pushover_emergency(
+                title=pushover_title,
+                message=pushover_message,
+                url=push_payload.get("url"),
+            )
 
     def _resolve_reminder_item_title(self, reminder: dict) -> str:
         item_title = str(reminder.get("title") or "").strip()

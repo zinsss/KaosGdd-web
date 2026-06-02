@@ -178,6 +178,14 @@ CREATE TABLE IF NOT EXISTS {push_event_dedupe} (
     created_at TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS {notification_preferences} (
+    id TEXT PRIMARY KEY,
+    mode TEXT NOT NULL DEFAULT 'hybrid',
+    updated_at TEXT NOT NULL,
+    CHECK (id = 'default'),
+    CHECK (mode IN ('web_push_only', 'pushover_only', 'hybrid'))
+);
+
 CREATE TABLE IF NOT EXISTS {scribbles} (
     id TEXT PRIMARY KEY,
     body TEXT NOT NULL,
@@ -321,6 +329,9 @@ ON {push_task_overdue_state}(updated_at);
 CREATE INDEX IF NOT EXISTS idx_push_event_dedupe_type_created
 ON {push_event_dedupe}(event_type, created_at);
 
+CREATE INDEX IF NOT EXISTS idx_notification_preferences_updated_at
+ON {notification_preferences}(updated_at);
+
 CREATE INDEX IF NOT EXISTS idx_scribbles_sort_order
 ON {scribbles}(sort_order DESC, created_at DESC);
 
@@ -354,6 +365,7 @@ ON {weather_daily_snapshots}(location_id, fetched_at);
     push_test_diagnostics=DbTables.PUSH_TEST_DIAGNOSTICS,
     push_task_overdue_state=DbTables.PUSH_TASK_OVERDUE_STATE,
     push_event_dedupe=DbTables.PUSH_EVENT_DEDUPE,
+    notification_preferences=DbTables.NOTIFICATION_PREFERENCES,
     scribbles=DbTables.SCRIBBLES,
     weather_daily_snapshots=DbTables.WEATHER_DAILY_SNAPSHOTS,
 )

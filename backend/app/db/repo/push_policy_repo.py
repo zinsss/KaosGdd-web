@@ -3,6 +3,16 @@ from sqlalchemy import text
 from app.config import DbTables
 from app.utils.clock import now_iso
 
+NOTIFICATION_MODE_WEB_PUSH_ONLY = "web_push_only"
+NOTIFICATION_MODE_PUSHOVER_ONLY = "pushover_only"
+NOTIFICATION_MODE_HYBRID = "hybrid"
+NOTIFICATION_MODES = {
+    NOTIFICATION_MODE_WEB_PUSH_ONLY,
+    NOTIFICATION_MODE_PUSHOVER_ONLY,
+    NOTIFICATION_MODE_HYBRID,
+}
+DEFAULT_NOTIFICATION_MODE = NOTIFICATION_MODE_HYBRID
+
 
 class PushPolicyRepo:
     def __init__(self, engine) -> None:
@@ -62,3 +72,52 @@ class PushPolicyRepo:
                 {"event_key": event_key, "event_type": event_type, "created_at": now_iso()},
             )
         return bool(result.rowcount)
+
+    def get_notification_preferences(self) -> dict:
+        with self.engine.begin() as conn:
+            row = conn.execute(
+                text(
+                    """
+                    SELECT mode, updated_at
+                    FROM {table}
+                    WHERE id = 'default'
+                    LIMIT 1
+                    """.format(table=DbTables.NOTIFICATION_PREFERENCES)
+                )
+            ).mappings().first()
+        if not row:
+            return {
+                "mode": DEFAULT_NOTIFICATION_MODE,
+                "updated_at": None,
+            }
+        mode = str(row.get("mode") or "").strip()
+        if mode not in NOTIFICATION_MODES:
+            mode = DEFAULT_NOTIFICATION_MODE
+        return {
+            "mode": mode,
+            "updated_at": row.get("updated_at"),
+        }
+
+    def set_notification_mode(self, mode: str) -> dict:
+        clean_mode = str(mode or "").strip()
+        if clean_mode not in NOTIFICATION_MODES:
+            raise ValueError("invalid notification mode")
+
+        updated_at = now_iso()
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO {table}(id, mode, updated_at)
+                    VALUES ('default', :mode, :updated_at)
+                    ON CONFLICT(id) DO UPDATE SET
+                        mode = excluded.mode,
+                        updated_at = excluded.updated_at
+                    """.format(table=DbTables.NOTIFICATION_PREFERENCES)
+                ),
+                {"mode": clean_mode, "updated_at": updated_at},
+            )
+        return {
+            "mode": clean_mode,
+            "updated_at": updated_at,
+        }
