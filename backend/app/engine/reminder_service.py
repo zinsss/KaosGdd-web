@@ -6,9 +6,13 @@ import re
 from app.config import SETTINGS
 from app.db.repo.push_policy_repo import (
     DEFAULT_NOTIFICATION_MODE,
+    NOTIFICATION_CHANNEL_NORMAL,
+    NOTIFICATION_CHANNEL_SYSTEM,
+    NOTIFICATION_CHANNEL_URGENT,
     NOTIFICATION_MODE_HYBRID,
     NOTIFICATION_MODE_PUSHOVER_ONLY,
     NOTIFICATION_MODE_WEB_PUSH_ONLY,
+    NOTIFICATION_PUSHOVER_HYBRID_CHANNELS,
 )
 from app.db.repo.event_repo import EventRepo
 from app.db.repo.items_repo import ItemsRepo
@@ -340,7 +344,7 @@ class ReminderService:
 
             push_payload = self._build_push_payload(row)
             self._send_notification(
-                channel="normal",
+                channel=NOTIFICATION_CHANNEL_NORMAL,
                 row=row,
                 push_payload=push_payload,
                 pushover_title=push_payload["title"],
@@ -368,7 +372,7 @@ class ReminderService:
             )
             missed_push_payload = self._build_missed_push_payload(row)
             self._send_notification(
-                channel="urgent",
+                channel=NOTIFICATION_CHANNEL_URGENT,
                 row=row,
                 push_payload=missed_push_payload,
                 pushover_title="KaosGdd missed reminder",
@@ -409,7 +413,7 @@ class ReminderService:
                     "has_app_attention": True,
                 }
                 self._send_notification(
-                    channel="urgent",
+                    channel=NOTIFICATION_CHANNEL_URGENT,
                     row={"id": task_id, "parent_item_id": task_id},
                     push_payload=push_payload,
                     pushover_title="KaosGdd task overdue",
@@ -431,7 +435,7 @@ class ReminderService:
             title=title,
             event_id=event_id,
             event_type="fax_received",
-            channel="normal",
+            channel=NOTIFICATION_CHANNEL_NORMAL,
             push_title="Fax received",
         )
 
@@ -448,7 +452,7 @@ class ReminderService:
             title=title,
             event_id=event_id,
             event_type="fax_send_failed",
-            channel="system",
+            channel=NOTIFICATION_CHANNEL_SYSTEM,
             push_title="Fax send failed",
             pushover_title="KaosGdd fax failed",
             pushover_message=self._build_fax_failed_pushover_message(
@@ -531,7 +535,7 @@ class ReminderService:
         if mode == NOTIFICATION_MODE_PUSHOVER_ONLY:
             return False
         if mode == NOTIFICATION_MODE_HYBRID:
-            return channel == "normal"
+            return channel == NOTIFICATION_CHANNEL_NORMAL
         return True
 
     def _notification_should_send_pushover(self, *, channel: str) -> bool:
@@ -541,7 +545,7 @@ class ReminderService:
         if mode == NOTIFICATION_MODE_PUSHOVER_ONLY:
             return True
         if mode == NOTIFICATION_MODE_HYBRID:
-            return channel in {"urgent", "system"}
+            return channel in NOTIFICATION_PUSHOVER_HYBRID_CHANNELS
         return False
 
     def _send_notification(

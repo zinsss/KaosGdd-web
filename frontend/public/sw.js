@@ -112,17 +112,3 @@ self.addEventListener("notificationclick", (event) => {
     }),
   );
 });
-
-self.addEventListener("message", (event) => {
-  const data = event.data;
-  if (!data || data.type !== "KAOSGDD_DEBUG_BADGE") return;
-  if (self.location.hostname !== "localhost") return;
-
-  if (data.action === "set") {
-    void tryUpdateBadge(1);
-    return;
-  }
-  if (data.action === "clear") {
-    void tryUpdateBadge(0);
-  }
-});
