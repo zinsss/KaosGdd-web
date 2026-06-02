@@ -12,6 +12,10 @@ import { localYmd, splitActiveTasksForRoutineBox } from "../lib/tasks/routine-gr
 
 const TASK_MODES = ["active", "done", "removed", "archived"];
 
+function isInteractiveTarget(target) {
+  return Boolean(target?.closest?.("a, button, input, textarea, select, option"));
+}
+
 function buildTaskModeHref(mode) {
   return mode === "active" ? "/tasks" : `/tasks?mode=${mode}`;
 }
@@ -416,6 +420,10 @@ export default function TasksPageClient({ initialMode }) {
   }
 
   function handleTouchStart(event) {
+    if (isInteractiveTarget(event.target)) {
+      clearTouchTracking();
+      return;
+    }
     if (event.touches.length !== 1) return;
     const touch = event.touches[0];
     touchStateRef.current = {

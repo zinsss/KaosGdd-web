@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function POST(_request, context) {
-  const id = context.params.id;
-  const subtaskId = context.params.subtaskId;
+  const { id, subtaskId } = await context.params;
   const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
   const res = await fetch(base + "/tasks/" + id + "/subtasks/" + subtaskId + "/toggle", {
     method: "POST",
