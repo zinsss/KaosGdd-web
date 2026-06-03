@@ -48,6 +48,43 @@ def test_init_schema_migrates_items_check_to_include_event_and_journal(tmp_path)
         )
 
 
+def test_init_schema_migrates_legacy_hybrid_notification_mode_to_pushover_primary(tmp_path) -> None:
+    db_path = tmp_path / "legacy-notification-mode.db"
+    conn = sqlite3.connect(db_path)
+    conn.execute(
+        """
+        CREATE TABLE notification_preferences (
+            id TEXT PRIMARY KEY,
+            mode TEXT NOT NULL DEFAULT 'hybrid',
+            updated_at TEXT NOT NULL,
+            CHECK (id = 'default'),
+            CHECK (mode IN ('web_push_only', 'pushover_only', 'hybrid'))
+        )
+        """
+    )
+    conn.execute(
+        """
+        INSERT INTO notification_preferences(id, mode, updated_at)
+        VALUES ('default', 'hybrid', '2026-06-03T00:00:00+00:00')
+        """
+    )
+    conn.commit()
+    conn.close()
+
+    engine = create_engine(f"sqlite:///{db_path}")
+    init_schema_v0(engine)
+
+    with engine.begin() as db:
+        row = db.execute(text("SELECT mode FROM notification_preferences WHERE id='default'")).scalar_one()
+        sql = db.execute(
+            text("SELECT sql FROM sqlite_master WHERE type='table' AND name='notification_preferences'")
+        ).scalar_one()
+
+    assert row == "pushover_primary"
+    assert "'pushover_primary'" in sql
+    assert "'hybrid'" not in sql
+
+
 def test_init_schema_rebuilds_items_children_after_sqlite_items_table_migration(tmp_path) -> None:
     db_path = tmp_path / "legacy-items-fk.db"
     conn = sqlite3.connect(db_path)

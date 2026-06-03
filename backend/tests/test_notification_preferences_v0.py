@@ -83,15 +83,30 @@ def _record_pushover(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
 def test_notification_preferences_default_and_update(main_module) -> None:
     initial = main_module.get_notification_preferences()
     assert initial["ok"] is True
-    assert initial["preferences"]["mode"] == "hybrid"
+    assert initial["preferences"]["mode"] == "pushover_primary"
+    assert initial["supported_modes"] == ["pushover_primary", "web_push_only", "pushover_only"]
 
     updated = main_module.update_notification_preferences({"mode": "web_push_only"})
     assert updated["ok"] is True
     assert updated["preferences"]["mode"] == "web_push_only"
 
+    primary = main_module.update_notification_preferences({"mode": "pushover_primary"})
+    assert primary["ok"] is True
+    assert primary["preferences"]["mode"] == "pushover_primary"
+
     invalid = main_module.update_notification_preferences({"mode": "sms"})
     assert invalid["ok"] is False
     assert invalid["error"] == "invalid notification mode"
+
+    legacy = main_module.update_notification_preferences({"mode": "hybrid"})
+    assert legacy["ok"] is False
+    assert legacy["error"] == "invalid notification mode"
+
+
+def test_legacy_hybrid_mode_normalizes_to_pushover_primary() -> None:
+    from app.db.repo.push_policy_repo import normalize_notification_mode
+
+    assert normalize_notification_mode("hybrid") == "pushover_primary"
 
 
 @pytest.mark.parametrize(
@@ -99,7 +114,7 @@ def test_notification_preferences_default_and_update(main_module) -> None:
     [
         ("web_push_only", 1, 0),
         ("pushover_only", 0, 1),
-        ("hybrid", 1, 0),
+        ("pushover_primary", 1, 1),
     ],
 )
 def test_normal_fired_reminder_routes_by_notification_mode(
@@ -131,7 +146,7 @@ def test_normal_fired_reminder_routes_by_notification_mode(
     [
         ("web_push_only", 1, 0),
         ("pushover_only", 0, 1),
-        ("hybrid", 0, 1),
+        ("pushover_primary", 0, 1),
     ],
 )
 def test_missed_reminder_routes_by_notification_mode(
@@ -147,9 +162,11 @@ def test_missed_reminder_routes_by_notification_mode(
         remind_at="2020-01-01T00:00:00+00:00",
     )
     assert ok is True
-    main_module.fire_due_reminders()
     web_push = _setup_web_push(main_module)
     pushover_calls = _record_pushover(monkeypatch)
+    main_module.fire_due_reminders()
+    web_push.payloads.clear()
+    pushover_calls.clear()
 
     missed = main_module.scan_missed_reminders()
 
@@ -159,8 +176,8 @@ def test_missed_reminder_routes_by_notification_mode(
     assert len(pushover_calls) == expected_pushover
 
 
-def test_overdue_task_uses_pushover_in_hybrid(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
-    main_module.update_notification_preferences({"mode": "hybrid"})
+def test_overdue_task_uses_pushover_in_pushover_primary(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    main_module.update_notification_preferences({"mode": "pushover_primary"})
     task = main_module.create_task({"title": "Submit overdue form", "due_at": "2020-01-01T00:00:00+00:00"})
     assert task["ok"] is True
     web_push = _setup_web_push(main_module)
@@ -180,7 +197,7 @@ def test_overdue_task_uses_pushover_in_hybrid(main_module, monkeypatch: pytest.M
     [
         ("web_push_only", 1, 0),
         ("pushover_only", 0, 1),
-        ("hybrid", 1, 0),
+        ("pushover_primary", 0, 1),
     ],
 )
 def test_fax_received_routes_by_notification_mode(
@@ -211,7 +228,7 @@ def test_fax_received_routes_by_notification_mode(
     [
         ("web_push_only", 1, 0),
         ("pushover_only", 0, 1),
-        ("hybrid", 0, 1),
+        ("pushover_primary", 0, 1),
     ],
 )
 def test_fax_send_failed_routes_by_notification_mode(

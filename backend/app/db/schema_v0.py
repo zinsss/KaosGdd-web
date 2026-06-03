@@ -180,10 +180,10 @@ CREATE TABLE IF NOT EXISTS {push_event_dedupe} (
 
 CREATE TABLE IF NOT EXISTS {notification_preferences} (
     id TEXT PRIMARY KEY,
-    mode TEXT NOT NULL DEFAULT 'hybrid',
+    mode TEXT NOT NULL DEFAULT 'pushover_primary',
     updated_at TEXT NOT NULL,
     CHECK (id = 'default'),
-    CHECK (mode IN ('web_push_only', 'pushover_only', 'hybrid'))
+    CHECK (mode IN ('pushover_primary', 'web_push_only', 'pushover_only'))
 );
 
 CREATE TABLE IF NOT EXISTS {scribbles} (
@@ -400,6 +400,17 @@ def _sqlite_reminder_items_allows_completed_state(conn) -> bool:
     return "'completed'" in ddl
 
 
+def _sqlite_notification_preferences_allows_pushover_primary(conn) -> bool:
+    row = conn.execute(
+        text("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = :name"),
+        {"name": DbTables.NOTIFICATION_PREFERENCES},
+    ).fetchone()
+    if not row or not row[0]:
+        return True
+    ddl = str(row[0]).lower()
+    return "'pushover_primary'" in ddl
+
+
 def _migrate_sqlite_items_table_add_supported_types(conn) -> None:
     conn.execute(text("PRAGMA foreign_keys = OFF"))
     try:
@@ -565,6 +576,49 @@ def _migrate_sqlite_reminder_items_add_completed_state(conn) -> None:
         conn.execute(text("PRAGMA foreign_keys = ON"))
 
 
+def _migrate_sqlite_notification_preferences_add_pushover_primary(conn) -> None:
+    conn.execute(text("PRAGMA foreign_keys = OFF"))
+    try:
+        conn.execute(
+            text(
+                f"ALTER TABLE {DbTables.NOTIFICATION_PREFERENCES} "
+                f"RENAME TO {DbTables.NOTIFICATION_PREFERENCES}__legacy"
+            )
+        )
+        conn.execute(
+            text(
+                f"""
+                CREATE TABLE {DbTables.NOTIFICATION_PREFERENCES} (
+                    id TEXT PRIMARY KEY,
+                    mode TEXT NOT NULL DEFAULT 'pushover_primary',
+                    updated_at TEXT NOT NULL,
+                    CHECK (id = 'default'),
+                    CHECK (mode IN ('pushover_primary', 'web_push_only', 'pushover_only'))
+                )
+                """
+            )
+        )
+        conn.execute(
+            text(
+                f"""
+                INSERT INTO {DbTables.NOTIFICATION_PREFERENCES}(id, mode, updated_at)
+                SELECT
+                    id,
+                    CASE
+                        WHEN mode = 'hybrid' THEN 'pushover_primary'
+                        WHEN mode IN ('pushover_primary', 'web_push_only', 'pushover_only') THEN mode
+                        ELSE 'pushover_primary'
+                    END AS mode,
+                    updated_at
+                FROM {DbTables.NOTIFICATION_PREFERENCES}__legacy
+                """
+            )
+        )
+        conn.execute(text(f"DROP TABLE {DbTables.NOTIFICATION_PREFERENCES}__legacy"))
+    finally:
+        conn.execute(text("PRAGMA foreign_keys = ON"))
+
+
 def _sqlite_table_columns(conn, table_name: str) -> set[str]:
     rows = conn.execute(text(f"PRAGMA table_info({table_name})")).fetchall()
     return {str(row[1]) for row in rows}
@@ -625,6 +679,8 @@ def init_schema_v0(engine) -> None:
             _migrate_sqlite_legacy_task_reminder_tables(conn)
             if not _sqlite_reminder_items_allows_completed_state(conn):
                 _migrate_sqlite_reminder_items_add_completed_state(conn)
+            if not _sqlite_notification_preferences_allows_pushover_primary(conn):
+                _migrate_sqlite_notification_preferences_add_pushover_primary(conn)
             _repair_sqlite_items_legacy_references(conn)
             _migrate_sqlite_scribbles_to_cards(conn)
         for statement in SCHEMA_SQL.split(";\n\n"):

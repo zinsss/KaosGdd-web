@@ -9,10 +9,10 @@ from app.db.repo.push_policy_repo import (
     NOTIFICATION_CHANNEL_NORMAL,
     NOTIFICATION_CHANNEL_SYSTEM,
     NOTIFICATION_CHANNEL_URGENT,
-    NOTIFICATION_MODE_HYBRID,
+    NOTIFICATION_MODE_PUSHOVER_PRIMARY,
     NOTIFICATION_MODE_PUSHOVER_ONLY,
     NOTIFICATION_MODE_WEB_PUSH_ONLY,
-    NOTIFICATION_PUSHOVER_HYBRID_CHANNELS,
+    NOTIFICATION_PUSHOVER_PRIMARY_WEB_PUSH_CHANNELS,
 )
 from app.db.repo.event_repo import EventRepo
 from app.db.repo.items_repo import ItemsRepo
@@ -354,6 +354,7 @@ class ReminderService:
                 push_payload=push_payload,
                 pushover_title=push_payload["title"],
                 pushover_message=push_payload["message"],
+                web_push_interactive=True,
             )
 
             fired.append(row)
@@ -550,14 +551,14 @@ class ReminderService:
             return DEFAULT_NOTIFICATION_MODE
         return str(preferences.get("mode") or DEFAULT_NOTIFICATION_MODE)
 
-    def _notification_should_send_web_push(self, *, channel: str) -> bool:
+    def _notification_should_send_web_push(self, *, channel: str, interactive: bool = False) -> bool:
         mode = self._notification_mode()
         if mode == NOTIFICATION_MODE_WEB_PUSH_ONLY:
             return True
         if mode == NOTIFICATION_MODE_PUSHOVER_ONLY:
             return False
-        if mode == NOTIFICATION_MODE_HYBRID:
-            return channel == NOTIFICATION_CHANNEL_NORMAL
+        if mode == NOTIFICATION_MODE_PUSHOVER_PRIMARY:
+            return interactive and channel in NOTIFICATION_PUSHOVER_PRIMARY_WEB_PUSH_CHANNELS
         return True
 
     def _notification_should_send_pushover(self, *, channel: str) -> bool:
@@ -566,8 +567,8 @@ class ReminderService:
             return False
         if mode == NOTIFICATION_MODE_PUSHOVER_ONLY:
             return True
-        if mode == NOTIFICATION_MODE_HYBRID:
-            return channel in NOTIFICATION_PUSHOVER_HYBRID_CHANNELS
+        if mode == NOTIFICATION_MODE_PUSHOVER_PRIMARY:
+            return True
         return False
 
     def _send_notification(
@@ -578,8 +579,9 @@ class ReminderService:
         push_payload: dict,
         pushover_title: str,
         pushover_message: str,
+        web_push_interactive: bool = False,
     ) -> None:
-        if self._notification_should_send_web_push(channel=channel):
+        if self._notification_should_send_web_push(channel=channel, interactive=web_push_interactive):
             self._send_web_push(row=row, push_payload=push_payload)
         if self._notification_should_send_pushover(channel=channel):
             self._send_pushover_emergency(
