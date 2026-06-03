@@ -1,6 +1,10 @@
-export async function updateAppBadge(count) {
+export function normalizeAppBadgeCount(count) {
   const numericCount = Number(count);
-  const safeCount = Number.isFinite(numericCount) ? Math.max(0, numericCount) : 0;
+  return Number.isFinite(numericCount) ? Math.max(0, numericCount) : 0;
+}
+
+export async function updateAppBadge(count) {
+  const safeCount = normalizeAppBadgeCount(count);
 
   try {
     if (safeCount > 0 && typeof navigator !== "undefined" && "setAppBadge" in navigator) {

@@ -1,13 +1,24 @@
+export const NOTIFICATION_MODE_WEB_PUSH_ONLY = "web_push_only";
+export const NOTIFICATION_MODE_PUSHOVER_ONLY = "pushover_only";
+export const NOTIFICATION_MODE_HYBRID = "hybrid";
+export const DEFAULT_NOTIFICATION_MODE = NOTIFICATION_MODE_HYBRID;
+export const DEFAULT_NOTIFICATION_MODES = [
+  NOTIFICATION_MODE_HYBRID,
+  NOTIFICATION_MODE_PUSHOVER_ONLY,
+  NOTIFICATION_MODE_WEB_PUSH_ONLY,
+];
+
 export const NOTIFICATION_MODE_LABELS = {
-  web_push_only: "Web Push only",
-  pushover_only: "Pushover only",
-  hybrid: "Hybrid",
+  [NOTIFICATION_MODE_WEB_PUSH_ONLY]: "Web Push only",
+  [NOTIFICATION_MODE_PUSHOVER_ONLY]: "Pushover only",
+  [NOTIFICATION_MODE_HYBRID]: "Hybrid",
 };
 
 export const NOTIFICATION_MODE_DESCRIPTIONS = {
-  web_push_only: "All app notifications use Web Push.",
-  pushover_only: "All app notifications use Pushover emergency.",
-  hybrid: "Normal reminders use Web Push; urgent and system notifications use Pushover emergency.",
+  [NOTIFICATION_MODE_WEB_PUSH_ONLY]: "All app notifications use Web Push.",
+  [NOTIFICATION_MODE_PUSHOVER_ONLY]: "All app notifications use Pushover emergency.",
+  [NOTIFICATION_MODE_HYBRID]:
+    "Normal reminders use Web Push; urgent and system notifications use Pushover emergency.",
 };
 
 export async function getNotificationPreferences() {

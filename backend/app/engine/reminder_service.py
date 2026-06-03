@@ -21,7 +21,7 @@ from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.task_repo import TaskRepo
 from app.integrations import pushover_client
 from app.integrations.push_format import build_push_body, build_push_title
-from app.strings import ApiText, PushText, ReminderStatusText
+from app.strings import ApiText, FaxNotificationText, PushText, ReminderStatusText
 from app.utils.clock import now_iso
 from app.utils.datetime_parse import parse_local_datetime_to_iso
 from app.utils.timefmt import format_dt_for_ui
@@ -436,7 +436,7 @@ class ReminderService:
             event_id=event_id,
             event_type="fax_received",
             channel=NOTIFICATION_CHANNEL_NORMAL,
-            push_title="Fax received",
+            push_title=FaxNotificationText.RECEIVED_TITLE,
         )
 
     def notify_fax_send_failed(
@@ -453,8 +453,8 @@ class ReminderService:
             event_id=event_id,
             event_type="fax_send_failed",
             channel=NOTIFICATION_CHANNEL_SYSTEM,
-            push_title="Fax send failed",
-            pushover_title="KaosGdd fax failed",
+            push_title=FaxNotificationText.SEND_FAILED_TITLE,
+            pushover_title=FaxNotificationText.SEND_FAILED_PUSHOVER_TITLE,
             pushover_message=self._build_fax_failed_pushover_message(
                 fax_id=fax_id,
                 title=title,
@@ -588,7 +588,7 @@ class ReminderService:
     ) -> str:
         clean_target = str(target or "").strip()
         clean_title = str(title or "").strip() or str(fax_id or "").strip()
-        lines = ["Fax send failed."]
+        lines = [FaxNotificationText.SEND_FAILED_LINE]
         if clean_target:
             lines.append(f"Target: {clean_target}")
         if clean_title:
