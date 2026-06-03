@@ -28,10 +28,12 @@ from app.db.repo.push_subscription_repo import PushSubscriptionRepo
 from app.db.repo.push_test_diagnostic_repo import PushTestDiagnosticRepo
 from app.db.repo.push_policy_repo import PushPolicyRepo
 from app.db.repo.push_policy_repo import (
-    NOTIFICATION_MODE_HYBRID,
+    DEFAULT_NOTIFICATION_MODE,
+    NOTIFICATION_MODE_PUSHOVER_PRIMARY,
     NOTIFICATION_MODE_PUSHOVER_ONLY,
-    NOTIFICATION_MODE_WEB_PUSH_ONLY,
     NOTIFICATION_MODES,
+    NOTIFICATION_SUPPORTED_MODES,
+    normalize_notification_mode,
 )
 from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.scribble_repo import ScribbleRepo
@@ -305,7 +307,7 @@ def _send_daily_summary_web_push(*, title: str, body: str, url: str) -> dict:
 
 
 def _send_daily_summary_pushover(*, title: str, body: str, url: str) -> dict:
-    result = pushover_client.send_pushover_emergency(title=title, message=body, url=url)
+    result = pushover_client.send_pushover_emergency(title=title, message=body, url=url, monospace=True)
     return {
         "sent": 1 if result.get("succeeded") else 0,
         "skipped": 0 if result.get("attempted") else 1,
@@ -316,14 +318,14 @@ def _send_daily_summary_pushover(*, title: str, body: str, url: str) -> dict:
 
 def _notification_mode() -> str:
     try:
-        return str(push_policy_repo.get_notification_preferences().get("mode") or NOTIFICATION_MODE_HYBRID)
+        return normalize_notification_mode(push_policy_repo.get_notification_preferences().get("mode"))
     except Exception:
-        return NOTIFICATION_MODE_HYBRID
+        return DEFAULT_NOTIFICATION_MODE
 
 
 def _notification_route_for_daily_summary() -> str:
     mode = _notification_mode()
-    if mode == NOTIFICATION_MODE_PUSHOVER_ONLY:
+    if mode in {NOTIFICATION_MODE_PUSHOVER_PRIMARY, NOTIFICATION_MODE_PUSHOVER_ONLY}:
         return "pushover"
     return "web_push"
 
@@ -1272,7 +1274,7 @@ def get_notification_preferences():
     return {
         "ok": True,
         "preferences": push_policy_repo.get_notification_preferences(),
-        "supported_modes": sorted(NOTIFICATION_MODES),
+        "supported_modes": NOTIFICATION_SUPPORTED_MODES,
     }
 
 
@@ -1283,12 +1285,12 @@ def update_notification_preferences(payload: dict):
         return {
             "ok": False,
             "error": "invalid notification mode",
-            "supported_modes": sorted(NOTIFICATION_MODES),
+            "supported_modes": NOTIFICATION_SUPPORTED_MODES,
         }
     return {
         "ok": True,
         "preferences": push_policy_repo.set_notification_mode(mode),
-        "supported_modes": sorted(NOTIFICATION_MODES),
+        "supported_modes": NOTIFICATION_SUPPORTED_MODES,
     }
 
 

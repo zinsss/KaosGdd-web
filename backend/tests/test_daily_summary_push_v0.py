@@ -83,13 +83,32 @@ def _summary(*, flags: dict | None = None) -> dict:
     }
 
 
-def _setup(main_module, monkeypatch: pytest.MonkeyPatch, *, summary: dict | None = None, subscriptions: int = 1):
+def _setup(
+    main_module,
+    monkeypatch: pytest.MonkeyPatch,
+    *,
+    summary: dict | None = None,
+    subscriptions: int = 1,
+    mode: str = "web_push_only",
+):
+    main_module.update_notification_preferences({"mode": mode})
     repo = FakePushSubscriptionRepo(count=subscriptions)
     web_push = FakeWebPushClient()
     monkeypatch.setattr(main_module, "push_subscription_repo", repo)
     monkeypatch.setattr(main_module, "web_push_client", web_push)
     monkeypatch.setattr(main_module.dashboard_service, "get_widget_summary", lambda: summary or _summary())
     return repo, web_push
+
+
+def _record_pushover(main_module, monkeypatch: pytest.MonkeyPatch) -> list[dict]:
+    calls: list[dict] = []
+
+    def fake_pushover(**kwargs):
+        calls.append(kwargs)
+        return {"attempted": True, "succeeded": True, "reason": None}
+
+    monkeypatch.setattr(main_module.pushover_client, "send_pushover_emergency", fake_pushover)
+    return calls
 
 
 def test_daily_summary_config_defaults_and_invalid_hhmm_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -253,7 +272,25 @@ def test_deep_link_points_to_root_dashboard(main_module, monkeypatch: pytest.Mon
     assert web_push.payloads[0]["url"] == "https://kaos.test/"
 
 
+def test_pushover_primary_daily_summary_uses_pushover_only(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    _, web_push = _setup(main_module, monkeypatch, mode="pushover_primary")
+    pushover_calls = _record_pushover(main_module, monkeypatch)
+    monkeypatch.setattr(main_module.SETTINGS, "PUSHOVER_EMERGENCY_ENABLED", True)
+
+    result = main_module.send_daily_summary({"slot": "morning"})
+
+    assert result["ok"] is True
+    assert result["sent"] == 1
+    assert web_push.payloads == []
+    assert len(pushover_calls) == 1
+    assert pushover_calls[0]["title"] == "KaosGdd Morning"
+    assert pushover_calls[0]["message"] == "Tasks 12 · Overdue 2\nReminders 3 · Events 2\nSupplies 4 · Fax 0"
+    assert pushover_calls[0]["url"] == "https://kaos.test/"
+    assert pushover_calls[0]["monospace"] is True
+
+
 def test_endpoint_returns_useful_sent_skipped_and_error_counts(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    main_module.update_notification_preferences({"mode": "web_push_only"})
     repo = FakePushSubscriptionRepo(count=2)
     web_push = FakeWebPushClient(fail_endpoint="https://push.example/sub/1")
     monkeypatch.setattr(main_module, "push_subscription_repo", repo)

@@ -5,21 +5,33 @@ from app.utils.clock import now_iso
 
 NOTIFICATION_MODE_WEB_PUSH_ONLY = "web_push_only"
 NOTIFICATION_MODE_PUSHOVER_ONLY = "pushover_only"
-NOTIFICATION_MODE_HYBRID = "hybrid"
+NOTIFICATION_MODE_PUSHOVER_PRIMARY = "pushover_primary"
+LEGACY_NOTIFICATION_MODE_HYBRID = "hybrid"
 NOTIFICATION_CHANNEL_NORMAL = "normal"
 NOTIFICATION_CHANNEL_URGENT = "urgent"
 NOTIFICATION_CHANNEL_SYSTEM = "system"
-NOTIFICATION_MODES = {
+NOTIFICATION_SUPPORTED_MODES = [
+    NOTIFICATION_MODE_PUSHOVER_PRIMARY,
     NOTIFICATION_MODE_WEB_PUSH_ONLY,
     NOTIFICATION_MODE_PUSHOVER_ONLY,
-    NOTIFICATION_MODE_HYBRID,
+]
+NOTIFICATION_MODES = set(NOTIFICATION_SUPPORTED_MODES)
+LEGACY_NOTIFICATION_MODES = {
+    LEGACY_NOTIFICATION_MODE_HYBRID,
 }
-NOTIFICATION_PUSHOVER_HYBRID_CHANNELS = {
-    NOTIFICATION_CHANNEL_URGENT,
-    NOTIFICATION_CHANNEL_SYSTEM,
+NOTIFICATION_PUSHOVER_PRIMARY_WEB_PUSH_CHANNELS = {
+    NOTIFICATION_CHANNEL_NORMAL,
 }
-DEFAULT_NOTIFICATION_MODE = NOTIFICATION_MODE_HYBRID
+DEFAULT_NOTIFICATION_MODE = NOTIFICATION_MODE_PUSHOVER_PRIMARY
 
+
+def normalize_notification_mode(mode: str | None) -> str:
+    clean_mode = str(mode or "").strip()
+    if clean_mode == LEGACY_NOTIFICATION_MODE_HYBRID:
+        return NOTIFICATION_MODE_PUSHOVER_PRIMARY
+    if clean_mode in NOTIFICATION_MODES:
+        return clean_mode
+    return DEFAULT_NOTIFICATION_MODE
 
 class PushPolicyRepo:
     def __init__(self, engine) -> None:
@@ -97,9 +109,7 @@ class PushPolicyRepo:
                 "mode": DEFAULT_NOTIFICATION_MODE,
                 "updated_at": None,
             }
-        mode = str(row.get("mode") or "").strip()
-        if mode not in NOTIFICATION_MODES:
-            mode = DEFAULT_NOTIFICATION_MODE
+        mode = normalize_notification_mode(row.get("mode"))
         return {
             "mode": mode,
             "updated_at": row.get("updated_at"),
