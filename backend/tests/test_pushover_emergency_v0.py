@@ -77,9 +77,16 @@ def _setup_web_push(main_module) -> FakeWebPushClient:
 
 
 def _fire_then_scan_missed(main_module):
-    task = main_module.create_task({"title": "Call pharmacy"})
+    task = main_module.create_task(
+        {
+            "title": "Call pharmacy",
+            "due_at": "2099-01-01T09:00:00+00:00",
+            "memo": "Call before lunch.\nBring insurance number.",
+        }
+    )
     assert task["ok"] is True
-    reminder = main_module.create_task_reminder(task["id"], {"remind_at": "2020-01-01T00:00:00+00:00"})
+    main_module.items_repo.replace_item_tags(task["id"], ["clinic", "fax"])
+    reminder = main_module.create_task_reminder(task["id"], {"remind_at": "2020-01-01T08:30:00+00:00"})
     assert reminder["ok"] is True
     _setup_web_push(main_module)
 
@@ -106,9 +113,59 @@ def test_missed_reminder_sends_pushover_emergency_when_enabled(main_module, monk
     assert missed["count"] == 1
     assert len(calls) == 1
     assert calls[0]["title"] == "KaosGdd missed reminder"
-    assert "Missed reminder: Call pharmacy" in calls[0]["message"]
-    assert "Reminder:" in calls[0]["message"]
+    assert "TASK • Call pharmacy" in calls[0]["message"]
+    assert "State    │ missed" in calls[0]["message"]
+    assert "Due      │ 2099-01-01 18:00" in calls[0]["message"]
+    assert "Reminder │ 2020-01-01 17:30" in calls[0]["message"]
+    assert "Tags     │ #clinic #fax" in calls[0]["message"]
+    assert "Memo\nCall before lunch.\nBring insurance number." in calls[0]["message"]
+    assert "Open\nhttps://kaos.test/reminders?mode=fired&reminder_id=" in calls[0]["message"]
+    assert len(calls[0]["message"].encode("utf-8")) <= 1024
+    assert calls[0]["monospace"] is True
     assert calls[0]["url"].startswith("https://kaos.test/reminders?mode=fired&reminder_id=")
+
+
+def test_overdue_task_sends_rich_pushover_emergency_when_enabled(
+    main_module,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = []
+
+    def record_emergency(**kwargs):
+        calls.append(kwargs)
+        return {"attempted": True, "succeeded": True, "reason": None}
+
+    monkeypatch.setattr("app.integrations.pushover_client.send_pushover_emergency", record_emergency)
+    _setup_web_push(main_module)
+
+    task = main_module.create_task(
+        {
+            "title": "Send referral fax",
+            "due_at": "2020-01-01T09:00:00+00:00",
+            "memo": "Call before lunch.",
+        }
+    )
+    assert task["ok"] is True
+    main_module.items_repo.replace_item_tags(task["id"], ["clinic", "fax"])
+
+    scanned = main_module.scan_overdue_pushes()
+
+    assert scanned["ok"] is True
+    assert scanned["count"] == 1
+    assert len(calls) == 1
+    assert calls[0]["title"] == "KaosGdd task overdue"
+    assert calls[0]["message"] == (
+        "TASK • Send referral fax\n"
+        "State    │ overdue\n"
+        "Due      │ 2020-01-01 18:00\n"
+        "Tags     │ #clinic #fax\n"
+        "Memo\n"
+        "Call before lunch.\n"
+        "Open\n"
+        f"https://kaos.test/tasks/{task['id']}"
+    )
+    assert calls[0]["monospace"] is True
+    assert calls[0]["url"] == f"https://kaos.test/tasks/{task['id']}"
 
 
 def test_missed_reminder_does_not_send_pushover_when_disabled(
@@ -185,6 +242,7 @@ def test_fax_send_failed_sends_pushover_emergency_when_enabled(
             "event_id": "send-failed-1",
             "title": "Referral.pdf",
             "fax_number": "02-1234-5678",
+            "error_message": "modem busy",
         }
     )
 
@@ -192,8 +250,48 @@ def test_fax_send_failed_sends_pushover_emergency_when_enabled(
     assert result["sent"] is True
     assert len(calls) == 1
     assert calls[0]["title"] == "KaosGdd fax failed"
-    assert calls[0]["message"] == "Fax send failed.\nTarget: 02-1234-5678\nFile: Referral.pdf"
+    assert calls[0]["message"] == (
+        "FAX • Send failed\n"
+        "Target   │ 02-1234-5678\n"
+        "File     │ Referral.pdf\n"
+        "Status   │ failed\n"
+        "Reason   │ modem busy\n"
+        "Open\n"
+        "https://kaos.test/fax"
+    )
+    assert calls[0]["monospace"] is True
     assert calls[0]["url"] == "https://kaos.test/fax"
+
+
+def test_fax_send_failed_pushover_message_preserves_open_url_when_truncated(
+    main_module,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls = []
+
+    def record_emergency(**kwargs):
+        calls.append(kwargs)
+        return {"attempted": True, "succeeded": True, "reason": None}
+
+    monkeypatch.setattr("app.integrations.pushover_client.send_pushover_emergency", record_emergency)
+    _setup_web_push(main_module)
+
+    result = main_module.notify_fax_send_failed(
+        {
+            "fax_id": "fax-long",
+            "event_id": "send-failed-long",
+            "title": "Referral.pdf",
+            "fax_number": "02-1234-5678",
+            "error_message": "modem busy " * 200,
+        }
+    )
+
+    assert result["ok"] is True
+    assert result["sent"] is True
+    assert len(calls) == 1
+    assert len(calls[0]["message"].encode("utf-8")) <= 1024
+    assert "Reason   │ modem busy" in calls[0]["message"]
+    assert "...\nOpen\nhttps://kaos.test/fax" in calls[0]["message"]
 
 
 def test_pushover_emergency_payload_includes_priority_retry_and_expire(
@@ -233,12 +331,13 @@ def test_pushover_emergency_payload_includes_priority_retry_and_expire(
 
     monkeypatch.setattr(pushover_module.request, "urlopen", fake_urlopen)
 
-    result = pushover_module.send_pushover_emergency(title="Emergency", message="Body")
+    result = pushover_module.send_pushover_emergency(title="Emergency", message="Body", monospace=True)
 
     assert result["succeeded"] is True
     assert captured["payload"]["priority"] == ["2"]
     assert captured["payload"]["retry"] == ["90"]
     assert captured["payload"]["expire"] == ["900"]
+    assert captured["payload"]["monospace"] == ["1"]
 
 
 def test_pushover_failure_is_logged_and_does_not_crash_scheduler(

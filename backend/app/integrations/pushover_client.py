@@ -20,6 +20,7 @@ def send_pushover(
     priority: int | None = None,
     retry: int | None = None,
     expire: int | None = None,
+    monospace: bool = False,
 ) -> dict:
     if not SETTINGS.PUSHOVER_ENABLED:
         return {
@@ -55,6 +56,8 @@ def send_pushover(
         payload["url"] = url
     if url_title:
         payload["url_title"] = url_title
+    if monospace:
+        payload["monospace"] = "1"
 
     data = parse.urlencode(payload).encode("utf-8")
     req = request.Request(PUSHOVER_ENDPOINT, data=data, method="POST")
@@ -113,6 +116,7 @@ def send_pushover_emergency(
     message: str,
     url: str | None = None,
     url_title: str | None = None,
+    monospace: bool = False,
 ) -> dict:
     if not SETTINGS.PUSHOVER_EMERGENCY_ENABLED:
         return {
@@ -128,6 +132,7 @@ def send_pushover_emergency(
         priority=2,
         retry=SETTINGS.PUSHOVER_EMERGENCY_RETRY_SECONDS,
         expire=SETTINGS.PUSHOVER_EMERGENCY_EXPIRE_SECONDS,
+        monospace=monospace,
     )
 
 

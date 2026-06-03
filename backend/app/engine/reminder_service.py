@@ -29,6 +29,11 @@ from app.utils.timefmt import format_dt_for_ui
 logger = logging.getLogger(__name__)
 
 
+PUSHOVER_MESSAGE_LIMIT_BYTES = 1024
+PUSHOVER_MESSAGE_TARGET_BYTES = 900
+PUSHOVER_TRUNCATION_SUFFIX = "..."
+
+
 class ReminderService:
     def __init__(
         self,
@@ -376,7 +381,10 @@ class ReminderService:
                 row=row,
                 push_payload=missed_push_payload,
                 pushover_title="KaosGdd missed reminder",
-                pushover_message=self._build_missed_reminder_pushover_message(row),
+                pushover_message=self._build_missed_reminder_pushover_message(
+                    row,
+                    open_url=missed_push_payload.get("url"),
+                ),
             )
 
             missed.append(row)
@@ -417,7 +425,10 @@ class ReminderService:
                     row={"id": task_id, "parent_item_id": task_id},
                     push_payload=push_payload,
                     pushover_title="KaosGdd task overdue",
-                    pushover_message=push_payload["message"],
+                    pushover_message=self._build_task_overdue_pushover_message(
+                        task=task,
+                        open_url=push_payload.get("url"),
+                    ),
                 )
                 pushed.append({"task_id": task_id, "due_at": due_at})
 
@@ -446,6 +457,7 @@ class ReminderService:
         title: str | None = None,
         event_id: str | None = None,
         target: str | None = None,
+        error_message: str | None = None,
     ) -> bool:
         return self._notify_fax_event(
             fax_id=fax_id,
@@ -459,6 +471,7 @@ class ReminderService:
                 fax_id=fax_id,
                 title=title,
                 target=target,
+                error_message=error_message,
             ),
         )
 
@@ -504,14 +517,23 @@ class ReminderService:
         )
         return True
 
-    def _build_missed_reminder_pushover_message(self, reminder: dict) -> str:
-        item_title = self._resolve_reminder_item_title(reminder)
-        remind_at = format_dt_for_ui(reminder.get("remind_at")) or str(reminder.get("remind_at") or "").strip()
-        return f"Missed reminder: {item_title}\nReminder: {remind_at}"
+    def _build_missed_reminder_pushover_message(self, reminder: dict, *, open_url: str | None = None) -> str:
+        context = self._resolve_notification_target_context(reminder)
+        lines = self._build_item_pushover_lines(
+            item_type=context["item_type"],
+            title=context["title"],
+            state="missed",
+            due_at=context.get("due_at"),
+            remind_at=reminder.get("remind_at"),
+            tags=context.get("tags") or [],
+            memo=context.get("memo"),
+            open_url=open_url,
+        )
+        return self._fit_pushover_message(lines)
 
     def _send_pushover_emergency(self, *, title: str, message: str, url: str | None = None) -> None:
         try:
-            result = pushover_client.send_pushover_emergency(title=title, message=message, url=url)
+            result = pushover_client.send_pushover_emergency(title=title, message=message, url=url, monospace=True)
         except Exception as exc:
             logger.warning("pushover emergency escalation exception: %s", exc)
             return
@@ -566,18 +588,91 @@ class ReminderService:
                 url=push_payload.get("url"),
             )
 
-    def _resolve_reminder_item_title(self, reminder: dict) -> str:
-        item_title = str(reminder.get("title") or "").strip()
+    def _resolve_notification_target_context(self, reminder: dict) -> dict:
         parent_item_id = reminder.get("parent_item_id")
+        context = {
+            "item_type": "reminder",
+            "title": str(reminder.get("title") or "").strip() or "Reminder",
+            "due_at": None,
+            "memo": None,
+            "tags": [],
+        }
+
         if parent_item_id:
             task = self.task_repo.get_task_detail(parent_item_id)
             if task is not None:
-                item_title = str(task.get("title") or item_title).strip()
+                context = {
+                    "item_type": "task",
+                    "title": str(task.get("title") or context["title"]).strip() or context["title"],
+                    "due_at": task.get("due_at"),
+                    "memo": task.get("memo"),
+                    "tags": self._list_item_tags(parent_item_id),
+                }
             elif self.event_repo is not None:
                 event = self.event_repo.get_event_detail(parent_item_id)
                 if event is not None:
-                    item_title = str(event.get("title") or item_title).strip()
-        return item_title or "Reminder"
+                    context = {
+                        "item_type": "event",
+                        "title": str(event.get("title") or context["title"]).strip() or context["title"],
+                        "due_at": event.get("start_date"),
+                        "memo": event.get("memo"),
+                        "tags": self._list_item_tags(parent_item_id),
+                    }
+        else:
+            reminder_id = reminder.get("id")
+            if reminder_id:
+                context["tags"] = self._list_item_tags(reminder_id)
+
+        return context
+
+    def _build_task_overdue_pushover_message(self, *, task: dict, open_url: str | None = None) -> str:
+        lines = self._build_item_pushover_lines(
+            item_type="task",
+            title=str(task.get("title") or PushText.TASK_FALLBACK_TITLE).strip() or PushText.TASK_FALLBACK_TITLE,
+            state="overdue",
+            due_at=task.get("due_at"),
+            remind_at=None,
+            tags=self._list_item_tags(task.get("id")),
+            memo=task.get("memo"),
+            open_url=open_url,
+        )
+        return self._fit_pushover_message(lines)
+
+    def _build_item_pushover_lines(
+        self,
+        *,
+        item_type: str,
+        title: str,
+        state: str,
+        due_at: str | None,
+        remind_at: str | None,
+        tags: list[str],
+        memo: str | None,
+        open_url: str | None,
+    ) -> list[str]:
+        lines = [f"{str(item_type or 'item').upper()} • {str(title or '').strip() or 'Reminder'}"]
+        lines.append(self._format_pushover_field("State", state))
+
+        due_display = format_dt_for_ui(due_at) or str(due_at or "").strip()
+        if due_display:
+            lines.append(self._format_pushover_field("Due", due_display))
+
+        remind_display = format_dt_for_ui(remind_at) or str(remind_at or "").strip()
+        if remind_display:
+            lines.append(self._format_pushover_field("Reminder", remind_display))
+
+        clean_tags = [f"#{str(tag).lstrip('#')}" for tag in tags if str(tag or "").strip()]
+        if clean_tags:
+            lines.append(self._format_pushover_field("Tags", " ".join(clean_tags)))
+
+        memo_text = str(memo or "").strip()
+        if memo_text:
+            lines.extend(["Memo", memo_text])
+
+        if open_url:
+            lines.extend(["Open", open_url])
+
+        return lines
 
     def _build_fax_failed_pushover_message(
         self,
@@ -585,15 +680,81 @@ class ReminderService:
         fax_id: str,
         title: str | None = None,
         target: str | None = None,
+        error_message: str | None = None,
     ) -> str:
         clean_target = str(target or "").strip()
         clean_title = str(title or "").strip() or str(fax_id or "").strip()
-        lines = [FaxNotificationText.SEND_FAILED_LINE]
+        clean_reason = str(error_message or "").strip()
+        lines = [FaxNotificationText.SEND_FAILED_HEADER]
         if clean_target:
-            lines.append(f"Target: {clean_target}")
+            lines.append(self._format_pushover_field("Target", clean_target))
         if clean_title:
-            lines.append(f"File: {clean_title}")
-        return "\n".join(lines)
+            lines.append(self._format_pushover_field("File", clean_title))
+        lines.append(self._format_pushover_field("Status", "failed"))
+        if clean_reason:
+            lines.append(self._format_pushover_field("Reason", clean_reason))
+        open_url = self._build_absolute_url("/fax")
+        if open_url:
+            lines.extend(["Open", open_url])
+        return self._fit_pushover_message(lines)
+
+    def _format_pushover_field(self, label: str, value: str) -> str:
+        return f"{label:<8} │ {value}"
+
+    def _list_item_tags(self, item_id: str | None) -> list[str]:
+        if self.items_repo is None or not item_id:
+            return []
+        try:
+            return self.items_repo.list_item_tags(str(item_id))
+        except Exception:
+            return []
+
+    def _fit_pushover_message(self, lines: list[str]) -> str:
+        message = "\n".join(str(line).rstrip() for line in lines if str(line).strip())
+        if self._utf8_len(message) <= PUSHOVER_MESSAGE_TARGET_BYTES:
+            return message
+
+        open_block: list[str] = []
+        if len(lines) >= 2 and str(lines[-2]).strip() == "Open":
+            open_block = [str(lines[-2]).rstrip(), str(lines[-1]).rstrip()]
+            lines = lines[:-2]
+
+        fitted_lines = list(lines)
+        while fitted_lines:
+            candidate_lines = fitted_lines + open_block
+            candidate = "\n".join(str(line).rstrip() for line in candidate_lines if str(line).strip())
+            if self._utf8_len(candidate) <= PUSHOVER_MESSAGE_LIMIT_BYTES:
+                return candidate
+            last = str(fitted_lines[-1])
+            next_last = self._truncate_utf8(last, max(0, self._utf8_len(last) - 128))
+            if next_last == last or len(next_last) <= len(PUSHOVER_TRUNCATION_SUFFIX):
+                fitted_lines.pop()
+            else:
+                fitted_lines[-1] = next_last
+
+        return self._truncate_utf8("\n".join(open_block), PUSHOVER_MESSAGE_LIMIT_BYTES)
+
+    def _truncate_utf8(self, value: str, max_bytes: int) -> str:
+        if max_bytes <= 0:
+            return ""
+        raw = str(value or "")
+        if self._utf8_len(raw) <= max_bytes:
+            return raw
+        suffix = PUSHOVER_TRUNCATION_SUFFIX
+        suffix_bytes = self._utf8_len(suffix)
+        budget = max(0, max_bytes - suffix_bytes)
+        output = []
+        used = 0
+        for char in raw:
+            char_len = self._utf8_len(char)
+            if used + char_len > budget:
+                break
+            output.append(char)
+            used += char_len
+        return "".join(output).rstrip() + suffix
+
+    def _utf8_len(self, value: str) -> int:
+        return len(str(value or "").encode("utf-8"))
 
     def _build_push_payload(self, reminder: dict) -> dict:
         reminder_id = str(reminder.get("id") or "").strip()
