@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { updateAppBadge } from "../lib/app-badge.js";
+import { normalizeAppBadgeCount, updateAppBadge } from "../lib/app-badge.js";
 
 function withNavigator(navigatorValue, callback) {
   const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, "navigator");
@@ -42,6 +42,13 @@ test("updateAppBadge calls navigator.setAppBadge when count is positive", async 
 
   assert.equal(setCount, 3);
   assert.equal(clearCalled, false);
+});
+
+test("normalizeAppBadgeCount clamps invalid or negative counts", () => {
+  assert.equal(normalizeAppBadgeCount(3), 3);
+  assert.equal(normalizeAppBadgeCount("2"), 2);
+  assert.equal(normalizeAppBadgeCount(-5), 0);
+  assert.equal(normalizeAppBadgeCount("not-a-number"), 0);
 });
 
 test("updateAppBadge calls navigator.clearAppBadge when count is zero", async () => {

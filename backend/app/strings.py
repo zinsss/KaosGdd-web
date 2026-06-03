@@ -32,6 +32,13 @@ class PushText:
     TEST_PUSH_BODY = "Push is connected. Open fired reminders."
 
 
+class FaxNotificationText:
+    RECEIVED_TITLE = "Fax received"
+    SEND_FAILED_TITLE = "Fax send failed"
+    SEND_FAILED_PUSHOVER_TITLE = "KaosGdd fax failed"
+    SEND_FAILED_LINE = "Fax send failed."
+
+
 class DailySummaryText:
     MORNING_TITLE = "KaosGdd Morning"
     LUNCH_TITLE = "KaosGdd Lunch"

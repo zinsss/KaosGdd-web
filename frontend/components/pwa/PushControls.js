@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 
 import { UI_STRINGS } from "../../lib/strings";
 import {
+  DEFAULT_NOTIFICATION_MODE,
+  DEFAULT_NOTIFICATION_MODES,
   NOTIFICATION_MODE_DESCRIPTIONS,
   NOTIFICATION_MODE_LABELS,
   getNotificationPreferences,
@@ -14,8 +16,8 @@ import { sendPushoverTest } from "../../lib/pwa/pushover-test";
 
 export default function PushControls() {
   const [status, setStatus] = useState({ state: "loading", message: "Checking notification status…" });
-  const [preferences, setPreferences] = useState({ mode: "hybrid" });
-  const [supportedModes, setSupportedModes] = useState(["hybrid", "pushover_only", "web_push_only"]);
+  const [preferences, setPreferences] = useState({ mode: DEFAULT_NOTIFICATION_MODE });
+  const [supportedModes, setSupportedModes] = useState(DEFAULT_NOTIFICATION_MODES);
   const [stateText, setStateText] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -23,8 +25,8 @@ export default function PushControls() {
     try {
       const [next, preferenceData] = await Promise.all([getPushStatus(), getNotificationPreferences()]);
       setStatus(next);
-      setPreferences(preferenceData.preferences || { mode: "hybrid" });
-      setSupportedModes(preferenceData.supported_modes || ["hybrid", "pushover_only", "web_push_only"]);
+      setPreferences(preferenceData.preferences || { mode: DEFAULT_NOTIFICATION_MODE });
+      setSupportedModes(preferenceData.supported_modes || DEFAULT_NOTIFICATION_MODES);
     } catch {
       setStatus({ state: "unsupported", message: "Push not supported on this device/browser" });
     }
