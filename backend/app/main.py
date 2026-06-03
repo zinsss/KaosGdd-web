@@ -1446,7 +1446,14 @@ def notify_fax_send_failed(payload: dict):
     title = str(payload.get("title") or "").strip() or None
     event_id = str(payload.get("event_id") or "").strip() or None
     target = str(payload.get("target") or payload.get("fax_number") or "").strip() or None
-    sent = reminder_service.notify_fax_send_failed(fax_id=fax_id, title=title, event_id=event_id, target=target)
+    error_message = str(payload.get("error_message") or payload.get("reason") or "").strip() or None
+    sent = reminder_service.notify_fax_send_failed(
+        fax_id=fax_id,
+        title=title,
+        event_id=event_id,
+        target=target,
+        error_message=error_message,
+    )
     return {"ok": True, "sent": bool(sent)}
 
 
