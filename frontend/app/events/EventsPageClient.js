@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { formatEventCountGlyph } from "../../lib/events/event-count-glyphs";
 import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
 import { UI_STRINGS } from "../../lib/strings";
 
@@ -315,6 +316,7 @@ export default function EventsPageClient() {
             const inMonth = d.startsWith(month);
             const dayEvents = mapByDate.get(d) || [];
             const count = dayEvents.length;
+            const countGlyph = formatEventCountGlyph(count);
             const weather = weatherByDate.get(d);
             const hasRecurringOccurrence = dayEvents.some((event) => event.is_recurring_occurrence);
             const dayOfWeek = new Date(`${d}T00:00:00`).getDay();
@@ -342,10 +344,10 @@ export default function EventsPageClient() {
                   ) : null}
                 </span>
                 <span className="calendarDayFooter">
-                  {count ? (
+                  {countGlyph ? (
                     <span className="eventCalCount">
                       {hasRecurringOccurrence ? <span className="recurringOccurrenceMark" aria-label="recurring occurrence">↻</span> : null}
-                      {count}
+                      {countGlyph}
                     </span>
                   ) : null}
                 </span>
