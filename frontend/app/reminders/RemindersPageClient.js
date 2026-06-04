@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import ReminderRestoreButton from "../../components/ReminderRestoreButton";
 import { dispatchAppStatusChanged } from "../../lib/app-status-events";
 import { UI_STRINGS } from "../../lib/strings";
+import { useModeSwipe } from "../../lib/use-mode-swipe";
 
 const REMINDER_MODES = ["active", "fired", "removed"];
 
@@ -256,6 +257,15 @@ export default function RemindersPageClient({ initialMode, items, initialExpande
     router.push(qs ? `${pathname}?${qs}` : pathname);
   }
 
+  function switchModeByStep(step) {
+    const index = REMINDER_MODES.indexOf(mode);
+    const nextIndex = index + step;
+    if (nextIndex < 0 || nextIndex >= REMINDER_MODES.length) return;
+    setMode(REMINDER_MODES[nextIndex]);
+  }
+
+  const modeSwipeHandlers = useModeSwipe({ onStep: switchModeByStep });
+
   useEffect(() => {
     const targetId = pendingInitialScrollIdRef.current;
     if (!targetId || expandedId !== targetId) return;
@@ -267,33 +277,11 @@ export default function RemindersPageClient({ initialMode, items, initialExpande
     row.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [expandedId, items]);
 
-  function onTouchStart(event) {
-    const touch = event.changedTouches?.[0];
-    if (!touch) return;
-    event.currentTarget.dataset.touchX = String(touch.clientX);
-  }
-
-  function onTouchEnd(event) {
-    const startX = Number(event.currentTarget.dataset.touchX || "0");
-    const touch = event.changedTouches?.[0];
-    if (!touch || !startX) return;
-
-    const deltaX = touch.clientX - startX;
-    if (Math.abs(deltaX) < 50) return;
-
-    const index = REMINDER_MODES.indexOf(mode);
-    if (deltaX < 0 && index < REMINDER_MODES.length - 1) {
-      setMode(REMINDER_MODES[index + 1]);
-    } else if (deltaX > 0 && index > 0) {
-      setMode(REMINDER_MODES[index - 1]);
-    }
-  }
-
   const modeContext = mode === "fired" ? "Fired / Completed" : mode === "removed" ? "Removed" : "Active";
 
   return (
-    <main className="page">
-      <section className="panel" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <main className="page taskModeSwipeArea" {...modeSwipeHandlers}>
+      <section className="panel">
         <div className="sectionTitleRow">
           <div className="sectionTitle sectionTitleNoMargin">
             <span className="sectionModuleName">{UI_STRINGS.REMINDERS}</span>
