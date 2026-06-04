@@ -90,6 +90,23 @@ def test_mark_done_moves_supply_from_active_to_done(main_module) -> None:
     assert done["items"][0]["title"] == "gloves"
 
 
+def test_visible_active_supply_id_is_actionable_for_done(main_module) -> None:
+    created = main_module.create_supply({"title": "syringe"})
+    assert created["ok"] is True
+
+    active = main_module.list_supplies(mode="active")["items"]
+    visible = next(item for item in active if item["title"] == "syringe")
+
+    assert visible["id"] == created["id"]
+    marked = main_module.mark_supply_done(visible["id"])
+
+    assert marked["ok"] is True
+    active_after = main_module.list_supplies(mode="active")["items"]
+    done_after = main_module.list_supplies(mode="done")["items"]
+    assert all(item["id"] != visible["id"] for item in active_after)
+    assert any(item["id"] == visible["id"] for item in done_after)
+
+
 def test_done_items_group_by_date_shape(main_module) -> None:
     first = main_module.create_supply({"title": "gauze"})
     second = main_module.create_supply({"title": "bandage"})
