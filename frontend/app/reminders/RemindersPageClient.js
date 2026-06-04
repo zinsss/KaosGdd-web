@@ -280,7 +280,7 @@ export default function RemindersPageClient({ initialMode, items, initialExpande
   const modeContext = mode === "fired" ? "Fired / Completed" : mode === "removed" ? "Removed" : "Active";
 
   return (
-    <main className="page taskModeSwipeArea" {...modeSwipeHandlers}>
+    <main className="page taskModeSwipeArea" ref={modeSwipeHandlers.ref}>
       <section className="panel">
         <div className="sectionTitleRow">
           <div className="sectionTitle sectionTitleNoMargin">

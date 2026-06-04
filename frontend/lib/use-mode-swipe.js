@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 const DEFAULT_MODE_SWIPE_STATE = {
   tracking: false,
@@ -62,7 +62,13 @@ export function getModeSwipeMoveResult({
 }
 
 export function useModeSwipe({ onStep }) {
+  const swipeAreaRef = useRef(null);
   const touchStateRef = useRef(createModeSwipeState());
+  const onStepRef = useRef(onStep);
+
+  useEffect(() => {
+    onStepRef.current = onStep;
+  }, [onStep]);
 
   function clearTouchTracking() {
     touchStateRef.current = createModeSwipeState();
@@ -84,7 +90,10 @@ export function useModeSwipe({ onStep }) {
   }
 
   function onTouchMove(event) {
-    if (event.touches.length !== 1) return;
+    if (event.touches.length !== 1) {
+      clearTouchTracking();
+      return;
+    }
     const touch = event.touches[0];
     const result = getModeSwipeMoveResult({
       state: touchStateRef.current,
@@ -92,10 +101,28 @@ export function useModeSwipe({ onStep }) {
       currentY: touch.clientY,
     });
     touchStateRef.current = result.nextState;
-    if (result.step) onStep(result.step);
+    if (result.step) onStepRef.current?.(result.step);
   }
 
+  useEffect(() => {
+    const element = swipeAreaRef.current;
+    if (!element) return undefined;
+
+    element.addEventListener("touchstart", onTouchStart, { passive: true });
+    element.addEventListener("touchmove", onTouchMove, { passive: true });
+    element.addEventListener("touchend", clearTouchTracking, { passive: true });
+    element.addEventListener("touchcancel", clearTouchTracking, { passive: true });
+
+    return () => {
+      element.removeEventListener("touchstart", onTouchStart);
+      element.removeEventListener("touchmove", onTouchMove);
+      element.removeEventListener("touchend", clearTouchTracking);
+      element.removeEventListener("touchcancel", clearTouchTracking);
+    };
+  }, []);
+
   return {
+    ref: swipeAreaRef,
     onTouchStart,
     onTouchMove,
     onTouchEnd: clearTouchTracking,

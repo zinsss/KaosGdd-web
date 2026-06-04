@@ -88,18 +88,21 @@
 }
 
 .appShellTopSpacer {
-  height: var(--app-shell-content-offset);
-  background: var(--ui-bg);
+  display: none;
 }
 
 .appShellMain {
+  position: fixed;
+  inset: 0;
   width: 100%;
-  height: max(0px, calc(100dvh - var(--app-shell-content-offset)));
+  height: auto;
   background: var(--ui-bg);
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  padding-top: var(--app-shell-content-offset);
   padding-bottom: var(--app-shell-bottom-reserve);
+  scroll-padding-top: var(--app-shell-content-offset);
   scrollbar-color:
     color-mix(in srgb, var(--ctp-lavender) 72%, var(--ctp-surface1))
     var(--ctp-surface0);
