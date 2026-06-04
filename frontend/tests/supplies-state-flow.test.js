@@ -18,3 +18,14 @@ test("supplies API route no longer proxies undo tokens", async () => {
   assert.doesNotMatch(source, /\/supplies\/undo/);
   assert.doesNotMatch(source, /undo_token/);
 });
+
+test("supplies dynamic API routes await route params before proxying IDs", async () => {
+  const doneSource = await readFile(new URL("../app/api/supplies/[id]/done/route.js", import.meta.url), "utf8");
+  const activeSource = await readFile(new URL("../app/api/supplies/[id]/active/route.js", import.meta.url), "utf8");
+  const deleteSource = await readFile(new URL("../app/api/supplies/[id]/route.js", import.meta.url), "utf8");
+
+  for (const source of [doneSource, activeSource, deleteSource]) {
+    assert.match(source, /const \{ id \} = await context\.params/);
+    assert.doesNotMatch(source, /context\.params\.id/);
+  }
+});
