@@ -159,6 +159,40 @@
   opacity: 1;
 }
 
+.modeTextLinks {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 0 0 auto;
+}
+
+.modeTextLink {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 8px;
+  border-radius: 6px;
+  color: var(--ui-text-dim);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.1;
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.modeTextLink:visited {
+  color: var(--ui-text-dim);
+}
+
+.modeTextLinkActive,
+.modeTextLinkActive:visited {
+  color: var(--ctp-lavender);
+  background: rgba(180, 190, 254, 0.12);
+}
+
 .topNavWrap {
   position: relative;
   --top-nav-edge-fade-width: 46px;

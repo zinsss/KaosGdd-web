@@ -2,16 +2,19 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import ReminderRestoreButton from "../../components/ReminderRestoreButton";
 import { dispatchAppStatusChanged } from "../../lib/app-status-events";
 import { UI_STRINGS } from "../../lib/strings";
-import { useModeSwipe } from "../../lib/use-mode-swipe";
 
 const REMINDER_MODES = ["active", "fired", "removed"];
 
 function buildReminderModeHref(mode) {
   return mode === "active" ? "/reminders" : `/reminders?mode=${mode}`;
+}
+
+function reminderModeLabel(mode) {
+  return mode === "fired" ? "Fired" : mode === "removed" ? "Removed" : "Active";
 }
 
 function itemLetter(reminder) {
@@ -228,9 +231,6 @@ function ReminderRow({ reminder, expanded, onToggle, mode }) {
 }
 
 export default function RemindersPageClient({ initialMode, items, initialExpandedReminderId }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
   const [expandedId, setExpandedId] = useState(initialExpandedReminderId || null);
   const listRef = useRef(null);
   const pendingInitialScrollIdRef = useRef(initialExpandedReminderId || null);
@@ -238,33 +238,13 @@ export default function RemindersPageClient({ initialMode, items, initialExpande
 
   const modeLinks = useMemo(
     () =>
-      REMINDER_MODES.map((dotMode) => ({
-        mode: dotMode,
-        href: buildReminderModeHref(dotMode),
+      REMINDER_MODES.map((linkMode) => ({
+        mode: linkMode,
+        href: buildReminderModeHref(linkMode),
+        label: reminderModeLabel(linkMode),
       })),
     [],
   );
-
-  function setMode(nextMode) {
-    const params = new URLSearchParams(searchParams?.toString() || "");
-    if (nextMode === "active") {
-      params.delete("mode");
-    } else {
-      params.set("mode", nextMode);
-    }
-    params.delete("reminder_id");
-    const qs = params.toString();
-    router.push(qs ? `${pathname}?${qs}` : pathname);
-  }
-
-  function switchModeByStep(step) {
-    const index = REMINDER_MODES.indexOf(mode);
-    const nextIndex = index + step;
-    if (nextIndex < 0 || nextIndex >= REMINDER_MODES.length) return;
-    setMode(REMINDER_MODES[nextIndex]);
-  }
-
-  const modeSwipeHandlers = useModeSwipe({ onStep: switchModeByStep });
 
   useEffect(() => {
     const targetId = pendingInitialScrollIdRef.current;
@@ -280,7 +260,7 @@ export default function RemindersPageClient({ initialMode, items, initialExpande
   const modeContext = mode === "fired" ? "Fired / Completed" : mode === "removed" ? "Removed" : "Active";
 
   return (
-    <main className="page taskModeSwipeArea" ref={modeSwipeHandlers.ref}>
+    <main className="page">
       <section className="panel">
         <div className="sectionTitleRow">
           <div className="sectionTitle sectionTitleNoMargin">
@@ -298,16 +278,18 @@ export default function RemindersPageClient({ initialMode, items, initialExpande
               {modeContext}
             </span>
           </div>
-          <div className="modeDots" aria-label="Reminder list mode">
+          <nav className="modeTextLinks" aria-label="Reminder list mode">
             {modeLinks.map((entry) => (
               <Link
                 key={entry.mode}
                 href={entry.href}
-                className={"modeDot" + (mode === entry.mode ? " modeDotActive" : "")}
+                className={"modeTextLink" + (mode === entry.mode ? " modeTextLinkActive" : "")}
                 aria-label={`Show ${entry.mode} reminders`}
-              />
+              >
+                {entry.label}
+              </Link>
             ))}
-          </div>
+          </nav>
         </div>
 
         {items.length === 0 ? (
