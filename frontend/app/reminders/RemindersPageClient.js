@@ -280,14 +280,14 @@ export default function RemindersPageClient({ initialMode, items, initialExpande
           </div>
           <nav className="modeTextLinks" aria-label="Reminder list mode">
             {modeLinks.map((entry) => (
-              <Link
+              <a
                 key={entry.mode}
                 href={entry.href}
                 className={"modeTextLink" + (mode === entry.mode ? " modeTextLinkActive" : "")}
                 aria-label={`Show ${entry.mode} reminders`}
               >
                 {entry.label}
-              </Link>
+              </a>
             ))}
           </nav>
         </div>
