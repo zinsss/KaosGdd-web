@@ -2,19 +2,21 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import TaskToggleButton from "./TaskToggleButton";
 import SubtaskToggleButton from "./SubtaskToggleButton";
 import TaskRestoreButton from "./TaskRestoreButton";
 import { UI_STRINGS } from "../lib/strings";
 import { captureCreatedEventHasType } from "../lib/post-create-navigation";
 import { localYmd, splitActiveTasksForRoutineBox } from "../lib/tasks/routine-grouping";
-import { useModeSwipe } from "../lib/use-mode-swipe";
 
 const TASK_MODES = ["active", "done", "removed", "archived"];
 
 function buildTaskModeHref(mode) {
   return mode === "active" ? "/tasks" : `/tasks?mode=${mode}`;
+}
+
+function taskModeLabel(mode) {
+  return mode === "done" ? "Done" : mode === "removed" ? "Removed" : mode === "archived" ? "Archived" : "Active";
 }
 
 function getTaskAuxMetaTag(task) {
@@ -179,7 +181,6 @@ function TaskRow({
 }
 
 export default function TasksPageClient({ initialMode }) {
-  const router = useRouter();
   const mode = TASK_MODES.includes(initialMode) ? initialMode : "active";
 
   const [items, setItems] = useState([]);
@@ -401,16 +402,6 @@ export default function TasksPageClient({ initialMode }) {
     [items, mode],
   );
 
-  function switchModeByStep(step) {
-    const currentIndex = TASK_MODES.indexOf(mode);
-    if (currentIndex < 0) return;
-    const nextIndex = currentIndex + step;
-    if (nextIndex < 0 || nextIndex >= TASK_MODES.length) return;
-    router.push(buildTaskModeHref(TASK_MODES[nextIndex]));
-  }
-
-  const modeSwipeHandlers = useModeSwipe({ onStep: switchModeByStep });
-
   const { routineTasks, normalTasks } = useMemo(
     () => splitActiveTasksForRoutineBox(items, localYmd(), mode),
     [items, mode],
@@ -439,10 +430,7 @@ export default function TasksPageClient({ initialMode }) {
   }
 
   return (
-    <main
-      className="page taskModeSwipeArea"
-      ref={modeSwipeHandlers.ref}
-    >
+    <main className="page">
       <section className="panel">
         <div className="sectionTitleRow">
           <div className="sectionTitle sectionTitleNoMargin">
@@ -450,16 +438,18 @@ export default function TasksPageClient({ initialMode }) {
             <span className="sectionSeparator"> • </span>
             <span className={modeContextClass}>{modeContext}</span>
           </div>
-          <div className="modeDots" aria-label="Task list mode">
+          <nav className="modeTextLinks" aria-label="Task list mode">
             {TASK_MODES.map((dotMode) => (
               <Link
                 key={dotMode}
                 href={buildTaskModeHref(dotMode)}
-                className={"modeDot" + (mode === dotMode ? " modeDotActive" : "")}
+                className={"modeTextLink" + (mode === dotMode ? " modeTextLinkActive" : "")}
                 aria-label={`Show ${dotMode} tasks`}
-              />
+              >
+                {taskModeLabel(dotMode)}
+              </Link>
             ))}
-          </div>
+          </nav>
         </div>
 
         {localError ? <div className="errorText">{localError}</div> : null}

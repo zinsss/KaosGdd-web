@@ -2,15 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { UI_STRINGS } from "../lib/strings";
 import { captureCreatedEventHasType } from "../lib/post-create-navigation";
-import { useModeSwipe } from "../lib/use-mode-swipe";
 
 const SUPPLY_MODES = ["active", "done"];
 
 function buildSupplyModeHref(mode) {
   return mode === "active" ? "/supplies" : `/supplies?mode=${mode}`;
+}
+
+function supplyModeLabel(mode) {
+  return mode === "done" ? "Done" : "Active";
 }
 
 function doneDateKey(item) {
@@ -28,7 +30,6 @@ function groupDoneByDate(items) {
 }
 
 export default function SuppliesPageClient({ initialMode }) {
-  const router = useRouter();
   const mode = SUPPLY_MODES.includes(initialMode) ? initialMode : "active";
 
   const [items, setItems] = useState([]);
@@ -138,20 +139,8 @@ export default function SuppliesPageClient({ initialMode }) {
 
   const doneGroups = useMemo(() => (mode === "done" ? groupDoneByDate(items || []) : []), [items, mode]);
 
-  function switchModeByStep(step) {
-    const currentIndex = SUPPLY_MODES.indexOf(mode);
-    const nextIndex = currentIndex + step;
-    if (nextIndex < 0 || nextIndex >= SUPPLY_MODES.length) return;
-    router.push(buildSupplyModeHref(SUPPLY_MODES[nextIndex]));
-  }
-
-  const modeSwipeHandlers = useModeSwipe({ onStep: switchModeByStep });
-
   return (
-    <main
-      className="page taskModeSwipeArea"
-      ref={modeSwipeHandlers.ref}
-    >
+    <main className="page">
       <section className="panel">
         <div className="sectionTitleRow">
           <div className="sectionTitle sectionTitleNoMargin">
@@ -161,16 +150,18 @@ export default function SuppliesPageClient({ initialMode }) {
               {mode === "active" ? "Active" : "Done"}
             </span>
           </div>
-          <div className="modeDots" aria-label="Supplies mode">
+          <nav className="modeTextLinks" aria-label="Supplies mode">
             {SUPPLY_MODES.map((dotMode) => (
               <Link
                 key={dotMode}
                 href={buildSupplyModeHref(dotMode)}
-                className={"modeDot" + (mode === dotMode ? " modeDotActive" : "")}
+                className={"modeTextLink" + (mode === dotMode ? " modeTextLinkActive" : "")}
                 aria-label={`Show ${dotMode} supplies`}
-              />
+              >
+                {supplyModeLabel(dotMode)}
+              </Link>
             ))}
-          </div>
+          </nav>
         </div>
 
         {localError ? <div className="errorText">{localError}</div> : null}

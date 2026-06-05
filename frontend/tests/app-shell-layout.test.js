@@ -27,7 +27,7 @@ test("service worker bumps app-shell cache and checks for updates", async () => 
     "utf8",
   );
 
-  assert.match(serviceWorkerSource, /const SW_CACHE = "kaosgdd-app-shell-v2";/);
+  assert.match(serviceWorkerSource, /const SW_CACHE = "kaosgdd-app-shell-v3";/);
   assert.match(serviceWorkerSource, /keys\.filter\(\(key\) => key !== SW_CACHE\)/);
   assert.match(bootstrapSource, /registration\.update\(\)/);
 });
