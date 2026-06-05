@@ -1,4 +1,4 @@
-const SW_CACHE = "kaosgdd-app-shell-v1";
+const SW_CACHE = "kaosgdd-app-shell-v2";
 const APP_SHELL_PATHS = ["/", "/scribble", "/tasks", "/reminders", "/events", "/journals", "/notes", "/files"];
 
 const normalizeBadgeCount = (count) => {
