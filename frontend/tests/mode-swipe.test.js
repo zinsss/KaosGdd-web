@@ -88,4 +88,17 @@ test("useModeSwipe exposes touchmove and keeps touchend as cleanup", async () =>
   assert.match(source, /function onTouchMove/);
   assert.match(source, /onTouchMove,/);
   assert.match(source, /onTouchEnd: clearTouchTracking/);
+  assert.match(source, /ref: swipeAreaRef/);
+  assert.match(source, /addEventListener\("touchmove", onTouchMove, \{ passive: true \}\)/);
+});
+
+test("list-mode pages attach swipe ref to the page touch area", async () => {
+  const taskSource = await readFile(new URL("../components/TasksPageClient.js", import.meta.url), "utf8");
+  const reminderSource = await readFile(new URL("../app/reminders/RemindersPageClient.js", import.meta.url), "utf8");
+  const supplySource = await readFile(new URL("../components/SuppliesPageClient.js", import.meta.url), "utf8");
+
+  for (const source of [taskSource, reminderSource, supplySource]) {
+    assert.match(source, /className="page taskModeSwipeArea"/);
+    assert.match(source, /ref=\{modeSwipeHandlers\.ref\}/);
+  }
 });

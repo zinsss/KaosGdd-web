@@ -49,8 +49,6 @@ export default function RootLayout({ children }) {
           </div>
         </header>
 
-        <div className="appShellTopSpacer" />
-
         <main className="appShellMain">
           {children}
         </main>

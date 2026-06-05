@@ -150,7 +150,7 @@ export default function SuppliesPageClient({ initialMode }) {
   return (
     <main
       className="page taskModeSwipeArea"
-      {...modeSwipeHandlers}
+      ref={modeSwipeHandlers.ref}
     >
       <section className="panel">
         <div className="sectionTitleRow">

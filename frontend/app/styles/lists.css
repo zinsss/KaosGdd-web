@@ -237,7 +237,7 @@
 }
 
 .taskModeSwipeArea {
-  touch-action: pan-y;
+  touch-action: auto;
   overscroll-behavior-x: contain;
 }
 
