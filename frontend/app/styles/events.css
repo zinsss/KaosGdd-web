@@ -110,7 +110,7 @@ body.eventsPageActive .appShellMain {
   flex: 0 0 auto;
   font-size: 1.34rem;
   line-height: 1;
-  margin-right: 3px;
+  margin-right: 5px;
   pointer-events: none;
 }
 
@@ -126,7 +126,7 @@ body.eventsPageActive .appShellMain {
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1;
   border-radius: 99px;
   background: var(--ui-panel);
