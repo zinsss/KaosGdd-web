@@ -19,3 +19,15 @@ test("top shell stays in flow so page controls are not covered", async () => {
   assert.doesNotMatch(mainCss, /position:\s*fixed;/);
   assert.doesNotMatch(mainCss, /padding-top:\s*var\(--app-shell-content-offset\);/);
 });
+
+test("service worker bumps app-shell cache and checks for updates", async () => {
+  const serviceWorkerSource = await readFile(new URL("../public/sw.js", import.meta.url), "utf8");
+  const bootstrapSource = await readFile(
+    new URL("../components/pwa/PwaBootstrap.js", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(serviceWorkerSource, /const SW_CACHE = "kaosgdd-app-shell-v2";/);
+  assert.match(serviceWorkerSource, /keys\.filter\(\(key\) => key !== SW_CACHE\)/);
+  assert.match(bootstrapSource, /registration\.update\(\)/);
+});
