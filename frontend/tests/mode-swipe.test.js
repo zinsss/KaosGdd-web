@@ -102,3 +102,13 @@ test("list-mode pages attach swipe ref to the page touch area", async () => {
     assert.match(source, /ref=\{modeSwipeHandlers\.ref\}/);
   }
 });
+
+test("list-mode controls are real buttons with explicit click handlers", async () => {
+  const taskSource = await readFile(new URL("../components/TasksPageClient.js", import.meta.url), "utf8");
+  const reminderSource = await readFile(new URL("../app/reminders/RemindersPageClient.js", import.meta.url), "utf8");
+  const supplySource = await readFile(new URL("../components/SuppliesPageClient.js", import.meta.url), "utf8");
+
+  assert.match(taskSource, /<button\s+type="button"[\s\S]*onClick=\{\(\) => router\.push\(buildTaskModeHref\(dotMode\)\)\}/);
+  assert.match(reminderSource, /<button\s+type="button"[\s\S]*onClick=\{\(\) => setMode\(entry\.mode\)\}/);
+  assert.match(supplySource, /<button\s+type="button"[\s\S]*onClick=\{\(\) => router\.push\(buildSupplyModeHref\(dotMode\)\)\}/);
+});

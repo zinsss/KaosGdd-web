@@ -452,9 +452,10 @@ export default function TasksPageClient({ initialMode }) {
           </div>
           <div className="modeDots" aria-label="Task list mode">
             {TASK_MODES.map((dotMode) => (
-              <Link
+              <button
+                type="button"
                 key={dotMode}
-                href={buildTaskModeHref(dotMode)}
+                onClick={() => router.push(buildTaskModeHref(dotMode))}
                 className={"modeDot" + (mode === dotMode ? " modeDotActive" : "")}
                 aria-label={`Show ${dotMode} tasks`}
               />

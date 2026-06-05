@@ -300,9 +300,10 @@ export default function RemindersPageClient({ initialMode, items, initialExpande
           </div>
           <div className="modeDots" aria-label="Reminder list mode">
             {modeLinks.map((entry) => (
-              <Link
+              <button
+                type="button"
                 key={entry.mode}
-                href={entry.href}
+                onClick={() => setMode(entry.mode)}
                 className={"modeDot" + (mode === entry.mode ? " modeDotActive" : "")}
                 aria-label={`Show ${entry.mode} reminders`}
               />

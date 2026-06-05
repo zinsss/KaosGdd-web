@@ -20,10 +20,8 @@
 }
 
 .appShellTop {
-  position: fixed;
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
   z-index: 60;
   background: var(--ui-bg);
   padding: var(--app-shell-safe-top) var(--app-column-edge-padding) 8px;
@@ -92,17 +90,13 @@
 }
 
 .appShellMain {
-  position: fixed;
-  inset: 0;
   width: 100%;
-  height: auto;
+  height: max(0px, calc(100dvh - var(--app-shell-content-offset)));
   background: var(--ui-bg);
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding-top: var(--app-shell-content-offset);
   padding-bottom: var(--app-shell-bottom-reserve);
-  scroll-padding-top: var(--app-shell-content-offset);
   scrollbar-color:
     color-mix(in srgb, var(--ctp-lavender) 72%, var(--ctp-surface1))
     var(--ctp-surface0);
@@ -135,16 +129,32 @@
 }
 
 .modeDot {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  opacity: 0.7;
+  padding: 0;
+  text-decoration: none;
+}
+
+.modeDot::before {
+  content: "";
   width: 8px;
   height: 8px;
   border-radius: 999px;
   background: var(--ui-text-dimmer);
-  opacity: 0.7;
-  text-decoration: none;
+}
+
+.modeDotActive::before {
+  background: var(--ctp-lavender);
 }
 
 .modeDotActive {
-  background: var(--ctp-lavender);
   opacity: 1;
 }
 
