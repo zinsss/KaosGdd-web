@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UI_STRINGS } from "../lib/strings";
 import { captureCreatedEventHasType } from "../lib/post-create-navigation";
@@ -163,9 +162,10 @@ export default function SuppliesPageClient({ initialMode }) {
           </div>
           <div className="modeDots" aria-label="Supplies mode">
             {SUPPLY_MODES.map((dotMode) => (
-              <Link
+              <button
+                type="button"
                 key={dotMode}
-                href={buildSupplyModeHref(dotMode)}
+                onClick={() => router.push(buildSupplyModeHref(dotMode))}
                 className={"modeDot" + (mode === dotMode ? " modeDotActive" : "")}
                 aria-label={`Show ${dotMode} supplies`}
               />

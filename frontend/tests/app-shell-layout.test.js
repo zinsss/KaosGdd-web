@@ -2,12 +2,20 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-test("fixed top shell offsets the real scroll container instead of using a spacer", async () => {
+function cssBlock(source, selector) {
+  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const match = source.match(new RegExp(`${escapedSelector}\\s*\\{[^}]*\\}`));
+  return match ? match[0] : "";
+}
+
+test("top shell stays in flow so page controls are not covered", async () => {
   const layoutSource = await readFile(new URL("../app/layout.js", import.meta.url), "utf8");
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
+  const topShellCss = cssBlock(shellCss, ".appShellTop");
+  const mainCss = cssBlock(shellCss, ".appShellMain");
 
   assert.doesNotMatch(layoutSource, /appShellTopSpacer/);
-  assert.match(shellCss, /\.appShellMain\s*\{[\s\S]*position:\s*fixed;/);
-  assert.match(shellCss, /\.appShellMain\s*\{[\s\S]*padding-top:\s*var\(--app-shell-content-offset\);/);
-  assert.match(shellCss, /\.appShellMain\s*\{[\s\S]*scroll-padding-top:\s*var\(--app-shell-content-offset\);/);
+  assert.match(topShellCss, /position:\s*sticky;/);
+  assert.doesNotMatch(mainCss, /position:\s*fixed;/);
+  assert.doesNotMatch(mainCss, /padding-top:\s*var\(--app-shell-content-offset\);/);
 });
