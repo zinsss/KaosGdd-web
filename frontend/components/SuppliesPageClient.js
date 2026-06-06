@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { UI_STRINGS } from "../lib/strings";
 import { captureCreatedEventHasType } from "../lib/post-create-navigation";
 
@@ -152,14 +151,14 @@ export default function SuppliesPageClient({ initialMode }) {
           </div>
           <nav className="modeTextLinks" aria-label="Supplies mode">
             {SUPPLY_MODES.map((dotMode) => (
-              <Link
+              <a
                 key={dotMode}
                 href={buildSupplyModeHref(dotMode)}
                 className={"modeTextLink" + (mode === dotMode ? " modeTextLinkActive" : "")}
                 aria-label={`Show ${dotMode} supplies`}
               >
                 {supplyModeLabel(dotMode)}
-              </Link>
+              </a>
             ))}
           </nav>
         </div>

@@ -1,5 +1,5 @@
-const SW_CACHE = "kaosgdd-app-shell-v3";
-const APP_SHELL_PATHS = ["/", "/scribble", "/tasks", "/reminders", "/events", "/journals", "/notes", "/files"];
+const SW_CACHE = "kaosgdd-app-shell-v4";
+const APP_SHELL_PATHS = ["/", "/scribble", "/events", "/journals", "/notes", "/files"];
 
 const normalizeBadgeCount = (count) => {
   const numericCount = Number(count);
@@ -36,7 +36,11 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
-      Promise.all(keys.filter((key) => key !== SW_CACHE).map((key) => caches.delete(key))),
+      Promise.all(
+        keys
+          .filter((key) => key.startsWith("kaosgdd-app-shell-") && key !== SW_CACHE)
+          .map((key) => caches.delete(key)),
+      ),
     ),
   );
   self.clients.claim();

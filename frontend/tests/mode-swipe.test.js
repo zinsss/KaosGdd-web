@@ -104,18 +104,18 @@ test("list-mode pages do not attach swipe while text links are the primary navig
   }
 });
 
-test("list-mode controls are visible text links with href fallback navigation", async () => {
+test("list-mode controls are visible raw anchors with href fallback navigation", async () => {
   const taskSource = await readFile(new URL("../components/TasksPageClient.js", import.meta.url), "utf8");
   const reminderSource = await readFile(new URL("../app/reminders/RemindersPageClient.js", import.meta.url), "utf8");
   const supplySource = await readFile(new URL("../components/SuppliesPageClient.js", import.meta.url), "utf8");
 
-  assert.match(taskSource, /<Link[\s\S]*href=\{buildTaskModeHref\(dotMode\)\}/);
+  assert.match(taskSource, /<a[\s\S]*href=\{buildTaskModeHref\(dotMode\)\}/);
   assert.match(taskSource, /mode === "active" \? "\/tasks" : `\/tasks\?mode=\$\{mode\}`/);
   assert.match(taskSource, /\{taskModeLabel\(dotMode\)\}/);
-  assert.match(reminderSource, /<Link[\s\S]*href=\{entry\.href\}/);
+  assert.match(reminderSource, /<a[\s\S]*href=\{entry\.href\}/);
   assert.match(reminderSource, /mode === "active" \? "\/reminders" : `\/reminders\?mode=\$\{mode\}`/);
   assert.match(reminderSource, /\{entry\.label\}/);
-  assert.match(supplySource, /<Link[\s\S]*href=\{buildSupplyModeHref\(dotMode\)\}/);
+  assert.match(supplySource, /<a[\s\S]*href=\{buildSupplyModeHref\(dotMode\)\}/);
   assert.match(supplySource, /mode === "active" \? "\/supplies" : `\/supplies\?mode=\$\{mode\}`/);
   assert.match(supplySource, /\{supplyModeLabel\(dotMode\)\}/);
 });
@@ -125,7 +125,8 @@ test("list-mode text links keep a large touch target", async () => {
   const match = shellCss.match(/\.modeTextLink\s*\{[^}]*\}/);
   const modeTextLinkCss = match ? match[0] : "";
 
-  assert.match(modeTextLinkCss, /min-height:\s*32px;/);
+  assert.match(modeTextLinkCss, /min-width:\s*44px;/);
+  assert.match(modeTextLinkCss, /min-height:\s*36px;/);
   assert.match(modeTextLinkCss, /padding:\s*4px 8px;/);
   assert.match(modeTextLinkCss, /pointer-events:\s*auto;/);
 });

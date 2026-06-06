@@ -90,7 +90,10 @@
 }
 
 .appShellMain {
+  position: relative;
+  z-index: 1;
   width: 100%;
+  min-height: 0;
   height: max(0px, calc(100dvh - var(--app-shell-content-offset)));
   background: var(--ui-bg);
   overflow-y: auto;
@@ -160,16 +163,20 @@
 }
 
 .modeTextLinks {
+  position: relative;
+  z-index: 200;
   display: inline-flex;
   align-items: center;
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 6px;
   flex: 0 0 auto;
+  pointer-events: auto;
 }
 
 .modeTextLink {
-  min-height: 32px;
+  min-width: 44px;
+  min-height: 36px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -191,6 +198,23 @@
 .modeTextLinkActive:visited {
   color: var(--ctp-lavender);
   background: rgba(180, 190, 254, 0.12);
+}
+
+.tapDebugPanel {
+  position: fixed;
+  right: 8px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  z-index: 10000;
+  max-width: min(360px, calc(100vw - 16px));
+  padding: 8px 10px;
+  border: 1px solid var(--ctp-maroon);
+  border-radius: 6px;
+  background: rgba(17, 17, 27, 0.94);
+  color: var(--ctp-rosewater);
+  font-size: 11px;
+  line-height: 1.35;
+  pointer-events: none;
+  white-space: pre-wrap;
 }
 
 .topNavWrap {

@@ -2,6 +2,7 @@ import "./globals.css";
 import AppHeaderTitle from "../components/AppHeaderTitle";
 import TopCaptureBar from "../components/TopCaptureBar";
 import AppShellHeightObserver from "../components/AppShellHeightObserver";
+import DebugTapPanel from "../components/DebugTapPanel";
 import TopNav from "../components/TopNav";
 import PwaBootstrap from "../components/pwa/PwaBootstrap";
 import { UI_STRINGS } from "../lib/strings";
@@ -36,6 +37,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body>
         <PwaBootstrap />
+        <DebugTapPanel />
         <AppShellHeightObserver />
         <header className="appShellTop">
           <div className="appShellTopInner">

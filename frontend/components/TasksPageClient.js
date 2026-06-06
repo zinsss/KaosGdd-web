@@ -440,14 +440,14 @@ export default function TasksPageClient({ initialMode }) {
           </div>
           <nav className="modeTextLinks" aria-label="Task list mode">
             {TASK_MODES.map((dotMode) => (
-              <Link
+              <a
                 key={dotMode}
                 href={buildTaskModeHref(dotMode)}
                 className={"modeTextLink" + (mode === dotMode ? " modeTextLinkActive" : "")}
                 aria-label={`Show ${dotMode} tasks`}
               >
                 {taskModeLabel(dotMode)}
-              </Link>
+              </a>
             ))}
           </nav>
         </div>
