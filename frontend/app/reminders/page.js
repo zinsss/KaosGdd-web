@@ -3,6 +3,10 @@ import RemindersPageClient from "./RemindersPageClient";
 
 const REMINDER_MODES = ["active", "fired", "removed"];
 
+function firstSearchParam(value) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 async function getReminders(mode) {
   const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
   const suffix = mode && mode !== "active" ? `?mode=${encodeURIComponent(mode)}` : "";
@@ -15,10 +19,9 @@ async function getReminders(mode) {
 }
 
 export default async function RemindersPage({ searchParams }) {
-  const modeParam = Array.isArray(searchParams?.mode) ? searchParams.mode[0] : searchParams?.mode;
-  const reminderIdParam = Array.isArray(searchParams?.reminder_id)
-    ? searchParams.reminder_id[0]
-    : searchParams?.reminder_id;
+  const resolvedSearchParams = await searchParams;
+  const modeParam = firstSearchParam(resolvedSearchParams?.mode);
+  const reminderIdParam = firstSearchParam(resolvedSearchParams?.reminder_id);
   const mode = REMINDER_MODES.includes(modeParam) ? modeParam : "active";
   const result = await getReminders(mode);
   const initialExpandedReminderId = reminderIdParam ? String(reminderIdParam) : null;
