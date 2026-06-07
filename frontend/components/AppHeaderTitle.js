@@ -25,8 +25,7 @@ export default function AppHeaderTitle() {
       setStatus(nextStatus);
       await updateAppBadge(nextStatus.strong_attention_count);
     } catch {
-      setStatus({ ...DEFAULT_MODULE_NAV_STATUS });
-      await updateAppBadge(0);
+      return;
     }
   }, []);
 
