@@ -27,6 +27,7 @@ body.eventsPageActive .appShellMain {
 .eventCalHeadSat { color: var(--ctp-blue); opacity: 1; }
 .eventCalHeadSun { color: var(--ctp-maroon); opacity: 1; }
 .eventCalCell {
+  position: relative;
   border: 1px solid var(--ui-border);
   background: transparent;
   min-height: 68px;
@@ -71,9 +72,37 @@ body.eventsPageActive .appShellMain {
   white-space: nowrap;
 }
 .eventCalCellMuted { opacity: 0.5; }
-.eventCalCellSelected { border-color: var(--ui-border-strong); background: var(--ui-panel); }
+.eventCalCellSelected {
+  border-color: rgba(180, 190, 254, 0.78);
+  background: rgba(180, 190, 254, 0.12);
+  box-shadow: inset 0 0 0 1px rgba(180, 190, 254, 0.46);
+}
 .eventCalCellToday {
-  box-shadow: inset 0 0 0 1px var(--ctp-lavender);
+  border-color: rgba(245, 194, 231, 0.72);
+}
+.eventCalCellToday::after {
+  content: "";
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--ctp-rosewater);
+}
+.eventCalCellTodayOnly {
+  background: rgba(245, 194, 231, 0.035);
+}
+.eventCalCellSelectedOnly {
+  color: var(--ui-text);
+}
+.eventCalCellSelectedToday {
+  border-color: rgba(180, 190, 254, 0.82);
+  background: rgba(180, 190, 254, 0.14);
+}
+.eventCalCellSelectedToday::after {
+  background: var(--ctp-rosewater);
+  box-shadow: 0 0 0 2px rgba(17, 17, 27, 0.82);
 }
 .eventCalDayNumber { color: var(--ui-text); }
 .eventCalDaySun { color: var(--ctp-maroon); }
@@ -148,6 +177,22 @@ body.eventsPageActive .appShellMain {
   border-color: rgba(180, 190, 254, 0.62);
   background: rgba(180, 190, 254, 0.13);
   color: var(--ctp-lavender);
+}
+
+.eventTodayButton {
+  border-radius: 999px;
+  min-width: 0;
+  width: auto;
+  padding: 5px 10px;
+  border-color: rgba(245, 194, 231, 0.42);
+  background: rgba(245, 194, 231, 0.08);
+  color: var(--ctp-rosewater);
+}
+
+.eventTodayButton:hover {
+  border-color: rgba(245, 194, 231, 0.62);
+  background: rgba(245, 194, 231, 0.13);
+  color: var(--ctp-rosewater);
 }
 
 .eventMonthGroups {

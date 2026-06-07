@@ -15,9 +15,36 @@ test("calendar day click updates selected date URL state", async () => {
   const source = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
 
   assert.match(source, /function updateSelectedDate\(nextDate/);
+  assert.match(source, /if \(nextDate === todayYmd\) \{/);
+  assert.match(source, /params\.delete\("date"\);/);
   assert.match(source, /params\.set\("date", nextDate\);/);
   assert.match(source, /router\.replace\(qs \? `\$\{pathname\}\?\$\{qs\}` : pathname, \{ scroll: false \}\);/);
   assert.match(source, /onClick=\{\(\) => updateSelectedDate\(d\)\}/);
+});
+
+test("calendar distinguishes today, selected, and today-selected states", async () => {
+  const source = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/styles/events.css", import.meta.url), "utf8");
+
+  assert.match(source, /const isSelected = selectedDate === d;/);
+  assert.match(source, /const isToday = todayYmd === d;/);
+  assert.match(source, /isSelected && !isToday \? " eventCalCellSelectedOnly" : ""/);
+  assert.match(source, /isToday && !isSelected \? " eventCalCellTodayOnly" : ""/);
+  assert.match(source, /isSelected && isToday \? " eventCalCellSelectedToday" : ""/);
+  assert.match(css, /\.eventCalCellTodayOnly\s*\{/);
+  assert.match(css, /\.eventCalCellSelectedOnly\s*\{/);
+  assert.match(css, /\.eventCalCellSelectedToday\s*\{/);
+  assert.match(css, /\.eventCalCellToday::after\s*\{/);
+});
+
+test("events page renders Today button that selects today", async () => {
+  const source = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
+  const css = await readFile(new URL("../app/styles/events.css", import.meta.url), "utf8");
+
+  assert.match(source, /className="button compactButton buttonToneNeutral eventTodayButton"/);
+  assert.match(source, /if \(todayYmd\) updateSelectedDate\(todayYmd\);/);
+  assert.match(source, />\s*Today\s*<\/button>/);
+  assert.match(css, /\.eventTodayButton\s*\{/);
 });
 
 test("events page renders selected-day panel instead of full-month event list", async () => {

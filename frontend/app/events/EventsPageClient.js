@@ -351,6 +351,15 @@ export default function EventsPageClient() {
             </div>
             <div className="actionRow compactActionRow">
               <button className="button compactButton buttonToneNeutral eventMonthNavButton" onClick={() => shiftMonth(-1)}>◀</button>
+              <button
+                className="button compactButton buttonToneNeutral eventTodayButton"
+                onClick={() => {
+                  if (todayYmd) updateSelectedDate(todayYmd);
+                }}
+                disabled={!todayYmd}
+              >
+                Today
+              </button>
               <button className="button compactButton buttonToneNeutral eventMonthNavButton" onClick={() => shiftMonth(1)}>▶</button>
             </div>
           </div>
@@ -374,14 +383,19 @@ export default function EventsPageClient() {
             const hasRecurringOccurrence = dayEvents.some((event) => event.is_recurring_occurrence);
             const dayOfWeek = new Date(`${d}T00:00:00`).getDay();
             const dayClass = dayOfWeek === 0 ? " eventCalDaySun" : dayOfWeek === 6 ? " eventCalDaySat" : "";
+            const isSelected = selectedDate === d;
+            const isToday = todayYmd === d;
             return (
               <button
                 key={d}
                 className={
                   "eventCalCell" +
                   (!inMonth ? " eventCalCellMuted" : "") +
-                  (selectedDate === d ? " eventCalCellSelected" : "") +
-                  (todayYmd === d ? " eventCalCellToday" : "")
+                  (isSelected ? " eventCalCellSelected" : "") +
+                  (isToday ? " eventCalCellToday" : "") +
+                  (isSelected && !isToday ? " eventCalCellSelectedOnly" : "") +
+                  (isToday && !isSelected ? " eventCalCellTodayOnly" : "") +
+                  (isSelected && isToday ? " eventCalCellSelectedToday" : "")
                 }
                 onClick={() => updateSelectedDate(d)}
               >
