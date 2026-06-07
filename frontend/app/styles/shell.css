@@ -64,6 +64,10 @@
   text-decoration: none;
 }
 
+.appHeaderTitleLink:visited {
+  color: var(--ctp-yellow);
+}
+
 .appHeaderTitleLink:hover {
   color: var(--ctp-yellow);
   opacity: 0.92;

@@ -33,13 +33,14 @@ export function normalizeModuleNavStatus(payload) {
   const hasUnackedReminders = Boolean(payload.has_unacked_reminders) || hasMissedReminders;
   const hasAttentionFax = Boolean(payload.has_attention_fax);
   const payloadStrongAttentionCount = Number(payload.strong_attention_count);
+  const hasExplicitStrongAttentionCount = Number.isFinite(payloadStrongAttentionCount);
   const fallbackStrongAttentionCount =
     (hasOverdueTasks ? 1 : 0) + (hasUnackedReminders ? 1 : 0) + (hasAttentionFax ? 1 : 0);
-  const strongAttentionCount = Number.isFinite(payloadStrongAttentionCount)
+  const strongAttentionCount = hasExplicitStrongAttentionCount
     ? Math.max(0, payloadStrongAttentionCount)
     : fallbackStrongAttentionCount;
-  const hasStrongAttention =
-    Boolean(payload.has_strong_attention) || hasOverdueTasks || hasUnackedReminders || hasAttentionFax || strongAttentionCount > 0;
+  const fallbackHasStrongAttention = Boolean(payload.has_strong_attention) || fallbackStrongAttentionCount > 0;
+  const hasStrongAttention = hasExplicitStrongAttentionCount ? strongAttentionCount > 0 : fallbackHasStrongAttention;
 
   return {
     has_overdue_tasks: hasOverdueTasks,
