@@ -28,6 +28,17 @@ class FakeWeatherProvider:
         return self.rows
 
 
+class FakeHourlyWeatherProvider(FakeWeatherProvider):
+    def __init__(self, rows: list[dict], hourly_rows: list[dict]) -> None:
+        super().__init__(rows)
+        self.hourly_rows = hourly_rows
+        self.hourly_calls = 0
+
+    def fetch_hourly(self, location: dict, target_date: str) -> list[dict]:
+        self.hourly_calls += 1
+        return self.hourly_rows
+
+
 def make_weather_service(tmp_path, rows: list[dict]):
     engine = create_engine(f"sqlite:///{tmp_path / 'weather.db'}")
     init_schema_v0(engine)
@@ -180,3 +191,63 @@ def test_future_forecast_dates_are_stored_and_returned(tmp_path) -> None:
     result = service.get_daily(location_id="daegu", start_date="2026-05-31", end_date="2026-06-01")
     assert provider.calls == 1
     assert [item["date"] for item in result["items"]] == ["2026-05-31", "2026-06-01"]
+
+
+def test_weather_dayparts_are_computed_from_hourly_rows(tmp_path) -> None:
+    engine = create_engine(f"sqlite:///{tmp_path / 'weather.db'}")
+    init_schema_v0(engine)
+    repo = WeatherRepo(engine)
+    provider = FakeHourlyWeatherProvider(
+        [],
+        [
+            {"time": "2026-06-07T06:00", "weather_code": 3, "temp_c": 12},
+            {"time": "2026-06-07T11:00", "weather_code": 61, "temp_c": 17},
+            {"time": "2026-06-07T12:00", "weather_code": 0, "temp_c": 18},
+            {"time": "2026-06-07T17:00", "weather_code": 0, "temp_c": 24},
+            {"time": "2026-06-07T18:00", "weather_code": 1, "temp_c": 15},
+            {"time": "2026-06-07T21:00", "weather_code": 2, "temp_c": 19},
+            {"time": "2026-06-07T00:00", "weather_code": 61, "temp_c": 12},
+            {"time": "2026-06-07T23:00", "weather_code": 61, "temp_c": 14},
+        ],
+    )
+    service = WeatherService(repo, provider=provider)
+
+    result = service.get_dayparts(location_id="pohang", target_date="2026-06-07")
+
+    assert result["ok"] is True
+    assert result["weather_dayparts_available"] is True
+    assert [item["label"] for item in result["weather_dayparts"]] == ["Morning", "Afternoon", "Evening", "Night"]
+    assert result["weather_dayparts"][0]["temp_min_c"] == 12
+    assert result["weather_dayparts"][0]["temp_max_c"] == 17
+    assert result["weather_dayparts"][0]["weather_code"] == 61
+    assert result["weather_dayparts"][3]["temp_min_c"] == 12
+    assert result["weather_dayparts"][3]["temp_max_c"] == 14
+    assert provider.hourly_calls == 1
+
+
+def test_weather_dayparts_report_time_of_day_unavailable_when_provider_has_no_hourly(tmp_path) -> None:
+    _, _, _, service = make_weather_service(tmp_path, [])
+
+    result = service.get_dayparts(location_id="pohang", target_date="2026-06-07")
+
+    assert result["ok"] is True
+    assert result["weather_dayparts_available"] is False
+    assert result["weather_unavailable_reason"] == "Weather info not available by time of day."
+    assert result["weather_dayparts"] == []
+
+
+def test_weather_dayparts_report_weather_unavailable_when_hourly_fetch_fails(tmp_path) -> None:
+    class FailingHourlyProvider(FakeWeatherProvider):
+        def fetch_hourly(self, location: dict, target_date: str) -> list[dict]:
+            raise RuntimeError("offline")
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'weather.db'}")
+    init_schema_v0(engine)
+    repo = WeatherRepo(engine)
+    service = WeatherService(repo, provider=FailingHourlyProvider([]))
+
+    result = service.get_dayparts(location_id="pohang", target_date="2026-06-07")
+
+    assert result["ok"] is True
+    assert result["weather_dayparts_available"] is False
+    assert result["weather_unavailable_reason"] == "Weather info not available."

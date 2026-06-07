@@ -51,7 +51,7 @@ from app.engine.fax_service import FaxService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
 from app.engine.supply_service import SupplyService
-from app.engine.weather_service import WeatherService
+from app.engine.weather_service import DEFAULT_WEATHER_LOCATION_ID, WeatherService
 from app.integrations import pushover_client
 from app.integrations.web_push_client import WebPushClient
 from app.schemas.reminders import normalize_minutes
@@ -466,8 +466,13 @@ def list_events(start_date: str, end_date: str, mode: str = "active"):
 
 
 @app.get("/weather/daily")
-def get_daily_weather(location: str = "daegu", start_date: str = "", end_date: str = ""):
+def get_daily_weather(location: str = DEFAULT_WEATHER_LOCATION_ID, start_date: str = "", end_date: str = ""):
     return weather_service.get_daily(location_id=location, start_date=start_date, end_date=end_date)
+
+
+@app.get("/weather/dayparts")
+def get_weather_dayparts(location: str = DEFAULT_WEATHER_LOCATION_ID, date: str = ""):
+    return weather_service.get_dayparts(location_id=location, target_date=date)
 
 
 @app.get("/events/{event_id}")
