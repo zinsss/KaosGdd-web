@@ -312,3 +312,15 @@
 .taskListSubsectionTitleTask {
   color: var(--ctp-lavender);
 }
+
+.faxInboxActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.faxInboxActionsCompact {
+  margin-top: 8px;
+}

@@ -49,6 +49,7 @@ function getFaxDirection(fax) {
 export function isAttentionFax(fax) {
   if (!fax || typeof fax !== "object") return false;
   if (String(fax.status || "active").toLowerCase() !== "active") return false;
+  if (String(fax.saved_file_id || "").trim()) return false;
 
   const direction = getFaxDirection(fax);
   const status = getFaxStatus(fax);

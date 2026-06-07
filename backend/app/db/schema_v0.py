@@ -117,11 +117,13 @@ CREATE TABLE IF NOT EXISTS {fax_items} (
     original_mime_type TEXT,
     pdf_file_path TEXT,
     source_file_path TEXT,
+    saved_file_id TEXT,
     received_at TEXT,
     sent_at TEXT,
     failed_at TEXT,
     error_message TEXT,
     FOREIGN KEY (item_id) REFERENCES {items}(id) ON DELETE CASCADE,
+    FOREIGN KEY (saved_file_id) REFERENCES {items}(id) ON DELETE SET NULL,
     CHECK (direction IN ('incoming', 'outgoing')),
     CHECK (fax_status IN ('received', 'queued', 'sending', 'sent', 'failed', 'conversion_failed'))
 );
@@ -659,6 +661,7 @@ def _migrate_sqlite_legacy_task_reminder_tables(conn) -> None:
 
     _sqlite_add_column_if_missing(conn, DbTables.FILE_ITEMS, "memo TEXT")
     _sqlite_add_column_if_missing(conn, DbTables.FILE_ITEMS, "fax_number TEXT")
+    _sqlite_add_column_if_missing(conn, DbTables.FAX_ITEMS, "saved_file_id TEXT")
 
     _sqlite_add_column_if_missing(conn, DbTables.ITEM_REMINDERS, "created_at TEXT")
     _sqlite_add_column_if_missing(conn, DbTables.SCRIBBLES, "tags_json TEXT NOT NULL DEFAULT '[]'")

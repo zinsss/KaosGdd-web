@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import FaxInboxActions from "../../components/FaxInboxActions";
+
 async function getFaxes() {
   const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
   try {
@@ -12,6 +14,10 @@ async function getFaxes() {
 
 function badgeLabel(item) {
   return item.direction === "incoming" ? "Incoming" : "Outgoing";
+}
+
+function canSaveToFiles(item) {
+  return item.direction === "incoming" && item.fax_status === "received" && !item.saved_file_id;
 }
 
 export default async function FaxPage() {
@@ -37,9 +43,16 @@ export default async function FaxPage() {
                 <div className="metaLine">
                   {item.fax_status}
                   {item.remote_number ? ` • ${item.remote_number}` : ""}
+                  {item.saved_file_id ? " • saved to Files" : ""}
                   {" • "}
                   {item.received_at_display || item.sent_at_display || item.created_at_display || item.created_at}
                 </div>
+                <FaxInboxActions
+                  faxId={item.id}
+                  canSave={canSaveToFiles(item)}
+                  savedFileId={item.saved_file_id}
+                  compact
+                />
               </li>
             ))}
           </ul>

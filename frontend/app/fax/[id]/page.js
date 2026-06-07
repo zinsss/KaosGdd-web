@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+import FaxInboxActions from "../../../components/FaxInboxActions";
+
 async function getFax(id) {
   const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
   try {
@@ -14,6 +16,7 @@ export default async function FaxDetailPage({ params }) {
   const { id } = await params;
   const result = await getFax(id);
   const item = result.item;
+  const canSaveToFiles = item?.direction === "incoming" && item?.fax_status === "received" && !item?.saved_file_id;
 
   return (
     <main className="page">
@@ -27,6 +30,7 @@ export default async function FaxDetailPage({ params }) {
             <div className="sectionTitle detailMainTitle">{item.title || "Fax"}</div>
             <div className="detailStateText">{item.fax_status}</div>
           </div>
+          <FaxInboxActions faxId={item.id} canSave={canSaveToFiles} savedFileId={item.saved_file_id} />
           <div className="detailReadBlock">
             <div className="detailReadRow"><div className="detailReadLabel">Direction</div><div className="detailReadContent withDivider">{item.direction}</div></div>
             {item.remote_number ? <div className="detailReadRow"><div className="detailReadLabel">Remote</div><div className="detailReadContent withDivider">{item.remote_number}</div></div> : null}
@@ -34,6 +38,12 @@ export default async function FaxDetailPage({ params }) {
             <div className="detailReadRow"><div className="detailReadLabel">Created</div><div className="detailReadContent withDivider">{item.created_at_display || item.created_at}</div></div>
             {item.received_at_display ? <div className="detailReadRow"><div className="detailReadLabel">Received</div><div className="detailReadContent withDivider">{item.received_at_display}</div></div> : null}
             {item.sent_at_display ? <div className="detailReadRow"><div className="detailReadLabel">Sent</div><div className="detailReadContent withDivider">{item.sent_at_display}</div></div> : null}
+            {item.saved_file_id ? (
+              <div className="detailReadRow">
+                <div className="detailReadLabel">Saved File</div>
+                <div className="detailReadContent withDivider"><Link className="taskLink" href={`/files/${item.saved_file_id}`}>{item.saved_file_id}</Link></div>
+              </div>
+            ) : null}
             {item.error_message ? <div className="detailReadRow"><div className="detailReadLabel">Error</div><div className="detailReadContent withDivider errorText">{item.error_message}</div></div> : null}
             <div className="detailReadRow">
               <div className="detailReadLabel">PDF</div>

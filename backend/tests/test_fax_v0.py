@@ -4,10 +4,13 @@ import importlib
 import os
 import subprocess
 import zlib
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
+from sqlalchemy import text
 
+from app.config import DbTables
 from app.engine.fax_pdf_conversion_service import FaxPdfConversionService
 from app.engine.fax_service import FaxService
 
@@ -240,6 +243,131 @@ def test_incoming_raw_fax_converts_to_pdf_before_alert(main_module, tmp_path: Pa
     fax = fax_service.get_fax(fax_id)
     assert fax["pdf_file_path"] == str(pdf)
     assert fax["pdf_available"] is True
+
+
+def test_received_fax_appears_in_inbox(main_module, tmp_path: Path) -> None:
+    raw = tmp_path / "recv-visible.tif"
+    raw.write_bytes(b"raw-tiff")
+    pdf = tmp_path / "recv-visible.pdf"
+    fax_service = _service_with_converter(main_module, FakeConverter(pdf))
+
+    ok, _status, fax_id = fax_service.receive_incoming_raw(source_file_path=str(raw), remote_number="031")
+
+    assert ok is True
+    inbox_ids = [item["id"] for item in fax_service.list_faxes()]
+    assert fax_id in inbox_ids
+
+
+def test_save_to_files_creates_file_links_fax_and_removes_temp_files(main_module, tmp_path: Path) -> None:
+    raw = tmp_path / "recv-save.tif"
+    raw.write_bytes(b"raw-tiff")
+    pdf = tmp_path / "recv-save.pdf"
+    fax_service = _service_with_converter(main_module, FakeConverter(pdf))
+    ok, _status, fax_id = fax_service.receive_incoming_raw(
+        source_file_path=str(raw),
+        original_filename="clinic-fax.tif",
+    )
+    assert ok is True
+    assert raw.exists()
+    assert pdf.exists()
+
+    saved, error, file_id = fax_service.save_incoming_to_files(fax_id)
+
+    assert saved is True
+    assert error is None
+    assert file_id
+    fax = fax_service.get_fax(fax_id)
+    assert fax["saved_file_id"] == file_id
+    assert fax["saved_to_files"] is True
+    assert fax["pdf_file_path"] is None
+    assert fax["source_file_path"] is None
+    assert not raw.exists()
+    assert not pdf.exists()
+    assert main_module.items_repo.list_item_links(fax_id) == [file_id]
+
+    file_item = main_module.get_file(file_id)["item"]
+    assert file_item["original_filename"] == "clinic-fax.pdf"
+    assert file_item["mime_type"] == "application/pdf"
+    assert Path(file_item["stored_path"]).read_bytes().startswith(b"%PDF-")
+
+
+def test_delete_received_fax_removes_inbox_item_and_temp_files(main_module, tmp_path: Path) -> None:
+    raw = tmp_path / "recv-delete.tif"
+    raw.write_bytes(b"raw-tiff")
+    pdf = tmp_path / "recv-delete.pdf"
+    fax_service = _service_with_converter(main_module, FakeConverter(pdf))
+    ok, _status, fax_id = fax_service.receive_incoming_raw(source_file_path=str(raw))
+    assert ok is True
+
+    deleted = fax_service.delete_inbox_fax(fax_id)
+
+    assert deleted is True
+    assert fax_service.get_fax(fax_id) is None
+    assert not raw.exists()
+    assert not pdf.exists()
+
+
+def _set_fax_received_at(main_module, fax_id: str, received_at: datetime) -> None:
+    iso = received_at.isoformat(timespec="seconds")
+    with main_module.engine.begin() as conn:
+        conn.execute(
+            text(
+                """
+                UPDATE {items}
+                SET created_at = :created_at,
+                    updated_at = :created_at
+                WHERE id = :id
+                """.format(items=DbTables.ITEMS)
+            ),
+            {"id": fax_id, "created_at": iso},
+        )
+        conn.execute(
+            text(
+                """
+                UPDATE {fax_items}
+                SET received_at = :received_at
+                WHERE item_id = :id
+                """.format(fax_items=DbTables.FAX_ITEMS)
+            ),
+            {"id": fax_id, "received_at": iso},
+        )
+
+
+def test_unsaved_fax_survives_before_90_days(main_module, tmp_path: Path) -> None:
+    raw = tmp_path / "recv-young.tif"
+    raw.write_bytes(b"raw-tiff")
+    pdf = tmp_path / "recv-young.pdf"
+    fax_service = _service_with_converter(main_module, FakeConverter(pdf))
+    ok, _status, fax_id = fax_service.receive_incoming_raw(source_file_path=str(raw))
+    assert ok is True
+    now = datetime(2026, 6, 7, tzinfo=timezone.utc)
+    _set_fax_received_at(main_module, fax_id, now - timedelta(days=89, hours=23))
+
+    cleanup = fax_service.cleanup_stale_inbox_items(now=now)
+
+    assert cleanup["fax_inbox_deleted"] == 0
+    assert fax_service.get_fax(fax_id) is not None
+    assert raw.exists()
+    assert pdf.exists()
+
+
+def test_unsaved_fax_is_removed_after_90_days_and_temp_is_cleaned(main_module, tmp_path: Path) -> None:
+    raw = tmp_path / "recv-stale.tif"
+    raw.write_bytes(b"raw-tiff")
+    pdf = tmp_path / "recv-stale.pdf"
+    fax_service = _service_with_converter(main_module, FakeConverter(pdf))
+    ok, _status, fax_id = fax_service.receive_incoming_raw(source_file_path=str(raw))
+    assert ok is True
+    now = datetime(2026, 6, 7, tzinfo=timezone.utc)
+    _set_fax_received_at(main_module, fax_id, now - timedelta(days=91))
+
+    cleanup = fax_service.cleanup_stale_inbox_items(now=now)
+
+    assert cleanup["fax_inbox_deleted"] == 1
+    assert cleanup["fax_temp_files_deleted"] == 2
+    assert fax_service.get_fax(fax_id) is None
+    assert not raw.exists()
+    assert not pdf.exists()
 
 
 def test_incoming_conversion_failure_creates_conversion_failed_record(main_module, tmp_path: Path) -> None:

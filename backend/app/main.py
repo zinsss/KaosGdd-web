@@ -712,6 +712,22 @@ def open_fax_pdf(fax_id: str):
     )
 
 
+@app.post("/fax/{fax_id}/save-to-files")
+def save_fax_to_files(fax_id: str):
+    ok, error, file_id = fax_service.save_incoming_to_files(fax_id)
+    if not ok:
+        return {"ok": False, "error": error or ApiText.NOT_FOUND}
+    return {"ok": True, "id": file_id, "file_id": file_id}
+
+
+@app.delete("/fax/{fax_id}")
+def delete_fax(fax_id: str):
+    ok = fax_service.delete_inbox_fax(fax_id)
+    if not ok:
+        return {"ok": False, "error": ApiText.NOT_FOUND}
+    return {"ok": True}
+
+
 @app.post("/fax/send-from-file")
 def send_fax_from_file(payload: dict):
     file_id = str(payload.get("file_id") or "").strip()
@@ -1468,11 +1484,15 @@ def notify_fax_send_failed(payload: dict):
 def run_lifecycle_maintenance():
     archived_tasks = task_service.archive_old_done_tasks()
     cleanup = reminder_service.cleanup_removed_items()
+    fax_cleanup = fax_service.cleanup_stale_inbox_items()
     return {
         "ok": True,
         "archived_tasks": archived_tasks,
         "hard_deleted_tasks": cleanup["tasks_deleted"],
         "hard_deleted_events": cleanup["events_deleted"],
         "hard_deleted_reminders": cleanup["reminders_deleted"],
+        "hard_deleted_fax_inbox": fax_cleanup["fax_inbox_deleted"],
+        "fax_temp_files_deleted": fax_cleanup["fax_temp_files_deleted"],
+        "fax_inbox_retention_days": fax_cleanup["fax_inbox_retention_days"],
         "fired_retention_days": SETTINGS.LIFECYCLE_FIRED_RETENTION_DAYS,
     }

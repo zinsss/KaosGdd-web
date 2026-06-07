@@ -32,12 +32,12 @@ class FaxRepo:
                     INSERT INTO {fax_items}(
                         item_id, direction, fax_status, remote_number, local_device,
                         original_filename, original_mime_type, pdf_file_path, source_file_path,
-                        received_at, sent_at, failed_at, error_message
+                        saved_file_id, received_at, sent_at, failed_at, error_message
                     )
                     VALUES (
                         :item_id, :direction, :fax_status, :remote_number, :local_device,
                         :original_filename, :original_mime_type, :pdf_file_path, :source_file_path,
-                        :received_at, :sent_at, :failed_at, :error_message
+                        NULL, :received_at, :sent_at, :failed_at, :error_message
                     )
                     """.format(fax_items=DbTables.FAX_ITEMS)
                 ),
@@ -66,6 +66,7 @@ class FaxRepo:
                     SELECT i.id, i.item_type, i.title, i.status, i.created_at, i.updated_at, i.deleted_at,
                            f.direction, f.fax_status, f.remote_number, f.local_device,
                            f.original_filename, f.original_mime_type, f.pdf_file_path, f.source_file_path,
+                           f.saved_file_id,
                            f.received_at, f.sent_at, f.failed_at, f.error_message
                     FROM {items} i
                     INNER JOIN {fax_items} f ON f.item_id = i.id
@@ -85,6 +86,7 @@ class FaxRepo:
                     SELECT i.id, i.item_type, i.title, i.status, i.created_at, i.updated_at, i.deleted_at,
                            f.direction, f.fax_status, f.remote_number, f.local_device,
                            f.original_filename, f.original_mime_type, f.pdf_file_path, f.source_file_path,
+                           f.saved_file_id,
                            f.received_at, f.sent_at, f.failed_at, f.error_message
                     FROM {items} i
                     INNER JOIN {fax_items} f ON f.item_id = i.id
@@ -129,3 +131,47 @@ class FaxRepo:
                 text("UPDATE {items} SET updated_at = :updated_at WHERE id = :id".format(items=DbTables.ITEMS)),
                 {"id": item_id, "updated_at": now_iso()},
             )
+
+    def mark_saved_to_file(self, item_id: str, *, saved_file_id: str) -> None:
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    UPDATE {fax_items}
+                    SET saved_file_id = :saved_file_id,
+                        pdf_file_path = NULL,
+                        source_file_path = NULL
+                    WHERE item_id = :item_id
+                    """.format(fax_items=DbTables.FAX_ITEMS)
+                ),
+                {"item_id": item_id, "saved_file_id": saved_file_id},
+            )
+            conn.execute(
+                text("UPDATE {items} SET updated_at = :updated_at WHERE id = :id".format(items=DbTables.ITEMS)),
+                {"id": item_id, "updated_at": now_iso()},
+            )
+
+    def list_stale_incoming_unsaved(self, *, cutoff_iso: str) -> list[dict]:
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT i.id, i.item_type, i.title, i.status, i.created_at, i.updated_at, i.deleted_at,
+                           f.direction, f.fax_status, f.remote_number, f.local_device,
+                           f.original_filename, f.original_mime_type, f.pdf_file_path, f.source_file_path,
+                           f.saved_file_id,
+                           f.received_at, f.sent_at, f.failed_at, f.error_message
+                    FROM {items} i
+                    INNER JOIN {fax_items} f ON f.item_id = i.id
+                    WHERE i.item_type = 'fax'
+                      AND i.status = 'active'
+                      AND f.direction = 'incoming'
+                      AND f.fax_status = 'received'
+                      AND f.saved_file_id IS NULL
+                      AND COALESCE(f.received_at, i.created_at) < :cutoff_iso
+                    ORDER BY i.created_at ASC, i.rowid ASC
+                    """.format(items=DbTables.ITEMS, fax_items=DbTables.FAX_ITEMS)
+                ),
+                {"cutoff_iso": cutoff_iso},
+            ).mappings().all()
+        return [dict(row) for row in rows]
