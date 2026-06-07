@@ -42,6 +42,10 @@ test("debug tap panel is gated by debugTap query parameter", async () => {
 
   assert.match(layoutSource, /<DebugTapPanel \/>/);
   assert.match(debugTapSource, /params\.get\("debugTap"\) === "1"/);
+  assert.match(debugTapSource, /const \[eventLog, setEventLog\] = useState\(\[\]\);/);
+  assert.match(debugTapSource, /\[nextInfo, \.\.\.currentLog\]\.slice\(0, 10\)/);
+  assert.match(debugTapSource, /timestamp/);
+  assert.match(debugTapSource, /url: `\$\{window\.location\.pathname\}\$\{window\.location\.search\}`/);
   assert.match(debugTapSource, /document\.addEventListener\("pointerdown", onEvent, true\)/);
   assert.match(debugTapSource, /document\.addEventListener\("click", onEvent, true\)/);
   assert.match(debugTapSource, /document\.addEventListener\("touchstart", onEvent, true\)/);
