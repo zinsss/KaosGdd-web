@@ -31,6 +31,7 @@ test("nav status counts active received and failed faxes as attention only", () 
   assert.equal(isAttentionFax({ status: "active", direction: "outgoing", fax_status: "queued" }), false);
   assert.equal(isAttentionFax({ status: "removed", direction: "incoming", fax_status: "received" }), false);
   assert.equal(isAttentionFax({ status: "archived", direction: "outgoing", fax_status: "failed" }), false);
+  assert.equal(isAttentionFax({ status: "active", direction: "incoming", fax_status: "received", saved_file_id: "file1" }), false);
 });
 
 test("nav status proxy returns strong attention for fired unacked reminders", async () => {
@@ -93,6 +94,7 @@ test("nav status proxy includes active fax attention in strong count", async () 
           { id: "fax2", status: "active", direction: "outgoing", fax_status: "failed" },
           { id: "fax3", status: "active", direction: "outgoing", fax_status: "queued" },
           { id: "fax4", status: "removed", direction: "incoming", fax_status: "received" },
+          { id: "fax5", status: "active", direction: "incoming", fax_status: "received", saved_file_id: "file1" },
         ],
       },
     };

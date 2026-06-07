@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import os
+import shutil
 import subprocess
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from uuid import uuid4
 
 from app.config import SETTINGS
 from app.db.repo.fax_repo import FaxRepo
@@ -45,8 +49,75 @@ class FaxService:
             return None
         path = str(detail.get("pdf_file_path") or "").strip()
         if not path or not os.path.isfile(path):
-            return None
+            saved_file_id = str(detail.get("saved_file_id") or "").strip()
+            if not saved_file_id:
+                return None
+            file_detail = self.file_repo.get_file_detail(saved_file_id)
+            if file_detail is None:
+                return None
+            path = str(file_detail.get("stored_path") or "").strip()
+            if not path or not os.path.isfile(path):
+                return None
         return detail, path
+
+    def save_incoming_to_files(self, item_id: str) -> tuple[bool, str | None, str | None]:
+        detail = self.fax_repo.get_fax_detail(item_id)
+        if detail is None:
+            return False, "not found", None
+        if str(detail.get("direction") or "").lower() != "incoming":
+            return False, "only incoming faxes can be saved to files", None
+        if str(detail.get("status") or "").lower() != "active":
+            return False, "fax is not active", None
+
+        existing_file_id = str(detail.get("saved_file_id") or "").strip()
+        if existing_file_id:
+            return True, None, existing_file_id
+
+        pdf_path = str(detail.get("pdf_file_path") or "").strip()
+        if not pdf_path or not os.path.isfile(pdf_path):
+            return False, "fax PDF not found", None
+
+        original_filename = str(detail.get("original_filename") or "").strip() or f"{item_id}.pdf"
+        file_name = self._fax_file_name(original_filename)
+        stored_path = self._safe_file_storage_path(file_name)
+        shutil.copyfile(pdf_path, stored_path)
+        size_bytes = os.path.getsize(stored_path)
+
+        file_id = self.items_repo.create_item("file", file_name)
+        self.file_repo.create_file(
+            file_id,
+            original_filename=file_name,
+            stored_path=stored_path,
+            mime_type="application/pdf",
+            size_bytes=size_bytes,
+        )
+        self.items_repo.replace_item_links(item_id, [file_id])
+        self.fax_repo.mark_saved_to_file(item_id, saved_file_id=file_id)
+        self._remove_temp_paths(detail)
+        return True, None, file_id
+
+    def delete_inbox_fax(self, item_id: str) -> bool:
+        detail = self.fax_repo.get_fax_detail(item_id)
+        if detail is None:
+            return False
+        self._remove_temp_paths(detail)
+        return self.items_repo.hard_delete_item(item_id)
+
+    def cleanup_stale_inbox_items(self, *, now: datetime | None = None) -> dict:
+        current = now or datetime.now(timezone.utc)
+        cutoff = (current - timedelta(days=SETTINGS.FAX_INBOX_RETENTION_DAYS)).isoformat(timespec="seconds")
+        rows = self.fax_repo.list_stale_incoming_unsaved(cutoff_iso=cutoff)
+        deleted = 0
+        temp_files_deleted = 0
+        for row in rows:
+            temp_files_deleted += self._remove_temp_paths(row)
+            if self.items_repo.hard_delete_item(str(row.get("id") or "")):
+                deleted += 1
+        return {
+            "fax_inbox_deleted": deleted,
+            "fax_temp_files_deleted": temp_files_deleted,
+            "fax_inbox_retention_days": SETTINGS.FAX_INBOX_RETENTION_DAYS,
+        }
 
     def send_file_as_fax(self, *, file_id: str, fax_number: str) -> tuple[bool, str, str | None]:
         clean_number = str(fax_number or "").strip()
@@ -205,6 +276,39 @@ class FaxService:
                 pass
         self.items_repo.hard_delete_item(file_id)
 
+    def _safe_file_storage_path(self, original_filename: str) -> str:
+        root = os.path.abspath(SETTINGS.FILE_STORAGE_DIR)
+        os.makedirs(root, exist_ok=True)
+
+        suffix = Path(str(original_filename or "")).suffix.lower()
+        safe_suffix = suffix if suffix and len(suffix) <= 10 and suffix.replace(".", "").isalnum() else ".pdf"
+        generated_name = f"{uuid4().hex}{safe_suffix}"
+        path = os.path.abspath(os.path.join(root, generated_name))
+        if not path.startswith(root + os.sep):
+            raise ValueError("unsafe storage path")
+        return path
+
+    def _fax_file_name(self, original_filename: str) -> str:
+        stem = Path(str(original_filename or "received-fax")).stem.strip() or "received-fax"
+        return f"{stem}.pdf"
+
+    def _remove_temp_paths(self, detail: dict) -> int:
+        removed = 0
+        seen: set[str] = set()
+        for key in ("pdf_file_path", "source_file_path"):
+            path = str(detail.get(key) or "").strip()
+            if not path or path in seen:
+                continue
+            seen.add(path)
+            if not os.path.isfile(path):
+                continue
+            try:
+                os.remove(path)
+                removed += 1
+            except OSError:
+                pass
+        return removed
+
     def _decorate_fax(self, row: dict) -> dict:
         item = dict(row)
         item["created_at_display"] = format_dt_for_ui(item.get("created_at"))
@@ -213,4 +317,8 @@ class FaxService:
         item["sent_at_display"] = format_dt_for_ui(item.get("sent_at"))
         item["failed_at_display"] = format_dt_for_ui(item.get("failed_at"))
         item["pdf_available"] = bool(item.get("pdf_file_path") and os.path.isfile(str(item.get("pdf_file_path"))))
+        if not item["pdf_available"] and item.get("saved_file_id"):
+            file_detail = self.file_repo.get_file_detail(str(item.get("saved_file_id")))
+            item["pdf_available"] = bool(file_detail and os.path.isfile(str(file_detail.get("stored_path") or "")))
+        item["saved_to_files"] = bool(item.get("saved_file_id"))
         return item
