@@ -168,6 +168,51 @@ body.eventsPageActive .appShellMain {
   margin-bottom: 4px;
 }
 
+.eventSelectedDayPanel {
+  display: grid;
+  gap: 10px;
+}
+
+.eventDaypartWeatherBlock {
+  border: 1px solid rgba(186, 194, 222, 0.14);
+  border-radius: var(--group-box-radius);
+  background: rgba(30, 30, 46, 0.26);
+  padding: 9px 10px;
+}
+
+.eventDaypartGrid {
+  display: grid;
+  gap: 6px;
+}
+
+.eventDaypartRow {
+  display: grid;
+  grid-template-columns: minmax(88px, 1fr) auto auto;
+  align-items: center;
+  gap: 9px;
+  color: var(--ui-text);
+  font-size: 13px;
+}
+
+.eventDaypartLabel {
+  color: var(--ui-text-dim);
+}
+
+.eventDaypartGlyph {
+  color: var(--ctp-sky);
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.eventDaypartTemp {
+  color: var(--ctp-lavender);
+  font-variant-numeric: tabular-nums;
+}
+
+.eventSelectedDayList {
+  margin-top: 0;
+}
+
 .eventListTitleRow {
   display: flex;
   align-items: center;

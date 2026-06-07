@@ -17,6 +17,22 @@ WEATHER_LOCATIONS = [
 DEFAULT_WEATHER_LOCATION_ID = "pohang"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 WEATHER_CACHE_TTL_MINUTES = 60
+WEATHER_DAYPARTS = [
+    ("Morning", range(6, 12)),
+    ("Afternoon", range(12, 18)),
+    ("Evening", range(18, 22)),
+    ("Night", (*range(0, 6), *range(22, 24))),
+]
+WEATHER_CONDITION_SEVERITY = {
+    "unknown": 0,
+    "clear": 1,
+    "partly_cloudy": 2,
+    "cloudy": 3,
+    "fog": 4,
+    "rain": 5,
+    "snow": 6,
+    "thunderstorm": 7,
+}
 
 WEATHER_GLYPHS = {
     "clear": "",
@@ -108,6 +124,39 @@ class OpenMeteoWeatherProvider:
                 continue
         return rows
 
+    def fetch_hourly(self, location: dict, target_date: str) -> list[dict]:
+        query = urlencode(
+            {
+                "latitude": location["latitude"],
+                "longitude": location["longitude"],
+                "hourly": "weather_code,temperature_2m",
+                "timezone": SETTINGS.APP_TIMEZONE,
+                "start_date": target_date,
+                "end_date": target_date,
+            }
+        )
+        with urlopen(f"{OPEN_METEO_URL}?{query}", timeout=10) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        hourly = payload.get("hourly") if isinstance(payload, dict) else {}
+        if not isinstance(hourly, dict):
+            return []
+        times = hourly.get("time") or []
+        codes = hourly.get("weather_code") or []
+        temperatures = hourly.get("temperature_2m") or []
+        rows = []
+        for index, timestamp in enumerate(times):
+            try:
+                rows.append(
+                    {
+                        "time": str(timestamp),
+                        "weather_code": int(codes[index]),
+                        "temp_c": round_celsius(temperatures[index]),
+                    }
+                )
+            except (IndexError, TypeError, ValueError):
+                continue
+        return rows
+
 
 class WeatherService:
     def __init__(self, weather_repo, provider=None) -> None:
@@ -150,6 +199,55 @@ class WeatherService:
             "location": {"id": location["id"], "label": location["label"]},
             "locations": weather_locations_public(),
             "items": items,
+        }
+
+    def get_dayparts(self, *, location_id: str | None, target_date: str) -> dict:
+        location = get_weather_location(location_id)
+        if location is None:
+            return {
+                "ok": False,
+                "date": target_date,
+                "weather_dayparts_available": False,
+                "weather_unavailable_reason": "Invalid weather location.",
+                "locations": weather_locations_public(),
+                "weather_dayparts": [],
+            }
+        try:
+            date.fromisoformat(target_date)
+        except (TypeError, ValueError):
+            target_date = self._today().isoformat()
+
+        fetch_hourly = getattr(self.provider, "fetch_hourly", None)
+        if not callable(fetch_hourly):
+            return self._dayparts_unavailable(
+                location=location,
+                target_date=target_date,
+                reason="Weather info not available by time of day.",
+            )
+
+        try:
+            hourly_rows = fetch_hourly(location, target_date)
+        except Exception:
+            return self._dayparts_unavailable(
+                location=location,
+                target_date=target_date,
+                reason="Weather info not available.",
+            )
+
+        dayparts = self._hourly_rows_to_dayparts(hourly_rows)
+        if not dayparts:
+            return self._dayparts_unavailable(
+                location=location,
+                target_date=target_date,
+                reason="Weather info not available by time of day.",
+            )
+        return {
+            "ok": True,
+            "date": target_date,
+            "location": {"id": location["id"], "label": location["label"]},
+            "locations": weather_locations_public(),
+            "weather_dayparts_available": True,
+            "weather_dayparts": dayparts,
         }
 
     def _refresh_forecast_if_needed(self, *, location: dict, end_date: str) -> None:
@@ -215,3 +313,49 @@ class WeatherService:
             "max_c": row.get("max_c"),
             "fetched_at": row.get("fetched_at"),
         }
+
+    def _dayparts_unavailable(self, *, location: dict, target_date: str, reason: str) -> dict:
+        return {
+            "ok": True,
+            "date": target_date,
+            "location": {"id": location["id"], "label": location["label"]},
+            "locations": weather_locations_public(),
+            "weather_dayparts_available": False,
+            "weather_unavailable_reason": reason,
+            "weather_dayparts": [],
+        }
+
+    def _hourly_rows_to_dayparts(self, hourly_rows: list[dict]) -> list[dict]:
+        by_hour = {}
+        for row in hourly_rows:
+            try:
+                hour = datetime.fromisoformat(str(row.get("time"))).hour
+                temp_c = round_celsius(row.get("temp_c"))
+                weather_code = int(row.get("weather_code"))
+            except (TypeError, ValueError):
+                continue
+            by_hour[hour] = {"temp_c": temp_c, "weather_code": weather_code}
+
+        dayparts = []
+        for label, hours in WEATHER_DAYPARTS:
+            rows = [by_hour[hour] for hour in hours if hour in by_hour]
+            if not rows:
+                continue
+            codes = [row["weather_code"] for row in rows]
+            representative_code = max(
+                codes,
+                key=lambda code: WEATHER_CONDITION_SEVERITY.get(weather_code_to_condition(code), 0),
+            )
+            condition = weather_code_to_condition(representative_code)
+            temps = [row["temp_c"] for row in rows]
+            dayparts.append(
+                {
+                    "label": label,
+                    "glyph": weather_glyph_for_condition(condition),
+                    "weather_code": representative_code,
+                    "temp_min_c": min(temps),
+                    "temp_max_c": max(temps),
+                    "available": True,
+                }
+            )
+        return dayparts

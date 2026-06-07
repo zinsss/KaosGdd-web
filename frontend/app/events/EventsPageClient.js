@@ -8,6 +8,7 @@ import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
 import { UI_STRINGS } from "../../lib/strings";
 
 const DEFAULT_WEATHER_LOCATION = "pohang";
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function isInteractiveTarget(target) {
   return Boolean(target?.closest?.("a, button, input, textarea, select, option"));
@@ -25,6 +26,16 @@ function monthBounds(value) {
   const start = new Date(year, month - 1, 1);
   const end = new Date(year, month, 0);
   return { start: ymd(start), end: ymd(end), startDate: start, endDate: end };
+}
+
+function monthValueForDate(dateValue) {
+  return String(dateValue || "").slice(0, 7);
+}
+
+function isValidYmd(value) {
+  if (!DATE_RE.test(String(value || ""))) return false;
+  const date = new Date(`${value}T00:00:00`);
+  return !Number.isNaN(date.getTime()) && ymd(date) === value;
 }
 
 function eachCalendarCell(monthValue) {
@@ -80,6 +91,9 @@ export default function EventsPageClient() {
   ]);
   const [weatherItems, setWeatherItems] = useState([]);
   const [weatherError, setWeatherError] = useState("");
+  const [weatherDayparts, setWeatherDayparts] = useState([]);
+  const [weatherDaypartsAvailable, setWeatherDaypartsAvailable] = useState(false);
+  const [weatherDaypartsReason, setWeatherDaypartsReason] = useState("Weather info not available.");
   const swipeRef = useRef({
     startX: 0,
     startY: 0,
@@ -132,6 +146,28 @@ export default function EventsPageClient() {
     loadWeather();
   }, [weatherStart, weatherEnd, weatherLocation]);
 
+  function loadWeatherDayparts() {
+    if (!selectedDate || !weatherLocation) return;
+
+    fetch(`/api/weather/dayparts?location=${encodeURIComponent(weatherLocation)}&date=${encodeURIComponent(selectedDate)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const available = Boolean(data?.weather_dayparts_available);
+        setWeatherDaypartsAvailable(available);
+        setWeatherDayparts(Array.isArray(data?.weather_dayparts) ? data.weather_dayparts : []);
+        setWeatherDaypartsReason(data?.weather_unavailable_reason || "Weather info not available.");
+      })
+      .catch(() => {
+        setWeatherDaypartsAvailable(false);
+        setWeatherDayparts([]);
+        setWeatherDaypartsReason("Weather info not available.");
+      });
+  }
+
+  useEffect(() => {
+    loadWeatherDayparts();
+  }, [selectedDate, weatherLocation]);
+
   useEffect(() => {
     function onCaptureCreated(event) {
       if (captureCreatedEventHasType(event, "event")) loadEvents();
@@ -144,10 +180,12 @@ export default function EventsPageClient() {
   useEffect(() => {
     const now = new Date();
     const currentYmd = ymd(now);
+    const dateParam = searchParams?.get("date");
+    const initialSelectedDate = isValidYmd(dateParam) ? dateParam : currentYmd;
     setTodayYmd(currentYmd);
-    setMonth(`${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`);
-    setSelectedDate(currentYmd);
-  }, []);
+    setMonth(monthValueForDate(initialSelectedDate));
+    setSelectedDate(initialSelectedDate);
+  }, [searchParams]);
 
   useEffect(() => {
     setWeatherLocation(searchParams?.get("weather") || DEFAULT_WEATHER_LOCATION);
@@ -184,30 +222,44 @@ export default function EventsPageClient() {
     return map;
   }, [weatherItems]);
 
-  const monthEventsByDate = useMemo(() => {
+  const selectedDayEvents = useMemo(() => {
     const unique = new Map();
-    items.forEach((event, index) => {
+    (mapByDate.get(selectedDate) || []).forEach((event, index) => {
       unique.set(event.occurrence_id || event.id, { ...event, _index: index });
     });
-    const sorted = Array.from(unique.values()).sort((a, b) => {
+    return Array.from(unique.values()).sort((a, b) => {
       if (a.start_date !== b.start_date) return a.start_date.localeCompare(b.start_date);
       const aEnd = a.end_date || a.start_date;
       const bEnd = b.end_date || b.start_date;
       if (aEnd !== bEnd) return aEnd.localeCompare(bEnd);
       return a._index - b._index;
     });
-    const grouped = new Map();
-    for (const event of sorted) {
-      if (!grouped.has(event.start_date)) grouped.set(event.start_date, []);
-      grouped.get(event.start_date).push(event);
+  }, [mapByDate, selectedDate]);
+
+  function updateSelectedDate(nextDate, options = {}) {
+    if (!isValidYmd(nextDate)) return;
+    setSelectedDate(nextDate);
+    setMonth(monthValueForDate(nextDate));
+    const params = new URLSearchParams(searchParams?.toString() || "");
+    if (nextDate === todayYmd) {
+      params.delete("date");
+    } else {
+      params.set("date", nextDate);
     }
-    return Array.from(grouped.entries());
-  }, [items]);
+    if (options.weatherLocation) {
+      if (options.weatherLocation === DEFAULT_WEATHER_LOCATION) params.delete("weather");
+      else params.set("weather", options.weatherLocation);
+    }
+    const qs = params.toString();
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
+  }
 
   function shiftMonth(delta) {
     const [y, m] = month.split("-").map(Number);
     const next = new Date(y, m - 1 + delta, 1);
-    setMonth(`${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`);
+    const nextMonth = `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}`;
+    const nextSelectedDate = todayYmd && nextMonth === monthValueForDate(todayYmd) ? todayYmd : `${nextMonth}-01`;
+    updateSelectedDate(nextSelectedDate);
   }
 
   function changeWeatherLocation(nextLocation) {
@@ -218,6 +270,7 @@ export default function EventsPageClient() {
     } else {
       params.set("weather", nextLocation);
     }
+    if (selectedDate && selectedDate !== todayYmd) params.set("date", selectedDate);
     const qs = params.toString();
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false });
   }
@@ -330,7 +383,7 @@ export default function EventsPageClient() {
                   (selectedDate === d ? " eventCalCellSelected" : "") +
                   (todayYmd === d ? " eventCalCellToday" : "")
                 }
-                onClick={() => setSelectedDate(d)}
+                onClick={() => updateSelectedDate(d)}
               >
                 <span className="calendarDayTop">
                   <span className={"calendarDayDate eventCalDayNumber" + dayClass}>{Number(d.slice(-2))}</span>
@@ -357,40 +410,49 @@ export default function EventsPageClient() {
         </div>
       </section>
 
-      <section className="panel">
-        <div className="sectionTitle">{month}</div>
-        {monthEventsByDate.length === 0 ? (
-          <div className="empty">No events.</div>
+      <section className="panel eventSelectedDayPanel">
+        <div className="sectionTitle">Selected day • {selectedDate || todayYmd || ""}</div>
+        <div className="eventDaypartWeatherBlock">
+          {weatherDaypartsAvailable && weatherDayparts.length > 0 ? (
+            <div className="eventDaypartGrid">
+              {weatherDayparts.map((daypart) => (
+                <div key={daypart.label} className="eventDaypartRow">
+                  <span className="eventDaypartLabel">{daypart.label}</span>
+                  <span className="eventDaypartGlyph" aria-hidden="true">{daypart.glyph}</span>
+                  <span className="eventDaypartTemp">{daypart.temp_min_c}–{daypart.temp_max_c}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty">{weatherDaypartsReason}</div>
+          )}
+        </div>
+
+        {selectedDayEvents.length === 0 ? (
+          <div className="empty">No events for this day.</div>
         ) : (
-          <div className="eventMonthGroups">
-            {monthEventsByDate.map(([date, dateEvents]) => (
-              <div key={date} className="eventMonthGroup">
-                <div className="eventMonthGroupHeading">{date}</div>
-                <ul className="taskList">
-                  {dateEvents.map((event) => {
-                    const badge = systemBadgeForEvent(event);
-                    return (
-                      <li key={event.occurrence_id || event.id} className="taskListRow">
-                        <div className="eventListTitleRow">
-                          {badge ? <span className={"eventSystemBadge " + badge.className}>{badge.label}</span> : null}
-                          {event.is_recurring_occurrence ? <span className="recurringOccurrenceMark" aria-label="recurring occurrence">↻</span> : null}
-                          <Link
-                            className={"taskLink taskListTitleLink" + (badge ? " " + badge.titleClass : "")}
-                            href={eventDetailHref(event)}
-                          >
-                            {event.title}
-                          </Link>
-                        </div>
-                        {event.end_date && event.end_date !== event.start_date ? (
-                          <div className="metaLine">{event.start_date} ~ {event.end_date}</div>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            ))}
-          </div>
+          <ul className="taskList eventSelectedDayList">
+            {selectedDayEvents.map((event) => {
+              const badge = systemBadgeForEvent(event);
+              return (
+                <li key={event.occurrence_id || event.id} className="taskListRow">
+                  <div className="eventListTitleRow">
+                    {badge ? <span className={"eventSystemBadge " + badge.className}>{badge.label}</span> : null}
+                    {event.is_recurring_occurrence ? <span className="recurringOccurrenceMark" aria-label="recurring occurrence">↻</span> : null}
+                    <Link
+                      className={"taskLink taskListTitleLink" + (badge ? " " + badge.titleClass : "")}
+                      href={eventDetailHref(event)}
+                    >
+                      {event.title}
+                    </Link>
+                  </div>
+                  {event.end_date && event.end_date !== event.start_date ? (
+                    <div className="metaLine">{event.start_date} ~ {event.end_date}</div>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
         )}
       </section>
     </main>
