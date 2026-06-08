@@ -11,6 +11,7 @@ DEFAULT_MINUTE = 30
 
 DATE_ONLY_PATTERN = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 TIME_ONLY_PATTERN = re.compile(r"^(?P<hour>\d{2}):(?P<minute>\d{2})(?::(?P<second>\d{2}))?$")
+RELATIVE_OFFSET_PATTERN = re.compile(r"^\+(?P<amount>\d+)(?P<unit>[mhd])$", flags=re.IGNORECASE)
 RELATIVE_DAY_PATTERN = re.compile(
     r"^\+(?P<days>\d+)d(?:\s+(?P<hour>\d{2}):(?P<minute>\d{2}))?$",
     flags=re.IGNORECASE,
@@ -54,6 +55,19 @@ def _resolve_with_default_time(
 def _parse_local_datetime(raw: str, *, tz: ZoneInfo, now_utc: datetime) -> datetime:
     normalized = " ".join(raw.split())
     now_local = now_utc.astimezone(tz)
+
+    match = RELATIVE_OFFSET_PATTERN.fullmatch(normalized)
+    if match:
+        amount = int(match.group("amount"))
+        if amount <= 0:
+            raise ValueError(f"invalid datetime format: {raw}")
+        unit = str(match.group("unit")).lower()
+        if unit == "m":
+            return now_local + timedelta(minutes=amount)
+        if unit == "h":
+            return now_local + timedelta(hours=amount)
+        if unit == "d":
+            return now_local + timedelta(days=amount)
 
     match = TODAY_TOMORROW_PATTERN.fullmatch(normalized)
     if match:
