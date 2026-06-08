@@ -127,6 +127,8 @@ def parse_capture_input(raw_text: str, *, timezone_name: str | None = None) -> d
             )
             if not remind_at:
                 raise ValueError("!! requires at least one reminder datetime")
+            if not title:
+                raise ValueError("title is required")
         remind_ats: list[str] = []
         if remind_at:
             remind_ats = [
