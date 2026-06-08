@@ -24,14 +24,53 @@ def test_tomorrow_defaults_to_1030(monkeypatch: pytest.MonkeyPatch) -> None:
     assert parse_local_datetime_to_iso("tomorrow") == "2026-04-16T01:30:00+00:00"
 
 
-def test_plus_3d_defaults_to_1030(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_plus_3d_is_relative_duration_from_now(monkeypatch: pytest.MonkeyPatch) -> None:
     _freeze_now(monkeypatch, "2026-04-15T00:00:00+00:00")
-    assert parse_local_datetime_to_iso("+3d") == "2026-04-18T01:30:00+00:00"
+    assert parse_local_datetime_to_iso("+3d") == "2026-04-18T00:00:00+00:00"
 
 
 def test_plus_3d_with_time(monkeypatch: pytest.MonkeyPatch) -> None:
     _freeze_now(monkeypatch, "2026-04-15T00:00:00+00:00")
     assert parse_local_datetime_to_iso("+3d 09:00") == "2026-04-18T00:00:00+00:00"
+
+
+@pytest.mark.parametrize(
+    ("raw_value", "expected"),
+    [
+        ("+2m", "2026-06-08T06:22:00+00:00"),
+        ("+10m", "2026-06-08T06:30:00+00:00"),
+        ("+1h", "2026-06-08T07:20:00+00:00"),
+        ("+2d", "2026-06-10T06:20:00+00:00"),
+    ],
+)
+def test_compact_relative_offsets_resolve_from_local_now(
+    raw_value: str, expected: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _freeze_now(monkeypatch, "2026-06-08T06:20:00+00:00")  # 15:20 in Asia/Seoul
+    assert parse_local_datetime_to_iso(raw_value) == expected
+
+
+@pytest.mark.parametrize("raw_value", ["+0m", "-2m", "+1w", "+1mo"])
+def test_invalid_compact_relative_offsets_are_rejected(
+    raw_value: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    _freeze_now(monkeypatch, "2026-06-08T06:20:00+00:00")
+    with pytest.raises(ValueError, match="invalid datetime format"):
+        parse_local_datetime_to_iso(raw_value)
+
+
+def test_task_due_and_reminder_accept_compact_relative_offsets(monkeypatch: pytest.MonkeyPatch) -> None:
+    _freeze_now(monkeypatch, "2026-06-08T06:20:00+00:00")
+
+    due_minutes = parse_task_raw("-- Test\nd:+2m")
+    reminder_minutes = parse_task_raw("-- Test\nr:+10m")
+    due_hours = parse_task_raw("-- Test\nd:+1h")
+    reminder_days = parse_task_raw("-- Test\nr:+2d")
+
+    assert due_minutes["due_at"] == "2026-06-08T06:22:00+00:00"
+    assert reminder_minutes["remind_ats"] == ["2026-06-08T06:30:00+00:00"]
+    assert due_hours["due_at"] == "2026-06-08T07:20:00+00:00"
+    assert reminder_days["remind_ats"] == ["2026-06-10T06:20:00+00:00"]
 
 
 def test_time_only_defaults_to_today(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -121,6 +160,7 @@ def test_task_inline_dr_full_datetime_sets_due_and_reminder(monkeypatch: pytest.
         ("17:00", "2026-04-15T08:00:00+00:00"),
         ("today", "2026-04-15T01:30:00+00:00"),
         ("tomorrow", "2026-04-16T01:30:00+00:00"),
+        ("+3d", "2026-04-18T00:00:00+00:00"),
         ("+3d 09:00", "2026-04-18T00:00:00+00:00"),
     ],
 )
