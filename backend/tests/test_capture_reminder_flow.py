@@ -155,6 +155,44 @@ def test_standalone_reminder_relative_day_with_time(main_module, monkeypatch: py
     assert parsed["parsed"]["remind_ats"] == ["2026-04-22T16:00:00+00:00"]
 
 
+def test_capture_standalone_reminder_compact_relative_offset(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-06-08T06:20:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    payload = main_module.capture_item({"raw": "!! +2m testing"})
+
+    assert payload["ok"] is True
+    detail = main_module.get_reminder(payload["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["title"] == "testing"
+    assert detail["item"]["remind_at"] == "2026-06-08T06:22:00+00:00"
+
+
+def test_capture_standalone_reminder_compact_relative_offset_requires_title(
+    main_module, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    fixed_now = datetime.fromisoformat("2026-06-08T06:20:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    payload = main_module.capture_item({"raw": "!! +2m"})
+
+    assert payload["ok"] is False
+    assert payload["error"] == "title is required"
+
+
+def test_standalone_reminder_compact_hour_and_day_offsets(monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-06-08T06:20:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    hour = parse_capture_input("!! +1h check again")
+    day = parse_capture_input("!! +2d ask again")
+
+    assert hour["parsed"]["title"] == "check again"
+    assert hour["parsed"]["remind_ats"] == ["2026-06-08T07:20:00+00:00"]
+    assert day["parsed"]["title"] == "ask again"
+    assert day["parsed"]["remind_ats"] == ["2026-06-10T06:20:00+00:00"]
+
+
 def test_standalone_reminder_time_only_defaults_to_today(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
     fixed_now = datetime.fromisoformat("2026-04-19T14:00:00+00:00")
     monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)

@@ -109,6 +109,31 @@ def test_capture_task_absolute_reminder_datetime_multiline(main_module) -> None:
     assert detail["item"]["reminders"][0]["remind_at"] == "2026-06-20T04:15:00+00:00"
 
 
+def test_capture_task_due_compact_relative_offset(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-06-08T06:20:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    payload = main_module.capture_item({"raw": "-- Test\nd:+2m"})
+
+    assert payload["ok"] is True
+    detail = main_module.get_task(payload["id"])
+    assert detail["ok"] is True
+    assert detail["item"]["due_at"] == "2026-06-08T06:22:00+00:00"
+
+
+def test_capture_task_reminder_compact_relative_offset(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    fixed_now = datetime.fromisoformat("2026-06-08T06:20:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
+
+    payload = main_module.capture_item({"raw": "-- Test\nr:+10m"})
+
+    assert payload["ok"] is True
+    detail = main_module.get_task(payload["id"])
+    assert detail["ok"] is True
+    assert len(detail["item"]["reminders"]) == 1
+    assert detail["item"]["reminders"][0]["remind_at"] == "2026-06-08T06:30:00+00:00"
+
+
 def test_capture_task_due_date_multiline(main_module) -> None:
     raw = "-- due date only\nd:2026-06-20"
 
