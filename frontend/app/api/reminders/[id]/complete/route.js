@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function POST(_request, context) {
-  const id = context.params.id;
+  const { id } = await context.params;
   const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
   const res = await fetch(base + "/reminders/" + id + "/complete", {
     method: "POST",
