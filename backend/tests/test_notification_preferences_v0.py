@@ -76,6 +76,7 @@ def _record_pushover(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
         calls.append(kwargs)
         return {"attempted": True, "succeeded": True, "reason": None}
 
+    monkeypatch.setattr("app.integrations.pushover_client.send_pushover", fake_pushover)
     monkeypatch.setattr("app.integrations.pushover_client.send_pushover_emergency", fake_pushover)
     return calls
 
@@ -211,7 +212,15 @@ def test_fax_received_routes_by_notification_mode(
     web_push = _setup_web_push(main_module)
     pushover_calls = _record_pushover(monkeypatch)
 
-    sent = main_module.notify_fax_received({"fax_id": "fax-1", "event_id": "evt-1", "title": "Clinic fax"})
+    sent = main_module.notify_fax_received(
+        {
+            "fax_id": "fax-1",
+            "event_id": "evt-1",
+            "title": "Clinic fax",
+            "remote_number": "031",
+            "local_device": "ttyACM0",
+        }
+    )
 
     assert sent["ok"] is True
     assert sent["sent"] is True
@@ -220,7 +229,8 @@ def test_fax_received_routes_by_notification_mode(
     if expected_web:
         assert web_push.payloads[0]["title"] == "Fax received"
     if expected_pushover:
-        assert pushover_calls[0]["title"] == "KaosGdd fax received"
+        assert pushover_calls[0]["title"] == "KaosGdd Fax"
+        assert pushover_calls[0]["message"] == "Fax received from 031"
 
 
 @pytest.mark.parametrize(

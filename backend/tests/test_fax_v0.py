@@ -234,12 +234,23 @@ def test_incoming_raw_fax_converts_to_pdf_before_alert(main_module, tmp_path: Pa
     reminder = FakeReminderService()
     fax_service = _service_with_converter(main_module, FakeConverter(pdf), reminder)
 
-    ok, status, fax_id = fax_service.receive_incoming_raw(source_file_path=str(raw), remote_number="031")
+    ok, status, fax_id = fax_service.receive_incoming_raw(
+        source_file_path=str(raw),
+        remote_number="031",
+        local_device="ttyACM0",
+    )
 
     assert ok is True
     assert status == "received"
     assert pdf.exists()
-    assert reminder.received == [{"fax_id": fax_id, "title": "Received fax"}]
+    assert reminder.received == [
+        {
+            "fax_id": fax_id,
+            "title": "Received fax",
+            "remote_number": "031",
+            "local_device": "ttyACM0",
+        }
+    ]
     fax = fax_service.get_fax(fax_id)
     assert fax["pdf_file_path"] == str(pdf)
     assert fax["pdf_available"] is True

@@ -222,7 +222,12 @@ class FaxService:
             received_at=now_iso(),
         )
         if self.reminder_service is not None:
-            self.reminder_service.notify_fax_received(fax_id=fax_id, title=title)
+            self.reminder_service.notify_fax_received(
+                fax_id=fax_id,
+                title=title,
+                remote_number=remote_number,
+                local_device=local_device,
+            )
         return True, "received", fax_id
 
     def _create_outgoing_record(

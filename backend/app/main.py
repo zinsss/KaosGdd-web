@@ -1457,7 +1457,15 @@ def notify_fax_received(payload: dict):
         return {"ok": False, "error": "fax_id is required"}
     title = str(payload.get("title") or "").strip() or None
     event_id = str(payload.get("event_id") or "").strip() or None
-    sent = reminder_service.notify_fax_received(fax_id=fax_id, title=title, event_id=event_id)
+    remote_number = str(payload.get("remote_number") or "").strip() or None
+    local_device = str(payload.get("local_device") or "").strip() or None
+    sent = reminder_service.notify_fax_received(
+        fax_id=fax_id,
+        title=title,
+        event_id=event_id,
+        remote_number=remote_number,
+        local_device=local_device,
+    )
     return {"ok": True, "sent": bool(sent)}
 
 

@@ -441,7 +441,15 @@ class ReminderService:
 
         return pushed
 
-    def notify_fax_received(self, *, fax_id: str, title: str | None = None, event_id: str | None = None) -> bool:
+    def notify_fax_received(
+        self,
+        *,
+        fax_id: str,
+        title: str | None = None,
+        event_id: str | None = None,
+        remote_number: str | None = None,
+        local_device: str | None = None,
+    ) -> bool:
         return self._notify_fax_event(
             fax_id=fax_id,
             title=title,
@@ -449,6 +457,11 @@ class ReminderService:
             event_type="fax_received",
             channel=NOTIFICATION_CHANNEL_NORMAL,
             push_title=FaxNotificationText.RECEIVED_TITLE,
+            pushover_title=FaxNotificationText.RECEIVED_PUSHOVER_TITLE,
+            pushover_message=self._build_fax_received_pushover_message(
+                remote_number=remote_number,
+                local_device=local_device,
+            ),
         )
 
     def notify_fax_send_failed(
@@ -532,6 +545,15 @@ class ReminderService:
         )
         return self._fit_pushover_message(lines)
 
+    def _send_pushover_normal(self, *, title: str, message: str, url: str | None = None) -> None:
+        try:
+            result = pushover_client.send_pushover(title=title, message=message, url=url, monospace=True)
+        except Exception as exc:
+            logger.warning("pushover send exception: %s", exc)
+            return
+        if result.get("attempted") and not result.get("succeeded"):
+            logger.warning("pushover send failed: reason=%s", result.get("reason"))
+
     def _send_pushover_emergency(self, *, title: str, message: str, url: str | None = None) -> None:
         try:
             result = pushover_client.send_pushover_emergency(title=title, message=message, url=url, monospace=True)
@@ -584,7 +606,12 @@ class ReminderService:
         if self._notification_should_send_web_push(channel=channel, interactive=web_push_interactive):
             self._send_web_push(row=row, push_payload=push_payload)
         if self._notification_should_send_pushover(channel=channel):
-            self._send_pushover_emergency(
+            send_pushover = (
+                self._send_pushover_normal
+                if channel == NOTIFICATION_CHANNEL_NORMAL
+                else self._send_pushover_emergency
+            )
+            send_pushover(
                 title=pushover_title,
                 message=pushover_message,
                 url=push_payload.get("url"),
@@ -699,6 +726,15 @@ class ReminderService:
         if open_url:
             lines.extend(["Open", open_url])
         return self._fit_pushover_message(lines)
+
+    def _build_fax_received_pushover_message(
+        self,
+        *,
+        remote_number: str | None = None,
+        local_device: str | None = None,
+    ) -> str:
+        clean_remote = str(remote_number or "").strip() or "unknown"
+        return f"Fax received from {clean_remote}"
 
     def _format_pushover_field(self, label: str, value: str) -> str:
         return f"{label:<8} │ {value}"

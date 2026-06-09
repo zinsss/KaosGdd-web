@@ -34,6 +34,7 @@ class PushText:
 
 class FaxNotificationText:
     RECEIVED_TITLE = "Fax received"
+    RECEIVED_PUSHOVER_TITLE = "KaosGdd Fax"
     SEND_FAILED_TITLE = "Fax send failed"
     SEND_FAILED_PUSHOVER_TITLE = "KaosGdd fax failed"
     SEND_FAILED_HEADER = "FAX • Send failed"

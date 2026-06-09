@@ -294,6 +294,65 @@ def test_fax_send_failed_pushover_message_preserves_open_url_when_truncated(
     assert "...\nOpen\nhttps://kaos.test/fax" in calls[0]["message"]
 
 
+
+def test_fax_received_uses_normal_pushover_when_emergency_disabled(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    db_path = tmp_path / "fax-received-normal-pushover-test.db"
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_path}")
+    monkeypatch.setenv("PUSHOVER_ENABLED", "true")
+    monkeypatch.setenv("PUSHOVER_APP_TOKEN", "app-token")
+    monkeypatch.setenv("PUSHOVER_USER_KEY", "user-key")
+    monkeypatch.setenv("PUSHOVER_EMERGENCY_ENABLED", "false")
+    monkeypatch.setenv("APP_BASE_URL", "https://kaos.test")
+
+    import app.config as config_module
+    import app.core.db as db_module
+    import app.engine.reminder_service as reminder_service_module
+    import app.integrations.pushover_client as pushover_module
+    import app.main as main_module
+
+    importlib.reload(config_module)
+    importlib.reload(db_module)
+    importlib.reload(pushover_module)
+    importlib.reload(reminder_service_module)
+    importlib.reload(main_module)
+    main_module.init_schema_v0(main_module.engine)
+    main_module.update_notification_preferences({"mode": "pushover_only"})
+
+    calls = []
+
+    def record_pushover(**kwargs):
+        calls.append(kwargs)
+        return {"attempted": True, "succeeded": True, "reason": None}
+
+    def fail_emergency(**_kwargs):
+        raise AssertionError("received fax must use normal Pushover, not emergency")
+
+    monkeypatch.setattr("app.integrations.pushover_client.send_pushover", record_pushover)
+    monkeypatch.setattr("app.integrations.pushover_client.send_pushover_emergency", fail_emergency)
+
+    result = main_module.notify_fax_received(
+        {
+            "fax_id": "fax-normal-1",
+            "event_id": "fax-normal-event-1",
+            "remote_number": "031",
+            "local_device": "ttyACM0",
+        }
+    )
+
+    assert result["ok"] is True
+    assert result["sent"] is True
+    assert calls == [
+        {
+            "title": "KaosGdd Fax",
+            "message": "Fax received from 031",
+            "url": "https://kaos.test/fax",
+            "monospace": True,
+        }
+    ]
+
 def test_pushover_emergency_payload_includes_priority_retry_and_expire(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
