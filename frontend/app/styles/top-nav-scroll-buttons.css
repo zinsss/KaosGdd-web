@@ -1,0 +1,31 @@
+.topNavScrollHint {
+  appearance: none;
+  width: 32px;
+  height: 36px;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.topNavScrollHint[hidden] {
+  display: none;
+}
+
+.topNavScrollButton:hover,
+.topNavScrollButton:focus-visible {
+  color: var(--ctp-teal);
+  opacity: 1;
+  text-shadow:
+    0 0 9px var(--top-nav-scroll-hint-glow),
+    0 0 18px rgba(148, 226, 213, 0.34);
+}
+
+.topNavScrollHintLeft {
+  left: -4px;
+}
+
+.topNavScrollHintRight {
+  right: -4px;
+}
