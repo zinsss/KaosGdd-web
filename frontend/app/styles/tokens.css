@@ -50,6 +50,7 @@
   --ui-title: var(--ctp-yellow);
 
   --group-box-radius: 14px;
+  --app-card-gap: 8px;
 }
 
 @font-face {

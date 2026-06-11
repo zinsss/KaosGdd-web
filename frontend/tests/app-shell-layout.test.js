@@ -71,3 +71,30 @@ test("attention box is mounted as a standalone card below capture shell", async 
   assert.match(attentionBoxCss, /max-width:\s*var\(--app-column-max-width\);/);
   assert.match(attentionBoxCss, /\.attentionBoxClose\s*\{/);
 });
+
+test("major app card spacing uses the shared spacing token", async () => {
+  const tokensCss = await readFile(new URL("../app/styles/tokens.css", import.meta.url), "utf8");
+  const baseCss = await readFile(new URL("../app/styles/base.css", import.meta.url), "utf8");
+  const globalsCss = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const spacingCss = await readFile(new URL("../app/styles/spacing.css", import.meta.url), "utf8");
+  const attentionBoxCss = await readFile(new URL("../app/styles/attention-box.css", import.meta.url), "utf8");
+  const dashboardCss = await readFile(new URL("../app/styles/dashboard.css", import.meta.url), "utf8");
+
+  const pageCss = cssBlock(baseCss, ".page");
+  const panelCss = cssBlock(baseCss, ".panel");
+  const topShellCss = cssBlock(spacingCss, ".appShellTop");
+  const attentionBoxCssBlock = cssBlock(attentionBoxCss, ".attentionBox");
+  const dashboardPageCss = cssBlock(dashboardCss, ".dashboardPage");
+  const dashboardGridCss = cssBlock(dashboardCss, ".dashboardGrid");
+
+  assert.match(tokensCss, /--app-card-gap:\s*8px;/);
+  assert.match(globalsCss, /@import "\.\/styles\/spacing\.css";/);
+  assert.match(spacingCss, /--app-shell-content-gap:\s*var\(--app-card-gap\);/);
+  assert.match(topShellCss, /padding-bottom:\s*var\(--app-card-gap\);/);
+  assert.match(pageCss, /padding:\s*0 0 var\(--app-card-gap\);/);
+  assert.match(panelCss, /margin-bottom:\s*var\(--app-card-gap\);/);
+  assert.match(attentionBoxCssBlock, /margin:\s*0 auto var\(--app-card-gap\);/);
+  assert.match(dashboardPageCss, /gap:\s*var\(--app-card-gap\);/);
+  assert.match(dashboardGridCss, /gap:\s*var\(--app-card-gap\);/);
+  assert.match(dashboardCss, /\.dashboardPage > \.panel,\s*\.dashboardGrid > \.panel\s*\{\s*margin-bottom:\s*0;/);
+});

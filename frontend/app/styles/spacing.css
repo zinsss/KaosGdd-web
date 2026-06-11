@@ -1,0 +1,13 @@
+:root {
+  --app-shell-content-gap: var(--app-card-gap);
+}
+
+.appShellTop {
+  padding-bottom: var(--app-card-gap);
+}
+
+@media (max-width: 640px) {
+  .appShellTop {
+    padding-bottom: var(--app-card-gap);
+  }
+}
