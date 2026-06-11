@@ -3,6 +3,7 @@ import AppHeaderTitle from "../components/AppHeaderTitle";
 import TopCaptureBar from "../components/TopCaptureBar";
 import AppShellHeightObserver from "../components/AppShellHeightObserver";
 import DebugTapPanel from "../components/DebugTapPanel";
+import AttentionBox from "../components/AttentionBox";
 import TopNav from "../components/TopNav";
 import PwaBootstrap from "../components/pwa/PwaBootstrap";
 import { UI_STRINGS } from "../lib/strings";
@@ -47,6 +48,7 @@ export default function RootLayout({ children }) {
               <span className="appHeaderSubtitle">{UI_STRINGS.APP_HEADER_SUBTITLE}</span>
             </div>
             <TopNav />
+            <AttentionBox />
             <TopCaptureBar />
           </div>
         </header>
