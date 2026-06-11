@@ -1,7 +1,7 @@
 .attentionBox {
   width: 100%;
   max-width: var(--app-column-max-width);
-  margin: 0 auto 10px;
+  margin: 0 auto var(--app-card-gap);
   padding: 12px 14px;
   border: 1px solid rgba(243, 139, 168, 0.38);
   border-radius: var(--group-box-radius);
@@ -131,7 +131,6 @@
 
 @media (max-width: 640px) {
   .attentionBox {
-    margin-bottom: 8px;
     padding: 10px 12px;
   }
 
