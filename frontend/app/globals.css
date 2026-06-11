@@ -10,6 +10,7 @@
 
 @import "./styles/dashboard.css";
 @import "./styles/events.css";
+@import "./styles/spacing.css";
 
 .markdownBody {
   line-height: 1.5;
