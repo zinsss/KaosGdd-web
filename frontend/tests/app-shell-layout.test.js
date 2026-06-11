@@ -50,3 +50,17 @@ test("debug tap panel is gated by debugTap query parameter", async () => {
   assert.match(debugTapSource, /document\.addEventListener\("click", onEvent, true\)/);
   assert.match(debugTapSource, /document\.addEventListener\("touchstart", onEvent, true\)/);
 });
+
+test("attention box is mounted below primary navigation", async () => {
+  const layoutSource = await readFile(new URL("../app/layout.js", import.meta.url), "utf8");
+  const attentionBoxSource = await readFile(new URL("../components/AttentionBox.js", import.meta.url), "utf8");
+  const globalsCss = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const attentionBoxCss = await readFile(new URL("../app/styles/attention-box.css", import.meta.url), "utf8");
+
+  assert.match(layoutSource, /<TopNav \/>\s*<AttentionBox \/>\s*<TopCaptureBar \/>/);
+  assert.match(attentionBoxSource, /DISMISSED_SIGNATURE_KEY/);
+  assert.match(attentionBoxSource, /KAOSGDD_STATUS_CHANGED_EVENT/);
+  assert.match(globalsCss, /@import "\.\/styles\/attention-box\.css";/);
+  assert.match(attentionBoxCss, /\.attentionBox\s*\{/);
+  assert.match(attentionBoxCss, /\.attentionBoxClose\s*\{/);
+});
