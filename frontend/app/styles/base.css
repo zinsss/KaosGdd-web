@@ -38,7 +38,7 @@ body {
   width: calc(100% - (var(--app-column-edge-padding) * 2));
   max-width: var(--app-column-max-width);
   margin: 0 auto;
-  padding: 12px 0 16px;
+  padding: 0 0 var(--app-card-gap);
   overscroll-behavior: contain;
 }
 
@@ -46,7 +46,7 @@ body {
   border: 1px solid var(--ui-border);
   border-radius: var(--group-box-radius);
   padding: 14px;
-  margin-bottom: 12px;
+  margin-bottom: var(--app-card-gap);
   background: var(--ui-panel);
 }
 
@@ -72,10 +72,6 @@ body {
 
   body {
     overflow: hidden;
-  }
-
-  .page {
-    padding: 8px 0 12px;
   }
 
   .panel {
