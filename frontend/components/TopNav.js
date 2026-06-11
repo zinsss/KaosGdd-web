@@ -56,6 +56,16 @@ export default function TopNav() {
     });
   }, []);
 
+  const scrollNavigation = useCallback((direction) => {
+    const navScroll = navScrollRef.current;
+    if (!navScroll) return;
+
+    navScroll.scrollBy({
+      left: direction * Math.max(120, navScroll.clientWidth * 0.7),
+      behavior: "smooth",
+    });
+  }, []);
+
   useEffect(() => {
     const navScroll = navScrollRef.current;
     if (!navScroll) return undefined;
@@ -200,12 +210,24 @@ export default function TopNav() {
           </Link>
         </div>
       </nav>
-      <span className="topNavScrollHint topNavScrollHintLeft" aria-hidden="true">
+      <button
+        type="button"
+        className="topNavScrollHint topNavScrollButton topNavScrollHintLeft"
+        aria-label="Scroll navigation left"
+        onClick={() => scrollNavigation(-1)}
+        hidden={!scrollHints.left}
+      >
         ‹
-      </span>
-      <span className="topNavScrollHint topNavScrollHintRight" aria-hidden="true">
+      </button>
+      <button
+        type="button"
+        className="topNavScrollHint topNavScrollButton topNavScrollHintRight"
+        aria-label="Scroll navigation right"
+        onClick={() => scrollNavigation(1)}
+        hidden={!scrollHints.right}
+      >
         ›
-      </span>
+      </button>
     </div>
   );
 }
