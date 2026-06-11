@@ -15,10 +15,21 @@ test("calendar event count badge stays visually independent of selected and toda
   const selectedTodayAfterCss = cssBlock(eventsCss, ".eventCalCellSelectedToday::after");
   const todayAfterCss = cssBlock(eventsCss, ".eventCalCellToday::after");
 
+  const countChildrenCss = cssBlock(eventsCss, ".eventCalCount *");
+
+  assert.match(countCss, /width:\s*22px;/);
+  assert.match(countCss, /min-width:\s*22px;/);
+  assert.match(countCss, /height:\s*22px;/);
+  assert.match(countCss, /padding:\s*0;/);
+  assert.match(countCss, /border-radius:\s*999px;/);
   assert.match(countCss, /background:\s*var\(--ctp-yellow\);/);
   assert.match(countCss, /color:\s*var\(--ctp-crust\);/);
   assert.match(countCss, /box-shadow:\s*none;/);
   assert.doesNotMatch(countCss, /background:\s*var\(--ui-panel\);/);
+  assert.doesNotMatch(countCss, /padding:\s*1px 6px;/);
+  assert.match(countChildrenCss, /background:\s*transparent;/);
+  assert.match(countChildrenCss, /box-shadow:\s*none;/);
+  assert.match(countChildrenCss, /color:\s*inherit;/);
   assert.doesNotMatch(selectedCss, /eventCalCount/);
   assert.doesNotMatch(selectedTodayAfterCss, /box-shadow:/);
   assert.match(todayAfterCss, /left:\s*7px;/);
