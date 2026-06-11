@@ -9,6 +9,9 @@ export const DEFAULT_MODULE_NAV_STATUS = {
   has_note_draft: false,
   has_file_draft: false,
   has_attention_fax: false,
+  attention_task_count: 0,
+  attention_reminder_count: 0,
+  attention_fax_count: 0,
 };
 
 export function hasAppAttention(status) {
@@ -32,9 +35,15 @@ export function normalizeModuleNavStatus(payload) {
   const hasMissedReminders = Boolean(payload.has_missed_reminders);
   const hasUnackedReminders = Boolean(payload.has_unacked_reminders) || hasMissedReminders;
   const hasAttentionFax = Boolean(payload.has_attention_fax);
+  const attentionTaskCount = Math.max(0, Number(payload.attention_task_count) || 0);
+  const attentionReminderCount = Math.max(0, Number(payload.attention_reminder_count) || 0);
+  const attentionFaxCount = Math.max(0, Number(payload.attention_fax_count) || 0);
   const payloadStrongAttentionCount = Number(payload.strong_attention_count);
   const hasExplicitStrongAttentionCount = Number.isFinite(payloadStrongAttentionCount);
   const fallbackStrongAttentionCount =
+    attentionTaskCount +
+    attentionReminderCount +
+    attentionFaxCount ||
     (hasOverdueTasks ? 1 : 0) + (hasUnackedReminders ? 1 : 0) + (hasAttentionFax ? 1 : 0);
   const strongAttentionCount = hasExplicitStrongAttentionCount
     ? Math.max(0, payloadStrongAttentionCount)
@@ -53,5 +62,8 @@ export function normalizeModuleNavStatus(payload) {
     has_note_draft: Boolean(payload.has_note_draft),
     has_file_draft: Boolean(payload.has_file_draft),
     has_attention_fax: hasAttentionFax,
+    attention_task_count: attentionTaskCount,
+    attention_reminder_count: attentionReminderCount,
+    attention_fax_count: attentionFaxCount,
   };
 }
