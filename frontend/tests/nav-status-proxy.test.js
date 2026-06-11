@@ -1,7 +1,14 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { GET, isAttentionFax, isAttentionReminder, isOverdueTask } from "../app/api/nav-status/route.js";
+import {
+  GET,
+  isAttentionFax,
+  isAttentionReminder,
+  isOverdueTask,
+  summarizeAttentionFax,
+  summarizeAttentionReminder,
+} from "../app/api/nav-status/route.js";
 
 test("nav status treats active overdue tasks as overdue only when active and open", () => {
   const nowMs = Date.parse("2026-05-30T12:00:00Z");
@@ -34,6 +41,44 @@ test("nav status counts active received and failed faxes as attention only", () 
   assert.equal(isAttentionFax({ status: "active", direction: "incoming", fax_status: "received", saved_file_id: "file1" }), false);
 });
 
+test("nav status summarizes attention reminders and faxes for the shell box", () => {
+  assert.deepEqual(
+    summarizeAttentionReminder({
+      id: "r1",
+      title: "Call pharmacy",
+      state: "missed",
+      remind_at_display: "Today 09:30",
+    }),
+    {
+      id: "r1",
+      title: "Call pharmacy",
+      state: "missed",
+      when: "Today 09:30",
+      href: "/reminders?mode=fired&reminder_id=r1",
+    },
+  );
+
+  assert.deepEqual(
+    summarizeAttentionFax({
+      id: "fax1",
+      title: "Lab result",
+      status: "active",
+      direction: "incoming",
+      fax_status: "received",
+      received_at_display: "Today 10:00",
+    }),
+    {
+      id: "fax1",
+      title: "Lab result",
+      direction: "incoming",
+      fax_status: "received",
+      when: "Today 10:00",
+      error_message: "",
+      href: "/fax/fax1",
+    },
+  );
+});
+
 test("nav status proxy returns strong attention for fired unacked reminders", async () => {
   const originalBase = process.env.NEXT_PUBLIC_API_BASE;
   const originalFetch = globalThis.fetch;
@@ -47,7 +92,9 @@ test("nav status proxy returns strong attention for fired unacked reminders", as
       "http://backend.test/tasks": { items: [] },
       "http://backend.test/supplies?mode=active": { items: [] },
       "http://backend.test/reminders?mode=active": { items: [] },
-      "http://backend.test/reminders?mode=fired": { items: [{ id: "r1", state: "fired" }] },
+      "http://backend.test/reminders?mode=fired": {
+        items: [{ id: "r1", title: "Wake up", state: "fired", remind_at_display: "Today 07:00" }],
+      },
       "http://backend.test/fax?mode=active": { items: [] },
     };
 
@@ -66,6 +113,16 @@ test("nav status proxy returns strong attention for fired unacked reminders", as
     assert.equal(data.has_strong_attention, true);
     assert.equal(data.strong_attention_count, 1);
     assert.equal(data.has_missed_reminders, false);
+    assert.equal(data.attention_reminder_count, 1);
+    assert.deepEqual(data.attention_reminders, [
+      {
+        id: "r1",
+        title: "Wake up",
+        state: "fired",
+        when: "Today 07:00",
+        href: "/reminders?mode=fired&reminder_id=r1",
+      },
+    ]);
     assert.ok(calls.some(([url]) => url === "http://backend.test/reminders?mode=fired"));
   } finally {
     globalThis.fetch = originalFetch;
@@ -113,6 +170,14 @@ test("nav status proxy includes active fax attention in strong count", async () 
     assert.equal(data.has_attention_fax, true);
     assert.equal(data.has_strong_attention, true);
     assert.equal(data.strong_attention_count, 2);
+    assert.equal(data.attention_fax_count, 2);
+    assert.deepEqual(
+      data.attention_faxes.map((fax) => [fax.id, fax.fax_status, fax.href]),
+      [
+        ["fax1", "received", "/fax/fax1"],
+        ["fax2", "failed", "/fax/fax2"],
+      ],
+    );
   } finally {
     globalThis.fetch = originalFetch;
     if (originalBase === undefined) {
