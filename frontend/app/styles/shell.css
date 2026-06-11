@@ -93,6 +93,14 @@
   display: none;
 }
 
+.appShellAttentionSlot {
+  position: relative;
+  z-index: 30;
+  width: 100%;
+  background: var(--ui-bg);
+  padding: 0 var(--app-column-edge-padding);
+}
+
 .appShellMain {
   position: relative;
   z-index: 1;

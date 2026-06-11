@@ -7,6 +7,7 @@ const SHELL_HEIGHT_VAR = "--app-shell-measured-height";
 export default function AppShellHeightObserver() {
   useEffect(() => {
     const shell = document.querySelector(".appShellTop");
+    const attentionSlot = document.querySelector(".appShellAttentionSlot");
     if (!shell) return undefined;
 
     const rootStyle = document.documentElement.style;
@@ -15,7 +16,9 @@ export default function AppShellHeightObserver() {
 
     const writeMeasuredHeight = () => {
       rafId = 0;
-      const measuredHeight = `${Math.ceil(shell.getBoundingClientRect().height)}px`;
+      const shellHeight = shell.getBoundingClientRect().height;
+      const attentionHeight = attentionSlot?.getBoundingClientRect().height || 0;
+      const measuredHeight = `${Math.ceil(shellHeight + attentionHeight)}px`;
       if (measuredHeight === lastMeasuredHeight) return;
 
       lastMeasuredHeight = measuredHeight;
@@ -33,6 +36,9 @@ export default function AppShellHeightObserver() {
       ? null
       : new ResizeObserver(scheduleMeasuredHeight);
     resizeObserver?.observe(shell);
+    if (attentionSlot) {
+      resizeObserver?.observe(attentionSlot);
+    }
 
     window.addEventListener("resize", scheduleMeasuredHeight);
     window.visualViewport?.addEventListener("resize", scheduleMeasuredHeight);

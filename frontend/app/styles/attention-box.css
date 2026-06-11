@@ -1,10 +1,13 @@
 .attentionBox {
-  margin-top: 8px;
-  padding: 8px 10px;
+  width: 100%;
+  max-width: var(--app-column-max-width);
+  margin: 0 auto 10px;
+  padding: 12px 14px;
   border: 1px solid rgba(243, 139, 168, 0.38);
-  border-radius: 8px;
-  background: color-mix(in srgb, var(--ctp-surface0) 86%, var(--ctp-maroon));
+  border-radius: var(--group-box-radius);
+  background: color-mix(in srgb, var(--ui-panel) 88%, var(--ctp-maroon));
   color: var(--ui-text);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
 }
 
 .attentionBoxTopLine {
@@ -128,8 +131,8 @@
 
 @media (max-width: 640px) {
   .attentionBox {
-    margin-top: 7px;
-    padding: 7px 8px;
+    margin-bottom: 8px;
+    padding: 10px 12px;
   }
 
   .attentionBoxTopLine,

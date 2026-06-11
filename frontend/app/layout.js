@@ -48,10 +48,13 @@ export default function RootLayout({ children }) {
               <span className="appHeaderSubtitle">{UI_STRINGS.APP_HEADER_SUBTITLE}</span>
             </div>
             <TopNav />
-            <AttentionBox />
             <TopCaptureBar />
           </div>
         </header>
+
+        <div className="appShellAttentionSlot">
+          <AttentionBox />
+        </div>
 
         <main className="appShellMain">
           {children}

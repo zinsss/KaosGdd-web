@@ -51,16 +51,23 @@ test("debug tap panel is gated by debugTap query parameter", async () => {
   assert.match(debugTapSource, /document\.addEventListener\("touchstart", onEvent, true\)/);
 });
 
-test("attention box is mounted below primary navigation", async () => {
+test("attention box is mounted as a standalone card below capture shell", async () => {
   const layoutSource = await readFile(new URL("../app/layout.js", import.meta.url), "utf8");
+  const observerSource = await readFile(new URL("../components/AppShellHeightObserver.js", import.meta.url), "utf8");
   const attentionBoxSource = await readFile(new URL("../components/AttentionBox.js", import.meta.url), "utf8");
   const globalsCss = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+  const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
   const attentionBoxCss = await readFile(new URL("../app/styles/attention-box.css", import.meta.url), "utf8");
 
-  assert.match(layoutSource, /<TopNav \/>\s*<AttentionBox \/>\s*<TopCaptureBar \/>/);
+  assert.match(layoutSource, /<TopNav \/>\s*<TopCaptureBar \/>/);
+  assert.doesNotMatch(layoutSource, /<TopNav \/>\s*<AttentionBox \/>\s*<TopCaptureBar \/>/);
+  assert.match(layoutSource, /<\/header>\s*<div className="appShellAttentionSlot">\s*<AttentionBox \/>\s*<\/div>\s*<main className="appShellMain">/);
+  assert.match(observerSource, /\.appShellAttentionSlot/);
+  assert.match(observerSource, /shellHeight \+ attentionHeight/);
   assert.match(attentionBoxSource, /DISMISSED_SIGNATURE_KEY/);
   assert.match(attentionBoxSource, /KAOSGDD_STATUS_CHANGED_EVENT/);
   assert.match(globalsCss, /@import "\.\/styles\/attention-box\.css";/);
-  assert.match(attentionBoxCss, /\.attentionBox\s*\{/);
+  assert.match(shellCss, /\.appShellAttentionSlot\s*\{/);
+  assert.match(attentionBoxCss, /max-width:\s*var\(--app-column-max-width\);/);
   assert.match(attentionBoxCss, /\.attentionBoxClose\s*\{/);
 });
