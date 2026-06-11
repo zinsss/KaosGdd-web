@@ -83,12 +83,13 @@ body.eventsPageActive .appShellMain {
 .eventCalCellToday::after {
   content: "";
   position: absolute;
-  right: 5px;
+  left: 7px;
   bottom: 5px;
   width: 5px;
   height: 5px;
   border-radius: 999px;
   background: var(--ctp-rosewater);
+  pointer-events: none;
 }
 .eventCalCellTodayOnly {
   background: rgba(245, 194, 231, 0.035);
@@ -102,7 +103,6 @@ body.eventsPageActive .appShellMain {
 }
 .eventCalCellSelectedToday::after {
   background: var(--ctp-rosewater);
-  box-shadow: 0 0 0 2px rgba(17, 17, 27, 0.82);
 }
 .eventCalDayNumber { color: var(--ui-text); }
 .eventCalDaySun { color: var(--ctp-maroon); }
@@ -154,13 +154,19 @@ body.eventsPageActive .appShellMain {
 .eventCalCount {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 3px;
+  min-width: 19px;
+  height: 19px;
   font-size: 17px;
   line-height: 1;
   border-radius: 99px;
-  background: var(--ui-panel);
-  color: var(--ctp-yellow);
-  padding: 1px 5px;
+  background: var(--ctp-yellow);
+  color: var(--ctp-crust);
+  padding: 1px 6px;
+  box-shadow: none;
+  position: relative;
+  z-index: 1;
 }
 
 .eventMonthNavButton {
