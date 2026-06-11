@@ -13,8 +13,9 @@ function normalizeItems(items) {
   return Array.isArray(items) ? items.filter((item) => item && typeof item === "object") : [];
 }
 
-function buildAttentionSignature(reminders, faxes) {
+function buildAttentionSignature(tasks, reminders, faxes) {
   const parts = [
+    ...tasks.map((item) => `t:${item.id}:${item.state || ""}:${item.when || ""}`),
     ...reminders.map((item) => `r:${item.id}:${item.state || ""}:${item.when || ""}`),
     ...faxes.map((item) => `f:${item.id}:${item.direction || ""}:${item.fax_status || ""}:${item.when || ""}`),
   ];
@@ -22,14 +23,34 @@ function buildAttentionSignature(reminders, faxes) {
   return parts.sort().join("|");
 }
 
-function getTotalCount(payload, reminders, faxes) {
-  const reminderCount = Number(payload?.attention_reminder_count);
-  const faxCount = Number(payload?.attention_fax_count);
+function getItemCount(payload, key, items) {
+  const count = Number(payload?.[key]);
+  return Number.isFinite(count) ? Math.max(0, count) : items.length;
+}
 
-  return {
-    reminders: Number.isFinite(reminderCount) ? Math.max(0, reminderCount) : reminders.length,
-    faxes: Number.isFinite(faxCount) ? Math.max(0, faxCount) : faxes.length,
+function getTotalCount(payload, tasks, reminders, faxes) {
+  const counts = {
+    tasks: getItemCount(payload, "attention_task_count", tasks),
+    reminders: getItemCount(payload, "attention_reminder_count", reminders),
+    faxes: getItemCount(payload, "attention_fax_count", faxes),
   };
+  const payloadStrongAttentionCount = Number(payload?.strong_attention_count);
+  const strong = Number.isFinite(payloadStrongAttentionCount)
+    ? Math.max(0, payloadStrongAttentionCount)
+    : counts.tasks + counts.reminders + counts.faxes;
+
+  return { ...counts, strong };
+}
+
+function formatCount(label, count) {
+  if (!count) return null;
+  return `${count} ${label}${count === 1 ? "" : "s"}`;
+}
+
+function formatCountLine(counts) {
+  return [formatCount("task", counts.tasks), formatCount("reminder", counts.reminders), formatCount("fax", counts.faxes)]
+    .filter(Boolean)
+    .join(" / ");
 }
 
 function getReminderStateLabel(state) {
@@ -48,7 +69,12 @@ function AttentionPill({ tone, children }) {
 
 export default function AttentionBox() {
   const pathname = usePathname();
-  const [attention, setAttention] = useState({ reminders: [], faxes: [], counts: { reminders: 0, faxes: 0 } });
+  const [attention, setAttention] = useState({
+    tasks: [],
+    reminders: [],
+    faxes: [],
+    counts: { tasks: 0, reminders: 0, faxes: 0, strong: 0 },
+  });
   const [dismissedSignature, setDismissedSignature] = useState("");
 
   const loadAttention = useCallback(async () => {
@@ -56,13 +82,15 @@ export default function AttentionBox() {
       const res = await fetch("/api/nav-status", { cache: "no-store" });
       if (!res.ok) return;
       const data = await res.json();
+      const tasks = normalizeItems(data?.attention_tasks);
       const reminders = normalizeItems(data?.attention_reminders);
       const faxes = normalizeItems(data?.attention_faxes);
 
       setAttention({
+        tasks,
         reminders,
         faxes,
-        counts: getTotalCount(data, reminders, faxes),
+        counts: getTotalCount(data, tasks, reminders, faxes),
       });
     } catch {
       return;
@@ -107,16 +135,19 @@ export default function AttentionBox() {
   }, [loadAttention]);
 
   const signature = useMemo(
-    () => buildAttentionSignature(attention.reminders, attention.faxes),
-    [attention.reminders, attention.faxes],
+    () => buildAttentionSignature(attention.tasks, attention.reminders, attention.faxes),
+    [attention.tasks, attention.reminders, attention.faxes],
   );
 
-  const totalCount = attention.counts.reminders + attention.counts.faxes;
-  const visibleItems = [...attention.reminders, ...attention.faxes];
-  const hiddenCount = Math.max(0, totalCount - visibleItems.length);
-  const moreHref = attention.counts.reminders > attention.reminders.length ? "/reminders?mode=fired" : "/fax";
+  const visibleItems = [...attention.tasks, ...attention.reminders, ...attention.faxes];
+  const hiddenCount = Math.max(0, attention.counts.strong - visibleItems.length);
+  const moreHref = attention.counts.tasks > attention.tasks.length
+    ? "/tasks"
+    : attention.counts.reminders > attention.reminders.length
+      ? "/reminders?mode=fired"
+      : "/fax";
 
-  if (!signature || totalCount <= 0 || dismissedSignature === signature) {
+  if (attention.counts.strong <= 0 || !signature || dismissedSignature === signature) {
     return null;
   }
 
@@ -134,11 +165,7 @@ export default function AttentionBox() {
       <div className="attentionBoxTopLine">
         <div className="attentionBoxTitle">
           <span>Needs attention</span>
-          <span className="attentionBoxCounts">
-            {attention.counts.reminders ? `${attention.counts.reminders} reminder${attention.counts.reminders === 1 ? "" : "s"}` : null}
-            {attention.counts.reminders && attention.counts.faxes ? " / " : null}
-            {attention.counts.faxes ? `${attention.counts.faxes} fax${attention.counts.faxes === 1 ? "" : "es"}` : null}
-          </span>
+          <span className="attentionBoxCounts">{formatCountLine(attention.counts)}</span>
         </div>
         <button className="attentionBoxClose" type="button" onClick={dismiss} aria-label="Close attention box">
           Close
@@ -146,6 +173,14 @@ export default function AttentionBox() {
       </div>
 
       <div className="attentionBoxList">
+        {attention.tasks.map((item) => (
+          <Link className="attentionBoxItem" href={item.href || "/tasks"} key={`task-${item.id}`}>
+            <AttentionPill tone="Task">overdue</AttentionPill>
+            <span className="attentionBoxItemTitle">{item.title || "Task"}</span>
+            {item.when ? <span className="attentionBoxItemMeta">{item.when}</span> : null}
+          </Link>
+        ))}
+
         {attention.reminders.map((item) => (
           <Link className="attentionBoxItem" href={item.href || "/reminders?mode=fired"} key={`reminder-${item.id}`}>
             <AttentionPill tone="Reminder">{getReminderStateLabel(item.state)}</AttentionPill>
