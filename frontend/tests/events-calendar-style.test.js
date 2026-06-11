@@ -8,28 +8,32 @@ function cssBlock(source, selector) {
   return match ? match[0] : "";
 }
 
-test("calendar event count badge stays visually independent of selected and today states", async () => {
+test("calendar event count renders as a plain yellow glyph", async () => {
   const eventsCss = await readFile(new URL("../app/styles/events.css", import.meta.url), "utf8");
   const countCss = cssBlock(eventsCss, ".eventCalCount");
   const selectedCss = cssBlock(eventsCss, ".eventCalCellSelected");
   const selectedTodayAfterCss = cssBlock(eventsCss, ".eventCalCellSelectedToday::after");
   const todayAfterCss = cssBlock(eventsCss, ".eventCalCellToday::after");
-
   const countChildrenCss = cssBlock(eventsCss, ".eventCalCount *");
 
-  assert.match(countCss, /width:\s*22px;/);
-  assert.match(countCss, /min-width:\s*22px;/);
-  assert.match(countCss, /height:\s*22px;/);
+  assert.match(countCss, /display:\s*inline-flex;/);
+  assert.match(countCss, /min-width:\s*1\.25em;/);
   assert.match(countCss, /padding:\s*0;/);
-  assert.match(countCss, /border-radius:\s*999px;/);
-  assert.match(countCss, /background:\s*var\(--ctp-yellow\);/);
-  assert.match(countCss, /color:\s*var\(--ctp-crust\);/);
+  assert.match(countCss, /border:\s*0;/);
+  assert.match(countCss, /border-radius:\s*0;/);
+  assert.match(countCss, /background:\s*transparent;/);
+  assert.match(countCss, /color:\s*var\(--ctp-yellow\);/);
   assert.match(countCss, /box-shadow:\s*none;/);
-  assert.doesNotMatch(countCss, /background:\s*var\(--ui-panel\);/);
-  assert.doesNotMatch(countCss, /padding:\s*1px 6px;/);
+  assert.match(countCss, /text-shadow:\s*none;/);
+  assert.doesNotMatch(countCss, /width:\s*22px;/);
+  assert.doesNotMatch(countCss, /height:\s*22px;/);
+  assert.doesNotMatch(countCss, /background:\s*var\(--ctp-yellow\);/);
+  assert.doesNotMatch(countCss, /color:\s*var\(--ctp-crust\);/);
   assert.match(countChildrenCss, /background:\s*transparent;/);
+  assert.match(countChildrenCss, /border:\s*0;/);
   assert.match(countChildrenCss, /box-shadow:\s*none;/);
   assert.match(countChildrenCss, /color:\s*inherit;/);
+  assert.match(countChildrenCss, /text-shadow:\s*none;/);
   assert.doesNotMatch(selectedCss, /eventCalCount/);
   assert.doesNotMatch(selectedTodayAfterCss, /box-shadow:/);
   assert.match(todayAfterCss, /left:\s*7px;/);
