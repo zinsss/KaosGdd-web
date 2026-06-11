@@ -1,0 +1,163 @@
+.attentionBox {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(243, 139, 168, 0.38);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ctp-surface0) 86%, var(--ctp-maroon));
+  color: var(--ui-text);
+}
+
+.attentionBoxTopLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+
+.attentionBoxTitle {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  color: var(--ctp-maroon);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.attentionBoxCounts {
+  color: var(--ui-text-dim);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.attentionBoxClose {
+  appearance: none;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ui-text-dim);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.attentionBoxClose:hover,
+.attentionBoxClose:focus {
+  color: var(--ui-text);
+  background: rgba(205, 214, 244, 0.08);
+}
+
+.attentionBoxList {
+  display: grid;
+  gap: 4px;
+  margin-top: 7px;
+}
+
+.attentionBoxItem {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 28px;
+  color: var(--ui-text);
+  font-size: 12px;
+  line-height: 1.25;
+  text-decoration: none;
+}
+
+.attentionBoxItem:visited {
+  color: var(--ui-text);
+}
+
+.attentionBoxItem:hover .attentionBoxItemTitle,
+.attentionBoxItem:focus .attentionBoxItemTitle {
+  color: var(--ctp-lavender);
+}
+
+.attentionBoxPill {
+  flex: 0 0 auto;
+  min-width: 62px;
+  border-radius: 999px;
+  padding: 3px 7px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.attentionBoxPillReminder {
+  background: rgba(243, 139, 168, 0.16);
+  color: var(--ctp-maroon);
+}
+
+.attentionBoxPillFax {
+  background: rgba(250, 179, 135, 0.16);
+  color: var(--ctp-peach);
+}
+
+.attentionBoxItemTitle {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 650;
+}
+
+.attentionBoxItemMeta {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ui-text-dim);
+}
+
+.attentionBoxError {
+  color: var(--ctp-red);
+}
+
+.attentionBoxMore {
+  color: var(--ui-text-dim);
+}
+
+@media (max-width: 640px) {
+  .attentionBox {
+    margin-top: 7px;
+    padding: 7px 8px;
+  }
+
+  .attentionBoxTopLine,
+  .attentionBoxTitle {
+    align-items: flex-start;
+  }
+
+  .attentionBoxTitle {
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .attentionBoxList {
+    gap: 5px;
+  }
+
+  .attentionBoxItem {
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 5px 7px;
+  }
+
+  .attentionBoxItemTitle {
+    flex: 1 1 calc(100% - 72px);
+  }
+
+  .attentionBoxItemMeta {
+    flex-basis: 100%;
+    padding-left: 69px;
+  }
+}

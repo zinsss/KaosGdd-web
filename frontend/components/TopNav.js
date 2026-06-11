@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { KAOSGDD_STATUS_CHANGED_EVENT } from "../lib/app-status-events";
 import { UI_STRINGS } from "../lib/strings";
 import { DEFAULT_MODULE_NAV_STATUS, normalizeModuleNavStatus } from "../lib/module-nav-status";
 
@@ -101,10 +102,16 @@ export default function TopNav() {
       loadNavStatus();
     }
 
+    function onStatusChanged() {
+      loadNavStatus();
+    }
+
     window.addEventListener("kaosgdd:capture-created", onCaptureCreated);
+    window.addEventListener(KAOSGDD_STATUS_CHANGED_EVENT, onStatusChanged);
     return () => {
       isMounted = false;
       window.removeEventListener("kaosgdd:capture-created", onCaptureCreated);
+      window.removeEventListener(KAOSGDD_STATUS_CHANGED_EVENT, onStatusChanged);
     };
   }, [pathname]);
 

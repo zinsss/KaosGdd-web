@@ -6,6 +6,7 @@ import { DEFAULT_MODULE_NAV_STATUS } from "../../../lib/module-nav-status.js";
 const ATTENTION_REMINDER_STATES = new Set(["fired", "missed"]);
 const ATTENTION_OUTGOING_FAX_STATUSES = new Set(["failed", "conversion_failed"]);
 const INACTIVE_TASK_STATUSES = new Set(["archived", "removed"]);
+const ATTENTION_ITEM_LIMIT = 6;
 
 function isActiveTask(task) {
   if (!task || typeof task !== "object") return false;
@@ -38,6 +39,35 @@ export function isAttentionReminder(reminder) {
   return ATTENTION_REMINDER_STATES.has(getReminderState(reminder));
 }
 
+function getReminderWhen(reminder) {
+  return (
+    reminder?.snoozed_until_display ||
+    reminder?.remind_at_display ||
+    reminder?.last_fired_at_display ||
+    reminder?.snoozed_until ||
+    reminder?.remind_at ||
+    reminder?.last_fired_at ||
+    reminder?.created_at_display ||
+    reminder?.created_at ||
+    ""
+  );
+}
+
+export function summarizeAttentionReminder(reminder) {
+  if (!isAttentionReminder(reminder)) return null;
+
+  const id = String(reminder.id || "").trim();
+  if (!id) return null;
+
+  return {
+    id,
+    title: String(reminder.title || "Reminder").trim() || "Reminder",
+    state: getReminderState(reminder),
+    when: String(getReminderWhen(reminder) || "").trim(),
+    href: `/reminders?mode=fired&reminder_id=${encodeURIComponent(id)}`,
+  };
+}
+
 function getFaxStatus(fax) {
   return String(fax?.fax_status || fax?.status || "").toLowerCase();
 }
@@ -57,6 +87,42 @@ export function isAttentionFax(fax) {
   if (direction === "incoming") return status === "received";
   if (direction === "outgoing") return ATTENTION_OUTGOING_FAX_STATUSES.has(status);
   return false;
+}
+
+function getFaxWhen(fax) {
+  return (
+    fax?.received_at_display ||
+    fax?.sent_at_display ||
+    fax?.created_at_display ||
+    fax?.received_at ||
+    fax?.sent_at ||
+    fax?.created_at ||
+    ""
+  );
+}
+
+export function summarizeAttentionFax(fax) {
+  if (!isAttentionFax(fax)) return null;
+
+  const id = String(fax.id || "").trim();
+  if (!id) return null;
+
+  return {
+    id,
+    title: String(fax.title || "Fax").trim() || "Fax",
+    direction: getFaxDirection(fax),
+    fax_status: getFaxStatus(fax),
+    when: String(getFaxWhen(fax) || "").trim(),
+    error_message: String(fax.error_message || "").trim(),
+    href: `/fax/${encodeURIComponent(id)}`,
+  };
+}
+
+function summarizeAttentionItems(items, summarize) {
+  return items
+    .map((item) => summarize(item))
+    .filter(Boolean)
+    .slice(0, ATTENTION_ITEM_LIMIT);
 }
 
 function getTodayYmdInAppTimezone() {
@@ -113,6 +179,8 @@ export async function GET() {
     const overdueTaskCount = tasks.filter((task) => isOverdueTask(task, nowMs)).length;
     const attentionReminderCount = reminders.filter((reminder) => isAttentionReminder(reminder)).length;
     const attentionFaxCount = faxes.filter((fax) => isAttentionFax(fax)).length;
+    const attentionReminders = summarizeAttentionItems(reminders, summarizeAttentionReminder);
+    const attentionFaxes = summarizeAttentionItems(faxes, summarizeAttentionFax);
     const hasOverdueTasks = overdueTaskCount > 0;
     const hasUnackedReminders = attentionReminderCount > 0;
     const hasAttentionFax = attentionFaxCount > 0;
@@ -129,6 +197,10 @@ export async function GET() {
       has_note_draft: false,
       has_file_draft: false,
       has_attention_fax: hasAttentionFax,
+      attention_reminder_count: attentionReminderCount,
+      attention_fax_count: attentionFaxCount,
+      attention_reminders: attentionReminders,
+      attention_faxes: attentionFaxes,
     });
   } catch {
     return NextResponse.json({ ...DEFAULT_MODULE_NAV_STATUS });
