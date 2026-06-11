@@ -1,6 +1,6 @@
 .dashboardPage {
   display: grid;
-  gap: 0;
+  gap: var(--app-card-gap);
 }
 
 .dashboardHero {
@@ -23,7 +23,12 @@
 .dashboardGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: var(--app-card-gap);
+}
+
+.dashboardPage > .panel,
+.dashboardGrid > .panel {
+  margin-bottom: 0;
 }
 
 .dashboardList {
