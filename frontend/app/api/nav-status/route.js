@@ -6,7 +6,6 @@ import { DEFAULT_MODULE_NAV_STATUS } from "../../../lib/module-nav-status.js";
 const ATTENTION_REMINDER_STATES = new Set(["fired", "missed"]);
 const ATTENTION_OUTGOING_FAX_STATUSES = new Set(["failed", "conversion_failed"]);
 const INACTIVE_TASK_STATUSES = new Set(["archived", "removed"]);
-const ATTENTION_ITEM_LIMIT = 6;
 
 function isActiveTask(task) {
   if (!task || typeof task !== "object") return false;
@@ -27,6 +26,25 @@ export function isOverdueTask(task, nowMs) {
   if (Number.isNaN(dueAtMs)) return false;
 
   return dueAtMs < nowMs;
+}
+
+function getTaskWhen(task) {
+  return task?.due_at_display || task?.due_at || task?.updated_at_display || task?.updated_at || "";
+}
+
+export function summarizeAttentionTask(task, nowMs = Date.now()) {
+  if (!isOverdueTask(task, nowMs)) return null;
+
+  const id = String(task.id || "").trim();
+  if (!id) return null;
+
+  return {
+    id,
+    title: String(task.title || "Task").trim() || "Task",
+    state: "overdue",
+    when: String(getTaskWhen(task) || "").trim(),
+    href: `/tasks/${encodeURIComponent(id)}`,
+  };
 }
 
 function getReminderState(reminder) {
@@ -119,10 +137,7 @@ export function summarizeAttentionFax(fax) {
 }
 
 function summarizeAttentionItems(items, summarize) {
-  return items
-    .map((item) => summarize(item))
-    .filter(Boolean)
-    .slice(0, ATTENTION_ITEM_LIMIT);
+  return items.map((item) => summarize(item)).filter(Boolean);
 }
 
 function getTodayYmdInAppTimezone() {
@@ -176,15 +191,16 @@ export async function GET() {
     const reminders = [...activeReminders, ...firedReminders];
     const supplies = Array.isArray(suppliesData?.items) ? suppliesData.items : [];
     const faxes = Array.isArray(faxData?.items) ? faxData.items : [];
-    const overdueTaskCount = tasks.filter((task) => isOverdueTask(task, nowMs)).length;
-    const attentionReminderCount = reminders.filter((reminder) => isAttentionReminder(reminder)).length;
-    const attentionFaxCount = faxes.filter((fax) => isAttentionFax(fax)).length;
+    const attentionTasks = summarizeAttentionItems(tasks, (task) => summarizeAttentionTask(task, nowMs));
     const attentionReminders = summarizeAttentionItems(reminders, summarizeAttentionReminder);
     const attentionFaxes = summarizeAttentionItems(faxes, summarizeAttentionFax);
-    const hasOverdueTasks = overdueTaskCount > 0;
+    const attentionTaskCount = attentionTasks.length;
+    const attentionReminderCount = attentionReminders.length;
+    const attentionFaxCount = attentionFaxes.length;
+    const hasOverdueTasks = attentionTaskCount > 0;
     const hasUnackedReminders = attentionReminderCount > 0;
     const hasAttentionFax = attentionFaxCount > 0;
-    const strongAttentionCount = overdueTaskCount + attentionReminderCount + attentionFaxCount;
+    const strongAttentionCount = attentionTaskCount + attentionReminderCount + attentionFaxCount;
 
     return NextResponse.json({
       has_overdue_tasks: hasOverdueTasks,
@@ -197,8 +213,10 @@ export async function GET() {
       has_note_draft: false,
       has_file_draft: false,
       has_attention_fax: hasAttentionFax,
+      attention_task_count: attentionTaskCount,
       attention_reminder_count: attentionReminderCount,
       attention_fax_count: attentionFaxCount,
+      attention_tasks: attentionTasks,
       attention_reminders: attentionReminders,
       attention_faxes: attentionFaxes,
     });
