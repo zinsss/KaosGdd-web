@@ -11,6 +11,7 @@
 @import "./styles/dashboard.css";
 @import "./styles/events.css";
 @import "./styles/spacing.css";
+@import "./styles/top-nav-scroll-buttons.css";
 
 .markdownBody {
   line-height: 1.5;
@@ -22,8 +23,7 @@
   line-height: 1.2;
 }
 
-.markdownBody ul,
-.markdownBody ol {
+.markdownBody ul, .markdownBody ol {
   padding-left: 1.2rem;
 }
 
