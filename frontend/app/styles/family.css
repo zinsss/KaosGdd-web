@@ -73,7 +73,7 @@
   position: relative;
   width: 100%;
   max-width: none;
-  padding: 10px 38px 28px 12px;
+  padding: 10px 38px 8px 12px;
   border-radius: 8px;
   background: #ffd8e5;
   color: #4b2536;
@@ -114,20 +114,23 @@
   font-weight: 800;
 }
 
+.familyBubbleFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 6px;
+}
+
 .familyBubbleTime {
-  display: block;
-  margin-top: 5px;
-  color: rgba(78, 37, 54, 0.58);
-  font-size: 11px;
-  text-align: right;
+  color: rgba(78, 37, 54, 0.48);
+  font-size: 0.76rem;
 }
 
 .familyBubbleDeleteIcon,
 .familyBubbleEditIcon {
   appearance: none;
   border: 0;
-  position: absolute;
-  right: 8px;
   width: 22px;
   height: 22px;
   border-radius: 999px;
@@ -141,12 +144,13 @@
 }
 
 .familyBubbleDeleteIcon {
+  position: absolute;
   top: 7px;
+  right: 8px;
   font-weight: 800;
 }
 
 .familyBubbleEditIcon {
-  bottom: 7px;
   font-size: 16px;
 }
 
