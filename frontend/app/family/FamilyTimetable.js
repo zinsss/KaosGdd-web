@@ -218,17 +218,6 @@ export default function FamilyTimetable() {
     [entries],
   );
 
-  function addTimetableEntry(dayOfWeek, startMinutes) {
-    const title = window.prompt("일정 이름");
-    if (!title || !title.trim()) return;
-
-    const nextEntry = createDefaultTimetableEntry({ dayOfWeek, startMinutes, title: title.trim() });
-    setEntries((current) => sortTimetableEntries([...current, nextEntry]));
-    setEditingEntryId(nextEntry.id);
-    setEditorDraft(entryToEditor(nextEntry));
-    setEditorError("");
-  }
-
   function startNewEntry() {
     setEditingEntryId(null);
     setEditorDraft(createNewScheduleDraft());
@@ -360,19 +349,14 @@ export default function FamilyTimetable() {
                 </div>
               ))}
 
-              {Array.from({ length: TIMETABLE_TOTAL_SLOTS }, (_, index) => {
-                const startMinutes = TIMETABLE_START_HOUR * 60 + index * TIMETABLE_SLOT_MINUTES;
-                return (
-                  <button
-                    className="familyTimetableSlot"
-                    type="button"
-                    aria-label={`${day.label} ${minutesToTime(startMinutes)} 일정 추가`}
-                    key={startMinutes}
-                    style={{ top: `${index * TIMETABLE_SLOT_PIXEL_HEIGHT}px` }}
-                    onClick={() => addTimetableEntry(day.dayOfWeek, startMinutes)}
-                  />
-                );
-              })}
+              {Array.from({ length: TIMETABLE_TOTAL_SLOTS }, (_, index) => (
+                <span
+                  className="familyTimetableSlot"
+                  aria-hidden="true"
+                  key={TIMETABLE_START_HOUR * 60 + index * TIMETABLE_SLOT_MINUTES}
+                  style={{ top: `${index * TIMETABLE_SLOT_PIXEL_HEIGHT}px` }}
+                />
+              ))}
 
               {visibleEntries
                 .filter((entry) => entry.dayOfWeek === day.dayOfWeek)
