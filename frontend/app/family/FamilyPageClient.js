@@ -42,6 +42,39 @@ export function parseChecklistInput(value) {
   };
 }
 
+function buildCheckedStateQueues(items) {
+  const queues = new Map();
+
+  for (const item of items || []) {
+    const text = String(item?.text || "");
+    if (!text) continue;
+    const queue = queues.get(text) || [];
+    queue.push({ id: item.id || createId(), checked: Boolean(item.checked) });
+    queues.set(text, queue);
+  }
+
+  return queues;
+}
+
+export function applyChecklistEdit(parsedChecklist, existingItems = []) {
+  const checkedStateQueues = buildCheckedStateQueues(existingItems);
+
+  return parsedChecklist.items.map((item) => {
+    const queue = checkedStateQueues.get(item.text) || [];
+    const previous = queue.shift();
+
+    return {
+      id: previous?.id || item.id || createId(),
+      text: item.text,
+      checked: previous ? previous.checked : false,
+    };
+  });
+}
+
+function checklistToDraft(message) {
+  return [message.title, ...(message.items || []).map((item) => item.text)].filter(Boolean).join("\n");
+}
+
 function getInputPlaceholder(checklistMode) {
   if (checklistMode) {
     return "첫 줄은 제목, 다음 줄부터 목록";
@@ -67,36 +100,54 @@ function loadMessages() {
   }
 }
 
-function MessageBubble({ message, onToggleChecklistItem }) {
-  if (message.type === "checklist") {
-    return (
-      <article className="familyBubble familyBubbleChecklist">
-        <div className="familyBubbleTitle">{message.title}</div>
-        <div className="familyChecklistRows">
-          {message.items.map((item) => (
-            <button
-              className={`familyChecklistRow${item.checked ? " familyChecklistRowChecked" : ""}`}
-              key={item.id}
-              type="button"
-              onClick={() => onToggleChecklistItem(message.id, item.id)}
-            >
-              <span className="familyChecklistBox" aria-hidden="true">
-                {item.checked ? "☑" : "☐"}
-              </span>
-              <span className="familyChecklistText">{item.text}</span>
-            </button>
-          ))}
-        </div>
-        <time className="familyBubbleTime">{message.createdAt}</time>
-      </article>
-    );
-  }
+function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onToggleChecklistItem }) {
+  const isChecklist = message.type === "checklist";
+  const deleteLabel = isChecklist ? "체크리스트 삭제" : "메모 삭제";
+  const editLabel = isChecklist ? "체크리스트 수정" : "메모 수정";
 
   return (
-    <article className="familyBubble">
-      <div className="familyBubbleText">{message.text}</div>
-      <time className="familyBubbleTime">{message.createdAt}</time>
-    </article>
+    <div className={`familyBubbleRow${isEditing ? " familyBubbleEditing" : ""}`}>
+      <article className={`familyBubble${isChecklist ? " familyBubbleChecklist" : ""}`}>
+        <button
+          className="familyBubbleDeleteIcon"
+          type="button"
+          aria-label={deleteLabel}
+          onClick={() => onDeleteMessage(message.id)}
+        >
+          ×
+        </button>
+
+        <div className="familyBubbleContent">
+          {isChecklist ? (
+            <>
+              <div className="familyBubbleTitle">{message.title}</div>
+              <div className="familyChecklistRows">
+                {message.items.map((item) => (
+                  <button
+                    className={`familyChecklistRow${item.checked ? " familyChecklistRowChecked" : ""}`}
+                    key={item.id}
+                    type="button"
+                    onClick={() => onToggleChecklistItem(message.id, item.id)}
+                  >
+                    <span className="familyChecklistBox" aria-hidden="true">
+                      {item.checked ? "☑" : "☐"}
+                    </span>
+                    <span className="familyChecklistText">{item.text}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="familyBubbleText">{message.text}</div>
+          )}
+          <time className="familyBubbleTime">{message.createdAt}</time>
+        </div>
+
+        <button className="familyBubbleEditIcon" type="button" aria-label={editLabel} onClick={() => onEditMessage(message)}>
+          ✎
+        </button>
+      </article>
+    </div>
   );
 }
 
@@ -105,6 +156,8 @@ export default function FamilyPageClient() {
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [draft, setDraft] = useState("");
   const [checklistMode, setChecklistMode] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState(null);
+  const isEditing = Boolean(editingMessageId);
   const canSend = useMemo(() => {
     const lineCount = compactLines(draft).length;
     return checklistMode ? lineCount >= 2 : lineCount > 0;
@@ -138,14 +191,75 @@ export default function FamilyPageClient() {
     el.style.height = `${Math.min(el.scrollHeight, 148)}px`;
   }
 
+  function resetComposer() {
+    setDraft("");
+    setEditingMessageId(null);
+    setChecklistMode(false);
+    requestAnimationFrame(resetInputHeight);
+  }
+
+  function focusAndResizeInput() {
+    requestAnimationFrame(() => {
+      resizeInputToContent();
+      inputRef.current?.focus();
+    });
+  }
+
   function handleDraftChange(event) {
     setDraft(event.target.value);
     resizeInputToContent(event.currentTarget);
   }
 
+  function startEditMessage(message) {
+    setEditingMessageId(message.id);
+    setChecklistMode(message.type === "checklist");
+    setDraft(message.type === "checklist" ? checklistToDraft(message) : message.text || "");
+    focusAndResizeInput();
+  }
+
+  function deleteMessage(messageId) {
+    if (!window.confirm("삭제할까요?")) return;
+
+    setMessages((current) => current.filter((message) => message.id !== messageId));
+
+    if (editingMessageId === messageId) {
+      resetComposer();
+    }
+  }
+
+  function saveEditedMessage(nextMessage) {
+    setMessages((current) =>
+      current.map((message) => (message.id === editingMessageId ? { ...message, ...nextMessage } : message)),
+    );
+    resetComposer();
+  }
+
   function sendMessage() {
     const lines = compactLines(draft);
     if (!lines.length) return;
+
+    if (isEditing) {
+      const existingMessage = messages.find((message) => message.id === editingMessageId);
+
+      if (checklistMode) {
+        const parsedChecklist = parseChecklistInput(draft);
+        if (!parsedChecklist) return;
+        const existingItems = existingMessage?.type === "checklist" ? existingMessage.items : [];
+
+        saveEditedMessage({
+          type: "checklist",
+          title: parsedChecklist.title,
+          items: applyChecklistEdit(parsedChecklist, existingItems),
+        });
+        return;
+      }
+
+      saveEditedMessage({
+        type: "message",
+        text: lines.join("\n"),
+      });
+      return;
+    }
 
     const nextMessage = checklistMode
       ? parseChecklistInput(draft)
@@ -201,7 +315,14 @@ export default function FamilyPageClient() {
 
         <div className="familyStream" aria-live="polite">
           {messages.map((message) => (
-            <MessageBubble message={message} key={message.id} onToggleChecklistItem={toggleChecklistItem} />
+            <MessageBubble
+              isEditing={message.id === editingMessageId}
+              message={message}
+              key={message.id}
+              onDeleteMessage={deleteMessage}
+              onEditMessage={startEditMessage}
+              onToggleChecklistItem={toggleChecklistItem}
+            />
           ))}
         </div>
 
@@ -226,8 +347,13 @@ export default function FamilyPageClient() {
             onKeyDown={onDraftKeyDown}
           />
           <button className="familySend" type="button" disabled={!canSend} onClick={sendMessage}>
-            보내기
+            {isEditing ? "저장" : "보내기"}
           </button>
+          {isEditing ? (
+            <button className="familyCancel" type="button" onClick={resetComposer}>
+              취소
+            </button>
+          ) : null}
         </div>
       </div>
     </section>
