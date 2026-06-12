@@ -15,9 +15,7 @@
   overflow: hidden;
   border: 1px solid rgba(214, 128, 157, 0.22);
   border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(255, 246, 250, 0.96), rgba(255, 239, 246, 0.96)),
-    #fff5f8;
+  background: #fff5f8;
   box-shadow: 0 14px 32px rgba(112, 54, 80, 0.16);
 }
 
@@ -28,7 +26,7 @@
   gap: 12px;
   padding: 18px 18px 12px;
   border-bottom: 1px solid rgba(214, 128, 157, 0.16);
-  background: rgba(255, 251, 253, 0.76);
+  background: #fffafd;
 }
 
 .familyHeader h1,
@@ -51,9 +49,6 @@
 
 .familyHeaderBadge {
   flex: 0 0 auto;
-  border-radius: 999px;
-  padding: 7px 10px;
-  background: #ffe1eb;
   color: #8d3f5d;
   font-size: 13px;
   font-weight: 700;
@@ -67,10 +62,7 @@
   gap: 10px;
   overflow-y: auto;
   padding: 16px;
-  background:
-    radial-gradient(circle at 12% 16%, rgba(255, 225, 235, 0.82), transparent 30%),
-    radial-gradient(circle at 86% 10%, rgba(255, 238, 206, 0.72), transparent 26%),
-    #fff8fb;
+  background: #fff8fb;
 }
 
 .familyBubble {
@@ -157,7 +149,7 @@
   align-items: end;
   padding: 12px;
   border-top: 1px solid rgba(214, 128, 157, 0.16);
-  background: rgba(255, 251, 253, 0.9);
+  background: #fffafd;
 }
 
 .familyChecklistToggle,
