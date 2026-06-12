@@ -30,6 +30,7 @@ test("family timetable has a visible add schedule editor path", async () => {
   assert.match(timetableSource, /dayOfWeek:\s*String\(getTodayDayOfWeek\(\)\)/);
   assert.match(timetableSource, /title:\s*""/);
   assert.match(timetableSource, /color:\s*"pink"/);
+  assert.match(timetableSource, /active:\s*true/);
   assert.match(timetableSource, /isNew:\s*true/);
 
   assert.match(introActionsCss, /display:\s*inline-flex;/);
@@ -73,8 +74,8 @@ test("family timetable add save rejects blank titles and stores structured recor
     /startTime:\s*minutesToTime\(start\)/,
     /endTime:\s*minutesToTime\(Math\.min\(TIMETABLE_END_HOUR \* 60, end\)\)/,
     /memo:\s*editorDraft\.memo/,
-    /color:\s*FAMILY_TIMETABLE_COLORS\.includes\(editorDraft\.color\) \? editorDraft\.color : "pink"/,
-    /active:\s*true/,
+    /color:\s*normalizeTimetableColor\(editorDraft\.color\)/,
+    /active:\s*editorDraft\.active !== false/,
     /createdAt:\s*now/,
     /updatedAt:\s*now/,
   ]) {
@@ -88,17 +89,53 @@ test("family timetable add save rejects blank titles and stores structured recor
   assert.match(timetableSource, /FAMILY_TIMETABLE_STORAGE_KEY = "kaosgdd\.family\.defaultTimetable\.v1"/);
 });
 
+test("family timetable new editor can prefill from existing schedules", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+  const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
+  const copyPillsCss = cssBlock(addCss, ".familyTimetableCopyPills");
+  const copyPillCss = cssBlock(addCss, ".familyTimetableCopyPill");
+
+  assert.match(timetableSource, /function entryToNewDraft\(entry\)/);
+  assert.match(timetableSource, /id:\s*""/);
+  assert.match(timetableSource, /title:\s*entry\.title/);
+  assert.match(timetableSource, /dayOfWeek:\s*String\(entry\.dayOfWeek\)/);
+  assert.match(timetableSource, /startTime:\s*entry\.startTime/);
+  assert.match(timetableSource, /endTime:\s*entry\.endTime/);
+  assert.match(timetableSource, /memo:\s*entry\.memo \|\| ""/);
+  assert.match(timetableSource, /color:\s*normalizeTimetableColor\(entry\.color\)/);
+  assert.match(timetableSource, /active:\s*entry\.active !== false/);
+  assert.match(timetableSource, /isNew:\s*true/);
+  assert.match(timetableSource, /function copyEntryToNewDraft\(entry\)/);
+  assert.match(timetableSource, /setEditorDraft\(entryToNewDraft\(entry\)\)/);
+  assert.match(timetableSource, /editorDraft\.isNew && visibleEntries\.length > 0/);
+  assert.match(timetableSource, /복사해서 만들기/);
+  assert.match(timetableSource, /familyTimetableCopyPills/);
+  assert.match(timetableSource, /familyTimetableCopyPill/);
+  assert.match(timetableSource, /onClick=\{\(\) => copyEntryToNewDraft\(entry\)\}/);
+  assert.match(timetableSource, /\{entry\.title\}/);
+  assert.doesNotMatch(timetableSource, /!editorDraft\.isNew[\s\S]*familyTimetableCopyPills/);
+
+  assert.match(copyPillsCss, /display:\s*flex;/);
+  assert.match(copyPillsCss, /overflow-x:\s*auto;/);
+  assert.match(copyPillCss, /flex:\s*0 0 auto;/);
+  assert.match(copyPillCss, /text-overflow:\s*ellipsis;/);
+});
+
 test("family timetable editor uses fixed pastel color chips", async () => {
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
-  const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
   const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
   const colorChipCss = cssBlock(addCss, ".familyTimetableColorChip");
   const activeChipCss = cssBlock(addCss, ".familyTimetableColorChipActive");
   const colorChipsCss = cssBlock(addCss, ".familyTimetableColorChips");
 
-  assert.match(timetableSource, /FAMILY_TIMETABLE_COLORS = \["pink", "cream", "yellow", "mint", "blue", "lavender"\]/);
+  for (const color of ["pink", "rose", "peach", "yellow", "mint", "green", "sky", "blue", "lavender", "purple", "cream", "gray"]) {
+    assert.match(timetableSource, new RegExp(`"${color}"`));
+  }
+  assert.match(timetableSource, /function normalizeTimetableColor\(color, fallback = "pink"\)/);
+  assert.match(timetableSource, /return FAMILY_TIMETABLE_COLORS\.includes\(color\) \? color : fallback;/);
+  assert.match(timetableSource, /function colorClassName\(color\)/);
   assert.match(timetableSource, /FAMILY_TIMETABLE_COLOR_LABELS = \{/);
-  for (const label of ["분홍", "크림", "노랑", "민트", "하늘", "보라"]) {
+  for (const label of ["분홍", "장미", "복숭아", "노랑", "민트", "초록", "하늘", "파랑", "라벤더", "보라", "크림", "회색"]) {
     assert.match(timetableSource, new RegExp(label));
   }
   assert.match(timetableSource, /<span>색상<\/span>/);
@@ -113,13 +150,19 @@ test("family timetable editor uses fixed pastel color chips", async () => {
 
   for (const className of [
     "familyTimetableEntryPink",
-    "familyTimetableEntryCream",
+    "familyTimetableEntryRose",
+    "familyTimetableEntryPeach",
     "familyTimetableEntryYellow",
     "familyTimetableEntryMint",
+    "familyTimetableEntryGreen",
+    "familyTimetableEntrySky",
     "familyTimetableEntryBlue",
     "familyTimetableEntryLavender",
+    "familyTimetableEntryPurple",
+    "familyTimetableEntryCream",
+    "familyTimetableEntryGray",
   ]) {
-    assert.match(familyCss, new RegExp(`\\.${className}\\s*\\{`));
+    assert.match(addCss, new RegExp(`\\.${className}\\s*,|\\.${className}\\s*\\{`));
   }
 
   assert.match(colorChipsCss, /display:\s*flex;/);
@@ -127,12 +170,6 @@ test("family timetable editor uses fixed pastel color chips", async () => {
   assert.match(colorChipCss, /min-height:\s*34px;/);
   assert.match(colorChipCss, /border-radius:\s*999px;/);
   assert.match(activeChipCss, /border-color:\s*rgba\(141, 63, 93, 0\.64\);/);
-  assert.match(addCss, /\.familyTimetableColorChipPink\s*\{/);
-  assert.match(addCss, /\.familyTimetableColorChipCream\s*\{/);
-  assert.match(addCss, /\.familyTimetableColorChipYellow\s*\{/);
-  assert.match(addCss, /\.familyTimetableColorChipMint\s*\{/);
-  assert.match(addCss, /\.familyTimetableColorChipBlue\s*\{/);
-  assert.match(addCss, /\.familyTimetableColorChipLavender\s*\{/);
 });
 
 test("family timetable editor keeps day and time controls compact", async () => {
