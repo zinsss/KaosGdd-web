@@ -21,15 +21,15 @@ test("family timetable has a visible add schedule editor path", async () => {
   assert.match(timetableSource, />\s*\+ 일정\s*<\/button>/);
   assert.match(timetableSource, /onClick=\{startNewEntry\}/);
   assert.match(timetableSource, /function startNewEntry\(\)/);
-  assert.match(timetableSource, /setEditorDraft\(createNewScheduleDraft\(\)\)/);
+  assert.match(timetableSource, /setEditorDraft\(createNewScheduleDraft/);
   assert.match(timetableSource, /requestAnimationFrame\(\(\) => titleInputRef\.current\?\.focus\(\)\)/);
-  assert.match(timetableSource, /function createNewScheduleDraft\(\)/);
+  assert.match(timetableSource, /function createNewScheduleDraft\(color = "pink"\)/);
   assert.match(timetableSource, /function getTodayDayOfWeek\(\)/);
   assert.match(timetableSource, /function getDefaultStartMinutes\(\)/);
   assert.match(timetableSource, /const fallback = 9 \* 60;/);
   assert.match(timetableSource, /dayOfWeek:\s*String\(getTodayDayOfWeek\(\)\)/);
   assert.match(timetableSource, /title:\s*""/);
-  assert.match(timetableSource, /color:\s*"pink"/);
+  assert.match(timetableSource, /color:\s*normalizeTimetableColor\(color\)/);
   assert.match(timetableSource, /active:\s*true/);
   assert.match(timetableSource, /isNew:\s*true/);
 
@@ -78,7 +78,7 @@ test("family timetable add save rejects blank titles and stores structured recor
     /startTime:\s*firstSlot\.startTime/,
     /endTime:\s*firstSlot\.endTime/,
     /memo:\s*editorDraft\.memo/,
-    /color:\s*normalizeTimetableColor\(editorDraft\.color\)/,
+    /color:\s*selectedColor/,
     /active:\s*editorDraft\.active !== false/,
     /createdAt:\s*now/,
     /updatedAt:\s*now/,
@@ -163,14 +163,49 @@ test("family timetable editor supports multiple compact time slots", async () =>
 
   assert.match(slotFieldCss, /display:\s*grid;/);
   assert.match(slotRowsCss, /display:\s*grid;/);
-  assert.match(slotRowCss, /display:\s*flex;/);
-  assert.match(slotRowCss, /flex-wrap:\s*wrap;/);
-  assert.match(slotRowCss, /gap:\s*10px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow label:nth-child\(1\)\s*\{[\s\S]*max-width:\s*120px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow label:nth-child\(2\),\s*\.familyTimetableSlotRow label:nth-child\(3\)\s*\{[\s\S]*max-width:\s*110px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*width:\s*100%;/);
+  assert.match(slotRowCss, /display:\s*grid;/);
+  assert.match(slotRowCss, /grid-template-columns:\s*minmax\(88px, 1fr\) minmax\(82px, 0\.8fr\) minmax\(82px, 0\.8fr\) 36px;/);
+  assert.match(slotRowCss, /align-items:\s*end;/);
+  assert.match(slotRowCss, /gap:\s*8px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*height:\s*42px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*font-size:\s*16px;/);
+  assert.match(addCss, /@media \(max-width: 640px\) \{[\s\S]*grid-template-columns:\s*minmax\(70px, 1fr\) minmax\(74px, 0\.85fr\) minmax\(74px, 0\.85fr\) 36px;/);
   assert.match(addSlotButtonCss, /justify-self:\s*start;/);
-  assert.match(removeButtonCss, /width:\s*34px;/);
+  assert.match(removeButtonCss, /align-self:\s*end;/);
+  assert.match(removeButtonCss, /width:\s*36px;/);
+});
+
+test("family timetable enforces one available color per schedule", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+  const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
+  const disabledChipCss = cssBlock(addCss, ".familyTimetableColorChipDisabled,
+.familyTimetableColorChip:disabled");
+  const colorHelpCss = cssBlock(addCss, ".familyTimetableColorHelp");
+
+  assert.match(timetableSource, /function getUsedScheduleColors\(entries, editingEntryId = null\)/);
+  assert.match(timetableSource, /entry\.id !== editingEntryId/);
+  assert.match(timetableSource, /function getFirstAvailableColor\(usedColors, preferredColor = "pink"\)/);
+  assert.match(timetableSource, /function hasAvailableColor\(usedColors\)/);
+  assert.match(timetableSource, /const \[colorNotice, setColorNotice\] = useState\(""\);/);
+  assert.match(timetableSource, /const usedEditorColors = useMemo/);
+  assert.match(timetableSource, /function colorIsUnavailable\(color\)/);
+  assert.match(timetableSource, /usedEditorColors\.has\(color\) && editorDraft\.color !== color && hasAvailableColor\(usedEditorColors\)/);
+  assert.match(timetableSource, /createNewScheduleDraft\(getFirstAvailableColor\(usedColors, "pink"\)\)/);
+  assert.match(timetableSource, /entryToNewDraft\(entry, usedColors\)/);
+  assert.match(timetableSource, /color:\s*getFirstAvailableColor\(usedColors, entry\.color\)/);
+  assert.match(timetableSource, /copiedDraft\.color !== copiedColor/);
+  assert.match(timetableSource, /이미 사용 중인 색상이라 다른 색상을 골랐어요\./);
+  assert.match(timetableSource, /이미 사용 중인 색상은 선택할 수 없어요\./);
+  assert.match(timetableSource, /const saveUsedColors = getUsedScheduleColors\(entries, editorDraft\.isNew \? null : editingEntryId\);/);
+  assert.match(timetableSource, /if \(saveUsedColors\.has\(selectedColor\) && hasAvailableColor\(saveUsedColors\)\) \{/);
+  assert.match(timetableSource, /setEditorDraft\(\(current\) => \(\{ \.\.\.current, color: nextColor \}\)\);/);
+  assert.match(timetableSource, /disabled=\{unavailable\}/);
+  assert.match(timetableSource, /familyTimetableColorChipDisabled/);
+  assert.match(timetableSource, /<p className="familyTimetableColorHelp">\{colorNotice\}<\/p>/);
+
+  assert.match(disabledChipCss, /opacity:\s*0\.38;/);
+  assert.match(disabledChipCss, /cursor:\s*not-allowed;/);
+  assert.match(colorHelpCss, /font-size:\s*11px;/);
 });
 
 test("family timetable new editor can prefill from existing schedules", async () => {
@@ -179,7 +214,7 @@ test("family timetable new editor can prefill from existing schedules", async ()
   const copyPillsCss = cssBlock(addCss, ".familyTimetableCopyPills");
   const copyPillCss = cssBlock(addCss, ".familyTimetableCopyPill");
 
-  assert.match(timetableSource, /function entryToNewDraft\(entry\)/);
+  assert.match(timetableSource, /function entryToNewDraft\(entry, usedColors = new Set\(\)\)/);
   assert.match(timetableSource, /id:\s*""/);
   assert.match(timetableSource, /title:\s*entry\.title/);
   assert.match(timetableSource, /const slots = entry\.slots\.map/);
@@ -188,11 +223,11 @@ test("family timetable new editor can prefill from existing schedules", async ()
   assert.match(timetableSource, /endTime:\s*firstSlot\.endTime/);
   assert.match(timetableSource, /slots,/);
   assert.match(timetableSource, /memo:\s*entry\.memo \|\| ""/);
-  assert.match(timetableSource, /color:\s*normalizeTimetableColor\(entry\.color\)/);
+  assert.match(timetableSource, /color:\s*getFirstAvailableColor\(usedColors, entry\.color\)/);
   assert.match(timetableSource, /active:\s*entry\.active !== false/);
   assert.match(timetableSource, /isNew:\s*true/);
   assert.match(timetableSource, /function copyEntryToNewDraft\(entry\)/);
-  assert.match(timetableSource, /setEditorDraft\(entryToNewDraft\(entry\)\)/);
+  assert.match(timetableSource, /setEditorDraft\(copiedDraft\)/);
   assert.match(timetableSource, /editorDraft\.isNew && visibleEntries\.length > 0/);
   assert.match(timetableSource, /복사해서 만들기/);
   assert.match(timetableSource, /familyTimetableCopyPills/);
@@ -262,13 +297,14 @@ test("family timetable editor keeps day and time controls compact", async () => 
   const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
   const slotRowCss = cssBlock(addCss, ".familyTimetableSlotRow");
 
-  assert.match(slotRowCss, /display:\s*flex;/);
-  assert.match(slotRowCss, /flex-wrap:\s*wrap;/);
-  assert.match(slotRowCss, /gap:\s*10px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow label:nth-child\(1\)\s*\{[\s\S]*max-width:\s*120px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow label:nth-child\(2\),\s*\.familyTimetableSlotRow label:nth-child\(3\)\s*\{[\s\S]*max-width:\s*110px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*width:\s*100%;/);
-  assert.match(addCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableSlotRow\s*\{[\s\S]*flex-wrap:\s*wrap;/);
+  assert.match(slotRowCss, /display:\s*grid;/);
+  assert.match(slotRowCss, /grid-template-columns:\s*minmax\(88px, 1fr\) minmax\(82px, 0\.8fr\) minmax\(82px, 0\.8fr\) 36px;/);
+  assert.match(slotRowCss, /align-items:\s*end;/);
+  assert.match(slotRowCss, /gap:\s*8px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*min-width:\s*0;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*height:\s*42px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*font-size:\s*16px;/);
+  assert.match(addCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableSlotRow\s*\{[\s\S]*grid-template-columns:\s*minmax\(70px, 1fr\) minmax\(74px, 0\.85fr\) minmax\(74px, 0\.85fr\) 36px;/);
 });
 
 test("family timetable add UX preserves compact mobile timetable rules", async () => {
