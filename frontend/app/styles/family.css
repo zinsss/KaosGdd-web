@@ -10,28 +10,36 @@
 
 .familyPage,
 .familyStream,
-.familyInput {
+.familyTimetableScroller,
+.familyInput,
+.familyTimetableEditor textarea {
   scrollbar-width: thin;
   scrollbar-color: rgba(214, 128, 157, 0.58) rgba(255, 248, 251, 0.76);
 }
 
 .familyPage::-webkit-scrollbar,
 .familyStream::-webkit-scrollbar,
-.familyInput::-webkit-scrollbar {
+.familyTimetableScroller::-webkit-scrollbar,
+.familyInput::-webkit-scrollbar,
+.familyTimetableEditor textarea::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 .familyPage::-webkit-scrollbar-track,
 .familyStream::-webkit-scrollbar-track,
-.familyInput::-webkit-scrollbar-track {
+.familyTimetableScroller::-webkit-scrollbar-track,
+.familyInput::-webkit-scrollbar-track,
+.familyTimetableEditor textarea::-webkit-scrollbar-track {
   background: rgba(255, 248, 251, 0.76);
   border-radius: 999px;
 }
 
 .familyPage::-webkit-scrollbar-thumb,
 .familyStream::-webkit-scrollbar-thumb,
-.familyInput::-webkit-scrollbar-thumb {
+.familyTimetableScroller::-webkit-scrollbar-thumb,
+.familyInput::-webkit-scrollbar-thumb,
+.familyTimetableEditor textarea::-webkit-scrollbar-thumb {
   background: rgba(214, 128, 157, 0.58);
   border-radius: 999px;
   border: 2px solid rgba(255, 248, 251, 0.76);
@@ -39,7 +47,9 @@
 
 .familyPage::-webkit-scrollbar-thumb:hover,
 .familyStream::-webkit-scrollbar-thumb:hover,
-.familyInput::-webkit-scrollbar-thumb:hover {
+.familyTimetableScroller::-webkit-scrollbar-thumb:hover,
+.familyInput::-webkit-scrollbar-thumb:hover,
+.familyTimetableEditor textarea::-webkit-scrollbar-thumb:hover {
   background: rgba(180, 92, 125, 0.72);
 }
 
@@ -87,6 +97,31 @@
   color: #8d3f5d;
   font-size: 13px;
   font-weight: 700;
+}
+
+.familyModeSwitch {
+  display: flex;
+  gap: 6px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(214, 128, 157, 0.16);
+  background: #fffafd;
+}
+
+.familyModeButton {
+  appearance: none;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  background: transparent;
+  color: rgba(78, 37, 54, 0.66);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.familyModeButtonActive {
+  background: #ffd8e5;
+  color: #5a283d;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.24);
 }
 
 .familyStream {
@@ -326,6 +361,323 @@
   box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.22);
 }
 
+.familyTimetable {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff8fb;
+}
+
+.familyTimetableIntro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px 10px;
+}
+
+.familyTimetableIntro h2,
+.familyTimetableIntro p {
+  margin: 0;
+}
+
+.familyTimetableIntro h2 {
+  color: #4b2536;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.familyTimetableIntro p {
+  margin-top: 3px;
+  color: rgba(78, 37, 54, 0.62);
+  font-size: 13px;
+}
+
+.familyTimetableBadge {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 5px 9px;
+  background: #fff0f5;
+  color: #8d3f5d;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.familyTimetableScroller {
+  flex: 1 1 auto;
+  min-height: 360px;
+  overflow: auto;
+  padding: 0 16px 16px;
+}
+
+.familyTimetableGrid {
+  --family-timetable-body-height: 840px;
+  min-width: 780px;
+  display: grid;
+  grid-template-columns: 58px repeat(7, minmax(96px, 1fr));
+  grid-template-rows: 32px var(--family-timetable-body-height);
+  border: 1px solid rgba(214, 128, 157, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fffdf7;
+}
+
+.familyTimetableCorner,
+.familyTimetableDayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-bottom: 1px solid rgba(214, 128, 157, 0.18);
+  background: #fffafd;
+  color: #8d3f5d;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.familyTimetableDayHeader {
+  border-left: 1px solid rgba(214, 128, 157, 0.14);
+}
+
+.familyTimetableTimeColumn,
+.familyTimetableDayColumn {
+  position: relative;
+  height: var(--family-timetable-body-height);
+}
+
+.familyTimetableTimeColumn {
+  background: #fffafd;
+  border-right: 1px solid rgba(214, 128, 157, 0.18);
+}
+
+.familyTimetableHourLabel {
+  position: absolute;
+  right: 8px;
+  transform: translateY(-0.5em);
+  color: rgba(78, 37, 54, 0.56);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.familyTimetableDayColumn {
+  background: #fff8fb;
+  border-left: 1px solid rgba(214, 128, 157, 0.12);
+}
+
+.familyTimetableHour {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 60px;
+  border-top: 1px solid rgba(214, 128, 157, 0.18);
+  pointer-events: none;
+}
+
+.familyTimetableHour span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgba(214, 128, 157, 0.07);
+}
+
+.familyTimetableHour span:nth-child(1) {
+  top: 10px;
+}
+
+.familyTimetableHour span:nth-child(2) {
+  top: 20px;
+}
+
+.familyTimetableHour span:nth-child(3) {
+  top: 30px;
+}
+
+.familyTimetableHour span:nth-child(4) {
+  top: 40px;
+}
+
+.familyTimetableHour span:nth-child(5) {
+  top: 50px;
+}
+
+.familyTimetableSlot {
+  appearance: none;
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  right: 0;
+  height: 10px;
+  border: 0;
+  background: transparent;
+}
+
+.familyTimetableSlot:hover,
+.familyTimetableSlot:focus-visible {
+  background: rgba(255, 216, 229, 0.36);
+  outline: none;
+}
+
+.familyTimetableEntry {
+  appearance: none;
+  position: absolute;
+  z-index: 2;
+  left: 4px;
+  right: 4px;
+  border: 1px solid rgba(151, 69, 98, 0.12);
+  border-radius: 8px;
+  padding: 6px 7px;
+  color: #4b2536;
+  text-align: left;
+  box-shadow: 0 5px 12px rgba(151, 69, 98, 0.13);
+  overflow: hidden;
+}
+
+.familyTimetableEntryPink {
+  background: #ffd8e5;
+}
+
+.familyTimetableEntryCream {
+  background: #fffdf7;
+}
+
+.familyTimetableEntryYellow {
+  background: #fff0bd;
+}
+
+.familyTimetableEntryMint {
+  background: #dff5df;
+}
+
+.familyTimetableEntryBlue {
+  background: #dbeafe;
+}
+
+.familyTimetableEntryLavender {
+  background: #eadcff;
+}
+
+.familyTimetableEntryEditing {
+  outline: 2px solid rgba(216, 111, 152, 0.55);
+}
+
+.familyTimetableEntryTitle,
+.familyTimetableEntryTime {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.familyTimetableEntryTitle {
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.familyTimetableEntryTime {
+  margin-top: 2px;
+  color: rgba(78, 37, 54, 0.58);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.familyTimetableEditor {
+  display: grid;
+  gap: 10px;
+  margin: 0 16px 16px;
+  padding: 12px;
+  border: 1px solid rgba(214, 128, 157, 0.24);
+  border-radius: 8px;
+  background: #fffafd;
+  box-shadow: 0 8px 18px rgba(151, 69, 98, 0.11);
+}
+
+.familyTimetableEditorHeader,
+.familyTimetableEditorActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.familyTimetableEditor h3 {
+  margin: 0;
+  color: #4b2536;
+  font-size: 16px;
+  letter-spacing: 0;
+}
+
+.familyTimetableEditor label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  color: rgba(78, 37, 54, 0.68);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.familyTimetableEditor input,
+.familyTimetableEditor select,
+.familyTimetableEditor textarea {
+  width: 100%;
+  min-height: 38px;
+  border: 1px solid rgba(214, 128, 157, 0.28);
+  border-radius: 8px;
+  padding: 8px 9px;
+  background: #fff;
+  color: #4b2536;
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.familyTimetableEditor textarea {
+  resize: vertical;
+}
+
+.familyTimetableEditor input:focus,
+.familyTimetableEditor select:focus,
+.familyTimetableEditor textarea:focus {
+  border-color: rgba(176, 91, 123, 0.74);
+  box-shadow: 0 0 0 3px rgba(255, 216, 229, 0.72);
+}
+
+.familyTimetableEditorGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.familyTimetableSave,
+.familyTimetableCancel,
+.familyTimetableEditorDelete {
+  appearance: none;
+  border: 0;
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.familyTimetableSave {
+  background: #d86f98;
+  color: #fff;
+}
+
+.familyTimetableCancel,
+.familyTimetableEditorDelete {
+  background: #fff0f5;
+  color: #8d3f5d;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.22);
+}
+
+.familyTimetableEditorDelete {
+  color: #9d3657;
+}
+
 @media (max-width: 640px) {
   .familyHeader {
     padding: 15px 14px 10px;
@@ -333,6 +685,10 @@
 
   .familyHeader h1 {
     font-size: 22px;
+  }
+
+  .familyModeSwitch {
+    padding: 9px 10px;
   }
 
   .familyStream {
@@ -347,5 +703,22 @@
   .familyCancel {
     grid-column: 2;
     width: 100%;
+  }
+
+  .familyTimetableIntro {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  .familyTimetableScroller {
+    padding: 0 12px 12px;
+  }
+
+  .familyTimetableEditor {
+    margin: 0 12px 12px;
+  }
+
+  .familyTimetableEditorGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

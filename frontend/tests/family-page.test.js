@@ -11,6 +11,7 @@ function cssBlock(source, selector) {
 test("family page route exposes a Korean quick pad shell", async () => {
   const pageSource = await readFile(new URL("../app/family/page.js", import.meta.url), "utf8");
   const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const globalsCss = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
   const topNavSource = await readFile(new URL("../components/TopNav.js", import.meta.url), "utf8");
@@ -24,7 +25,7 @@ test("family page route exposes a Korean quick pad shell", async () => {
   assert.match(clientSource, /items:\s*lines\.slice\(1\)/);
   assert.match(clientSource, /☐/);
   assert.match(clientSource, /☑/);
-  assert.doesNotMatch(clientSource.toLowerCase(), /therapy/);
+  assert.doesNotMatch(`${clientSource}\n${timetableSource}`.toLowerCase(), /therapy/);
   assert.doesNotMatch(topNavSource, /\/family/);
   assert.match(globalsCss, /@import "\.\/styles\/family\.css";/);
   assert.match(familyCss, /\.familyPage\s*\{/);
@@ -50,17 +51,82 @@ test("family composer avoids iOS zoom and resets textarea height after send", as
   assert.match(clientSource, /requestAnimationFrame\(resetInputHeight\)/);
 });
 
+test("family default timetable uses a local weekly template model", async () => {
+  const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+  const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
+  const topNavSource = await readFile(new URL("../components/TopNav.js", import.meta.url), "utf8");
+
+  assert.match(clientSource, /메모/);
+  assert.match(clientSource, /기본 시간표/);
+  assert.match(clientSource, /familyMode/);
+  assert.match(clientSource, /setFamilyMode\("memo"\)/);
+  assert.match(clientSource, /setFamilyMode\("timetable"\)/);
+  assert.match(clientSource, /<FamilyTimetable \/>/);
+  assert.doesNotMatch(topNavSource, /\/family/);
+
+  assert.match(timetableSource, /FAMILY_TIMETABLE_STORAGE_KEY = "kaosgdd\.family\.defaultTimetable\.v1"/);
+  assert.match(timetableSource, /TIMETABLE_START_HOUR = 8/);
+  assert.match(timetableSource, /TIMETABLE_END_HOUR = 22/);
+  assert.match(timetableSource, /TIMETABLE_SLOT_MINUTES = 10/);
+  assert.match(timetableSource, /DEFAULT_TIMETABLE_DURATION_MINUTES = 40/);
+  assert.match(timetableSource, /FAMILY_TIMETABLE_COLORS = \["pink", "cream", "yellow", "mint", "blue", "lavender"\]/);
+  assert.match(timetableSource, /DAY_LABELS = \[/);
+  for (const dayLabel of ["월", "화", "수", "목", "금", "토", "일"]) {
+    assert.match(timetableSource, new RegExp(`label: "${dayLabel}"`));
+  }
+  assert.match(timetableSource, /TIMETABLE_HOURS/);
+  assert.match(timetableSource, /TIMETABLE_VISIBLE_HOURS/);
+  assert.match(timetableSource, /familyTimetableHourLabel/);
+  assert.match(timetableSource, /familyTimetableSlot/);
+
+  assert.match(timetableSource, /function timeToMinutes\(timeString\)/);
+  assert.match(timetableSource, /function minutesToTime\(totalMinutes\)/);
+  assert.match(timetableSource, /function snapMinutes\(totalMinutes\)/);
+  assert.match(timetableSource, /function createDefaultTimetableEntry/);
+  assert.match(timetableSource, /id:\s*createId\(\)/);
+  assert.match(timetableSource, /title:\s*title\.trim\(\) \|\| "새 일정"/);
+  assert.match(timetableSource, /dayOfWeek,/);
+  assert.match(timetableSource, /startTime:\s*minutesToTime\(start\)/);
+  assert.match(timetableSource, /endTime:\s*minutesToTime\(end\)/);
+  assert.match(timetableSource, /memo:\s*""/);
+  assert.match(timetableSource, /color:\s*"pink"/);
+  assert.match(timetableSource, /active:\s*true/);
+  assert.match(timetableSource, /createdAt:\s*now/);
+  assert.match(timetableSource, /updatedAt:\s*now/);
+  assert.match(timetableSource, /window\.localStorage\.getItem\(FAMILY_TIMETABLE_STORAGE_KEY\)/);
+  assert.match(timetableSource, /window\.localStorage\.setItem\(FAMILY_TIMETABLE_STORAGE_KEY, JSON\.stringify\(entries\)\)/);
+  assert.match(timetableSource, /function addTimetableEntry\(dayOfWeek, startMinutes\)/);
+  assert.match(timetableSource, /window\.prompt\("일정 이름"\)/);
+  assert.match(timetableSource, /if \(!title \|\| !title\.trim\(\)\) return;/);
+  assert.match(timetableSource, /createDefaultTimetableEntry\(\{ dayOfWeek, startMinutes, title: title\.trim\(\) \}\)/);
+  assert.match(timetableSource, /function startEditEntry\(entry\)/);
+  assert.match(timetableSource, /function saveEditingEntry\(\)/);
+  assert.match(timetableSource, /function deleteTimetableEntry/);
+  assert.match(timetableSource, /window\.confirm\("삭제할까요\?"\)/);
+  assert.match(timetableSource, /active !== false/);
+  assert.doesNotMatch(timetableSource, /draggable|dragstart|dragover|drop/);
+
+  assert.match(familyCss, /\.familyModeSwitch\s*\{/);
+  assert.match(familyCss, /\.familyTimetable\s*\{/);
+  assert.match(familyCss, /\.familyTimetableGrid\s*\{/);
+  assert.match(familyCss, /\.familyTimetableHourLabel\s*\{/);
+  assert.match(familyCss, /\.familyTimetableSlot\s*\{/);
+  assert.match(familyCss, /\.familyTimetableEditor\s*\{/);
+});
+
 test("family scrollable areas use pastel family scrollbars", async () => {
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
   const baseCss = await readFile(new URL("../app/styles/base.css", import.meta.url), "utf8");
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
 
-  assert.match(familyCss, /\.familyPage,\s*\.familyStream,\s*\.familyInput\s*\{[\s\S]*scrollbar-color:\s*rgba\(214, 128, 157, 0\.58\) rgba\(255, 248, 251, 0\.76\);/);
+  assert.match(familyCss, /\.familyPage,\s*\.familyStream,\s*\.familyTimetableScroller,\s*\.familyInput,\s*\.familyTimetableEditor textarea\s*\{[\s\S]*scrollbar-color:\s*rgba\(214, 128, 157, 0\.58\) rgba\(255, 248, 251, 0\.76\);/);
   assert.match(familyCss, /\.familyInput::-webkit-scrollbar\s*\{/);
   assert.match(familyCss, /\.familyInput::-webkit-scrollbar-track\s*\{/);
   assert.match(familyCss, /\.familyInput::-webkit-scrollbar-thumb\s*\{/);
   assert.match(familyCss, /\.familyInput::-webkit-scrollbar-thumb:hover\s*\{/);
   assert.match(familyCss, /\.familyStream::-webkit-scrollbar-thumb\s*\{/);
+  assert.match(familyCss, /\.familyTimetableScroller::-webkit-scrollbar-thumb\s*\{/);
   assert.match(familyCss, /\.familyPage::-webkit-scrollbar-track\s*\{/);
   assert.match(familyCss, /background:\s*rgba\(214, 128, 157, 0\.58\);/);
   assert.match(familyCss, /background:\s*rgba\(180, 92, 125, 0\.72\);/);
