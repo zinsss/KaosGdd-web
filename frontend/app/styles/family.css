@@ -118,13 +118,20 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  flex-wrap: nowrap;
   gap: 8px;
   margin-top: 6px;
+  white-space: nowrap;
 }
 
 .familyBubbleTime {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
   color: rgba(78, 37, 54, 0.48);
   font-size: 0.76rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .familyBubbleDeleteIcon,
@@ -151,6 +158,8 @@
 }
 
 .familyBubbleEditIcon {
+  position: static;
+  flex: 0 0 auto;
   font-size: 16px;
 }
 
