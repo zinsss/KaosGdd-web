@@ -119,17 +119,60 @@ function getDefaultStartMinutes() {
   return snappedMinutes;
 }
 
-export function createDefaultTimetableEntry({ dayOfWeek, startMinutes, title = "" }) {
-  const now = new Date().toISOString();
+function normalizeDayOfWeek(dayOfWeek) {
+  const value = Number(dayOfWeek);
+  return Number.isInteger(value) && value >= 1 && value <= 7 ? value : 1;
+}
+
+function normalizeTimetableSlot(slot) {
+  const dayOfWeek = normalizeDayOfWeek(slot?.dayOfWeek);
+  const start = clampTimetableMinutes(timeToMinutes(slot?.startTime));
+  const rawEnd = clampTimetableMinutes(timeToMinutes(slot?.endTime));
+  const end = Math.min(TIMETABLE_END_HOUR * 60, Math.max(start + TIMETABLE_SLOT_MINUTES, rawEnd));
+
+  return {
+    dayOfWeek,
+    startTime: minutesToTime(start),
+    endTime: minutesToTime(end),
+  };
+}
+
+function createDefaultSlot({ dayOfWeek, startMinutes }) {
   const start = clampTimetableMinutes(startMinutes);
   const end = Math.min(TIMETABLE_END_HOUR * 60, start + DEFAULT_TIMETABLE_DURATION_MINUTES);
 
   return {
-    id: createId(),
-    title: title.trim() || "새 일정",
     dayOfWeek,
     startTime: minutesToTime(start),
     endTime: minutesToTime(end),
+  };
+}
+
+function slotsFromEntry(entry) {
+  const rawSlots = Array.isArray(entry?.slots) && entry.slots.length > 0
+    ? entry.slots
+    : [
+        {
+          dayOfWeek: entry?.dayOfWeek,
+          startTime: entry?.startTime,
+          endTime: entry?.endTime,
+        },
+      ];
+
+  return rawSlots.map(normalizeTimetableSlot).filter((slot) => slot.dayOfWeek >= 1 && slot.dayOfWeek <= 7);
+}
+
+export function createDefaultTimetableEntry({ dayOfWeek, startMinutes, title = "" }) {
+  const now = new Date().toISOString();
+  const slot = createDefaultSlot({ dayOfWeek, startMinutes });
+
+  return {
+    id: createId(),
+    title: title.trim() || "새 일정",
+    slots: [slot],
+    dayOfWeek,
+    startTime: slot.startTime,
+    endTime: slot.endTime,
     memo: "",
     color: "pink",
     active: true,
@@ -140,15 +183,17 @@ export function createDefaultTimetableEntry({ dayOfWeek, startMinutes, title = "
 
 function normalizeTimetableEntry(entry) {
   if (!entry || typeof entry !== "object") return null;
-  const dayOfWeek = Number(entry.dayOfWeek);
-  if (!Number.isInteger(dayOfWeek) || dayOfWeek < 1 || dayOfWeek > 7) return null;
+  const slots = slotsFromEntry(entry);
+  if (slots.length === 0) return null;
+  const firstSlot = slots[0];
 
   return {
     id: String(entry.id || createId()),
     title: String(entry.title || "새 일정"),
-    dayOfWeek,
-    startTime: minutesToTime(clampTimetableMinutes(timeToMinutes(entry.startTime))),
-    endTime: minutesToTime(clampTimetableMinutes(timeToMinutes(entry.endTime))),
+    slots,
+    dayOfWeek: firstSlot.dayOfWeek,
+    startTime: firstSlot.startTime,
+    endTime: firstSlot.endTime,
     memo: String(entry.memo || ""),
     color: normalizeTimetableColor(entry.color),
     active: entry.active !== false,
@@ -178,14 +223,20 @@ function saveTimetableEntries(entries) {
 
 function sortTimetableEntries(entries) {
   return [...entries].sort((a, b) => {
-    if (a.dayOfWeek !== b.dayOfWeek) return a.dayOfWeek - b.dayOfWeek;
-    return timeToMinutes(a.startTime) - timeToMinutes(b.startTime);
+    const firstSlotA = a.slots[0];
+    const firstSlotB = b.slots[0];
+    if (firstSlotA.dayOfWeek !== firstSlotB.dayOfWeek) return firstSlotA.dayOfWeek - firstSlotB.dayOfWeek;
+    return timeToMinutes(firstSlotA.startTime) - timeToMinutes(firstSlotB.startTime);
   });
 }
 
-function getEntryStyle(entry) {
-  const start = timeToMinutes(entry.startTime);
-  const end = Math.max(start + TIMETABLE_SLOT_MINUTES, timeToMinutes(entry.endTime));
+function sortTimetableBlocks(blocks) {
+  return [...blocks].sort((a, b) => timeToMinutes(a.slot.startTime) - timeToMinutes(b.slot.startTime));
+}
+
+function getEntryStyle(slot) {
+  const start = timeToMinutes(slot.startTime);
+  const end = Math.max(start + TIMETABLE_SLOT_MINUTES, timeToMinutes(slot.endTime));
   const offset = Math.max(0, start - TIMETABLE_START_HOUR * 60);
   const duration = Math.max(TIMETABLE_SLOT_MINUTES, end - start);
 
@@ -199,9 +250,11 @@ function entryToEditor(entry) {
   return {
     id: entry.id,
     title: entry.title,
-    dayOfWeek: String(entry.dayOfWeek),
-    startTime: entry.startTime,
-    endTime: entry.endTime,
+    slots: entry.slots.map((slot) => ({
+      dayOfWeek: String(slot.dayOfWeek),
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+    })),
     memo: entry.memo || "",
     color: normalizeTimetableColor(entry.color),
     active: entry.active !== false,
@@ -210,14 +263,21 @@ function entryToEditor(entry) {
 
 function createNewScheduleDraft() {
   const start = getDefaultStartMinutes();
-  const end = Math.min(TIMETABLE_END_HOUR * 60, start + DEFAULT_TIMETABLE_DURATION_MINUTES);
+  const slot = createDefaultSlot({ dayOfWeek: getTodayDayOfWeek(), startMinutes: start });
 
   return {
     id: "",
     title: "",
     dayOfWeek: String(getTodayDayOfWeek()),
-    startTime: minutesToTime(start),
-    endTime: minutesToTime(end),
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+    slots: [
+      {
+        dayOfWeek: String(slot.dayOfWeek),
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      },
+    ],
     memo: "",
     color: "pink",
     active: true,
@@ -226,17 +286,31 @@ function createNewScheduleDraft() {
 }
 
 function entryToNewDraft(entry) {
+  const slots = entry.slots.map((slot) => ({
+    dayOfWeek: String(slot.dayOfWeek),
+    startTime: slot.startTime,
+    endTime: slot.endTime,
+  }));
+  const firstSlot = slots[0];
+
   return {
     id: "",
     title: entry.title,
-    dayOfWeek: String(entry.dayOfWeek),
-    startTime: entry.startTime,
-    endTime: entry.endTime,
+    dayOfWeek: firstSlot.dayOfWeek,
+    startTime: firstSlot.startTime,
+    endTime: firstSlot.endTime,
+    slots,
     memo: entry.memo || "",
     color: normalizeTimetableColor(entry.color),
     active: entry.active !== false,
     isNew: true,
   };
+}
+
+function normalizeEditorSlots(slots) {
+  return (Array.isArray(slots) ? slots : [])
+    .map((slot) => normalizeTimetableSlot(slot))
+    .filter((slot) => slot.dayOfWeek >= 1 && slot.dayOfWeek <= 7);
 }
 
 export default function FamilyTimetable() {
@@ -261,6 +335,19 @@ export default function FamilyTimetable() {
     () => sortTimetableEntries(entries.filter((entry) => entry.active !== false)),
     [entries],
   );
+
+  const visibleBlocksByDay = useMemo(() => {
+    return DAY_LABELS.reduce((days, day) => {
+      days[day.dayOfWeek] = sortTimetableBlocks(
+        visibleEntries.flatMap((entry) =>
+          entry.slots
+            .map((slot, slotIndex) => ({ entry, slot, slotIndex }))
+            .filter((block) => block.slot.dayOfWeek === day.dayOfWeek),
+        ),
+      );
+      return days;
+    }, {});
+  }, [visibleEntries]);
 
   function startNewEntry() {
     setEditingEntryId(null);
@@ -295,6 +382,41 @@ export default function FamilyTimetable() {
     }
   }
 
+  function updateEditorSlot(slotIndex, field, value) {
+    setEditorDraft((current) => ({
+      ...current,
+      slots: current.slots.map((slot, index) => (index === slotIndex ? { ...slot, [field]: value } : slot)),
+    }));
+  }
+
+  function addEditorSlot() {
+    setEditorDraft((current) => {
+      const previousSlot = current.slots[current.slots.length - 1] || createNewScheduleDraft().slots[0];
+      return {
+        ...current,
+        slots: [
+          ...current.slots,
+          {
+            dayOfWeek: previousSlot.dayOfWeek,
+            startTime: previousSlot.startTime,
+            endTime: previousSlot.endTime,
+          },
+        ],
+      };
+    });
+    setEditorError("");
+  }
+
+  function removeEditorSlot(slotIndex) {
+    setEditorDraft((current) => {
+      if (current.slots.length <= 1) return current;
+      return {
+        ...current,
+        slots: current.slots.filter((_, index) => index !== slotIndex),
+      };
+    });
+  }
+
   function saveEditingEntry() {
     if (!editorDraft) return;
     const title = editorDraft.title.trim();
@@ -304,15 +426,21 @@ export default function FamilyTimetable() {
       return;
     }
 
-    const start = clampTimetableMinutes(timeToMinutes(editorDraft.startTime));
-    const end = Math.max(start + TIMETABLE_SLOT_MINUTES, clampTimetableMinutes(timeToMinutes(editorDraft.endTime)));
+    const slots = normalizeEditorSlots(editorDraft.slots);
+    if (slots.length === 0) {
+      setEditorError("시간을 하나 이상 추가해주세요.");
+      return;
+    }
+
+    const firstSlot = slots[0];
     const now = new Date().toISOString();
     const nextEntry = {
       id: createId(),
       title,
-      dayOfWeek: Number(editorDraft.dayOfWeek),
-      startTime: minutesToTime(start),
-      endTime: minutesToTime(Math.min(TIMETABLE_END_HOUR * 60, end)),
+      slots,
+      dayOfWeek: firstSlot.dayOfWeek,
+      startTime: firstSlot.startTime,
+      endTime: firstSlot.endTime,
       memo: editorDraft.memo,
       color: normalizeTimetableColor(editorDraft.color),
       active: editorDraft.active !== false,
@@ -334,9 +462,10 @@ export default function FamilyTimetable() {
           return {
             ...entry,
             title,
-            dayOfWeek: Number(editorDraft.dayOfWeek),
-            startTime: minutesToTime(start),
-            endTime: minutesToTime(Math.min(TIMETABLE_END_HOUR * 60, end)),
+            slots,
+            dayOfWeek: firstSlot.dayOfWeek,
+            startTime: firstSlot.startTime,
+            endTime: firstSlot.endTime,
             memo: editorDraft.memo,
             color: normalizeTimetableColor(editorDraft.color),
             active: editorDraft.active !== false,
@@ -410,25 +539,23 @@ export default function FamilyTimetable() {
                 />
               ))}
 
-              {visibleEntries
-                .filter((entry) => entry.dayOfWeek === day.dayOfWeek)
-                .map((entry) => (
-                  <button
-                    className={`familyTimetableEntry familyTimetableEntry${colorClassName(entry.color)}${entry.id === editingEntryId ? " familyTimetableEntryEditing" : ""}`}
-                    type="button"
-                    key={entry.id}
-                    style={getEntryStyle(entry)}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      startEditEntry(entry);
-                    }}
-                  >
-                    <span className="familyTimetableEntryTitle">{entry.title}</span>
-                    <span className="familyTimetableEntryTime">
-                      {entry.startTime} - {entry.endTime}
-                    </span>
-                  </button>
-                ))}
+              {(visibleBlocksByDay[day.dayOfWeek] || []).map(({ entry, slot, slotIndex }) => (
+                <button
+                  className={`familyTimetableEntry familyTimetableEntry${colorClassName(entry.color)}${entry.id === editingEntryId ? " familyTimetableEntryEditing" : ""}`}
+                  type="button"
+                  key={`${entry.id}-${slotIndex}`}
+                  style={getEntryStyle(slot)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    startEditEntry(entry);
+                  }}
+                >
+                  <span className="familyTimetableEntryTitle">{entry.title}</span>
+                  <span className="familyTimetableEntryTime">
+                    {slot.startTime} - {slot.endTime}
+                  </span>
+                </button>
+              ))}
             </div>
           ))}
         </div>
@@ -461,25 +588,44 @@ export default function FamilyTimetable() {
             </p>
           ) : null}
 
-          <div className="familyTimetableEditorGrid">
-            <label>
-              <span>요일</span>
-              <select value={editorDraft.dayOfWeek} onChange={(event) => updateEditorDraft("dayOfWeek", event.target.value)}>
-                {DAY_LABELS.map((day) => (
-                  <option value={day.dayOfWeek} key={day.dayOfWeek}>
-                    {day.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>시작</span>
-              <input type="time" step={TIMETABLE_SLOT_MINUTES * 60} value={editorDraft.startTime} onChange={(event) => updateEditorDraft("startTime", event.target.value)} />
-            </label>
-            <label>
-              <span>끝</span>
-              <input type="time" step={TIMETABLE_SLOT_MINUTES * 60} value={editorDraft.endTime} onChange={(event) => updateEditorDraft("endTime", event.target.value)} />
-            </label>
+          <div className="familyTimetableSlotField">
+            <span>시간</span>
+            <div className="familyTimetableSlotRows">
+              {editorDraft.slots.map((slot, slotIndex) => (
+                <div className="familyTimetableSlotRow" key={slotIndex}>
+                  <label>
+                    <span>요일</span>
+                    <select value={slot.dayOfWeek} onChange={(event) => updateEditorSlot(slotIndex, "dayOfWeek", event.target.value)}>
+                      {DAY_LABELS.map((day) => (
+                        <option value={day.dayOfWeek} key={day.dayOfWeek}>
+                          {day.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>시작</span>
+                    <input type="time" step={TIMETABLE_SLOT_MINUTES * 60} value={slot.startTime} onChange={(event) => updateEditorSlot(slotIndex, "startTime", event.target.value)} />
+                  </label>
+                  <label>
+                    <span>끝</span>
+                    <input type="time" step={TIMETABLE_SLOT_MINUTES * 60} value={slot.endTime} onChange={(event) => updateEditorSlot(slotIndex, "endTime", event.target.value)} />
+                  </label>
+                  <button
+                    className="familyTimetableSlotRemove"
+                    type="button"
+                    disabled={editorDraft.slots.length <= 1}
+                    aria-label="시간 삭제"
+                    onClick={() => removeEditorSlot(slotIndex)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button className="familyTimetableAddSlotButton" type="button" onClick={addEditorSlot}>
+              + 시간 추가
+            </button>
           </div>
 
           <div className="familyTimetableColorField">
