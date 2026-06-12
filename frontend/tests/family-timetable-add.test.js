@@ -4,7 +4,7 @@ import { readFile } from "node:fs/promises";
 
 function cssBlock(source, selector) {
   const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = source.match(new RegExp(`${escapedSelector}\\s*\\{[^}]*\\}`));
+  const match = source.match(new RegExp(`${escapedSelector}\s*\{[^}]*\}`));
   return match ? match[0] : "";
 }
 
@@ -30,6 +30,7 @@ test("family timetable has a visible add schedule editor path", async () => {
   assert.match(timetableSource, /dayOfWeek:\s*String\(getTodayDayOfWeek\(\)\)/);
   assert.match(timetableSource, /title:\s*""/);
   assert.match(timetableSource, /color:\s*"pink"/);
+  assert.match(timetableSource, /active:\s*true/);
   assert.match(timetableSource, /isNew:\s*true/);
 
   assert.match(introActionsCss, /display:\s*inline-flex;/);
@@ -63,42 +64,164 @@ test("family timetable add save rejects blank titles and stores structured recor
   assert.match(timetableSource, /role="alert"/);
   assert.match(timetableSource, /일정 이름을 입력해주세요\./);
   assert.match(timetableSource, /if \(field === "title" && value\.trim\(\)\) \{/);
+  assert.match(timetableSource, /const \{ slots, error: slotError \} = normalizeEditorSlots\(editorDraft\.slots\);/);
+  assert.match(timetableSource, /if \(slotError\) \{/);
+  assert.match(timetableSource, /setEditorError\(slotError\);/);
   assert.match(timetableSource, /if \(editorDraft\.isNew\) \{/);
   assert.match(timetableSource, /setEntries\(\(current\) => sortTimetableEntries\(\[\.\.\.current, nextEntry\]\)\)/);
 
   for (const fieldPattern of [
     /id:\s*createId\(\)/,
     /title,/,
-    /dayOfWeek:\s*Number\(editorDraft\.dayOfWeek\)/,
-    /startTime:\s*minutesToTime\(start\)/,
-    /endTime:\s*minutesToTime\(Math\.min\(TIMETABLE_END_HOUR \* 60, end\)\)/,
+    /slots,/,
+    /dayOfWeek:\s*firstSlot\.dayOfWeek/,
+    /startTime:\s*firstSlot\.startTime/,
+    /endTime:\s*firstSlot\.endTime/,
     /memo:\s*editorDraft\.memo/,
-    /color:\s*FAMILY_TIMETABLE_COLORS\.includes\(editorDraft\.color\) \? editorDraft\.color : "pink"/,
-    /active:\s*true/,
+    /color:\s*normalizeTimetableColor\(editorDraft\.color\)/,
+    /active:\s*editorDraft\.active !== false/,
     /createdAt:\s*now/,
     /updatedAt:\s*now/,
   ]) {
     assert.match(timetableSource, fieldPattern);
   }
 
-  for (const label of ["일정 이름", "요일", "시작", "끝", "메모", "색상", "저장", "취소", "삭제"]) {
-    assert.match(timetableSource, new RegExp(label));
+  for (const label of ["일정 이름", "시간", "요일", "시작", "끝", "+ 시간 추가", "메모", "색상", "저장", "취소", "삭제"]) {
+    assert.match(timetableSource, new RegExp(label.replace("+", "\\+")));
   }
 
   assert.match(timetableSource, /FAMILY_TIMETABLE_STORAGE_KEY = "kaosgdd\.family\.defaultTimetable\.v1"/);
 });
 
+test("family timetable editor rejects invalid slot values without Monday fallback", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+
+  assert.match(timetableSource, /function parseTimeString\(timeString\)/);
+  assert.match(timetableSource, /function isValidDayOfWeek\(dayOfWeek\)/);
+  assert.match(timetableSource, /function parseEditorSlot\(slot\)/);
+  assert.match(timetableSource, /if \(!isValidDayOfWeek\(slot\?\.dayOfWeek\)\) \{/);
+  assert.match(timetableSource, /return \{ error: "요일을 확인해주세요\." \};/);
+  assert.match(timetableSource, /const startRaw = parseTimeString\(slot\?\.startTime\);/);
+  assert.match(timetableSource, /const endRaw = parseTimeString\(slot\?\.endTime\);/);
+  assert.match(timetableSource, /if \(startRaw === null \|\| endRaw === null\) \{/);
+  assert.match(timetableSource, /return \{ error: "시간을 확인해주세요\." \};/);
+  assert.match(timetableSource, /if \(start < earliest \|\| start >= latest \|\| end <= start \|\| end > latest\) \{/);
+  assert.match(timetableSource, /const parsed = parseEditorSlot\(slot\);/);
+  assert.match(timetableSource, /if \(parsed\.error\) return \{ error: parsed\.error, slots: \[\] \};/);
+  assert.match(timetableSource, /return \{ error: "시간을 하나 이상 추가해주세요\.", slots: \[\] \};/);
+  assert.doesNotMatch(timetableSource, /normalizeEditorSlots[\s\S]*map\(\(slot\) => normalizeTimetableSlot\(slot\)\)/);
+});
+
+test("family timetable legacy storage recovery still normalizes old records", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+
+  assert.match(timetableSource, /function normalizeDayOfWeek\(dayOfWeek\)/);
+  assert.match(timetableSource, /return isValidDayOfWeek\(value\) \? value : 1;/);
+  assert.match(timetableSource, /function normalizeTimetableSlot\(slot\)/);
+  assert.match(timetableSource, /const dayOfWeek = normalizeDayOfWeek\(slot\?\.dayOfWeek\);/);
+  assert.match(timetableSource, /function slotsFromEntry\(entry\)/);
+  assert.match(timetableSource, /Array\.isArray\(entry\?\.slots\) && entry\.slots\.length > 0/);
+  assert.match(timetableSource, /dayOfWeek:\s*entry\?\.dayOfWeek/);
+  assert.match(timetableSource, /startTime:\s*entry\?\.startTime/);
+  assert.match(timetableSource, /endTime:\s*entry\?\.endTime/);
+  assert.match(timetableSource, /return rawSlots\.map\(normalizeTimetableSlot\)/);
+  assert.match(timetableSource, /function normalizeTimetableEntry\(entry\)/);
+  assert.match(timetableSource, /slots,/);
+  assert.match(timetableSource, /dayOfWeek:\s*firstSlot\.dayOfWeek/);
+});
+
+test("family timetable editor supports multiple compact time slots", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+  const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
+  const slotFieldCss = cssBlock(addCss, ".familyTimetableSlotField");
+  const slotRowsCss = cssBlock(addCss, ".familyTimetableSlotRows");
+  const slotRowCss = cssBlock(addCss, ".familyTimetableSlotRow");
+  const addSlotButtonCss = cssBlock(addCss, ".familyTimetableAddSlotButton");
+  const removeButtonCss = cssBlock(addCss, ".familyTimetableSlotRemove");
+
+  assert.match(timetableSource, /function normalizeTimetableSlot\(slot\)/);
+  assert.match(timetableSource, /function createDefaultSlot\(\{ dayOfWeek, startMinutes \}\)/);
+  assert.match(timetableSource, /function slotsFromEntry\(entry\)/);
+  assert.match(timetableSource, /slots:\s*\[slot\]/);
+  assert.match(timetableSource, /slots:\s*entry\.slots\.map/);
+  assert.match(timetableSource, /function updateEditorSlot\(slotIndex, field, value\)/);
+  assert.match(timetableSource, /function addEditorSlot\(\)/);
+  assert.match(timetableSource, /function removeEditorSlot\(slotIndex\)/);
+  assert.match(timetableSource, /editorDraft\.slots\.map\(\(slot, slotIndex\) =>/);
+  assert.match(timetableSource, /className="familyTimetableSlotRows"/);
+  assert.match(timetableSource, /className="familyTimetableSlotRow"/);
+  assert.match(timetableSource, /className="familyTimetableAddSlotButton"/);
+  assert.match(timetableSource, /className="familyTimetableSlotRemove"/);
+  assert.match(timetableSource, />\s*\+ 시간 추가\s*<\/button>/);
+  assert.match(timetableSource, /disabled=\{editorDraft\.slots\.length <= 1\}/);
+  assert.match(timetableSource, /aria-label="시간 삭제"/);
+  assert.match(timetableSource, /updateEditorSlot\(slotIndex, "dayOfWeek", event\.target\.value\)/);
+  assert.match(timetableSource, /updateEditorSlot\(slotIndex, "startTime", event\.target\.value\)/);
+  assert.match(timetableSource, /updateEditorSlot\(slotIndex, "endTime", event\.target\.value\)/);
+  assert.match(timetableSource, /onClick=\{addEditorSlot\}/);
+  assert.match(timetableSource, /onClick=\{\(\) => removeEditorSlot\(slotIndex\)\}/);
+
+  assert.match(slotFieldCss, /display:\s*grid;/);
+  assert.match(slotRowsCss, /display:\s*grid;/);
+  assert.match(slotRowCss, /display:\s*flex;/);
+  assert.match(slotRowCss, /flex-wrap:\s*wrap;/);
+  assert.match(slotRowCss, /gap:\s*10px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow label:nth-child\(1\)\s*\{[\s\S]*max-width:\s*120px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow label:nth-child\(2\),\s*\.familyTimetableSlotRow label:nth-child\(3\)\s*\{[\s\S]*max-width:\s*110px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*width:\s*100%;/);
+  assert.match(addSlotButtonCss, /justify-self:\s*start;/);
+  assert.match(removeButtonCss, /width:\s*34px;/);
+});
+
+test("family timetable new editor can prefill from existing schedules", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+  const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
+  const copyPillsCss = cssBlock(addCss, ".familyTimetableCopyPills");
+  const copyPillCss = cssBlock(addCss, ".familyTimetableCopyPill");
+
+  assert.match(timetableSource, /function entryToNewDraft\(entry\)/);
+  assert.match(timetableSource, /id:\s*""/);
+  assert.match(timetableSource, /title:\s*entry\.title/);
+  assert.match(timetableSource, /const slots = entry\.slots\.map/);
+  assert.match(timetableSource, /dayOfWeek:\s*firstSlot\.dayOfWeek/);
+  assert.match(timetableSource, /startTime:\s*firstSlot\.startTime/);
+  assert.match(timetableSource, /endTime:\s*firstSlot\.endTime/);
+  assert.match(timetableSource, /slots,/);
+  assert.match(timetableSource, /memo:\s*entry\.memo \|\| ""/);
+  assert.match(timetableSource, /color:\s*normalizeTimetableColor\(entry\.color\)/);
+  assert.match(timetableSource, /active:\s*entry\.active !== false/);
+  assert.match(timetableSource, /isNew:\s*true/);
+  assert.match(timetableSource, /function copyEntryToNewDraft\(entry\)/);
+  assert.match(timetableSource, /setEditorDraft\(entryToNewDraft\(entry\)\)/);
+  assert.match(timetableSource, /editorDraft\.isNew && visibleEntries\.length > 0/);
+  assert.match(timetableSource, /복사해서 만들기/);
+  assert.match(timetableSource, /familyTimetableCopyPills/);
+  assert.match(timetableSource, /familyTimetableCopyPill/);
+  assert.match(timetableSource, /onClick=\{\(\) => copyEntryToNewDraft\(entry\)\}/);
+  assert.match(timetableSource, /\{entry\.title\}/);
+  assert.doesNotMatch(timetableSource, /!editorDraft\.isNew[\s\S]*familyTimetableCopyPills/);
+
+  assert.match(copyPillsCss, /display:\s*flex;/);
+  assert.match(copyPillsCss, /overflow-x:\s*auto;/);
+  assert.match(copyPillCss, /flex:\s*0 0 auto;/);
+  assert.match(copyPillCss, /text-overflow:\s*ellipsis;/);
+});
+
 test("family timetable editor uses fixed pastel color chips", async () => {
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
-  const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
   const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
   const colorChipCss = cssBlock(addCss, ".familyTimetableColorChip");
   const activeChipCss = cssBlock(addCss, ".familyTimetableColorChipActive");
   const colorChipsCss = cssBlock(addCss, ".familyTimetableColorChips");
 
-  assert.match(timetableSource, /FAMILY_TIMETABLE_COLORS = \["pink", "cream", "yellow", "mint", "blue", "lavender"\]/);
+  for (const color of ["pink", "rose", "peach", "yellow", "mint", "green", "sky", "blue", "lavender", "purple", "cream", "gray"]) {
+    assert.match(timetableSource, new RegExp(`"${color}"`));
+  }
+  assert.match(timetableSource, /function normalizeTimetableColor\(color, fallback = "pink"\)/);
+  assert.match(timetableSource, /return FAMILY_TIMETABLE_COLORS\.includes\(color\) \? color : fallback;/);
+  assert.match(timetableSource, /function colorClassName\(color\)/);
   assert.match(timetableSource, /FAMILY_TIMETABLE_COLOR_LABELS = \{/);
-  for (const label of ["분홍", "크림", "노랑", "민트", "하늘", "보라"]) {
+  for (const label of ["분홍", "장미", "복숭아", "노랑", "민트", "초록", "하늘", "파랑", "라벤더", "보라", "크림", "회색"]) {
     assert.match(timetableSource, new RegExp(label));
   }
   assert.match(timetableSource, /<span>색상<\/span>/);
@@ -113,13 +236,19 @@ test("family timetable editor uses fixed pastel color chips", async () => {
 
   for (const className of [
     "familyTimetableEntryPink",
-    "familyTimetableEntryCream",
+    "familyTimetableEntryRose",
+    "familyTimetableEntryPeach",
     "familyTimetableEntryYellow",
     "familyTimetableEntryMint",
+    "familyTimetableEntryGreen",
+    "familyTimetableEntrySky",
     "familyTimetableEntryBlue",
     "familyTimetableEntryLavender",
+    "familyTimetableEntryPurple",
+    "familyTimetableEntryCream",
+    "familyTimetableEntryGray",
   ]) {
-    assert.match(familyCss, new RegExp(`\\.${className}\\s*\\{`));
+    assert.match(addCss, new RegExp(`\\.${className}\\s*,|\\.${className}\\s*\\{`));
   }
 
   assert.match(colorChipsCss, /display:\s*flex;/);
@@ -127,25 +256,19 @@ test("family timetable editor uses fixed pastel color chips", async () => {
   assert.match(colorChipCss, /min-height:\s*34px;/);
   assert.match(colorChipCss, /border-radius:\s*999px;/);
   assert.match(activeChipCss, /border-color:\s*rgba\(141, 63, 93, 0\.64\);/);
-  assert.match(addCss, /\.familyTimetableColorChipPink\s*\{/);
-  assert.match(addCss, /\.familyTimetableColorChipCream\s*\{/);
-  assert.match(addCss, /\.familyTimetableColorChipYellow\s*\{/);
-  assert.match(addCss, /\.familyTimetableColorChipMint\s*\{/);
-  assert.match(addCss, /\.familyTimetableColorChipBlue\s*\{/);
-  assert.match(addCss, /\.familyTimetableColorChipLavender\s*\{/);
 });
 
 test("family timetable editor keeps day and time controls compact", async () => {
   const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
-  const editorGridCss = cssBlock(addCss, ".familyTimetableEditorGrid");
+  const slotRowCss = cssBlock(addCss, ".familyTimetableSlotRow");
 
-  assert.match(editorGridCss, /display:\s*flex;/);
-  assert.match(editorGridCss, /flex-wrap:\s*wrap;/);
-  assert.match(editorGridCss, /gap:\s*10px;/);
-  assert.match(addCss, /\.familyTimetableEditorGrid label:nth-child\(1\)\s*\{[\s\S]*max-width:\s*120px;/);
-  assert.match(addCss, /\.familyTimetableEditorGrid label:nth-child\(2\),\s*\.familyTimetableEditorGrid label:nth-child\(3\)\s*\{[\s\S]*max-width:\s*110px;/);
-  assert.match(addCss, /\.familyTimetableEditorGrid select,\s*\.familyTimetableEditorGrid input\[type="time"\]\s*\{[\s\S]*width:\s*100%;/);
-  assert.match(addCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableEditorGrid\s*\{[\s\S]*flex-wrap:\s*wrap;/);
+  assert.match(slotRowCss, /display:\s*flex;/);
+  assert.match(slotRowCss, /flex-wrap:\s*wrap;/);
+  assert.match(slotRowCss, /gap:\s*10px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow label:nth-child\(1\)\s*\{[\s\S]*max-width:\s*120px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow label:nth-child\(2\),\s*\.familyTimetableSlotRow label:nth-child\(3\)\s*\{[\s\S]*max-width:\s*110px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*width:\s*100%;/);
+  assert.match(addCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableSlotRow\s*\{[\s\S]*flex-wrap:\s*wrap;/);
 });
 
 test("family timetable add UX preserves compact mobile timetable rules", async () => {
