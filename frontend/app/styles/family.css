@@ -8,6 +8,41 @@
   font-family: "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
 }
 
+.familyPage,
+.familyStream,
+.familyInput {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(214, 128, 157, 0.58) rgba(255, 248, 251, 0.76);
+}
+
+.familyPage::-webkit-scrollbar,
+.familyStream::-webkit-scrollbar,
+.familyInput::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.familyPage::-webkit-scrollbar-track,
+.familyStream::-webkit-scrollbar-track,
+.familyInput::-webkit-scrollbar-track {
+  background: rgba(255, 248, 251, 0.76);
+  border-radius: 999px;
+}
+
+.familyPage::-webkit-scrollbar-thumb,
+.familyStream::-webkit-scrollbar-thumb,
+.familyInput::-webkit-scrollbar-thumb {
+  background: rgba(214, 128, 157, 0.58);
+  border-radius: 999px;
+  border: 2px solid rgba(255, 248, 251, 0.76);
+}
+
+.familyPage::-webkit-scrollbar-thumb:hover,
+.familyStream::-webkit-scrollbar-thumb:hover,
+.familyInput::-webkit-scrollbar-thumb:hover {
+  background: rgba(180, 92, 125, 0.72);
+}
+
 .familyCard {
   min-height: calc(100dvh - var(--app-shell-content-offset) - var(--app-shell-bottom-reserve) - var(--app-card-gap));
   display: flex;
