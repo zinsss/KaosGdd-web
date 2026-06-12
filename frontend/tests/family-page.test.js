@@ -14,7 +14,7 @@ test("family page route exposes a Korean quick pad shell", async () => {
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const globalsCss = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
-  const topNavSource = await readFile(new URL("../components/TopNav.js", import.meta.url), "utf8");
+  const topNavSource = await readFile(new URL("../components/TopNav.js" , import.meta.url), "utf8");
 
   assert.match(pageSource, /FamilyPageClient/);
   assert.match(clientSource, /가족 메모/);
@@ -70,7 +70,9 @@ test("family default timetable uses a local weekly template model", async () => 
   assert.match(timetableSource, /TIMETABLE_END_HOUR = 22/);
   assert.match(timetableSource, /TIMETABLE_SLOT_MINUTES = 10/);
   assert.match(timetableSource, /DEFAULT_TIMETABLE_DURATION_MINUTES = 40/);
-  assert.match(timetableSource, /FAMILY_TIMETABLE_COLORS = \["pink", "cream", "yellow", "mint", "blue", "lavender"\]/);
+  for (const color of ["pink", "rose", "peach", "yellow", "mint", "green", "sky", "blue", "lavender", "purple", "cream", "gray"]) {
+    assert.match(timetableSource, new RegExp(`"${color}"`));
+  }
   assert.match(timetableSource, /DAY_LABELS = \[/);
   for (const dayLabel of ["월", "화", "수", "목", "금", "토", "일"]) {
     assert.match(timetableSource, new RegExp(`label: "${dayLabel}"`));
