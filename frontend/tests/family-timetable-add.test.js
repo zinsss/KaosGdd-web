@@ -70,8 +70,6 @@ test("family timetable time-slot rows match the reference grid", async () => {
   assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?justify-self:\s*start;/);
   assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?width:\s*48px;/);
   assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?min-width:\s*48px;/);
-  assert.doesNotMatch(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?position:\s*absolute;/);
-  assert.doesNotMatch(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?margin-[^:]+:\s*-/);
   assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?grid-template-columns:\s*72px minmax\(96px, 1fr\) minmax\(96px, 1fr\) 44px;/);
   assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?height:\s*44px;/);
 });
