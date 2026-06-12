@@ -41,6 +41,19 @@ test("family timetable has a visible add schedule editor path", async () => {
   assert.match(editorErrorCss, /color:\s*#9d3657;/);
 });
 
+test("family timetable disables empty-cell add behavior", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+  const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
+  const slotCss = cssBlock(addCss, ".familyTimetableSlot");
+
+  assert.match(timetableSource, /<span\s+className="familyTimetableSlot"/);
+  assert.match(timetableSource, /aria-hidden="true"/);
+  assert.doesNotMatch(timetableSource, /function addTimetableEntry/);
+  assert.doesNotMatch(timetableSource, /window\.prompt/);
+  assert.doesNotMatch(timetableSource, /onClick=\{\(\) => addTimetableEntry/);
+  assert.match(slotCss, /pointer-events:\s*none;/);
+});
+
 test("family timetable add save rejects blank titles and stores structured records", async () => {
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
 
@@ -72,9 +85,6 @@ test("family timetable add save rejects blank titles and stores structured recor
     assert.match(timetableSource, new RegExp(label));
   }
 
-  assert.match(timetableSource, /window\.prompt\("일정 이름"\)/);
-  assert.match(timetableSource, /if \(!title \|\| !title\.trim\(\)\) return;/);
-  assert.match(timetableSource, /createDefaultTimetableEntry\(\{ dayOfWeek, startMinutes, title: title\.trim\(\) \}\)/);
   assert.match(timetableSource, /FAMILY_TIMETABLE_STORAGE_KEY = "kaosgdd\.family\.defaultTimetable\.v1"/);
 });
 
@@ -123,6 +133,19 @@ test("family timetable editor uses fixed pastel color chips", async () => {
   assert.match(addCss, /\.familyTimetableColorChipMint\s*\{/);
   assert.match(addCss, /\.familyTimetableColorChipBlue\s*\{/);
   assert.match(addCss, /\.familyTimetableColorChipLavender\s*\{/);
+});
+
+test("family timetable editor keeps day and time controls compact", async () => {
+  const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
+  const editorGridCss = cssBlock(addCss, ".familyTimetableEditorGrid");
+
+  assert.match(editorGridCss, /display:\s*flex;/);
+  assert.match(editorGridCss, /flex-wrap:\s*wrap;/);
+  assert.match(editorGridCss, /gap:\s*10px;/);
+  assert.match(addCss, /\.familyTimetableEditorGrid label:nth-child\(1\)\s*\{[\s\S]*max-width:\s*120px;/);
+  assert.match(addCss, /\.familyTimetableEditorGrid label:nth-child\(2\),\s*\.familyTimetableEditorGrid label:nth-child\(3\)\s*\{[\s\S]*max-width:\s*110px;/);
+  assert.match(addCss, /\.familyTimetableEditorGrid select,\s*\.familyTimetableEditorGrid input\[type="time"\]\s*\{[\s\S]*width:\s*100%;/);
+  assert.match(addCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableEditorGrid\s*\{[\s\S]*flex-wrap:\s*wrap;/);
 });
 
 test("family timetable add UX preserves compact mobile timetable rules", async () => {
