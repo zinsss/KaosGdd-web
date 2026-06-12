@@ -176,9 +176,9 @@ export default function FamilyTimetable() {
 
   function addTimetableEntry(dayOfWeek, startMinutes) {
     const title = window.prompt("일정 이름");
-    if (title === null) return;
+    if (!title || !title.trim()) return;
 
-    const nextEntry = createDefaultTimetableEntry({ dayOfWeek, startMinutes, title });
+    const nextEntry = createDefaultTimetableEntry({ dayOfWeek, startMinutes, title: title.trim() });
     setEntries((current) => sortTimetableEntries([...current, nextEntry]));
     setEditingEntryId(nextEntry.id);
     setEditorDraft(entryToEditor(nextEntry));
