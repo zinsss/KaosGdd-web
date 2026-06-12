@@ -115,6 +115,27 @@ test("family default timetable uses a local weekly template model", async () => 
   assert.match(familyCss, /\.familyTimetableEditor\s*\{/);
 });
 
+test("family timetable uses compact no-scroll mobile layout", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+  const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
+
+  assert.match(timetableSource, /familyTimetableHourFull/);
+  assert.match(timetableSource, /familyTimetableHourCompact/);
+  assert.match(timetableSource, /<span className="familyTimetableHourCompact">\{hour\}<\/span>/);
+  assert.match(timetableSource, /<span className="familyTimetableHourFull">\{minutesToTime\(hour \* 60\)\}<\/span>/);
+  for (const dayLabel of ["월", "화", "수", "목", "금", "토", "일"]) {
+    assert.match(timetableSource, new RegExp(`label: "${dayLabel}"`));
+  }
+
+  assert.match(familyCss, /\.familyTimetableHourCompact\s*\{\s*display:\s*none;/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableScroller\s*\{[\s\S]*overflow-x:\s*hidden;/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableGrid\s*\{[\s\S]*min-width:\s*0;/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*grid-template-columns:\s*24px repeat\(7, minmax\(0, 1fr\)\);/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableHourFull\s*\{[\s\S]*display:\s*none;/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableHourCompact\s*\{[\s\S]*display:\s*inline;/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableEntryTime\s*\{[\s\S]*display:\s*none;/);
+});
+
 test("family scrollable areas use pastel family scrollbars", async () => {
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
   const baseCss = await readFile(new URL("../app/styles/base.css", import.meta.url), "utf8");
