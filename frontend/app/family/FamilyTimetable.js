@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 export const FAMILY_TIMETABLE_STORAGE_KEY = "kaosgdd.family.defaultTimetable.v1";
 export const TIMETABLE_START_HOUR = 8;
@@ -9,6 +9,15 @@ export const TIMETABLE_SLOT_MINUTES = 10;
 export const DEFAULT_TIMETABLE_DURATION_MINUTES = 40;
 export const TIMETABLE_SLOT_PIXEL_HEIGHT = 10;
 export const FAMILY_TIMETABLE_COLORS = ["pink", "cream", "yellow", "mint", "blue", "lavender"];
+
+const FAMILY_TIMETABLE_COLOR_LABELS = {
+  pink: "분홍",
+  cream: "크림",
+  yellow: "노랑",
+  mint: "민트",
+  blue: "하늘",
+  lavender: "보라",
+};
 
 const DAY_LABELS = [
   { dayOfWeek: 1, label: "월" },
@@ -63,6 +72,23 @@ export function snapMinutes(totalMinutes) {
 
 function clampTimetableMinutes(totalMinutes) {
   return Math.max(TIMETABLE_START_HOUR * 60, Math.min(TIMETABLE_END_HOUR * 60, snapMinutes(totalMinutes)));
+}
+
+function getTodayDayOfWeek() {
+  const today = new Date().getDay();
+  return today === 0 ? 7 : today;
+}
+
+function getDefaultStartMinutes() {
+  const fallback = 9 * 60;
+  const now = new Date();
+  const rawMinutes = now.getHours() * 60 + now.getMinutes() + TIMETABLE_SLOT_MINUTES;
+  const snappedMinutes = Math.ceil(rawMinutes / TIMETABLE_SLOT_MINUTES) * TIMETABLE_SLOT_MINUTES;
+  const earliest = TIMETABLE_START_HOUR * 60;
+  const latest = TIMETABLE_END_HOUR * 60 - DEFAULT_TIMETABLE_DURATION_MINUTES;
+
+  if (snappedMinutes < earliest || snappedMinutes > latest) return fallback;
+  return snappedMinutes;
 }
 
 export function createDefaultTimetableEntry({ dayOfWeek, startMinutes, title = "" }) {
@@ -153,11 +179,29 @@ function entryToEditor(entry) {
   };
 }
 
+function createNewScheduleDraft() {
+  const start = getDefaultStartMinutes();
+  const end = Math.min(TIMETABLE_END_HOUR * 60, start + DEFAULT_TIMETABLE_DURATION_MINUTES);
+
+  return {
+    id: "",
+    title: "",
+    dayOfWeek: String(getTodayDayOfWeek()),
+    startTime: minutesToTime(start),
+    endTime: minutesToTime(end),
+    memo: "",
+    color: "pink",
+    isNew: true,
+  };
+}
+
 export default function FamilyTimetable() {
   const [entries, setEntries] = useState([]);
   const [loaded, setLoaded] = useState(false);
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [editorDraft, setEditorDraft] = useState(null);
+  const [editorError, setEditorError] = useState("");
+  const titleInputRef = useRef(null);
 
   useEffect(() => {
     setEntries(loadTimetableEntries());
@@ -182,26 +226,65 @@ export default function FamilyTimetable() {
     setEntries((current) => sortTimetableEntries([...current, nextEntry]));
     setEditingEntryId(nextEntry.id);
     setEditorDraft(entryToEditor(nextEntry));
+    setEditorError("");
+  }
+
+  function startNewEntry() {
+    setEditingEntryId(null);
+    setEditorDraft(createNewScheduleDraft());
+    setEditorError("");
+    requestAnimationFrame(() => titleInputRef.current?.focus());
   }
 
   function startEditEntry(entry) {
     setEditingEntryId(entry.id);
     setEditorDraft(entryToEditor(entry));
+    setEditorError("");
   }
 
   function cancelEditEntry() {
     setEditingEntryId(null);
     setEditorDraft(null);
+    setEditorError("");
   }
 
   function updateEditorDraft(field, value) {
     setEditorDraft((current) => ({ ...current, [field]: value }));
+    if (field === "title" && value.trim()) {
+      setEditorError("");
+    }
   }
 
   function saveEditingEntry() {
     if (!editorDraft) return;
+    const title = editorDraft.title.trim();
+    if (!title) {
+      setEditorError("일정 이름을 입력해주세요.");
+      requestAnimationFrame(() => titleInputRef.current?.focus());
+      return;
+    }
+
     const start = clampTimetableMinutes(timeToMinutes(editorDraft.startTime));
     const end = Math.max(start + TIMETABLE_SLOT_MINUTES, clampTimetableMinutes(timeToMinutes(editorDraft.endTime)));
+    const now = new Date().toISOString();
+    const nextEntry = {
+      id: createId(),
+      title,
+      dayOfWeek: Number(editorDraft.dayOfWeek),
+      startTime: minutesToTime(start),
+      endTime: minutesToTime(Math.min(TIMETABLE_END_HOUR * 60, end)),
+      memo: editorDraft.memo,
+      color: FAMILY_TIMETABLE_COLORS.includes(editorDraft.color) ? editorDraft.color : "pink",
+      active: true,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    if (editorDraft.isNew) {
+      setEntries((current) => sortTimetableEntries([...current, nextEntry]));
+      cancelEditEntry();
+      return;
+    }
 
     setEntries((current) =>
       sortTimetableEntries(
@@ -210,13 +293,13 @@ export default function FamilyTimetable() {
 
           return {
             ...entry,
-            title: editorDraft.title.trim() || "새 일정",
+            title,
             dayOfWeek: Number(editorDraft.dayOfWeek),
             startTime: minutesToTime(start),
             endTime: minutesToTime(Math.min(TIMETABLE_END_HOUR * 60, end)),
             memo: editorDraft.memo,
             color: FAMILY_TIMETABLE_COLORS.includes(editorDraft.color) ? editorDraft.color : "pink",
-            updatedAt: new Date().toISOString(),
+            updatedAt: now,
           };
         }),
       ),
@@ -239,7 +322,12 @@ export default function FamilyTimetable() {
           <h2>기본 시간표</h2>
           <p>매주 반복되는 일정을 미리 적어두는 곳이에요.</p>
         </div>
-        <span className="familyTimetableBadge">08:00-22:00</span>
+        <div className="familyTimetableIntroActions">
+          <button className="familyTimetableAddButton" type="button" onClick={startNewEntry}>
+            + 일정
+          </button>
+          <span className="familyTimetableBadge">08:00-22:00</span>
+        </div>
       </div>
 
       <div className="familyTimetableScroller">
@@ -321,16 +409,23 @@ export default function FamilyTimetable() {
           }}
         >
           <div className="familyTimetableEditorHeader">
-            <h3>일정 수정</h3>
-            <button className="familyTimetableEditorDelete" type="button" onClick={() => deleteTimetableEntry()}>
-              삭제
-            </button>
+            <h3>{editorDraft.isNew ? "일정 추가" : "일정 수정"}</h3>
+            {!editorDraft.isNew ? (
+              <button className="familyTimetableEditorDelete" type="button" onClick={() => deleteTimetableEntry()}>
+                삭제
+              </button>
+            ) : null}
           </div>
 
           <label>
-            <span>이름</span>
-            <input value={editorDraft.title} onChange={(event) => updateEditorDraft("title", event.target.value)} />
+            <span>일정 이름</span>
+            <input ref={titleInputRef} value={editorDraft.title} onChange={(event) => updateEditorDraft("title", event.target.value)} />
           </label>
+          {editorError ? (
+            <p className="familyTimetableEditorError" role="alert">
+              {editorError}
+            </p>
+          ) : null}
 
           <div className="familyTimetableEditorGrid">
             <label>
@@ -351,16 +446,25 @@ export default function FamilyTimetable() {
               <span>끝</span>
               <input type="time" step={TIMETABLE_SLOT_MINUTES * 60} value={editorDraft.endTime} onChange={(event) => updateEditorDraft("endTime", event.target.value)} />
             </label>
-            <label>
-              <span>색</span>
-              <select value={editorDraft.color} onChange={(event) => updateEditorDraft("color", event.target.value)}>
-                {FAMILY_TIMETABLE_COLORS.map((color) => (
-                  <option value={color} key={color}>
-                    {color}
-                  </option>
-                ))}
-              </select>
-            </label>
+          </div>
+
+          <div className="familyTimetableColorField">
+            <span>색상</span>
+            <div className="familyTimetableColorChips" role="radiogroup" aria-label="색상">
+              {FAMILY_TIMETABLE_COLORS.map((color) => (
+                <button
+                  className={`familyTimetableColorChip familyTimetableColorChip${color[0].toUpperCase()}${color.slice(1)}${
+                    editorDraft.color === color ? " familyTimetableColorChipActive" : ""
+                  }`}
+                  type="button"
+                  aria-pressed={editorDraft.color === color}
+                  key={color}
+                  onClick={() => updateEditorDraft("color", color)}
+                >
+                  {FAMILY_TIMETABLE_COLOR_LABELS[color]}
+                </button>
+              ))}
+            </div>
           </div>
 
           <label>
