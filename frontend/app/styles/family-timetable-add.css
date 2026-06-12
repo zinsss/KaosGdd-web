@@ -26,11 +26,50 @@
   outline: none;
 }
 
+.familyTimetableSlot {
+  pointer-events: none;
+}
+
+.familyTimetableSlot:hover,
+.familyTimetableSlot:focus-visible {
+  background: transparent;
+  outline: none;
+}
+
 .familyTimetableEditorError {
   margin: -4px 0 0;
   color: #9d3657;
   font-size: 12px;
   font-weight: 900;
+}
+
+.familyTimetableEditorGrid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 10px;
+}
+
+.familyTimetableEditorGrid label {
+  flex: 0 1 auto;
+  width: auto;
+  min-width: 0;
+}
+
+.familyTimetableEditorGrid label:nth-child(1) {
+  flex-basis: 120px;
+  max-width: 120px;
+}
+
+.familyTimetableEditorGrid label:nth-child(2),
+.familyTimetableEditorGrid label:nth-child(3) {
+  flex-basis: 110px;
+  max-width: 110px;
+}
+
+.familyTimetableEditorGrid select,
+.familyTimetableEditorGrid input[type="time"] {
+  width: 100%;
 }
 
 .familyTimetableColorField {
@@ -112,6 +151,11 @@
   .familyTimetableAddButton {
     min-height: 38px;
     min-width: 82px;
+  }
+
+  .familyTimetableEditorGrid {
+    display: flex;
+    flex-wrap: wrap;
   }
 
   .familyTimetableColorChips {
