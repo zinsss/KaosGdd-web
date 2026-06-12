@@ -94,6 +94,11 @@
   line-height: 1.1;
 }
 
+.attentionBoxPillTask {
+  background: rgba(249, 226, 175, 0.14);
+  color: var(--ctp-yellow);
+}
+
 .attentionBoxPillReminder {
   background: rgba(243, 139, 168, 0.16);
   color: var(--ctp-maroon);
