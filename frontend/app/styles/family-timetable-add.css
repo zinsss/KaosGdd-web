@@ -72,7 +72,8 @@
   width: 100%;
 }
 
-.familyTimetableColorField {
+.familyTimetableColorField,
+.familyTimetableCopyField {
   display: grid;
   gap: 6px;
   min-width: 0;
@@ -101,28 +102,64 @@
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.34);
 }
 
+.familyTimetableEntryPink,
 .familyTimetableColorChipPink {
   background: #ffd8e5;
 }
 
-.familyTimetableColorChipCream {
-  background: #fffdf7;
+.familyTimetableEntryRose,
+.familyTimetableColorChipRose {
+  background: #ffd7dd;
 }
 
+.familyTimetableEntryPeach,
+.familyTimetableColorChipPeach {
+  background: #ffe0cf;
+}
+
+.familyTimetableEntryYellow,
 .familyTimetableColorChipYellow {
   background: #fff0bd;
 }
 
+.familyTimetableEntryMint,
 .familyTimetableColorChipMint {
+  background: #ddf5ea;
+}
+
+.familyTimetableEntryGreen,
+.familyTimetableColorChipGreen {
   background: #dff5df;
 }
 
+.familyTimetableEntrySky,
+.familyTimetableColorChipSky {
+  background: #d9f0ff;
+}
+
+.familyTimetableEntryBlue,
 .familyTimetableColorChipBlue {
   background: #dbeafe;
 }
 
+.familyTimetableEntryLavender,
 .familyTimetableColorChipLavender {
   background: #eadcff;
+}
+
+.familyTimetableEntryPurple,
+.familyTimetableColorChipPurple {
+  background: #efd9f7;
+}
+
+.familyTimetableEntryCream,
+.familyTimetableColorChipCream {
+  background: #fffdf7;
+}
+
+.familyTimetableEntryGray,
+.familyTimetableColorChipGray {
+  background: #ece8e4;
 }
 
 .familyTimetableColorChipActive {
@@ -136,6 +173,39 @@
 .familyTimetableColorChip:focus-visible {
   border-color: rgba(141, 63, 93, 0.56);
   outline: none;
+}
+
+.familyTimetableCopyPills {
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 1px 0 3px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(214, 128, 157, 0.5) rgba(255, 248, 251, 0.72);
+}
+
+.familyTimetableCopyPill {
+  appearance: none;
+  border: 1px solid rgba(151, 69, 98, 0.14);
+  flex: 0 0 auto;
+  max-width: 150px;
+  min-height: 32px;
+  border-radius: 999px;
+  padding: 0 10px;
+  color: #4b2536;
+  font-size: 13px;
+  font-weight: 900;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.familyTimetableCopyPill:hover,
+.familyTimetableCopyPill:focus-visible {
+  border-color: rgba(141, 63, 93, 0.56);
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 216, 229, 0.72);
 }
 
 @media (max-width: 640px) {
@@ -165,5 +235,10 @@
   .familyTimetableColorChip {
     min-height: 36px;
     padding: 0 9px;
+  }
+
+  .familyTimetableCopyPill {
+    min-height: 34px;
+    max-width: 132px;
   }
 }
