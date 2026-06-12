@@ -43,33 +43,86 @@
   font-weight: 900;
 }
 
-.familyTimetableEditorGrid {
+.familyTimetableSlotField {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  color: rgba(78, 37, 54, 0.68);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.familyTimetableSlotRows {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.familyTimetableSlotRow {
   display: flex;
   flex-wrap: wrap;
   align-items: end;
   gap: 10px;
+  min-width: 0;
 }
 
-.familyTimetableEditorGrid label {
+.familyTimetableSlotRow label {
   flex: 0 1 auto;
   width: auto;
   min-width: 0;
 }
 
-.familyTimetableEditorGrid label:nth-child(1) {
+.familyTimetableSlotRow label:nth-child(1) {
   flex-basis: 120px;
   max-width: 120px;
 }
 
-.familyTimetableEditorGrid label:nth-child(2),
-.familyTimetableEditorGrid label:nth-child(3) {
+.familyTimetableSlotRow label:nth-child(2),
+.familyTimetableSlotRow label:nth-child(3) {
   flex-basis: 110px;
   max-width: 110px;
 }
 
-.familyTimetableEditorGrid select,
-.familyTimetableEditorGrid input[type="time"] {
+.familyTimetableSlotRow select,
+.familyTimetableSlotRow input[type="time"] {
   width: 100%;
+}
+
+.familyTimetableSlotRemove,
+.familyTimetableAddSlotButton {
+  appearance: none;
+  border: 1px solid rgba(151, 69, 98, 0.16);
+  border-radius: 999px;
+  background: rgba(255, 248, 251, 0.78);
+  color: #8d3f5d;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.familyTimetableSlotRemove {
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  line-height: 1;
+}
+
+.familyTimetableSlotRemove:disabled {
+  opacity: 0.36;
+}
+
+.familyTimetableAddSlotButton {
+  justify-self: start;
+  min-height: 34px;
+  padding: 0 12px;
+}
+
+.familyTimetableSlotRemove:not(:disabled):hover,
+.familyTimetableSlotRemove:not(:disabled):focus-visible,
+.familyTimetableAddSlotButton:hover,
+.familyTimetableAddSlotButton:focus-visible {
+  border-color: rgba(141, 63, 93, 0.5);
+  background: rgba(255, 216, 229, 0.62);
+  outline: none;
 }
 
 .familyTimetableColorField,
@@ -223,9 +276,15 @@
     min-width: 82px;
   }
 
-  .familyTimetableEditorGrid {
+  .familyTimetableSlotRow {
     display: flex;
     flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .familyTimetableSlotRemove,
+  .familyTimetableAddSlotButton {
+    min-height: 36px;
   }
 
   .familyTimetableColorChips {
