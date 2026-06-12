@@ -96,10 +96,11 @@ test("family default timetable uses a local weekly template model", async () => 
   assert.match(timetableSource, /updatedAt:\s*now/);
   assert.match(timetableSource, /window\.localStorage\.getItem\(FAMILY_TIMETABLE_STORAGE_KEY\)/);
   assert.match(timetableSource, /window\.localStorage\.setItem\(FAMILY_TIMETABLE_STORAGE_KEY, JSON\.stringify\(entries\)\)/);
-  assert.match(timetableSource, /function addTimetableEntry\(dayOfWeek, startMinutes\)/);
-  assert.match(timetableSource, /window\.prompt\("일정 이름"\)/);
-  assert.match(timetableSource, /if \(!title \|\| !title\.trim\(\)\) return;/);
-  assert.match(timetableSource, /createDefaultTimetableEntry\(\{ dayOfWeek, startMinutes, title: title\.trim\(\) \}\)/);
+  assert.doesNotMatch(timetableSource, /function addTimetableEntry/);
+  assert.doesNotMatch(timetableSource, /window\.prompt/);
+  assert.doesNotMatch(timetableSource, /onClick=\{\(\) => addTimetableEntry/);
+  assert.match(timetableSource, /<span\s+className="familyTimetableSlot"/);
+  assert.match(timetableSource, /aria-hidden="true"/);
   assert.match(timetableSource, /function startEditEntry\(entry\)/);
   assert.match(timetableSource, /function saveEditingEntry\(\)/);
   assert.match(timetableSource, /function deleteTimetableEntry/);
