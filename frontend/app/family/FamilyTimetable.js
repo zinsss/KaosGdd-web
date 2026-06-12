@@ -742,13 +742,13 @@ export default function FamilyTimetable() {
                   <button
                     className={`familyTimetableColorChip familyTimetableColorChip${colorClassName(color)}${editorDraft.color === color ? " familyTimetableColorChipActive" : ""}${unavailable ? " familyTimetableColorChipDisabled" : ""}`}
                     type="button"
+                    aria-label={FAMILY_TIMETABLE_COLOR_LABELS[color]}
                     aria-pressed={editorDraft.color === color}
                     disabled={unavailable}
                     key={color}
+                    title={FAMILY_TIMETABLE_COLOR_LABELS[color]}
                     onClick={() => updateEditorDraft("color", color)}
-                  >
-                    {FAMILY_TIMETABLE_COLOR_LABELS[color]}
-                  </button>
+                  />
                 );
               })}
             </div>
