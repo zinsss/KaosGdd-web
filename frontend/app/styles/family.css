@@ -66,17 +66,14 @@
 }
 
 .familyBubbleRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 24px;
-  gap: 6px;
   width: 100%;
-  align-items: stretch;
 }
 
 .familyBubble {
+  position: relative;
   width: 100%;
   max-width: none;
-  padding: 10px 12px 7px;
+  padding: 10px 38px 28px 12px;
   border-radius: 8px;
   background: #ffd8e5;
   color: #4b2536;
@@ -100,6 +97,10 @@
   background: rgba(255, 216, 229, 0.62);
 }
 
+.familyBubbleContent {
+  min-width: 0;
+}
+
 .familyBubbleText,
 .familyBubbleTitle {
   white-space: pre-wrap;
@@ -121,18 +122,12 @@
   text-align: right;
 }
 
-.familyBubbleActions {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  align-items: center;
-  padding: 2px 0 3px;
-}
-
 .familyBubbleDeleteIcon,
 .familyBubbleEditIcon {
   appearance: none;
   border: 0;
+  position: absolute;
+  right: 8px;
   width: 22px;
   height: 22px;
   border-radius: 999px;
@@ -146,10 +141,12 @@
 }
 
 .familyBubbleDeleteIcon {
+  top: 7px;
   font-weight: 800;
 }
 
 .familyBubbleEditIcon {
+  bottom: 7px;
   font-size: 16px;
 }
 
