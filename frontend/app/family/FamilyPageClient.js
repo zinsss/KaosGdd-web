@@ -108,32 +108,6 @@ function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onT
   return (
     <div className={`familyBubbleRow${isEditing ? " familyBubbleEditing" : ""}`}>
       <article className={`familyBubble${isChecklist ? " familyBubbleChecklist" : ""}`}>
-        {isChecklist ? (
-          <>
-            <div className="familyBubbleTitle">{message.title}</div>
-            <div className="familyChecklistRows">
-              {message.items.map((item) => (
-                <button
-                  className={`familyChecklistRow${item.checked ? " familyChecklistRowChecked" : ""}`}
-                  key={item.id}
-                  type="button"
-                  onClick={() => onToggleChecklistItem(message.id, item.id)}
-                >
-                  <span className="familyChecklistBox" aria-hidden="true">
-                    {item.checked ? "☑" : "☐"}
-                  </span>
-                  <span className="familyChecklistText">{item.text}</span>
-                </button>
-              ))}
-            </div>
-          </>
-        ) : (
-          <div className="familyBubbleText">{message.text}</div>
-        )}
-        <time className="familyBubbleTime">{message.createdAt}</time>
-      </article>
-
-      <div className="familyBubbleActions">
         <button
           className="familyBubbleDeleteIcon"
           type="button"
@@ -142,10 +116,37 @@ function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onT
         >
           ×
         </button>
+
+        <div className="familyBubbleContent">
+          {isChecklist ? (
+            <>
+              <div className="familyBubbleTitle">{message.title}</div>
+              <div className="familyChecklistRows">
+                {message.items.map((item) => (
+                  <button
+                    className={`familyChecklistRow${item.checked ? " familyChecklistRowChecked" : ""}`}
+                    key={item.id}
+                    type="button"
+                    onClick={() => onToggleChecklistItem(message.id, item.id)}
+                  >
+                    <span className="familyChecklistBox" aria-hidden="true">
+                      {item.checked ? "☑" : "☐"}
+                    </span>
+                    <span className="familyChecklistText">{item.text}</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="familyBubbleText">{message.text}</div>
+          )}
+          <time className="familyBubbleTime">{message.createdAt}</time>
+        </div>
+
         <button className="familyBubbleEditIcon" type="button" aria-label={editLabel} onClick={() => onEditMessage(message)}>
           ✎
         </button>
-      </div>
+      </article>
     </div>
   );
 }
