@@ -212,8 +212,8 @@ test("family bubbles keep edit control in the footer with time", async () => {
   assert.doesNotMatch(editIconCss, /bottom:\s*7px;/);
   assert.doesNotMatch(familyCss, /\.familyBubbleActions/);
   assert.doesNotMatch(familyCss, /grid-template-columns:\s*minmax\(0, 1fr\) 24px;/);
-  assert.doesNotMatch(familyCss, /\.familyBubbleFooter[\s\S]*?width:\s*100%;/);
-  assert.doesNotMatch(familyCss, /\.familyBubbleEditIcon[\s\S]*?width:\s*100%;/);
+  assert.doesNotMatch(bubbleFooterCss, /width:\s*100%;/);
+  assert.doesNotMatch(editIconCss, /width:\s*100%;/);
 });
 
 test("family bubbles can be edited and deleted through composer mode", async () => {
