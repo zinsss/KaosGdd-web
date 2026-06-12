@@ -78,6 +78,24 @@ function colorClassName(color) {
   return `${normalizedColor[0].toUpperCase()}${normalizedColor.slice(1)}`;
 }
 
+function getUsedScheduleColors(entries, editingEntryId = null) {
+  return new Set(
+    entries
+      .filter((entry) => entry.active !== false && entry.id !== editingEntryId)
+      .map((entry) => normalizeTimetableColor(entry.color)),
+  );
+}
+
+function getFirstAvailableColor(usedColors, preferredColor = "pink") {
+  const preferred = normalizeTimetableColor(preferredColor);
+  if (!usedColors.has(preferred)) return preferred;
+  return FAMILY_TIMETABLE_COLORS.find((color) => !usedColors.has(color)) || preferred;
+}
+
+function hasAvailableColor(usedColors) {
+  return FAMILY_TIMETABLE_COLORS.some((color) => !usedColors.has(color));
+}
+
 function parseTimeString(timeString) {
   const match = String(timeString || "").match(/^(\d{1,2}):(\d{2})$/);
   if (!match) return null;
@@ -301,7 +319,7 @@ function entryToEditor(entry) {
   };
 }
 
-function createNewScheduleDraft() {
+function createNewScheduleDraft(color = "pink") {
   const start = getDefaultStartMinutes();
   const slot = createDefaultSlot({ dayOfWeek: getTodayDayOfWeek(), startMinutes: start });
 
@@ -319,13 +337,13 @@ function createNewScheduleDraft() {
       },
     ],
     memo: "",
-    color: "pink",
+    color: normalizeTimetableColor(color),
     active: true,
     isNew: true,
   };
 }
 
-function entryToNewDraft(entry) {
+function entryToNewDraft(entry, usedColors = new Set()) {
   const slots = entry.slots.map((slot) => ({
     dayOfWeek: String(slot.dayOfWeek),
     startTime: slot.startTime,
@@ -341,7 +359,7 @@ function entryToNewDraft(entry) {
     endTime: firstSlot.endTime,
     slots,
     memo: entry.memo || "",
-    color: normalizeTimetableColor(entry.color),
+    color: getFirstAvailableColor(usedColors, entry.color),
     active: entry.active !== false,
     isNew: true,
   };
@@ -368,6 +386,7 @@ export default function FamilyTimetable() {
   const [editingEntryId, setEditingEntryId] = useState(null);
   const [editorDraft, setEditorDraft] = useState(null);
   const [editorError, setEditorError] = useState("");
+  const [colorNotice, setColorNotice] = useState("");
   const titleInputRef = useRef(null);
 
   useEffect(() => {
@@ -385,6 +404,11 @@ export default function FamilyTimetable() {
     [entries],
   );
 
+  const usedEditorColors = useMemo(
+    () => getUsedScheduleColors(entries, editorDraft?.isNew ? null : editingEntryId),
+    [entries, editorDraft?.isNew, editingEntryId],
+  );
+
   const visibleBlocksByDay = useMemo(() => {
     return DAY_LABELS.reduce((days, day) => {
       days[day.dayOfWeek] = sortTimetableBlocks(
@@ -398,17 +422,32 @@ export default function FamilyTimetable() {
     }, {});
   }, [visibleEntries]);
 
+  function colorIsUnavailable(color) {
+    if (!editorDraft) return false;
+    return usedEditorColors.has(color) && editorDraft.color !== color && hasAvailableColor(usedEditorColors);
+  }
+
   function startNewEntry() {
+    const usedColors = getUsedScheduleColors(entries);
     setEditingEntryId(null);
-    setEditorDraft(createNewScheduleDraft());
+    setEditorDraft(createNewScheduleDraft(getFirstAvailableColor(usedColors, "pink")));
     setEditorError("");
+    setColorNotice(usedColors.size > 0 ? "이미 사용 중인 색상은 선택할 수 없어요." : "");
     requestAnimationFrame(() => titleInputRef.current?.focus());
   }
 
   function copyEntryToNewDraft(entry) {
+    const usedColors = getUsedScheduleColors(entries);
+    const copiedDraft = entryToNewDraft(entry, usedColors);
+    const copiedColor = normalizeTimetableColor(entry.color);
     setEditingEntryId(null);
-    setEditorDraft(entryToNewDraft(entry));
+    setEditorDraft(copiedDraft);
     setEditorError("");
+    setColorNotice(
+      copiedDraft.color !== copiedColor
+        ? "이미 사용 중인 색상이라 다른 색상을 골랐어요."
+        : "이미 사용 중인 색상은 선택할 수 없어요.",
+    );
     requestAnimationFrame(() => titleInputRef.current?.focus());
   }
 
@@ -416,17 +455,23 @@ export default function FamilyTimetable() {
     setEditingEntryId(entry.id);
     setEditorDraft(entryToEditor(entry));
     setEditorError("");
+    setColorNotice("이미 사용 중인 색상은 선택할 수 없어요.");
   }
 
   function cancelEditEntry() {
     setEditingEntryId(null);
     setEditorDraft(null);
     setEditorError("");
+    setColorNotice("");
   }
 
   function updateEditorDraft(field, value) {
     setEditorDraft((current) => ({ ...current, [field]: value }));
     if (field === "title" && value.trim()) {
+      setEditorError("");
+    }
+    if (field === "color") {
+      setColorNotice("이미 사용 중인 색상은 선택할 수 없어요.");
       setEditorError("");
     }
   }
@@ -476,6 +521,16 @@ export default function FamilyTimetable() {
       return;
     }
 
+    const selectedColor = normalizeTimetableColor(editorDraft.color);
+    const saveUsedColors = getUsedScheduleColors(entries, editorDraft.isNew ? null : editingEntryId);
+    if (saveUsedColors.has(selectedColor) && hasAvailableColor(saveUsedColors)) {
+      const nextColor = getFirstAvailableColor(saveUsedColors, selectedColor);
+      setEditorDraft((current) => ({ ...current, color: nextColor }));
+      setEditorError("이미 사용 중인 색상은 선택할 수 없어요.");
+      setColorNotice("사용 가능한 다른 색상을 골랐어요.");
+      return;
+    }
+
     const { slots, error: slotError } = normalizeEditorSlots(editorDraft.slots);
     if (slotError) {
       setEditorError(slotError);
@@ -492,7 +547,7 @@ export default function FamilyTimetable() {
       startTime: firstSlot.startTime,
       endTime: firstSlot.endTime,
       memo: editorDraft.memo,
-      color: normalizeTimetableColor(editorDraft.color),
+      color: selectedColor,
       active: editorDraft.active !== false,
       createdAt: now,
       updatedAt: now,
@@ -517,7 +572,7 @@ export default function FamilyTimetable() {
             startTime: firstSlot.startTime,
             endTime: firstSlot.endTime,
             memo: editorDraft.memo,
-            color: normalizeTimetableColor(editorDraft.color),
+            color: selectedColor,
             active: editorDraft.active !== false,
             updatedAt: now,
           };
@@ -681,18 +736,23 @@ export default function FamilyTimetable() {
           <div className="familyTimetableColorField">
             <span>색상</span>
             <div className="familyTimetableColorChips" role="radiogroup" aria-label="색상">
-              {FAMILY_TIMETABLE_COLORS.map((color) => (
-                <button
-                  className={`familyTimetableColorChip familyTimetableColorChip${colorClassName(color)}${editorDraft.color === color ? " familyTimetableColorChipActive" : ""}`}
-                  type="button"
-                  aria-pressed={editorDraft.color === color}
-                  key={color}
-                  onClick={() => updateEditorDraft("color", color)}
-                >
-                  {FAMILY_TIMETABLE_COLOR_LABELS[color]}
-                </button>
-              ))}
+              {FAMILY_TIMETABLE_COLORS.map((color) => {
+                const unavailable = colorIsUnavailable(color);
+                return (
+                  <button
+                    className={`familyTimetableColorChip familyTimetableColorChip${colorClassName(color)}${editorDraft.color === color ? " familyTimetableColorChipActive" : ""}${unavailable ? " familyTimetableColorChipDisabled" : ""}`}
+                    type="button"
+                    aria-pressed={editorDraft.color === color}
+                    disabled={unavailable}
+                    key={color}
+                    onClick={() => updateEditorDraft("color", color)}
+                  >
+                    {FAMILY_TIMETABLE_COLOR_LABELS[color]}
+                  </button>
+                );
+              })}
             </div>
+            {colorNotice ? <p className="familyTimetableColorHelp">{colorNotice}</p> : null}
           </div>
 
           <label>
