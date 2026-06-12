@@ -64,9 +64,9 @@ test("family timetable add save rejects blank titles and stores structured recor
   assert.match(timetableSource, /role="alert"/);
   assert.match(timetableSource, /일정 이름을 입력해주세요\./);
   assert.match(timetableSource, /if \(field === "title" && value\.trim\(\)\) \{/);
-  assert.match(timetableSource, /const slots = normalizeEditorSlots\(editorDraft\.slots\);/);
-  assert.match(timetableSource, /if \(slots\.length === 0\) \{/);
-  assert.match(timetableSource, /setEditorError\("시간을 하나 이상 추가해주세요\."\);/);
+  assert.match(timetableSource, /const \{ slots, error: slotError \} = normalizeEditorSlots\(editorDraft\.slots\);/);
+  assert.match(timetableSource, /if \(slotError\) \{/);
+  assert.match(timetableSource, /setEditorError\(slotError\);/);
   assert.match(timetableSource, /if \(editorDraft\.isNew\) \{/);
   assert.match(timetableSource, /setEntries\(\(current\) => sortTimetableEntries\(\[\.\.\.current, nextEntry\]\)\)/);
 
@@ -91,6 +91,43 @@ test("family timetable add save rejects blank titles and stores structured recor
   }
 
   assert.match(timetableSource, /FAMILY_TIMETABLE_STORAGE_KEY = "kaosgdd\.family\.defaultTimetable\.v1"/);
+});
+
+test("family timetable editor rejects invalid slot values without Monday fallback", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+
+  assert.match(timetableSource, /function parseTimeString\(timeString\)/);
+  assert.match(timetableSource, /function isValidDayOfWeek\(dayOfWeek\)/);
+  assert.match(timetableSource, /function parseEditorSlot\(slot\)/);
+  assert.match(timetableSource, /if \(!isValidDayOfWeek\(slot\?\.dayOfWeek\)\) \{/);
+  assert.match(timetableSource, /return \{ error: "요일을 확인해주세요\." \};/);
+  assert.match(timetableSource, /const startRaw = parseTimeString\(slot\?\.startTime\);/);
+  assert.match(timetableSource, /const endRaw = parseTimeString\(slot\?\.endTime\);/);
+  assert.match(timetableSource, /if \(startRaw === null \|\| endRaw === null\) \{/);
+  assert.match(timetableSource, /return \{ error: "시간을 확인해주세요\." \};/);
+  assert.match(timetableSource, /if \(start < earliest \|\| start >= latest \|\| end <= start \|\| end > latest\) \{/);
+  assert.match(timetableSource, /const parsed = parseEditorSlot\(slot\);/);
+  assert.match(timetableSource, /if \(parsed\.error\) return \{ error: parsed\.error, slots: \[\] \};/);
+  assert.match(timetableSource, /return \{ error: "시간을 하나 이상 추가해주세요\.", slots: \[\] \};/);
+  assert.doesNotMatch(timetableSource, /normalizeEditorSlots[\s\S]*map\(\(slot\) => normalizeTimetableSlot\(slot\)\)/);
+});
+
+test("family timetable legacy storage recovery still normalizes old records", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+
+  assert.match(timetableSource, /function normalizeDayOfWeek\(dayOfWeek\)/);
+  assert.match(timetableSource, /return isValidDayOfWeek\(value\) \? value : 1;/);
+  assert.match(timetableSource, /function normalizeTimetableSlot\(slot\)/);
+  assert.match(timetableSource, /const dayOfWeek = normalizeDayOfWeek\(slot\?\.dayOfWeek\);/);
+  assert.match(timetableSource, /function slotsFromEntry\(entry\)/);
+  assert.match(timetableSource, /Array\.isArray\(entry\?\.slots\) && entry\.slots\.length > 0/);
+  assert.match(timetableSource, /dayOfWeek:\s*entry\?\.dayOfWeek/);
+  assert.match(timetableSource, /startTime:\s*entry\?\.startTime/);
+  assert.match(timetableSource, /endTime:\s*entry\?\.endTime/);
+  assert.match(timetableSource, /return rawSlots\.map\(normalizeTimetableSlot\)/);
+  assert.match(timetableSource, /function normalizeTimetableEntry\(entry\)/);
+  assert.match(timetableSource, /slots,/);
+  assert.match(timetableSource, /dayOfWeek:\s*firstSlot\.dayOfWeek/);
 });
 
 test("family timetable editor supports multiple compact time slots", async () => {
@@ -149,6 +186,7 @@ test("family timetable new editor can prefill from existing schedules", async ()
   assert.match(timetableSource, /dayOfWeek:\s*firstSlot\.dayOfWeek/);
   assert.match(timetableSource, /startTime:\s*firstSlot\.startTime/);
   assert.match(timetableSource, /endTime:\s*firstSlot\.endTime/);
+  assert.match(timetableSource, /slots,/);
   assert.match(timetableSource, /memo:\s*entry\.memo \|\| ""/);
   assert.match(timetableSource, /color:\s*normalizeTimetableColor\(entry\.color\)/);
   assert.match(timetableSource, /active:\s*entry\.active !== false/);
