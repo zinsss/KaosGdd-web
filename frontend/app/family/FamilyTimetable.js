@@ -10,6 +10,15 @@ export const DEFAULT_TIMETABLE_DURATION_MINUTES = 40;
 export const TIMETABLE_SLOT_PIXEL_HEIGHT = 10;
 export const FAMILY_TIMETABLE_COLORS = ["pink", "cream", "yellow", "mint", "blue", "lavender"];
 
+const FAMILY_TIMETABLE_COLOR_LABELS = {
+  pink: "분홍",
+  cream: "크림",
+  yellow: "노랑",
+  mint: "민트",
+  blue: "하늘",
+  lavender: "보라",
+};
+
 const DAY_LABELS = [
   { dayOfWeek: 1, label: "월" },
   { dayOfWeek: 2, label: "화" },
@@ -437,16 +446,25 @@ export default function FamilyTimetable() {
               <span>끝</span>
               <input type="time" step={TIMETABLE_SLOT_MINUTES * 60} value={editorDraft.endTime} onChange={(event) => updateEditorDraft("endTime", event.target.value)} />
             </label>
-            <label>
-              <span>색상</span>
-              <select value={editorDraft.color} onChange={(event) => updateEditorDraft("color", event.target.value)}>
-                {FAMILY_TIMETABLE_COLORS.map((color) => (
-                  <option value={color} key={color}>
-                    {color}
-                  </option>
-                ))}
-              </select>
-            </label>
+          </div>
+
+          <div className="familyTimetableColorField">
+            <span>색상</span>
+            <div className="familyTimetableColorChips" role="radiogroup" aria-label="색상">
+              {FAMILY_TIMETABLE_COLORS.map((color) => (
+                <button
+                  className={`familyTimetableColorChip familyTimetableColorChip${color[0].toUpperCase()}${color.slice(1)}${
+                    editorDraft.color === color ? " familyTimetableColorChipActive" : ""
+                  }`}
+                  type="button"
+                  aria-pressed={editorDraft.color === color}
+                  key={color}
+                  onClick={() => updateEditorDraft("color", color)}
+                >
+                  {FAMILY_TIMETABLE_COLOR_LABELS[color]}
+                </button>
+              ))}
+            </div>
           </div>
 
           <label>
