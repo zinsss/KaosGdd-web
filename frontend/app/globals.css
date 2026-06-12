@@ -12,6 +12,7 @@
 @import "./styles/events.css";
 @import "./styles/spacing.css";
 @import "./styles/top-nav-scroll-buttons.css";
+@import "./styles/family.css";
 
 .markdownBody {
   line-height: 1.5;
