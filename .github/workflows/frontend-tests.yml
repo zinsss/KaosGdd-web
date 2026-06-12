@@ -1,0 +1,24 @@
+name: Frontend validation
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Whitespace check
+        run: git diff --check
+
+      - name: Run all frontend tests
+        run: node --test frontend/tests/*.test.js
