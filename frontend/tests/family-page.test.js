@@ -50,14 +50,43 @@ test("family composer avoids iOS zoom and resets textarea height after send", as
   assert.match(clientSource, /requestAnimationFrame\(resetInputHeight\)/);
 });
 
-test("family bubbles can be edited through composer mode", async () => {
+test("family bubbles use full-width memo rows with edit and delete actions", async () => {
+  const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
+  const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
+  const bubbleRowCss = cssBlock(familyCss, ".familyBubbleRow");
+  const bubbleCss = cssBlock(familyCss, ".familyBubble");
+  const bubbleActionsCss = cssBlock(familyCss, ".familyBubbleActions");
+
+  assert.match(clientSource, /familyBubbleRow/);
+  assert.match(clientSource, /familyBubbleActions/);
+  assert.match(clientSource, /familyBubbleDeleteIcon/);
+  assert.match(clientSource, /familyBubbleEditIcon/);
+  assert.match(clientSource, />\s*×\s*<\/button>/);
+  assert.match(clientSource, />\s*✎\s*<\/button>/);
+  assert.doesNotMatch(clientSource, />\s*수정\s*<\/button>/);
+  assert.match(bubbleRowCss, /display:\s*grid;/);
+  assert.match(bubbleRowCss, /grid-template-columns:\s*minmax\(0, 1fr\) 24px;/);
+  assert.match(bubbleRowCss, /width:\s*100%;/);
+  assert.match(bubbleCss, /width:\s*100%;/);
+  assert.match(bubbleCss, /max-width:\s*none;/);
+  assert.match(bubbleActionsCss, /flex-direction:\s*column;/);
+  assert.doesNotMatch(familyCss, /align-self:\s*flex-(?:start|end);/);
+  assert.doesNotMatch(familyCss, /max-width:\s*min\(76%, 520px\)/);
+  assert.doesNotMatch(familyCss, /max-width:\s*88%/);
+  assert.doesNotMatch(familyCss, /familyBubbleRowRight|familyBubbleRowLeft|familyBubbleRowChecklist/);
+});
+
+test("family bubbles can be edited and deleted through composer mode", async () => {
   const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
 
   assert.match(clientSource, /editingMessageId/);
   assert.match(clientSource, /function startEditMessage\(message\)/);
   assert.match(clientSource, /onEditMessage=\{startEditMessage\}/);
-  assert.match(clientSource, />\s*수정\s*<\/button>/);
+  assert.match(clientSource, /function deleteMessage\(messageId\)/);
+  assert.match(clientSource, /window\.confirm\("삭제할까요\?"\)/);
+  assert.match(clientSource, /setMessages\(\(current\) => current\.filter\(\(message\) => message\.id !== messageId\)\)/);
+  assert.match(clientSource, /if \(editingMessageId === messageId\) \{\s*resetComposer\(\);\s*\}/);
   assert.match(clientSource, /\{isEditing \? "저장" : "보내기"\}/);
   assert.match(clientSource, />\s*취소\s*<\/button>/);
   assert.match(clientSource, /function checklistToDraft\(message\)/);
@@ -65,6 +94,7 @@ test("family bubbles can be edited through composer mode", async () => {
   assert.match(clientSource, /checkedStateQueues\.get\(item\.text\)/);
   assert.match(clientSource, /checked:\s*previous \? previous\.checked : false/);
   assert.match(clientSource, /setMessages\(\(current\) =>\s*current\.map/);
-  assert.match(familyCss, /\.familyBubbleEdit\s*\{/);
+  assert.match(familyCss, /\.familyBubbleEditing \.familyBubble\s*\{/);
+  assert.match(familyCss, /\.familyBubbleEditing \.familyBubbleEditIcon\s*\{/);
   assert.match(familyCss, /\.familyCancel\s*\{/);
 });
