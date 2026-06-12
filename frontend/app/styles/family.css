@@ -461,6 +461,10 @@
   white-space: nowrap;
 }
 
+.familyTimetableHourCompact {
+  display: none;
+}
+
 .familyTimetableDayColumn {
   background: #fff8fb;
   border-left: 1px solid rgba(214, 128, 157, 0.12);
@@ -711,7 +715,47 @@
   }
 
   .familyTimetableScroller {
-    padding: 0 12px 12px;
+    overflow-x: hidden;
+    padding: 0 8px 12px;
+  }
+
+  .familyTimetableGrid {
+    min-width: 0;
+    width: 100%;
+    grid-template-columns: 24px repeat(7, minmax(0, 1fr));
+  }
+
+  .familyTimetableDayHeader {
+    font-size: 12px;
+  }
+
+  .familyTimetableHourLabel {
+    right: 4px;
+    font-size: 11px;
+  }
+
+  .familyTimetableHourFull {
+    display: none;
+  }
+
+  .familyTimetableHourCompact {
+    display: inline;
+  }
+
+  .familyTimetableEntry {
+    left: 2px;
+    right: 2px;
+    border-radius: 6px;
+    padding: 4px 3px;
+  }
+
+  .familyTimetableEntryTitle {
+    font-size: 11px;
+    line-height: 1.15;
+  }
+
+  .familyTimetableEntryTime {
+    display: none;
   }
 
   .familyTimetableEditor {
