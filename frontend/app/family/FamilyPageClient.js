@@ -104,7 +104,10 @@ export default function FamilyPageClient() {
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [draft, setDraft] = useState("");
   const [checklistMode, setChecklistMode] = useState(false);
-  const canSend = useMemo(() => compactLines(draft).length > 0, [draft]);
+  const canSend = useMemo(() => {
+    const lineCount = compactLines(draft).length;
+    return checklistMode ? lineCount >= 2 : lineCount > 0;
+  }, [checklistMode, draft]);
 
   useEffect(() => {
     setMessages(loadMessages());
@@ -194,6 +197,7 @@ export default function FamilyPageClient() {
             value={draft}
             rows={checklistMode ? 4 : 2}
             placeholder={getInputPlaceholder(checklistMode)}
+            aria-label="가족 메모 입력"
             onChange={(event) => setDraft(event.target.value)}
             onKeyDown={onDraftKeyDown}
           />
