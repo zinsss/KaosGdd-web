@@ -45,6 +45,7 @@ test("family composer avoids iOS zoom and resets textarea height after send", as
   assert.match(clientSource, /el\.style\.height = "";/);
   assert.match(clientSource, /function resizeInputToContent/);
   assert.match(clientSource, /Math\.min\(el\.scrollHeight, 148\)/);
+  assert.match(clientSource, /rows=\{checklistMode \? 4 : 1\}/);
   assert.match(clientSource, /onChange=\{handleDraftChange\}/);
   assert.match(clientSource, /setDraft\(""\);\s*requestAnimationFrame\(resetInputHeight\);/);
 });
