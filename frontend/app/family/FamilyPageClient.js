@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const STORAGE_KEY = "kaosgdd:family-quick-pad-v0";
 
@@ -101,6 +101,7 @@ function MessageBubble({ message, onToggleChecklistItem }) {
 }
 
 export default function FamilyPageClient() {
+  const inputRef = useRef(null);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [draft, setDraft] = useState("");
   const [checklistMode, setChecklistMode] = useState(false);
@@ -120,6 +121,27 @@ export default function FamilyPageClient() {
       return;
     }
   }, [messages]);
+
+  useEffect(() => {
+    requestAnimationFrame(resetInputHeight);
+  }, [checklistMode]);
+
+  function resetInputHeight() {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "";
+  }
+
+  function resizeInputToContent(el = inputRef.current) {
+    if (!el) return;
+    el.style.height = "";
+    el.style.height = `${Math.min(el.scrollHeight, 148)}px`;
+  }
+
+  function handleDraftChange(event) {
+    setDraft(event.target.value);
+    resizeInputToContent(event.currentTarget);
+  }
 
   function sendMessage() {
     const lines = compactLines(draft);
@@ -143,6 +165,7 @@ export default function FamilyPageClient() {
       },
     ]);
     setDraft("");
+    requestAnimationFrame(resetInputHeight);
   }
 
   function toggleChecklistItem(messageId, itemId) {
@@ -193,12 +216,13 @@ export default function FamilyPageClient() {
             ☑
           </button>
           <textarea
+            ref={inputRef}
             className="familyInput"
             value={draft}
             rows={checklistMode ? 4 : 2}
             placeholder={getInputPlaceholder(checklistMode)}
             aria-label="가족 메모 입력"
-            onChange={(event) => setDraft(event.target.value)}
+            onChange={handleDraftChange}
             onKeyDown={onDraftKeyDown}
           />
           <button className="familySend" type="button" disabled={!canSend} onClick={sendMessage}>
