@@ -77,15 +77,26 @@ test("family bubbles keep edit control in the footer with time", async () => {
   assert.match(bubbleCss, /padding:\s*10px 38px 8px 12px;/);
   assert.match(bubbleFooterCss, /display:\s*flex;/);
   assert.match(bubbleFooterCss, /justify-content:\s*flex-end;/);
+  assert.match(bubbleFooterCss, /flex-wrap:\s*nowrap;/);
   assert.match(bubbleFooterCss, /gap:\s*8px;/);
+  assert.match(bubbleFooterCss, /white-space:\s*nowrap;/);
+  assert.match(bubbleTimeCss, /display:\s*inline-flex;/);
+  assert.match(bubbleTimeCss, /flex:\s*0 0 auto;/);
   assert.match(bubbleTimeCss, /font-size:\s*0\.76rem;/);
+  assert.match(bubbleTimeCss, /line-height:\s*1;/);
+  assert.match(bubbleTimeCss, /white-space:\s*nowrap;/);
+  assert.doesNotMatch(bubbleTimeCss, /display:\s*block;/);
   assert.match(deleteIconCss, /position:\s*absolute;/);
   assert.match(deleteIconCss, /right:\s*8px;/);
   assert.match(deleteIconCss, /top:\s*7px;/);
+  assert.match(editIconCss, /position:\s*static;/);
+  assert.match(editIconCss, /flex:\s*0 0 auto;/);
   assert.doesNotMatch(editIconCss, /position:\s*absolute;/);
   assert.doesNotMatch(editIconCss, /bottom:\s*7px;/);
   assert.doesNotMatch(familyCss, /\.familyBubbleActions/);
   assert.doesNotMatch(familyCss, /grid-template-columns:\s*minmax\(0, 1fr\) 24px;/);
+  assert.doesNotMatch(familyCss, /\.familyBubbleFooter[\s\S]*width:\s*100%;/);
+  assert.doesNotMatch(familyCss, /\.familyBubbleEditIcon[\s\S]*width:\s*100%;/);
 });
 
 test("family bubbles can be edited and deleted through composer mode", async () => {
