@@ -35,7 +35,7 @@ test("family composer avoids iOS zoom and resets textarea height after send", as
   const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
   const familyInputCss = cssBlock(familyCss, ".familyInput");
-  const familyComposerButtonCss = cssBlock(familyCss, ".familyChecklistToggle,\n.familySend");
+  const familyComposerButtonCss = cssBlock(familyCss, ".familyChecklistToggle,\n.familySend,\n.familyCancel");
 
   assert.match(familyInputCss, /font-size:\s*16px;/);
   assert.match(familyComposerButtonCss, /font-size:\s*16px;/);
@@ -47,5 +47,24 @@ test("family composer avoids iOS zoom and resets textarea height after send", as
   assert.match(clientSource, /Math\.min\(el\.scrollHeight, 148\)/);
   assert.match(clientSource, /rows=\{checklistMode \? 4 : 1\}/);
   assert.match(clientSource, /onChange=\{handleDraftChange\}/);
-  assert.match(clientSource, /setDraft\(""\);\s*requestAnimationFrame\(resetInputHeight\);/);
+  assert.match(clientSource, /requestAnimationFrame\(resetInputHeight\)/);
+});
+
+test("family bubbles can be edited through composer mode", async () => {
+  const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
+  const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
+
+  assert.match(clientSource, /editingMessageId/);
+  assert.match(clientSource, /function startEditMessage\(message\)/);
+  assert.match(clientSource, /onEditMessage=\{startEditMessage\}/);
+  assert.match(clientSource, />\s*수정\s*<\/button>/);
+  assert.match(clientSource, /\{isEditing \? "저장" : "보내기"\}/);
+  assert.match(clientSource, />\s*취소\s*<\/button>/);
+  assert.match(clientSource, /function checklistToDraft\(message\)/);
+  assert.match(clientSource, /function applyChecklistEdit\(parsedChecklist, existingItems = \[\]\)/);
+  assert.match(clientSource, /checkedStateQueues\.get\(item\.text\)/);
+  assert.match(clientSource, /checked:\s*previous \? previous\.checked : false/);
+  assert.match(clientSource, /setMessages\(\(current\) =>\s*current\.map/);
+  assert.match(familyCss, /\.familyBubbleEdit\s*\{/);
+  assert.match(familyCss, /\.familyCancel\s*\{/);
 });
