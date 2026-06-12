@@ -254,7 +254,8 @@ export default function FamilyTimetable() {
           <div className="familyTimetableTimeColumn">
             {TIMETABLE_HOURS.map((hour) => (
               <div className="familyTimetableHourLabel" key={hour} style={{ top: `${(hour - TIMETABLE_START_HOUR) * 60}px` }}>
-                {minutesToTime(hour * 60)}
+                <span className="familyTimetableHourFull">{minutesToTime(hour * 60)}</span>
+                <span className="familyTimetableHourCompact">{hour}</span>
               </div>
             ))}
           </div>
