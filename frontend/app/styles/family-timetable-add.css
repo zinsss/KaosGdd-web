@@ -60,25 +60,41 @@
 
 .familyTimetableSlotRow {
   display: grid;
-  grid-template-columns: 68px 96px 96px 40px;
+  grid-template-columns: 88px 128px 128px 48px;
   align-items: end;
-  gap: 6px;
-  max-width: 340px;
+  column-gap: 12px;
+  row-gap: 8px;
+  width: max-content;
+  max-width: 100%;
   min-width: 0;
 }
 
 .familyTimetableSlotRow label {
+  display: block;
   width: auto;
   min-width: 0;
 }
 
+.familyTimetableSlotRow label > span {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.familyTimetableSlotRow select,
+.familyTimetableSlotRow input[type="time"],
+.familyTimetableSlotRemove {
+  box-sizing: border-box;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  border-radius: 16px;
+}
+
 .familyTimetableSlotRow select,
 .familyTimetableSlotRow input[type="time"] {
-  box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  height: 38px;
-  padding: 0 8px;
+  padding: 0 14px;
   font-size: 16px;
   line-height: 1;
 }
@@ -96,8 +112,9 @@
 
 .familyTimetableSlotRemove {
   align-self: end;
-  width: 38px;
-  height: 38px;
+  justify-self: start;
+  width: 48px;
+  min-width: 48px;
   padding: 0;
   line-height: 1;
 }
@@ -132,9 +149,11 @@
 }
 
 .familyTimetableColorChips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(6, 44px);
+  justify-content: start;
+  align-items: center;
+  gap: 14px;
   min-width: 0;
 }
 
@@ -295,7 +314,8 @@
   }
 
   .familyTimetableColorChips {
-    gap: 7px;
+    grid-template-columns: repeat(6, 42px);
+    gap: 10px;
   }
 
   .familyTimetableColorChip {
@@ -313,23 +333,51 @@
 
 @media (max-width: 430px) {
   .familyTimetableSlotRow {
-    grid-template-columns: 58px 86px 86px 36px;
-    gap: 5px;
-    max-width: 291px;
+    grid-template-columns: 72px minmax(96px, 1fr) minmax(96px, 1fr) 44px;
+    column-gap: 8px;
+    row-gap: 8px;
+  }
+
+  .familyTimetableSlotRow select,
+  .familyTimetableSlotRow input[type="time"],
+  .familyTimetableSlotRemove {
+    height: 44px;
+    min-height: 44px;
+    max-height: 44px;
   }
 
   .familyTimetableSlotRow select,
   .familyTimetableSlotRow input[type="time"] {
-    height: 36px;
-    padding: 0 6px;
+    padding: 0 10px;
   }
 
   .familyTimetableSlotRemove {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    min-width: 44px;
   }
 
   .familyTimetableAddSlotButton {
     min-height: 36px;
+  }
+}
+
+@media (max-width: 360px) {
+  .familyTimetableSlotRow {
+    grid-template-columns: 64px minmax(82px, 1fr) minmax(82px, 1fr) 40px;
+    column-gap: 6px;
+  }
+
+  .familyTimetableSlotRow select,
+  .familyTimetableSlotRow input[type="time"] {
+    padding: 0 8px;
+  }
+
+  .familyTimetableSlotRemove {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  .familyTimetableColorChips {
+    gap: 6px;
   }
 }

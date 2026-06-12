@@ -52,7 +52,7 @@ test("family timetable keeps legacy recovery while storing grouped slots", async
   assert.match(timetableSource, /dayOfWeek:\s*firstSlot\.dayOfWeek/);
 });
 
-test("family timetable time-slot rows use compact fixed columns", async () => {
+test("family timetable time-slot rows match the reference grid", async () => {
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
   const slotRowCss = cssBlock(addCss, ".familyTimetableSlotRow");
@@ -65,22 +65,30 @@ test("family timetable time-slot rows use compact fixed columns", async () => {
   assert.match(timetableSource, /aria-label="시간 삭제"/);
 
   assert.match(slotRowCss, /display:\s*grid;/);
-  assert.match(slotRowCss, /grid-template-columns:\s*68px 96px 96px 40px;/);
-  assert.match(slotRowCss, /max-width:\s*340px;/);
+  assert.match(slotRowCss, /grid-template-columns:\s*88px 128px 128px 48px;/);
+  assert.match(slotRowCss, /column-gap:\s*12px;/);
+  assert.match(slotRowCss, /row-gap:\s*8px;/);
+  assert.match(slotRowCss, /width:\s*max-content;/);
+  assert.match(slotRowCss, /max-width:\s*100%;/);
   assert.match(slotRowCss, /align-items:\s*end;/);
-  assert.match(slotRowCss, /gap:\s*6px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*box-sizing:\s*border-box;/);
-  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*height:\s*38px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*padding:\s*0 8px;/);
-  assert.match(removeButtonCss, /width:\s*38px;/);
-  assert.match(removeButtonCss, /height:\s*38px;/);
-  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*grid-template-columns:\s*58px 86px 86px 36px;/);
-  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*max-width:\s*291px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*height:\s*48px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*min-height:\s*48px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*max-height:\s*48px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*box-sizing:\s*border-box;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*padding:\s*0 14px;/);
+  assert.match(removeButtonCss, /justify-self:\s*start;/);
+  assert.match(removeButtonCss, /width:\s*48px;/);
+  assert.match(removeButtonCss, /min-width:\s*48px;/);
+  assert.doesNotMatch(removeButtonCss, /position:\s*absolute;/);
+  assert.doesNotMatch(removeButtonCss, /margin-[^:]+:\s*-/);
+  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*grid-template-columns:\s*72px minmax\(96px, 1fr\) minmax\(96px, 1fr\) 44px;/);
+  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*height:\s*44px;/);
 });
 
-test("family timetable color chips are color-only accessible buttons", async () => {
+test("family timetable color chips are a 6x2 color-only accessible grid", async () => {
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
+  const colorChipsCss = cssBlock(addCss, ".familyTimetableColorChips");
   const colorChipCss = cssBlock(addCss, ".familyTimetableColorChip");
   const activeChipCss = cssBlock(addCss, ".familyTimetableColorChipActive");
 
@@ -91,6 +99,9 @@ test("family timetable color chips are color-only accessible buttons", async () 
   assert.doesNotMatch(timetableSource, /<button[\s\S]*>\s*\{FAMILY_TIMETABLE_COLOR_LABELS\[color\]\}\s*<\/button>/);
   assert.doesNotMatch(timetableSource, /className="familyTimetableColorChipLabel"/);
 
+  assert.match(colorChipsCss, /display:\s*grid;/);
+  assert.match(colorChipsCss, /grid-template-columns:\s*repeat\(6, 44px\);/);
+  assert.match(colorChipsCss, /align-items:\s*center;/);
   assert.match(colorChipCss, /width:\s*44px;/);
   assert.match(colorChipCss, /height:\s*44px;/);
   assert.match(colorChipCss, /min-width:\s*44px;/);
@@ -101,7 +112,7 @@ test("family timetable color chips are color-only accessible buttons", async () 
   assert.match(colorChipCss, /color:\s*transparent;/);
   assert.match(activeChipCss, /border-color:\s*rgba\(141, 63, 93, 0\.78\);/);
   assert.match(addCss, /\.familyTimetableColorChipDisabled,\s*\.familyTimetableColorChip:disabled\s*\{[\s\S]*opacity:\s*0\.38;/);
-  assert.match(addCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableColorChip\s*\{[\s\S]*width:\s*42px;/);
+  assert.match(addCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableColorChips\s*\{[\s\S]*grid-template-columns:\s*repeat\(6, 42px\);/);
 });
 
 test("family timetable color uniqueness and copy pills remain", async () => {
