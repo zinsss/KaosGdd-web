@@ -100,46 +100,53 @@ function loadMessages() {
   }
 }
 
-function MessageBubble({ message, onEditMessage, onToggleChecklistItem }) {
-  if (message.type === "checklist") {
-    return (
-      <article className="familyBubble familyBubbleChecklist">
-        <div className="familyBubbleTitle">{message.title}</div>
-        <div className="familyChecklistRows">
-          {message.items.map((item) => (
-            <button
-              className={`familyChecklistRow${item.checked ? " familyChecklistRowChecked" : ""}`}
-              key={item.id}
-              type="button"
-              onClick={() => onToggleChecklistItem(message.id, item.id)}
-            >
-              <span className="familyChecklistBox" aria-hidden="true">
-                {item.checked ? "☑" : "☐"}
-              </span>
-              <span className="familyChecklistText">{item.text}</span>
-            </button>
-          ))}
-        </div>
-        <div className="familyBubbleFooter">
-          <time className="familyBubbleTime">{message.createdAt}</time>
-          <button className="familyBubbleEdit" type="button" onClick={() => onEditMessage(message)}>
-            수정
-          </button>
-        </div>
-      </article>
-    );
-  }
+function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onToggleChecklistItem }) {
+  const isChecklist = message.type === "checklist";
+  const deleteLabel = isChecklist ? "체크리스트 삭제" : "메모 삭제";
+  const editLabel = isChecklist ? "체크리스트 수정" : "메모 수정";
 
   return (
-    <article className="familyBubble">
-      <div className="familyBubbleText">{message.text}</div>
-      <div className="familyBubbleFooter">
+    <div className={`familyBubbleRow${isEditing ? " familyBubbleEditing" : ""}`}>
+      <article className={`familyBubble${isChecklist ? " familyBubbleChecklist" : ""}`}>
+        {isChecklist ? (
+          <>
+            <div className="familyBubbleTitle">{message.title}</div>
+            <div className="familyChecklistRows">
+              {message.items.map((item) => (
+                <button
+                  className={`familyChecklistRow${item.checked ? " familyChecklistRowChecked" : ""}`}
+                  key={item.id}
+                  type="button"
+                  onClick={() => onToggleChecklistItem(message.id, item.id)}
+                >
+                  <span className="familyChecklistBox" aria-hidden="true">
+                    {item.checked ? "☑" : "☐"}
+                  </span>
+                  <span className="familyChecklistText">{item.text}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="familyBubbleText">{message.text}</div>
+        )}
         <time className="familyBubbleTime">{message.createdAt}</time>
-        <button className="familyBubbleEdit" type="button" onClick={() => onEditMessage(message)}>
-          수정
+      </article>
+
+      <div className="familyBubbleActions">
+        <button
+          className="familyBubbleDeleteIcon"
+          type="button"
+          aria-label={deleteLabel}
+          onClick={() => onDeleteMessage(message.id)}
+        >
+          ×
+        </button>
+        <button className="familyBubbleEditIcon" type="button" aria-label={editLabel} onClick={() => onEditMessage(message)}>
+          ✎
         </button>
       </div>
-    </article>
+    </div>
   );
 }
 
@@ -207,6 +214,16 @@ export default function FamilyPageClient() {
     setChecklistMode(message.type === "checklist");
     setDraft(message.type === "checklist" ? checklistToDraft(message) : message.text || "");
     focusAndResizeInput();
+  }
+
+  function deleteMessage(messageId) {
+    if (!window.confirm("삭제할까요?")) return;
+
+    setMessages((current) => current.filter((message) => message.id !== messageId));
+
+    if (editingMessageId === messageId) {
+      resetComposer();
+    }
   }
 
   function saveEditedMessage(nextMessage) {
@@ -298,8 +315,10 @@ export default function FamilyPageClient() {
         <div className="familyStream" aria-live="polite">
           {messages.map((message) => (
             <MessageBubble
+              isEditing={message.id === editingMessageId}
               message={message}
               key={message.id}
+              onDeleteMessage={deleteMessage}
               onEditMessage={startEditMessage}
               onToggleChecklistItem={toggleChecklistItem}
             />
