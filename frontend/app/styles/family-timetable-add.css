@@ -59,33 +59,26 @@
 }
 
 .familyTimetableSlotRow {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(88px, 1fr) minmax(82px, 0.8fr) minmax(82px, 0.8fr) 36px;
   align-items: end;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .familyTimetableSlotRow label {
-  flex: 0 1 auto;
   width: auto;
   min-width: 0;
-}
-
-.familyTimetableSlotRow label:nth-child(1) {
-  flex-basis: 120px;
-  max-width: 120px;
-}
-
-.familyTimetableSlotRow label:nth-child(2),
-.familyTimetableSlotRow label:nth-child(3) {
-  flex-basis: 110px;
-  max-width: 110px;
 }
 
 .familyTimetableSlotRow select,
 .familyTimetableSlotRow input[type="time"] {
   width: 100%;
+  min-width: 0;
+  height: 42px;
+  padding: 0 10px;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .familyTimetableSlotRemove,
@@ -100,8 +93,9 @@
 }
 
 .familyTimetableSlotRemove {
-  width: 34px;
-  height: 34px;
+  align-self: end;
+  width: 36px;
+  height: 36px;
   padding: 0;
   line-height: 1;
 }
@@ -222,10 +216,30 @@
     inset 0 0 0 1px rgba(141, 63, 93, 0.2);
 }
 
+.familyTimetableColorChipDisabled,
+.familyTimetableColorChip:disabled {
+  cursor: not-allowed;
+  opacity: 0.38;
+  filter: grayscale(0.24);
+}
+
 .familyTimetableColorChip:hover,
 .familyTimetableColorChip:focus-visible {
   border-color: rgba(141, 63, 93, 0.56);
   outline: none;
+}
+
+.familyTimetableColorChip:disabled:hover,
+.familyTimetableColorChip:disabled:focus-visible {
+  border-color: rgba(151, 69, 98, 0.15);
+  outline: none;
+}
+
+.familyTimetableColorHelp {
+  margin: -1px 0 0;
+  color: rgba(78, 37, 54, 0.58);
+  font-size: 11px;
+  font-weight: 800;
 }
 
 .familyTimetableCopyPills {
@@ -277,9 +291,14 @@
   }
 
   .familyTimetableSlotRow {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    grid-template-columns: minmax(70px, 1fr) minmax(74px, 0.85fr) minmax(74px, 0.85fr) 36px;
+    gap: 6px;
+  }
+
+  .familyTimetableSlotRow select,
+  .familyTimetableSlotRow input[type="time"] {
+    height: 40px;
+    padding: 0 6px;
   }
 
   .familyTimetableSlotRemove,
