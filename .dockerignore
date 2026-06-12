@@ -1,0 +1,29 @@
+.git
+.gitignore
+
+# Node
+frontend/node_modules
+frontend/.next
+frontend/out
+frontend/.env
+frontend/.env.*
+
+# Python
+backend/.venv
+backend/__pycache__
+backend/.pytest_cache
+backend/**/*.pyc
+
+# Runtime data
+data
+files
+uploads
+logs
+backups
+*.db
+*.sqlite
+*.sqlite3
+
+# Local env/secrets
+.env
+.env.*
