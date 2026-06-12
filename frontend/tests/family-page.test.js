@@ -98,6 +98,8 @@ test("family default timetable uses a local weekly template model", async () => 
   assert.match(timetableSource, /window\.localStorage\.setItem\(FAMILY_TIMETABLE_STORAGE_KEY, JSON\.stringify\(entries\)\)/);
   assert.match(timetableSource, /function addTimetableEntry\(dayOfWeek, startMinutes\)/);
   assert.match(timetableSource, /window\.prompt\("일정 이름"\)/);
+  assert.match(timetableSource, /if \(!title \|\| !title\.trim\(\)\) return;/);
+  assert.match(timetableSource, /createDefaultTimetableEntry\(\{ dayOfWeek, startMinutes, title: title\.trim\(\) \}\)/);
   assert.match(timetableSource, /function startEditEntry\(entry\)/);
   assert.match(timetableSource, /function saveEditingEntry\(\)/);
   assert.match(timetableSource, /function deleteTimetableEntry/);
