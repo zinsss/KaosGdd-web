@@ -50,6 +50,24 @@ test("family composer avoids iOS zoom and resets textarea height after send", as
   assert.match(clientSource, /requestAnimationFrame\(resetInputHeight\)/);
 });
 
+test("family scrollable areas use pastel family scrollbars", async () => {
+  const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
+  const baseCss = await readFile(new URL("../app/styles/base.css", import.meta.url), "utf8");
+  const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
+
+  assert.match(familyCss, /\.familyPage,\s*\.familyStream,\s*\.familyInput\s*\{[\s\S]*scrollbar-color:\s*rgba\(214, 128, 157, 0\.58\) rgba\(255, 248, 251, 0\.76\);/);
+  assert.match(familyCss, /\.familyInput::-webkit-scrollbar\s*\{/);
+  assert.match(familyCss, /\.familyInput::-webkit-scrollbar-track\s*\{/);
+  assert.match(familyCss, /\.familyInput::-webkit-scrollbar-thumb\s*\{/);
+  assert.match(familyCss, /\.familyInput::-webkit-scrollbar-thumb:hover\s*\{/);
+  assert.match(familyCss, /\.familyStream::-webkit-scrollbar-thumb\s*\{/);
+  assert.match(familyCss, /\.familyPage::-webkit-scrollbar-track\s*\{/);
+  assert.match(familyCss, /background:\s*rgba\(214, 128, 157, 0\.58\);/);
+  assert.match(familyCss, /background:\s*rgba\(180, 92, 125, 0\.72\);/);
+  assert.doesNotMatch(baseCss, /familyInput|214, 128, 157|255, 248, 251/);
+  assert.doesNotMatch(shellCss, /familyInput|214, 128, 157|255, 248, 251/);
+});
+
 test("family bubbles keep edit control in the footer with time", async () => {
   const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
