@@ -140,12 +140,14 @@ function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onT
           ) : (
             <div className="familyBubbleText">{message.text}</div>
           )}
-          <time className="familyBubbleTime">{message.createdAt}</time>
         </div>
 
-        <button className="familyBubbleEditIcon" type="button" aria-label={editLabel} onClick={() => onEditMessage(message)}>
-          ✎
-        </button>
+        <div className="familyBubbleFooter">
+          <time className="familyBubbleTime">{message.createdAt}</time>
+          <button className="familyBubbleEditIcon" type="button" aria-label={editLabel} onClick={() => onEditMessage(message)}>
+            ✎
+          </button>
+        </div>
       </article>
     </div>
   );
