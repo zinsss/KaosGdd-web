@@ -219,7 +219,7 @@ export default function FamilyPageClient() {
             ref={inputRef}
             className="familyInput"
             value={draft}
-            rows={checklistMode ? 4 : 2}
+            rows={checklistMode ? 4 : 1}
             placeholder={getInputPlaceholder(checklistMode)}
             aria-label="가족 메모 입력"
             onChange={handleDraftChange}
