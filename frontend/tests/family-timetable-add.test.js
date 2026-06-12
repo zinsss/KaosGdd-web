@@ -78,6 +78,53 @@ test("family timetable add save rejects blank titles and stores structured recor
   assert.match(timetableSource, /FAMILY_TIMETABLE_STORAGE_KEY = "kaosgdd\.family\.defaultTimetable\.v1"/);
 });
 
+test("family timetable editor uses fixed pastel color chips", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+  const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
+  const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
+  const colorChipCss = cssBlock(addCss, ".familyTimetableColorChip");
+  const activeChipCss = cssBlock(addCss, ".familyTimetableColorChipActive");
+  const colorChipsCss = cssBlock(addCss, ".familyTimetableColorChips");
+
+  assert.match(timetableSource, /FAMILY_TIMETABLE_COLORS = \["pink", "cream", "yellow", "mint", "blue", "lavender"\]/);
+  assert.match(timetableSource, /FAMILY_TIMETABLE_COLOR_LABELS = \{/);
+  for (const label of ["분홍", "크림", "노랑", "민트", "하늘", "보라"]) {
+    assert.match(timetableSource, new RegExp(label));
+  }
+  assert.match(timetableSource, /<span>색상<\/span>/);
+  assert.match(timetableSource, /familyTimetableColorChips/);
+  assert.match(timetableSource, /role="radiogroup"/);
+  assert.match(timetableSource, /aria-label="색상"/);
+  assert.match(timetableSource, /familyTimetableColorChipActive/);
+  assert.match(timetableSource, /aria-pressed=\{editorDraft\.color === color\}/);
+  assert.match(timetableSource, /onClick=\{\(\) => updateEditorDraft\("color", color\)\}/);
+  assert.match(timetableSource, /\{FAMILY_TIMETABLE_COLOR_LABELS\[color\]\}/);
+  assert.doesNotMatch(timetableSource, /<select value=\{editorDraft\.color\}/);
+
+  for (const className of [
+    "familyTimetableEntryPink",
+    "familyTimetableEntryCream",
+    "familyTimetableEntryYellow",
+    "familyTimetableEntryMint",
+    "familyTimetableEntryBlue",
+    "familyTimetableEntryLavender",
+  ]) {
+    assert.match(familyCss, new RegExp(`\\.${className}\\s*\\{`));
+  }
+
+  assert.match(colorChipsCss, /display:\s*flex;/);
+  assert.match(colorChipsCss, /flex-wrap:\s*wrap;/);
+  assert.match(colorChipCss, /min-height:\s*34px;/);
+  assert.match(colorChipCss, /border-radius:\s*999px;/);
+  assert.match(activeChipCss, /border-color:\s*rgba\(141, 63, 93, 0\.64\);/);
+  assert.match(addCss, /\.familyTimetableColorChipPink\s*\{/);
+  assert.match(addCss, /\.familyTimetableColorChipCream\s*\{/);
+  assert.match(addCss, /\.familyTimetableColorChipYellow\s*\{/);
+  assert.match(addCss, /\.familyTimetableColorChipMint\s*\{/);
+  assert.match(addCss, /\.familyTimetableColorChipBlue\s*\{/);
+  assert.match(addCss, /\.familyTimetableColorChipLavender\s*\{/);
+});
+
 test("family timetable add UX preserves compact mobile timetable rules", async () => {
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
