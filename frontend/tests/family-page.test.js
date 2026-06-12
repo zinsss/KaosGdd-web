@@ -3,9 +3,18 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 function cssBlock(source, selector) {
-  const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = source.match(new RegExp(`${escapedSelector}\\s*\\{[^}]*\\}`));
-  return match ? match[0] : "";
+  const requestedSelectors = selector.split(",").map((value) => value.trim()).filter(Boolean);
+  const blocks = [];
+  const blockPattern = /([^{}]+)\{([^{}]*)\}/g;
+
+  for (const match of source.matchAll(blockPattern)) {
+    const blockSelectors = match[1].split(",").map((value) => value.trim());
+    if (requestedSelectors.every((requestedSelector) => blockSelectors.includes(requestedSelector))) {
+      blocks.push(`${match[1]}{${match[2]}}`);
+    }
+  }
+
+  return blocks.join("\n");
 }
 
 test("family page route exposes a Korean quick pad shell", async () => {
@@ -131,12 +140,12 @@ test("family timetable uses compact no-scroll mobile layout", async () => {
   }
 
   assert.match(familyCss, /\.familyTimetableHourCompact\s*\{\s*display:\s*none;/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableScroller\s*\{[\s\S]*overflow-x:\s*hidden;/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableGrid\s*\{[\s\S]*min-width:\s*0;/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*grid-template-columns:\s*24px repeat\(7, minmax\(0, 1fr\)\);/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableHourFull\s*\{[\s\S]*display:\s*none;/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableHourCompact\s*\{[\s\S]*display:\s*inline;/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*\.familyTimetableEntryTime\s*\{[\s\S]*display:\s*none;/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableScroller\s*\{[\s\S]*?overflow-x:\s*hidden;/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableGrid\s*\{[\s\S]*?min-width:\s*0;/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?grid-template-columns:\s*24px repeat\(7, minmax\(0, 1fr\)\);/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableHourFull\s*\{[\s\S]*?display:\s*none;/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableHourCompact\s*\{[\s\S]*?display:\s*inline;/);
+  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableEntryTime\s*\{[\s\S]*?display:\s*none;/);
 });
 
 test("family scrollable areas use pastel family scrollbars", async () => {
@@ -144,14 +153,14 @@ test("family scrollable areas use pastel family scrollbars", async () => {
   const baseCss = await readFile(new URL("../app/styles/base.css", import.meta.url), "utf8");
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
 
-  assert.match(familyCss, /\.familyPage,\s*\.familyStream,\s*\.familyTimetableScroller,\s*\.familyInput,\s*\.familyTimetableEditor textarea\s*\{[\s\S]*scrollbar-color:\s*rgba\(214, 128, 157, 0\.58\) rgba\(255, 248, 251, 0\.76\);/);
-  assert.match(familyCss, /\.familyInput::-webkit-scrollbar\s*\{/);
-  assert.match(familyCss, /\.familyInput::-webkit-scrollbar-track\s*\{/);
-  assert.match(familyCss, /\.familyInput::-webkit-scrollbar-thumb\s*\{/);
-  assert.match(familyCss, /\.familyInput::-webkit-scrollbar-thumb:hover\s*\{/);
-  assert.match(familyCss, /\.familyStream::-webkit-scrollbar-thumb\s*\{/);
-  assert.match(familyCss, /\.familyTimetableScroller::-webkit-scrollbar-thumb\s*\{/);
-  assert.match(familyCss, /\.familyPage::-webkit-scrollbar-track\s*\{/);
+  assert.match(familyCss, /\.familyPage,\s*\.familyStream,\s*\.familyTimetableScroller,\s*\.familyInput,\s*\.familyTimetableEditor textarea\s*\{[\s\S]*?scrollbar-color:\s*rgba\(214, 128, 157, 0\.58\) rgba\(255, 248, 251, 0\.76\);/);
+  assert.match(familyCss, /\.familyInput::-webkit-scrollbar[\s\S]*?\{[\s\S]*?width:\s*8px;/);
+  assert.match(familyCss, /\.familyInput::-webkit-scrollbar-track[\s\S]*?\{[\s\S]*?background:\s*rgba\(255, 248, 251, 0\.76\);/);
+  assert.match(familyCss, /\.familyInput::-webkit-scrollbar-thumb[\s\S]*?\{[\s\S]*?background:\s*rgba\(214, 128, 157, 0\.58\);/);
+  assert.match(familyCss, /\.familyInput::-webkit-scrollbar-thumb:hover[\s\S]*?\{[\s\S]*?background:\s*rgba\(180, 92, 125, 0\.72\);/);
+  assert.match(familyCss, /\.familyStream::-webkit-scrollbar-thumb[\s\S]*?\{[\s\S]*?background:\s*rgba\(214, 128, 157, 0\.58\);/);
+  assert.match(familyCss, /\.familyTimetableScroller::-webkit-scrollbar-thumb[\s\S]*?\{[\s\S]*?background:\s*rgba\(214, 128, 157, 0\.58\);/);
+  assert.match(familyCss, /\.familyPage::-webkit-scrollbar-track[\s\S]*?\{[\s\S]*?background:\s*rgba\(255, 248, 251, 0\.76\);/);
   assert.match(familyCss, /background:\s*rgba\(214, 128, 157, 0\.58\);/);
   assert.match(familyCss, /background:\s*rgba\(180, 92, 125, 0\.72\);/);
   assert.doesNotMatch(baseCss, /familyInput|214, 128, 157|255, 248, 251/);
@@ -203,8 +212,8 @@ test("family bubbles keep edit control in the footer with time", async () => {
   assert.doesNotMatch(editIconCss, /bottom:\s*7px;/);
   assert.doesNotMatch(familyCss, /\.familyBubbleActions/);
   assert.doesNotMatch(familyCss, /grid-template-columns:\s*minmax\(0, 1fr\) 24px;/);
-  assert.doesNotMatch(familyCss, /\.familyBubbleFooter[\s\S]*width:\s*100%;/);
-  assert.doesNotMatch(familyCss, /\.familyBubbleEditIcon[\s\S]*width:\s*100%;/);
+  assert.doesNotMatch(familyCss, /\.familyBubbleFooter[\s\S]*?width:\s*100%;/);
+  assert.doesNotMatch(familyCss, /\.familyBubbleEditIcon[\s\S]*?width:\s*100%;/);
 });
 
 test("family bubbles can be edited and deleted through composer mode", async () => {
