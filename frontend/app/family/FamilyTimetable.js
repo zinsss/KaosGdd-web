@@ -8,15 +8,34 @@ export const TIMETABLE_END_HOUR = 22;
 export const TIMETABLE_SLOT_MINUTES = 10;
 export const DEFAULT_TIMETABLE_DURATION_MINUTES = 40;
 export const TIMETABLE_SLOT_PIXEL_HEIGHT = 10;
-export const FAMILY_TIMETABLE_COLORS = ["pink", "cream", "yellow", "mint", "blue", "lavender"];
+export const FAMILY_TIMETABLE_COLORS = [
+  "pink",
+  "rose",
+  "peach",
+  "yellow",
+  "mint",
+  "green",
+  "sky",
+  "blue",
+  "lavender",
+  "purple",
+  "cream",
+  "gray",
+];
 
 const FAMILY_TIMETABLE_COLOR_LABELS = {
   pink: "분홍",
-  cream: "크림",
+  rose: "장미",
+  peach: "복숭아",
   yellow: "노랑",
   mint: "민트",
-  blue: "하늘",
-  lavender: "보라",
+  green: "초록",
+  sky: "하늘",
+  blue: "파랑",
+  lavender: "라벤더",
+  purple: "보라",
+  cream: "크림",
+  gray: "회색",
 };
 
 const DAY_LABELS = [
@@ -48,6 +67,15 @@ function createId() {
 
 function padTimePart(value) {
   return String(value).padStart(2, "0");
+}
+
+function normalizeTimetableColor(color, fallback = "pink") {
+  return FAMILY_TIMETABLE_COLORS.includes(color) ? color : fallback;
+}
+
+function colorClassName(color) {
+  const normalizedColor = normalizeTimetableColor(color);
+  return `${normalizedColor[0].toUpperCase()}${normalizedColor.slice(1)}`;
 }
 
 export function timeToMinutes(timeString) {
@@ -122,7 +150,7 @@ function normalizeTimetableEntry(entry) {
     startTime: minutesToTime(clampTimetableMinutes(timeToMinutes(entry.startTime))),
     endTime: minutesToTime(clampTimetableMinutes(timeToMinutes(entry.endTime))),
     memo: String(entry.memo || ""),
-    color: FAMILY_TIMETABLE_COLORS.includes(entry.color) ? entry.color : "pink",
+    color: normalizeTimetableColor(entry.color),
     active: entry.active !== false,
     createdAt: String(entry.createdAt || new Date().toISOString()),
     updatedAt: String(entry.updatedAt || entry.createdAt || new Date().toISOString()),
@@ -175,7 +203,8 @@ function entryToEditor(entry) {
     startTime: entry.startTime,
     endTime: entry.endTime,
     memo: entry.memo || "",
-    color: entry.color || "pink",
+    color: normalizeTimetableColor(entry.color),
+    active: entry.active !== false,
   };
 }
 
@@ -191,6 +220,21 @@ function createNewScheduleDraft() {
     endTime: minutesToTime(end),
     memo: "",
     color: "pink",
+    active: true,
+    isNew: true,
+  };
+}
+
+function entryToNewDraft(entry) {
+  return {
+    id: "",
+    title: entry.title,
+    dayOfWeek: String(entry.dayOfWeek),
+    startTime: entry.startTime,
+    endTime: entry.endTime,
+    memo: entry.memo || "",
+    color: normalizeTimetableColor(entry.color),
+    active: entry.active !== false,
     isNew: true,
   };
 }
@@ -221,6 +265,13 @@ export default function FamilyTimetable() {
   function startNewEntry() {
     setEditingEntryId(null);
     setEditorDraft(createNewScheduleDraft());
+    setEditorError("");
+    requestAnimationFrame(() => titleInputRef.current?.focus());
+  }
+
+  function copyEntryToNewDraft(entry) {
+    setEditingEntryId(null);
+    setEditorDraft(entryToNewDraft(entry));
     setEditorError("");
     requestAnimationFrame(() => titleInputRef.current?.focus());
   }
@@ -263,8 +314,8 @@ export default function FamilyTimetable() {
       startTime: minutesToTime(start),
       endTime: minutesToTime(Math.min(TIMETABLE_END_HOUR * 60, end)),
       memo: editorDraft.memo,
-      color: FAMILY_TIMETABLE_COLORS.includes(editorDraft.color) ? editorDraft.color : "pink",
-      active: true,
+      color: normalizeTimetableColor(editorDraft.color),
+      active: editorDraft.active !== false,
       createdAt: now,
       updatedAt: now,
     };
@@ -287,7 +338,8 @@ export default function FamilyTimetable() {
             startTime: minutesToTime(start),
             endTime: minutesToTime(Math.min(TIMETABLE_END_HOUR * 60, end)),
             memo: editorDraft.memo,
-            color: FAMILY_TIMETABLE_COLORS.includes(editorDraft.color) ? editorDraft.color : "pink",
+            color: normalizeTimetableColor(editorDraft.color),
+            active: editorDraft.active !== false,
             updatedAt: now,
           };
         }),
@@ -362,9 +414,7 @@ export default function FamilyTimetable() {
                 .filter((entry) => entry.dayOfWeek === day.dayOfWeek)
                 .map((entry) => (
                   <button
-                    className={`familyTimetableEntry familyTimetableEntry${entry.color[0].toUpperCase()}${entry.color.slice(1)}${
-                      entry.id === editingEntryId ? " familyTimetableEntryEditing" : ""
-                    }`}
+                    className={`familyTimetableEntry familyTimetableEntry${colorClassName(entry.color)}${entry.id === editingEntryId ? " familyTimetableEntryEditing" : ""}`}
                     type="button"
                     key={entry.id}
                     style={getEntryStyle(entry)}
@@ -437,9 +487,7 @@ export default function FamilyTimetable() {
             <div className="familyTimetableColorChips" role="radiogroup" aria-label="색상">
               {FAMILY_TIMETABLE_COLORS.map((color) => (
                 <button
-                  className={`familyTimetableColorChip familyTimetableColorChip${color[0].toUpperCase()}${color.slice(1)}${
-                    editorDraft.color === color ? " familyTimetableColorChipActive" : ""
-                  }`}
+                  className={`familyTimetableColorChip familyTimetableColorChip${colorClassName(color)}${editorDraft.color === color ? " familyTimetableColorChipActive" : ""}`}
                   type="button"
                   aria-pressed={editorDraft.color === color}
                   key={color}
@@ -455,6 +503,24 @@ export default function FamilyTimetable() {
             <span>메모</span>
             <textarea value={editorDraft.memo} rows={2} onChange={(event) => updateEditorDraft("memo", event.target.value)} />
           </label>
+
+          {editorDraft.isNew && visibleEntries.length > 0 ? (
+            <div className="familyTimetableCopyField">
+              <span>복사해서 만들기</span>
+              <div className="familyTimetableCopyPills" aria-label="복사해서 만들기">
+                {visibleEntries.map((entry) => (
+                  <button
+                    className={`familyTimetableCopyPill familyTimetableEntry${colorClassName(entry.color)}`}
+                    type="button"
+                    key={entry.id}
+                    onClick={() => copyEntryToNewDraft(entry)}
+                  >
+                    {entry.title}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
 
           <div className="familyTimetableEditorActions">
             <button className="familyTimetableSave" type="submit">
