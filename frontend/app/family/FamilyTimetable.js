@@ -78,13 +78,20 @@ function colorClassName(color) {
   return `${normalizedColor[0].toUpperCase()}${normalizedColor.slice(1)}`;
 }
 
-export function timeToMinutes(timeString) {
-  const [rawHour, rawMinute] = String(timeString || "0:00").split(":");
-  const hour = Number.parseInt(rawHour, 10);
-  const minute = Number.parseInt(rawMinute, 10);
+function parseTimeString(timeString) {
+  const match = String(timeString || "").match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
 
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return TIMETABLE_START_HOUR * 60;
+  const hour = Number.parseInt(match[1], 10);
+  const minute = Number.parseInt(match[2], 10);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute)) return null;
+  if (hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
   return hour * 60 + minute;
+}
+
+export function timeToMinutes(timeString) {
+  const minutes = parseTimeString(timeString);
+  return minutes === null ? TIMETABLE_START_HOUR * 60 : minutes;
 }
 
 export function minutesToTime(totalMinutes) {
@@ -119,9 +126,14 @@ function getDefaultStartMinutes() {
   return snappedMinutes;
 }
 
+function isValidDayOfWeek(dayOfWeek) {
+  const value = Number(dayOfWeek);
+  return Number.isInteger(value) && value >= 1 && value <= 7;
+}
+
 function normalizeDayOfWeek(dayOfWeek) {
   const value = Number(dayOfWeek);
-  return Number.isInteger(value) && value >= 1 && value <= 7 ? value : 1;
+  return isValidDayOfWeek(value) ? value : 1;
 }
 
 function normalizeTimetableSlot(slot) {
@@ -145,6 +157,34 @@ function createDefaultSlot({ dayOfWeek, startMinutes }) {
     dayOfWeek,
     startTime: minutesToTime(start),
     endTime: minutesToTime(end),
+  };
+}
+
+function parseEditorSlot(slot) {
+  if (!isValidDayOfWeek(slot?.dayOfWeek)) {
+    return { error: "요일을 확인해주세요." };
+  }
+
+  const startRaw = parseTimeString(slot?.startTime);
+  const endRaw = parseTimeString(slot?.endTime);
+  if (startRaw === null || endRaw === null) {
+    return { error: "시간을 확인해주세요." };
+  }
+
+  const start = snapMinutes(startRaw);
+  const end = snapMinutes(endRaw);
+  const earliest = TIMETABLE_START_HOUR * 60;
+  const latest = TIMETABLE_END_HOUR * 60;
+  if (start < earliest || start >= latest || end <= start || end > latest) {
+    return { error: "시간을 확인해주세요." };
+  }
+
+  return {
+    slot: {
+      dayOfWeek: Number(slot.dayOfWeek),
+      startTime: minutesToTime(start),
+      endTime: minutesToTime(end),
+    },
   };
 }
 
@@ -308,9 +348,18 @@ function entryToNewDraft(entry) {
 }
 
 function normalizeEditorSlots(slots) {
-  return (Array.isArray(slots) ? slots : [])
-    .map((slot) => normalizeTimetableSlot(slot))
-    .filter((slot) => slot.dayOfWeek >= 1 && slot.dayOfWeek <= 7);
+  const normalizedSlots = [];
+  for (const slot of Array.isArray(slots) ? slots : []) {
+    const parsed = parseEditorSlot(slot);
+    if (parsed.error) return { error: parsed.error, slots: [] };
+    normalizedSlots.push(parsed.slot);
+  }
+
+  if (normalizedSlots.length === 0) {
+    return { error: "시간을 하나 이상 추가해주세요.", slots: [] };
+  }
+
+  return { error: "", slots: normalizedSlots };
 }
 
 export default function FamilyTimetable() {
@@ -387,6 +436,7 @@ export default function FamilyTimetable() {
       ...current,
       slots: current.slots.map((slot, index) => (index === slotIndex ? { ...slot, [field]: value } : slot)),
     }));
+    setEditorError("");
   }
 
   function addEditorSlot() {
@@ -426,9 +476,9 @@ export default function FamilyTimetable() {
       return;
     }
 
-    const slots = normalizeEditorSlots(editorDraft.slots);
-    if (slots.length === 0) {
-      setEditorError("시간을 하나 이상 추가해주세요.");
+    const { slots, error: slotError } = normalizeEditorSlots(editorDraft.slots);
+    if (slotError) {
+      setEditorError(slotError);
       return;
     }
 
