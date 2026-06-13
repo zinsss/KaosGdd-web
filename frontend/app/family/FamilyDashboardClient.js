@@ -38,19 +38,19 @@ export default function FamilyDashboardClient() {
   }
 
   return (
-    <section className="familyPage" aria-label="가족 대시보드">
+    <section className="familyPage" aria-label="우짜노우짤꼬">
       <div className="familyCard">
         <header className="familyHeader">
           <div>
             <p className="familyKicker">우리집</p>
-            <h1>가족 대시보드</h1>
+            <h1>우짜노우짤꼬</h1>
           </div>
           <nav className="familyHomeNav" aria-label="가족 화면">
             <Link className="familyHomeNavLink familyHomeNavLinkActive" href="/family">
-              뭐하노
+              모하노
             </Link>
             <Link className="familyHomeNavLink" href="/family/memo">
-              뭐라캤노
+              뭐라켔노
             </Link>
           </nav>
         </header>
