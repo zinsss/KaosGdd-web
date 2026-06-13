@@ -1,9 +1,9 @@
-import FamilyPageClient from "./FamilyPageClient";
+import FamilyDashboardClient from "./FamilyDashboardClient";
 
 export const metadata = {
-  title: "가족 메모 - KaosGdd",
+  title: "가족 대시보드 - KaosGdd",
 };
 
 export default function FamilyPage() {
-  return <FamilyPageClient />;
+  return <FamilyDashboardClient />;
 }

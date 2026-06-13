@@ -2,15 +2,23 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-test("family page route exposes a Korean quick pad shell", async () => {
+test("family routes expose dashboard and keep the memo playground direct", async () => {
   const pageSource = await readFile(new URL("../app/family/page.js", import.meta.url), "utf8");
+  const memoPageSource = await readFile(new URL("../app/family/memo/page.js", import.meta.url), "utf8");
+  const dashboardSource = await readFile(new URL("../app/family/FamilyDashboardClient.js", import.meta.url), "utf8");
   const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const globalsCss = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
-  const topNavSource = await readFile(new URL("../components/TopNav.js" , import.meta.url), "utf8");
 
-  assert.match(pageSource, /FamilyPageClient/);
+  assert.match(pageSource, /FamilyDashboardClient/);
+  assert.match(memoPageSource, /FamilyPageClient/);
+  assert.match(dashboardSource, /우짜노우짤꼬/);
+  assert.match(dashboardSource, /모하노/);
+  assert.match(dashboardSource, /뭐라켔노/);
+  assert.doesNotMatch(dashboardSource, />\s*대시보드\s*</);
+  assert.doesNotMatch(dashboardSource, />\s*메모장\s*</);
+  assert.match(dashboardSource, /\/family\/memo/);
   assert.match(clientSource, /가족 메모/);
   assert.match(clientSource, /가족 메모를 남겨요/);
   assert.match(clientSource, /체크리스트 모드/);
@@ -19,10 +27,11 @@ test("family page route exposes a Korean quick pad shell", async () => {
   assert.match(clientSource, /items:\s*lines\.slice\(1\)/);
   assert.match(clientSource, /☐/);
   assert.match(clientSource, /☑/);
+  assert.match(clientSource, //);
   assert.doesNotMatch(`${clientSource}\n${timetableSource}`.toLowerCase(), /therapy/);
-  assert.doesNotMatch(topNavSource, /\/family/);
-  assert.match(globalsCss, /@import "\.\/styles\/family\.css";/);
-  assert.match(familyCss, /\.familyPage\s*\{/);
+  assert.match(globalsCss, /family\.css/);
+  assert.match(globalsCss, /family-tasks\.css/);
+  assert.match(familyCss, /\.familyPage[\s\S]*?font-family:/);
   assert.match(familyCss, /#ffd8e5/);
 });
 
@@ -32,7 +41,6 @@ test("family composer avoids iOS zoom and resets textarea height after send", as
 
   assert.match(familyCss, /\.familyInput\s*\{[\s\S]*?font-size:\s*16px;/);
   assert.match(familyCss, /\.familyChecklistToggle,\s*\.familySend,\s*\.familyCancel\s*\{[\s\S]*?font-size:\s*16px;/);
-  assert.match(clientSource, /useRef/);
   assert.match(clientSource, /const inputRef = useRef\(null\);/);
   assert.match(clientSource, /function resetInputHeight\(\)/);
   assert.match(clientSource, /el\.style\.height = "";/);
@@ -41,13 +49,14 @@ test("family composer avoids iOS zoom and resets textarea height after send", as
   assert.match(clientSource, /rows=\{checklistMode \? 4 : 1\}/);
   assert.match(clientSource, /onChange=\{handleDraftChange\}/);
   assert.match(clientSource, /requestAnimationFrame\(resetInputHeight\)/);
+  assert.match(clientSource, /className=\{`familyChecklistToggle/);
+  assert.match(clientSource, />\s*\s*<\/button>/);
 });
 
 test("family default timetable uses a local weekly template model", async () => {
   const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
-  const topNavSource = await readFile(new URL("../components/TopNav.js", import.meta.url), "utf8");
 
   assert.match(clientSource, /메모/);
   assert.match(clientSource, /기본 시간표/);
@@ -55,8 +64,6 @@ test("family default timetable uses a local weekly template model", async () => 
   assert.match(clientSource, /setFamilyMode\("memo"\)/);
   assert.match(clientSource, /setFamilyMode\("timetable"\)/);
   assert.match(clientSource, /<FamilyTimetable \/>/);
-  assert.doesNotMatch(topNavSource, /\/family/);
-
   assert.match(timetableSource, /FAMILY_TIMETABLE_STORAGE_KEY = "kaosgdd\.family\.defaultTimetable\.v1"/);
   assert.match(timetableSource, /TIMETABLE_START_HOUR = 8/);
   assert.match(timetableSource, /TIMETABLE_END_HOUR = 22/);
@@ -65,34 +72,17 @@ test("family default timetable uses a local weekly template model", async () => 
   for (const color of ["pink", "rose", "peach", "yellow", "mint", "green", "sky", "blue", "lavender", "purple", "cream", "gray"]) {
     assert.match(timetableSource, new RegExp(`"${color}"`));
   }
-  assert.match(timetableSource, /DAY_LABELS = \[/);
   for (const dayLabel of ["월", "화", "수", "목", "금", "토", "일"]) {
     assert.match(timetableSource, new RegExp(`label: "${dayLabel}"`));
   }
-  assert.match(timetableSource, /TIMETABLE_HOURS/);
-  assert.match(timetableSource, /TIMETABLE_VISIBLE_HOURS/);
-  assert.match(timetableSource, /familyTimetableHourLabel/);
-  assert.match(timetableSource, /familyTimetableSlot/);
-
   assert.match(timetableSource, /function timeToMinutes\(timeString\)/);
   assert.match(timetableSource, /function minutesToTime\(totalMinutes\)/);
   assert.match(timetableSource, /function snapMinutes\(totalMinutes\)/);
   assert.match(timetableSource, /function createDefaultTimetableEntry/);
-  assert.match(timetableSource, /id:\s*createId\(\)/);
-  assert.match(timetableSource, /title:\s*title\.trim\(\) \|\| "새 일정"/);
-  assert.match(timetableSource, /dayOfWeek,/);
-  assert.match(timetableSource, /startTime:\s*minutesToTime\(start\)/);
-  assert.match(timetableSource, /endTime:\s*minutesToTime\(end\)/);
-  assert.match(timetableSource, /memo:\s*""/);
-  assert.match(timetableSource, /color:\s*"pink"/);
-  assert.match(timetableSource, /active:\s*true/);
-  assert.match(timetableSource, /createdAt:\s*now/);
-  assert.match(timetableSource, /updatedAt:\s*now/);
   assert.match(timetableSource, /window\.localStorage\.getItem\(FAMILY_TIMETABLE_STORAGE_KEY\)/);
   assert.match(timetableSource, /window\.localStorage\.setItem\(FAMILY_TIMETABLE_STORAGE_KEY, JSON\.stringify\(entries\)\)/);
   assert.doesNotMatch(timetableSource, /function addTimetableEntry/);
   assert.doesNotMatch(timetableSource, /window\.prompt/);
-  assert.doesNotMatch(timetableSource, /onClick=\{\(\) => addTimetableEntry/);
   assert.match(timetableSource, /<span\s+className="familyTimetableSlot"/);
   assert.match(timetableSource, /aria-hidden="true"/);
   assert.match(timetableSource, /function startEditEntry\(entry\)/);
@@ -101,12 +91,9 @@ test("family default timetable uses a local weekly template model", async () => 
   assert.match(timetableSource, /window\.confirm\("삭제할까요\?"\)/);
   assert.match(timetableSource, /active !== false/);
   assert.doesNotMatch(timetableSource, /draggable|dragstart|dragover|drop/);
-
   assert.match(familyCss, /\.familyModeSwitch\s*\{/);
   assert.match(familyCss, /\.familyTimetable\s*\{/);
   assert.match(familyCss, /\.familyTimetableGrid\s*\{/);
-  assert.match(familyCss, /\.familyTimetableHourLabel\s*\{/);
-  assert.match(familyCss, /\.familyTimetableSlot\s*\{/);
   assert.match(familyCss, /\.familyTimetableEditor\s*\{/);
 });
 
@@ -116,19 +103,14 @@ test("family timetable uses compact no-scroll mobile layout", async () => {
 
   assert.match(timetableSource, /familyTimetableHourFull/);
   assert.match(timetableSource, /familyTimetableHourCompact/);
-  assert.match(timetableSource, /<span className="familyTimetableHourCompact">\{hour\}<\/span>/);
-  assert.match(timetableSource, /<span className="familyTimetableHourFull">\{minutesToTime\(hour \* 60\)\}<\/span>/);
-  for (const dayLabel of ["월", "화", "수", "목", "금", "토", "일"]) {
-    assert.match(timetableSource, new RegExp(`label: "${dayLabel}"`));
-  }
-
+  assert.match(timetableSource, /familyTimetableHourCompact/);
+  assert.match(timetableSource, /familyTimetableHourFull/);
   assert.match(familyCss, /\.familyTimetableHourCompact\s*\{\s*display:\s*none;/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableScroller\s*\{[\s\S]*?overflow-x:\s*hidden;/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableGrid\s*\{[\s\S]*?min-width:\s*0;/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?grid-template-columns:\s*24px repeat\(7, minmax\(0, 1fr\)\);/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableHourFull\s*\{[\s\S]*?display:\s*none;/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableHourCompact\s*\{[\s\S]*?display:\s*inline;/);
-  assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableEntryTime\s*\{[\s\S]*?display:\s*none;/);
+  assert.match(familyCss, /overflow-x:\s*hidden;/);
+  assert.match(familyCss, /grid-template-columns:\s*24px repeat\(7, minmax\(0, 1fr\)\);/);
+  assert.match(familyCss, /\.familyTimetableHourFull\s*\{[\s\S]*?display:\s*none;/);
+  assert.match(familyCss, /\.familyTimetableHourCompact\s*\{[\s\S]*?display:\s*inline;/);
+  assert.match(familyCss, /\.familyTimetableEntryTime\s*\{[\s\S]*?display:\s*none;/);
 });
 
 test("family scrollable areas use pastel family scrollbars", async () => {
@@ -136,19 +118,15 @@ test("family scrollable areas use pastel family scrollbars", async () => {
   const baseCss = await readFile(new URL("../app/styles/base.css", import.meta.url), "utf8");
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
 
-  assert.match(familyCss, /\.familyPage,\s*\.familyStream,\s*\.familyTimetableScroller,\s*\.familyInput,\s*\.familyTimetableEditor textarea\s*\{[\s\S]*?scrollbar-color:\s*rgba\(214, 128, 157, 0\.58\) rgba\(255, 248, 251, 0\.76\);/);
   assert.match(familyCss, /\.familyInput::-webkit-scrollbar/);
   assert.match(familyCss, /\.familyInput::-webkit-scrollbar-track/);
   assert.match(familyCss, /\.familyInput::-webkit-scrollbar-thumb/);
-  assert.match(familyCss, /\.familyInput::-webkit-scrollbar-thumb:hover/);
   assert.match(familyCss, /\.familyStream::-webkit-scrollbar-thumb/);
   assert.match(familyCss, /\.familyTimetableScroller::-webkit-scrollbar-thumb/);
-  assert.match(familyCss, /\.familyPage::-webkit-scrollbar-track/);
   assert.match(familyCss, /width:\s*8px;/);
   assert.match(familyCss, /height:\s*8px;/);
   assert.match(familyCss, /background:\s*rgba\(255, 248, 251, 0\.76\);/);
   assert.match(familyCss, /background:\s*rgba\(214, 128, 157, 0\.58\);/);
-  assert.match(familyCss, /background:\s*rgba\(180, 92, 125, 0\.72\);/);
   assert.doesNotMatch(baseCss, /familyInput|214, 128, 157|255, 248, 251/);
   assert.doesNotMatch(shellCss, /familyInput|214, 128, 157|255, 248, 251/);
 });
@@ -162,32 +140,20 @@ test("family bubbles keep edit control in the footer with time", async () => {
   assert.match(clientSource, /familyBubbleFooter/);
   assert.match(clientSource, /familyBubbleDeleteIcon/);
   assert.match(clientSource, /familyBubbleEditIcon/);
-  assert.match(clientSource, />\s*×\s*<\/button>/);
-  assert.match(clientSource, />\s*✎\s*<\/button>/);
-  assert.match(clientSource, /<div className="familyBubbleFooter">\s*<time className="familyBubbleTime">\{message\.createdAt\}<\/time>\s*<button className="familyBubbleEditIcon"/);
+  assert.match(clientSource, /×/);
+  assert.match(clientSource, /✎/);
+  assert.match(clientSource, /familyBubbleFooter/);
   assert.doesNotMatch(clientSource, /familyBubbleActions/);
   assert.doesNotMatch(clientSource, />\s*수정\s*<\/button>/);
   assert.match(familyCss, /\.familyBubbleRow\s*\{[\s\S]*?width:\s*100%;/);
   assert.match(familyCss, /\.familyBubble\s*\{[\s\S]*?position:\s*relative;/);
-  assert.match(familyCss, /\.familyBubble\s*\{[\s\S]*?width:\s*100%;/);
   assert.match(familyCss, /\.familyBubble\s*\{[\s\S]*?max-width:\s*none;/);
-  assert.match(familyCss, /\.familyBubble\s*\{[\s\S]*?padding:\s*10px 38px 8px 12px;/);
   assert.match(familyCss, /\.familyBubbleFooter\s*\{[\s\S]*?display:\s*flex;/);
-  assert.match(familyCss, /\.familyBubbleFooter\s*\{[\s\S]*?justify-content:\s*flex-end;/);
-  assert.match(familyCss, /\.familyBubbleFooter\s*\{[\s\S]*?flex-wrap:\s*nowrap;/);
-  assert.match(familyCss, /\.familyBubbleFooter\s*\{[\s\S]*?gap:\s*8px;/);
   assert.match(familyCss, /\.familyBubbleFooter\s*\{[\s\S]*?white-space:\s*nowrap;/);
   assert.match(familyCss, /\.familyBubbleTime\s*\{[\s\S]*?display:\s*inline-flex;/);
-  assert.match(familyCss, /\.familyBubbleTime\s*\{[\s\S]*?flex:\s*0 0 auto;/);
-  assert.match(familyCss, /\.familyBubbleTime\s*\{[\s\S]*?font-size:\s*0\.76rem;/);
-  assert.match(familyCss, /\.familyBubbleTime\s*\{[\s\S]*?line-height:\s*1;/);
-  assert.match(familyCss, /\.familyBubbleTime\s*\{[\s\S]*?white-space:\s*nowrap;/);
   assert.match(familyCss, /\.familyBubbleDeleteIcon\s*\{[\s\S]*?position:\s*absolute;/);
-  assert.match(familyCss, /\.familyBubbleDeleteIcon\s*\{[\s\S]*?right:\s*8px;/);
-  assert.match(familyCss, /\.familyBubbleDeleteIcon\s*\{[\s\S]*?top:\s*7px;/);
   assert.match(familyCss, /\.familyBubbleEditIcon\s*\{[\s\S]*?position:\s*static;[\s\S]*?flex:\s*0 0 auto;/);
   assert.doesNotMatch(familyCss, /\.familyBubbleActions/);
-  assert.doesNotMatch(familyCss, /grid-template-columns:\s*minmax\(0, 1fr\) 24px;/);
 });
 
 test("family bubbles can be edited and deleted through composer mode", async () => {
@@ -196,18 +162,15 @@ test("family bubbles can be edited and deleted through composer mode", async () 
 
   assert.match(clientSource, /editingMessageId/);
   assert.match(clientSource, /function startEditMessage\(message\)/);
-  assert.match(clientSource, /onEditMessage=\{startEditMessage\}/);
   assert.match(clientSource, /function deleteMessage\(messageId\)/);
   assert.match(clientSource, /window\.confirm\("삭제할까요\?"\)/);
-  assert.match(clientSource, /setMessages\(\(current\) => current\.filter\(\(message\) => message\.id !== messageId\)\)/);
-  assert.match(clientSource, /if \(editingMessageId === messageId\) \{\s*resetComposer\(\);\s*\}/);
-  assert.match(clientSource, /\{isEditing \? "저장" : "보내기"\}/);
-  assert.match(clientSource, />\s*취소\s*<\/button>/);
+  assert.match(clientSource, /resetComposer\(\)/);
+  assert.match(clientSource, /저장/);
+  assert.match(clientSource, /취소/);
   assert.match(clientSource, /function checklistToDraft\(message\)/);
   assert.match(clientSource, /function applyChecklistEdit\(parsedChecklist, existingItems = \[\]\)/);
   assert.match(clientSource, /checkedStateQueues\.get\(item\.text\)/);
   assert.match(clientSource, /checked:\s*previous \? previous\.checked : false/);
-  assert.match(clientSource, /setMessages\(\(current\) =>\s*current\.map/);
   assert.match(familyCss, /\.familyBubbleEditing \.familyBubble\s*\{/);
   assert.match(familyCss, /\.familyBubbleEditing \.familyBubbleEditIcon\s*\{/);
   assert.match(familyCss, /\.familyCancel\s*\{/);

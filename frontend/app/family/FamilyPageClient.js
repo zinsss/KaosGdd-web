@@ -360,7 +360,7 @@ export default function FamilyPageClient() {
                 aria-pressed={checklistMode}
                 onClick={() => setChecklistMode((current) => !current)}
               >
-                ☑
+                
               </button>
               <textarea
                 ref={inputRef}

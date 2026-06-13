@@ -14,6 +14,7 @@
 @import "./styles/top-nav-scroll-buttons.css";
 @import "./styles/family.css";
 @import "./styles/family-timetable-add.css";
+@import "./styles/family-tasks.css";
 
 .markdownBody {
   line-height: 1.5;
