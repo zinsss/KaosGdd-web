@@ -39,13 +39,13 @@ const FAMILY_TIMETABLE_COLOR_LABELS = {
 };
 
 const DAY_LABELS = [
-  { dayOfWeek: 1, label: "월" },
-  { dayOfWeek: 2, label: "화" },
-  { dayOfWeek: 3, label: "수" },
-  { dayOfWeek: 4, label: "목" },
-  { dayOfWeek: 5, label: "금" },
-  { dayOfWeek: 6, label: "토" },
-  { dayOfWeek: 7, label: "일" },
+  { dayOfWeek: 1, label: "월", optionLabel: "월요일" },
+  { dayOfWeek: 2, label: "화", optionLabel: "화요일" },
+  { dayOfWeek: 3, label: "수", optionLabel: "수요일" },
+  { dayOfWeek: 4, label: "목", optionLabel: "목요일" },
+  { dayOfWeek: 5, label: "금", optionLabel: "금요일" },
+  { dayOfWeek: 6, label: "토", optionLabel: "토요일" },
+  { dayOfWeek: 7, label: "일", optionLabel: "일요일" },
 ];
 
 const TIMETABLE_HOURS = Array.from(
@@ -703,7 +703,7 @@ export default function FamilyTimetable() {
                     <select value={slot.dayOfWeek} onChange={(event) => updateEditorSlot(slotIndex, "dayOfWeek", event.target.value)}>
                       {DAY_LABELS.map((day) => (
                         <option value={day.dayOfWeek} key={day.dayOfWeek}>
-                          {day.label}
+                          {day.optionLabel}
                         </option>
                       ))}
                     </select>
