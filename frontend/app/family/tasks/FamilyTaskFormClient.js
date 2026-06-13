@@ -10,7 +10,7 @@ import {
   loadFamilyTasks,
   normalizeFamilyTask,
   saveFamilyTasks,
-} from "../../familyTasks";
+} from "../familyTasks";
 
 const EMPTY_DRAFT = {
   title: "",
