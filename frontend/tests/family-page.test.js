@@ -14,8 +14,10 @@ test("family routes expose dashboard and keep the memo playground direct", async
   assert.match(pageSource, /FamilyDashboardClient/);
   assert.match(memoPageSource, /FamilyPageClient/);
   assert.match(dashboardSource, /가족 대시보드/);
-  assert.match(dashboardSource, /대시보드/);
-  assert.match(dashboardSource, /메모장/);
+  assert.match(dashboardSource, /뭐하노/);
+  assert.match(dashboardSource, /뭐라캤노/);
+  assert.doesNotMatch(dashboardSource, />\s*대시보드\s*</);
+  assert.doesNotMatch(dashboardSource, />\s*메모장\s*</);
   assert.match(dashboardSource, /\/family\/memo/);
   assert.match(clientSource, /가족 메모/);
   assert.match(clientSource, /가족 메모를 남겨요/);
@@ -25,6 +27,7 @@ test("family routes expose dashboard and keep the memo playground direct", async
   assert.match(clientSource, /items:\s*lines\.slice\(1\)/);
   assert.match(clientSource, /☐/);
   assert.match(clientSource, /☑/);
+  assert.match(clientSource, //);
   assert.doesNotMatch(`${clientSource}\n${timetableSource}`.toLowerCase(), /therapy/);
   assert.match(globalsCss, /family\.css/);
   assert.match(globalsCss, /family-tasks\.css/);
@@ -46,6 +49,8 @@ test("family composer avoids iOS zoom and resets textarea height after send", as
   assert.match(clientSource, /rows=\{checklistMode \? 4 : 1\}/);
   assert.match(clientSource, /onChange=\{handleDraftChange\}/);
   assert.match(clientSource, /requestAnimationFrame\(resetInputHeight\)/);
+  assert.match(clientSource, /className=\{`familyChecklistToggle/);
+  assert.match(clientSource, />\s*\s*<\/button>/);
 });
 
 test("family default timetable uses a local weekly template model", async () => {
