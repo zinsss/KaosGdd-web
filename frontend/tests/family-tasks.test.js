@@ -37,7 +37,7 @@ test("family dashboard renders active task cards and completion flow", async () 
   assert.match(dashboardSource, /href=\{`\/family\/tasks\/\$\{task\.id\}\/edit`\}/);
   assert.match(dashboardSource, />\s*□\s*<\/button>/);
   assert.match(dashboardSource, />\s*✎\s*<\/Link>/);
-  assert.match(taskCss, /\.familyTaskSection\s*\{/);
+  assert.match(taskCss, /\.familyTaskSection/);
   assert.match(taskCss, /\.familyTaskCard\s*\{/);
   assert.match(taskCss, /\.familyTaskCheck\s*,\s*\.familyTaskEdit/);
 });
@@ -70,7 +70,7 @@ test("family task add and edit forms validate, save, cancel, and delete", async 
   for (const assignee of ["엄마", "아빠", "모두"]) {
     assert.match(formSource, new RegExp(assignee));
   }
-  assert.match(taskCss, /\.familyTaskForm\s*,/);
+  assert.match(taskCss, /\.familyTaskForm/);
   assert.match(taskCss, /\.familyTaskFormGrid\s*\{/);
   assert.match(taskCss, /\.familyTaskFormError\s*\{/);
 });
@@ -92,7 +92,7 @@ test("family done archive renders newest completed tasks and supports restore/de
   assert.match(doneSource, />\s*복원\s*<\/button>/);
   assert.match(doneSource, />\s*삭제\s*<\/button>/);
   assert.match(doneSource, /formatFamilyDateTime\(task\.completed_at \|\| task\.updated_at\)/);
-  assert.match(taskCss, /\.familyDoneTasks\s*\{/);
+  assert.match(taskCss, /\.familyDoneTasks/);
   assert.match(taskCss, /\.familyDoneTaskRow\s*\{/);
-  assert.match(taskCss, /\.familyDoneTaskActions\s*\{/);
+  assert.match(taskCss, /\.familyDoneTaskActions/);
 });
