@@ -45,7 +45,7 @@ test("family timetable keeps legacy recovery while storing grouped slots", async
   assert.match(timetableSource, /dayOfWeek:\s*firstSlot\.dayOfWeek/);
 });
 
-test("family timetable time-slot rows match the reference grid", async () => {
+test("family timetable time-slot rows match the compact reference grid", async () => {
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
 
@@ -55,23 +55,27 @@ test("family timetable time-slot rows match the reference grid", async () => {
   assert.match(timetableSource, /disabled=\{editorDraft\.slots\.length <= 1\}/);
   assert.match(timetableSource, /aria-label="시간 삭제"/);
 
+  assert.match(addCss, /\.familyTimetableSlotRows\s*\{[\s\S]*?max-width:\s*100%;/);
   assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?display:\s*grid;/);
-  assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?grid-template-columns:\s*88px 128px 128px 48px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?column-gap:\s*12px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?grid-template-columns:\s*72px 104px 104px 44px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?column-gap:\s*8px;/);
   assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?row-gap:\s*8px;/);
   assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?width:\s*max-content;/);
   assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?max-width:\s*100%;/);
   assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?align-items:\s*end;/);
-  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?height:\s*48px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?min-height:\s*48px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?max-height:\s*48px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?height:\s*44px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?min-height:\s*44px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?max-height:\s*44px;/);
   assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?box-sizing:\s*border-box;/);
-  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*?padding:\s*0 14px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*?padding:\s*0 10px;/);
+  assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?position:\s*static;/);
   assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?justify-self:\s*start;/);
-  assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?width:\s*48px;/);
-  assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?min-width:\s*48px;/);
-  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?grid-template-columns:\s*72px minmax\(96px, 1fr\) minmax\(96px, 1fr\) 44px;/);
-  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?height:\s*44px;/);
+  assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?width:\s*44px;/);
+  assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?min-width:\s*44px;/);
+  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?\.familyTimetableSlotRows\s*\{[\s\S]*?overflow-x:\s*auto;/);
+  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?grid-template-columns:\s*64px 96px 96px 40px;/);
+  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?height:\s*40px;/);
+  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?width:\s*40px;/);
 });
 
 test("family timetable color chips are a 6x2 color-only accessible grid", async () => {
