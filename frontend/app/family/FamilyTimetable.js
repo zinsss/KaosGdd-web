@@ -39,14 +39,25 @@ const FAMILY_TIMETABLE_COLOR_LABELS = {
 };
 
 const DAY_LABELS = [
+  { dayOfWeek: 7, label: "일", optionLabel: "일요일" },
   { dayOfWeek: 1, label: "월", optionLabel: "월요일" },
   { dayOfWeek: 2, label: "화", optionLabel: "화요일" },
   { dayOfWeek: 3, label: "수", optionLabel: "수요일" },
   { dayOfWeek: 4, label: "목", optionLabel: "목요일" },
   { dayOfWeek: 5, label: "금", optionLabel: "금요일" },
   { dayOfWeek: 6, label: "토", optionLabel: "토요일" },
-  { dayOfWeek: 7, label: "일", optionLabel: "일요일" },
 ];
+
+function weekendClassSuffix(dayOfWeek) {
+  if (dayOfWeek === 7) return "Sunday";
+  if (dayOfWeek === 6) return "Saturday";
+  return "";
+}
+
+function dayClassName(baseClassName, dayOfWeek) {
+  const suffix = weekendClassSuffix(dayOfWeek);
+  return suffix ? `${baseClassName} ${baseClassName}${suffix}` : baseClassName;
+}
 
 const TIMETABLE_HOURS = Array.from(
   { length: TIMETABLE_END_HOUR - TIMETABLE_START_HOUR + 1 },
@@ -609,7 +620,7 @@ export default function FamilyTimetable() {
         <div className="familyTimetableGrid" style={{ "--family-timetable-body-height": `${TIMETABLE_BODY_HEIGHT}px` }}>
           <div className="familyTimetableCorner" aria-hidden="true" />
           {DAY_LABELS.map((day) => (
-            <div className="familyTimetableDayHeader" key={day.dayOfWeek}>
+            <div className={dayClassName("familyTimetableDayHeader", day.dayOfWeek)} key={day.dayOfWeek}>
               {day.label}
             </div>
           ))}
@@ -624,7 +635,7 @@ export default function FamilyTimetable() {
           </div>
 
           {DAY_LABELS.map((day) => (
-            <div className="familyTimetableDayColumn" key={day.dayOfWeek}>
+            <div className={dayClassName("familyTimetableDayColumn", day.dayOfWeek)} key={day.dayOfWeek}>
               {TIMETABLE_VISIBLE_HOURS.map((hour) => (
                 <div className="familyTimetableHour" key={hour} style={{ top: `${(hour - TIMETABLE_START_HOUR) * 60}px` }}>
                   <span />
