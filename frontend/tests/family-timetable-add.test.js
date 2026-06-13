@@ -51,27 +51,38 @@ test("family timetable time-slot rows keep separate gapped columns", async () =>
 
   assert.match(timetableSource, /editorDraft\.slots\.map\(\(slot, slotIndex\) =>/);
   assert.match(timetableSource, /className="familyTimetableSlotRow"/);
+  assert.match(timetableSource, />\s*요일\s*<\/span>/);
+  assert.match(timetableSource, /className="familyTimetableSlotSeparator"/);
+  assert.match(timetableSource, /aria-hidden="true"\s*>\s*~\s*<\/span>/);
   assert.match(timetableSource, />\s*\+ 시간 추가\s*<\/button>/);
   assert.match(timetableSource, /disabled=\{editorDraft\.slots\.length <= 1\}/);
   assert.match(timetableSource, /aria-label="시간 삭제"/);
 
   assert.match(addCss, /\.familyTimetableSlotRows\s*\{[\s\S]*?max-width:\s*100%;/);
   assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?display:\s*grid;/);
-  assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?grid-template-columns:\s*64px minmax\(0, 1fr\) minmax\(0, 1fr\) 40px;/);
-  assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?column-gap:\s*8px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?grid-template-columns:\s*64px minmax\(0, 1fr\) 16px minmax\(0, 1fr\) 40px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?column-gap:\s*6px;/);
   assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?width:\s*100%;/);
-  assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?max-width:\s*360px;/);
+  assert.match(addCss, /\.familyTimetableSlotRow\s*\{[\s\S]*?max-width:\s*376px;/);
   assert.match(addCss, /\.familyTimetableSlotField\s*\{[\s\S]*?min-width:\s*0;/);
   assert.match(addCss, /\.familyTimetableSlotRow label\s*\{[\s\S]*?min-width:\s*0;/);
+  assert.match(addCss, /\.familyTimetableSlotSeparator\s*\{[\s\S]*?display:\s*flex;/);
+  assert.match(addCss, /\.familyTimetableSlotSeparator\s*\{[\s\S]*?align-items:\s*center;/);
+  assert.match(addCss, /\.familyTimetableSlotSeparator\s*\{[\s\S]*?justify-content:\s*center;/);
+  assert.match(addCss, /\.familyTimetableSlotSeparator\s*\{[\s\S]*?height:\s*40px;/);
   assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*?width:\s*100%;/);
   assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*?min-width:\s*0;/);
   assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?height:\s*40px;/);
   assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?position:\s*static;/);
+  assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?border:\s*0;/);
+  assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?background:\s*transparent;/);
+  assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?box-shadow:\s*none;/);
   assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?width:\s*40px;/);
   assert.match(addCss, /\.familyTimetableSlotRemove\s*\{[\s\S]*?min-width:\s*40px;/);
-  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?grid-template-columns:\s*56px minmax\(0, 1fr\) minmax\(0, 1fr\) 36px;/);
-  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?column-gap:\s*6px;/);
+  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?grid-template-columns:\s*56px minmax\(0, 1fr\) 14px minmax\(0, 1fr\) 36px;/);
+  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?column-gap:\s*4px;/);
+  assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?\.familyTimetableSlotSeparator\s*\{[\s\S]*?height:\s*36px;/);
   assert.match(addCss, /@media \(max-width: 430px\) \{[\s\S]*?width:\s*36px;/);
 });
 
