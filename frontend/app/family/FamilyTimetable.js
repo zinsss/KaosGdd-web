@@ -712,6 +712,7 @@ export default function FamilyTimetable() {
                     <span>시작</span>
                     <input type="time" step={TIMETABLE_SLOT_MINUTES * 60} value={slot.startTime} onChange={(event) => updateEditorSlot(slotIndex, "startTime", event.target.value)} />
                   </label>
+                  <span className="familyTimetableSlotSeparator" aria-hidden="true">~</span>
                   <label>
                     <span>끝</span>
                     <input type="time" step={TIMETABLE_SLOT_MINUTES * 60} value={slot.endTime} onChange={(event) => updateEditorSlot(slotIndex, "endTime", event.target.value)} />
