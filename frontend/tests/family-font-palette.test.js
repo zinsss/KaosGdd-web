@@ -24,7 +24,7 @@ test("family page uses larger Hyunok font sizing without affecting global UI", a
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
 
   assert.match(familyCss, /@font-face[\s\S]*?GangwonEducationHyunokSam/);
-  assert.match(addCss, /\.familyPage[\s\S]*?font-size:\s*18px;/);
+  assert.match(addCss, /\.familyPage[\s\S]*?font-size:\s*20px;/);
   assert.match(familyCss, /\.familyPage button[\s\S]*?font-family:\s*inherit;/);
   assert.match(familyCss, /\.familyPage input/);
   assert.match(familyCss, /\.familyPage textarea/);

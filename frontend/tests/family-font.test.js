@@ -12,7 +12,7 @@ test("family page uses GangwonEducationHyunokSam without changing global fonts",
   assert.match(familyCss, /@font-face\s*\{[\s\S]*GangwonEduHyeonokT_OTFMediumA\.woff/);
   assert.match(familyCss, /@font-face\s*\{[\s\S]*font-display:\s*swap;/);
   assert.match(familyCss, /\.familyPage[\s\S]*?font-family:\s*"GangwonEducationHyunokSam", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;/);
-  assert.match(timetableAddCss, /\.familyPage[\s\S]*?font-size:\s*18px;/);
+  assert.match(timetableAddCss, /\.familyPage[\s\S]*?font-size:\s*20px;/);
   assert.match(familyCss, /\.familyPage button[\s\S]*?font-family:\s*inherit;/);
   assert.match(familyCss, /\.familyPage input/);
   assert.match(familyCss, /\.familyPage textarea/);
