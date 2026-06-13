@@ -50,7 +50,8 @@ test("family timetable color chips remain color-only and accessible", async () =
 
   assert.match(timetableSource, /aria-label=\{FAMILY_TIMETABLE_COLOR_LABELS\[color\]\}/);
   assert.match(timetableSource, /title=\{FAMILY_TIMETABLE_COLOR_LABELS\[color\]\}/);
-  assert.doesNotMatch(timetableSource, /<button[\s\S]*>\s*\{FAMILY_TIMETABLE_COLOR_LABELS\[color\]\}\s*<\/button>/);
+  assert.match(timetableSource, /className=\{`familyTimetableColorChip/);
+  assert.doesNotMatch(timetableSource, /familyTimetableColorChipLabel/);
   assert.match(addCss, /\.familyTimetableColorChip[\s\S]*?color:\s*transparent;/);
   assert.match(addCss, /\.familyTimetableColorChip[\s\S]*?font-size:\s*0;/);
 });
