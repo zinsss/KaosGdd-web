@@ -51,6 +51,10 @@
   padding: 14px;
 }
 
+.familyDashboardPanel {
+  min-height: 96px;
+}
+
 .familyTaskSectionHeader {
   display: flex;
   align-items: flex-start;
@@ -61,11 +65,13 @@
 .familyTaskSectionHeader h2,
 .familyTaskSectionHeader p,
 .familyTaskCard h3,
+.familyTaskPageTitle,
 .familyDoneTaskRow h2 {
   margin: 0;
 }
 
-.familyTaskSectionHeader h2 {
+.familyTaskSectionHeader h2,
+.familyTaskPageTitle {
   color: #4b2536;
   font-size: 22px;
   line-height: 1.15;
@@ -118,6 +124,10 @@
   background: #d86f98;
   color: #fff;
   box-shadow: 0 6px 14px rgba(151, 69, 98, 0.14);
+}
+
+.familyTaskActionButtonMuted {
+  opacity: 0.64;
 }
 
 .familyTaskList {
