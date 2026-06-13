@@ -40,6 +40,16 @@
   outline: none;
 }
 
+.familyTimetableDayHeaderSunday,
+.familyTimetableDayColumnSunday {
+  background: rgba(255, 216, 229, 0.38);
+}
+
+.familyTimetableDayHeaderSaturday,
+.familyTimetableDayColumnSaturday {
+  background: rgba(219, 234, 254, 0.42);
+}
+
 .familyTimetableEditorError {
   margin: -4px 0 0;
   color: #9d3657;
@@ -110,6 +120,12 @@
   padding: 0 2px;
   font-size: 16px;
   line-height: 1;
+  text-align: center;
+  text-align-last: center;
+}
+
+.familyTimetableSlotRow select option {
+  text-align: center;
 }
 
 .familyTimetableSlotRow select:focus,
