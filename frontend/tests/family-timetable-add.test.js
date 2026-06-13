@@ -45,6 +45,22 @@ test("family timetable keeps legacy recovery while storing grouped slots", async
   assert.match(timetableSource, /dayOfWeek:\s*firstSlot\.dayOfWeek/);
 });
 
+test("family timetable displays Sunday-first week order with weekend hints", async () => {
+  const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
+  const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
+
+  assert.match(
+    timetableSource,
+    /const DAY_LABELS = \[\s*\{ dayOfWeek: 7, label: "일", optionLabel: "일요일" \},\s*\{ dayOfWeek: 1, label: "월", optionLabel: "월요일" \},\s*\{ dayOfWeek: 2, label: "화", optionLabel: "화요일" \},\s*\{ dayOfWeek: 3, label: "수", optionLabel: "수요일" \},\s*\{ dayOfWeek: 4, label: "목", optionLabel: "목요일" \},\s*\{ dayOfWeek: 5, label: "금", optionLabel: "금요일" \},\s*\{ dayOfWeek: 6, label: "토", optionLabel: "토요일" \},/,
+  );
+  assert.match(timetableSource, /if \(dayOfWeek === 7\) return "Sunday";/);
+  assert.match(timetableSource, /if \(dayOfWeek === 6\) return "Saturday";/);
+  assert.match(timetableSource, /dayClassName\("familyTimetableDayHeader", day\.dayOfWeek\)/);
+  assert.match(timetableSource, /dayClassName\("familyTimetableDayColumn", day\.dayOfWeek\)/);
+  assert.match(addCss, /\.familyTimetableDayHeaderSunday,\s*\.familyTimetableDayColumnSunday\s*\{[\s\S]*?background:\s*rgba\(255, 216, 229, 0\.38\);/);
+  assert.match(addCss, /\.familyTimetableDayHeaderSaturday,\s*\.familyTimetableDayColumnSaturday\s*\{[\s\S]*?background:\s*rgba\(219, 234, 254, 0\.42\);/);
+});
+
 test("family timetable time-slot rows use underline controls", async () => {
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
@@ -57,7 +73,7 @@ test("family timetable time-slot rows use underline controls", async () => {
   assert.match(timetableSource, />\s*\+ 시간 추가\s*<\/button>/);
   assert.match(timetableSource, /disabled=\{editorDraft\.slots\.length <= 1\}/);
   assert.match(timetableSource, /aria-label="시간 삭제"/);
-  for (const optionLabel of ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]) {
+  for (const optionLabel of ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]) {
     assert.match(timetableSource, new RegExp(`optionLabel: "${optionLabel}"`));
   }
   assert.match(timetableSource, /\{day\.optionLabel\}/);
@@ -81,6 +97,9 @@ test("family timetable time-slot rows use underline controls", async () => {
   assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*?border-radius:\s*0;/);
   assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*?background:\s*transparent;/);
   assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*?box-shadow:\s*none;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*?text-align:\s*center;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\]\s*\{[\s\S]*?text-align-last:\s*center;/);
+  assert.match(addCss, /\.familyTimetableSlotRow select option\s*\{[\s\S]*?text-align:\s*center;/);
   assert.match(addCss, /\.familyTimetableSlotRow select:focus,\s*\.familyTimetableSlotRow input\[type="time"\]:focus\s*\{[\s\S]*?border-bottom-color:\s*rgba\(176, 91, 123, 0\.74\);/);
   assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(addCss, /\.familyTimetableSlotRow select,\s*\.familyTimetableSlotRow input\[type="time"\],\s*\.familyTimetableSlotRemove\s*\{[\s\S]*?height:\s*40px;/);
@@ -139,7 +158,7 @@ test("family timetable color uniqueness and copy pills remain", async () => {
   assert.match(addCss, /\.familyTimetableCopyPills\s*\{[\s\S]*?overflow-x:\s*auto;/);
   assert.match(addCss, /\.familyTimetableCopyPill\s*\{[\s\S]*?flex:\s*0 0 auto;/);
 
-  for (const dayLabel of ["월", "화", "수", "목", "금", "토", "일"]) {
+  for (const dayLabel of ["일", "월", "화", "수", "목", "금", "토"]) {
     assert.match(timetableSource, new RegExp(`label: "${dayLabel}"`));
   }
   assert.match(familyCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTimetableScroller\s*\{[\s\S]*?overflow-x:\s*hidden;/);
