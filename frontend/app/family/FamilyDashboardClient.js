@@ -47,10 +47,10 @@ export default function FamilyDashboardClient() {
           </div>
           <nav className="familyHomeNav" aria-label="가족 화면">
             <Link className="familyHomeNavLink familyHomeNavLinkActive" href="/family">
-              대시보드
+              뭐하노
             </Link>
             <Link className="familyHomeNavLink" href="/family/memo">
-              메모장
+              뭐라캤노
             </Link>
           </nav>
         </header>
