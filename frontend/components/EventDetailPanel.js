@@ -36,6 +36,10 @@ function visibleTags(item) {
   });
 }
 
+function stableEventActionId(item) {
+  return item.local_event_id || item.kaos_event_id || item.canonical_event_id || item.id || "";
+}
+
 export default function EventDetailPanel({ item, raw, occurrenceDate = "" }) {
   const router = useRouter();
   const [showEdit, setShowEdit] = useState(false);
@@ -49,6 +53,8 @@ export default function EventDetailPanel({ item, raw, occurrenceDate = "" }) {
   const systemBadge = badgeForEvent(item);
   const isImportedCalendarEvent = item.is_imported_calendar_event || false;
   const isPublicHoliday = item.event_class === "public-holiday";
+  const publicHolidayEventId = stableEventActionId(item);
+  const publicHolidayActionAvailable = Boolean(publicHolidayEventId) && !String(publicHolidayEventId).includes(":");
   const displayTags = visibleTags(item);
   const hasOccurrenceContext = Boolean(item.repeat_rule && occurrenceDate && occurrenceDate !== item.start_date);
 
@@ -83,13 +89,17 @@ export default function EventDetailPanel({ item, raw, occurrenceDate = "" }) {
 
   async function onClassificationChange(event) {
     const checked = event.target.checked;
+    if (!publicHolidayActionAvailable) {
+      setClassificationError("event_not_persisted");
+      return;
+    }
     setIsClassifying(true);
     setClassificationError("");
     try {
-      const res = await fetch(`/api/events/${item.id}/classification`, {
+      const res = await fetch(`/api/events/${publicHolidayEventId}/classification`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ is_public_holiday: checked }),
+        body: JSON.stringify({ is_public_holiday: checked, event_id: publicHolidayEventId }),
       });
       const data = await res.json().catch(() => null);
       if (!res.ok || !data?.ok) {
@@ -158,7 +168,7 @@ export default function EventDetailPanel({ item, raw, occurrenceDate = "" }) {
                     type="checkbox"
                     checked={isPublicHoliday}
                     onChange={onClassificationChange}
-                    disabled={isClassifying}
+                    disabled={isClassifying || !publicHolidayActionAvailable}
                   />
                   <span>{UI_STRINGS.PUBLIC_HOLIDAY_LABEL}</span>
                 </label>
