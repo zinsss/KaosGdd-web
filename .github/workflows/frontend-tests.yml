@@ -27,4 +27,12 @@ jobs:
         run: git diff --check
 
       - name: Run all frontend tests
-        run: node --test frontend/tests/*.test.js
+        run: |
+          set +e
+          node --test frontend/tests/*.test.js > /tmp/frontend-tests.log 2>&1
+          status=$?
+          if [ "$status" -ne 0 ]; then
+            grep -n -A 18 -B 2 -E "not ok|AssertionError|ERR_ASSERTION" /tmp/frontend-tests.log || true
+          fi
+          cat /tmp/frontend-tests.log
+          exit "$status"
