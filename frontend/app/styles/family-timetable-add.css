@@ -1,5 +1,5 @@
 .familyPage {
-  font-size: 17px;
+  font-size: 18px;
 }
 
 .familyTimetableIntroActions {
@@ -228,62 +228,62 @@
 
 .familyTimetableEntryPink,
 .familyTimetableColorChipPink {
-  background: #ffd8e5;
+  background: #ffc6dc;
 }
 
 .familyTimetableEntryRose,
 .familyTimetableColorChipRose {
-  background: #ffd7dd;
+  background: #ffb3c7;
 }
 
 .familyTimetableEntryPeach,
 .familyTimetableColorChipPeach {
-  background: #ffe0cf;
+  background: #ffd2ba;
 }
 
 .familyTimetableEntryYellow,
 .familyTimetableColorChipYellow {
-  background: #fff0bd;
+  background: #ffe08a;
 }
 
 .familyTimetableEntryMint,
 .familyTimetableColorChipMint {
-  background: #ddf5ea;
+  background: #c9f2d2;
 }
 
 .familyTimetableEntryGreen,
 .familyTimetableColorChipGreen {
-  background: #dff5df;
+  background: #bcebc2;
 }
 
 .familyTimetableEntrySky,
 .familyTimetableColorChipSky {
-  background: #d9f0ff;
+  background: #c9f2ff;
 }
 
 .familyTimetableEntryBlue,
 .familyTimetableColorChipBlue {
-  background: #dbeafe;
+  background: #c7dcff;
 }
 
 .familyTimetableEntryLavender,
 .familyTimetableColorChipLavender {
-  background: #eadcff;
+  background: #e0c8ff;
 }
 
 .familyTimetableEntryPurple,
 .familyTimetableColorChipPurple {
-  background: #efd9f7;
+  background: #e8bff0;
 }
 
 .familyTimetableEntryCream,
 .familyTimetableColorChipCream {
-  background: #fffdf7;
+  background: #fff1b8;
 }
 
 .familyTimetableEntryGray,
 .familyTimetableColorChipGray {
-  background: #ece8e4;
+  background: #ded8d2;
 }
 
 .familyTimetableColorChipActive {
