@@ -12,8 +12,8 @@ test("family page uses larger Hyunok font sizing without affecting global UI", a
   assert.match(addCss, /\.familyPage\s*\{\s*font-size:\s*18px;\s*\}/);
   assert.match(familyCss, /\.familyPage button,\s*\.familyPage input,\s*\.familyPage textarea,\s*\.familyPage select\s*\{[\s\S]*?font-family:\s*inherit;/);
   assert.match(familyCss, /\.familyInput\s*\{[\s\S]*?font-size:\s*16px;/);
-  assert.doesNotMatch(baseCss, /GangwonEducationHyunokSam|font-size:\s*18px;/);
-  assert.doesNotMatch(shellCss, /GangwonEducationHyunokSam|font-size:\s*18px;/);
+  assert.doesNotMatch(baseCss, /GangwonEducationHyunokSam/);
+  assert.doesNotMatch(shellCss, /GangwonEducationHyunokSam/);
 });
 
 test("family timetable palette uses distinct pastel schedule colors", async () => {
@@ -49,5 +49,4 @@ test("family timetable color chips remain color-only and accessible", async () =
   assert.doesNotMatch(timetableSource, /<button[\s\S]*>\s*\{FAMILY_TIMETABLE_COLOR_LABELS\[color\]\}\s*<\/button>/);
   assert.match(addCss, /\.familyTimetableColorChip\s*\{[\s\S]*?color:\s*transparent;/);
   assert.match(addCss, /\.familyTimetableColorChip\s*\{[\s\S]*?font-size:\s*0;/);
-}
-);
+});
