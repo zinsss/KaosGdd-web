@@ -65,12 +65,16 @@
 
 .familyTimetableSlotRow {
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) 40px;
+  grid-template-columns: 64px minmax(0, 1fr) 16px minmax(0, 1fr) 40px;
   align-items: end;
-  column-gap: 8px;
+  column-gap: 6px;
   row-gap: 8px;
   width: 100%;
-  max-width: 360px;
+  max-width: 376px;
+  min-width: 0;
+}
+
+.familyTimetableSlotField {
   min-width: 0;
 }
 
@@ -104,12 +108,20 @@
   line-height: 1;
 }
 
+.familyTimetableSlotSeparator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  color: rgba(78, 37, 54, 0.62);
+  font-weight: 900;
+  line-height: 1;
+}
+
 .familyTimetableSlotRemove,
 .familyTimetableAddSlotButton {
   appearance: none;
-  border: 1px solid rgba(151, 69, 98, 0.16);
   border-radius: 999px;
-  background: rgba(255, 248, 251, 0.78);
   color: #8d3f5d;
   font-size: 13px;
   font-weight: 900;
@@ -121,6 +133,9 @@
   position: static;
   width: 40px;
   min-width: 40px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
   padding: 0;
   line-height: 1;
 }
@@ -132,16 +147,22 @@
 .familyTimetableAddSlotButton {
   justify-self: start;
   min-height: 34px;
+  border: 1px solid rgba(151, 69, 98, 0.16);
   padding: 0 12px;
+  background: rgba(255, 248, 251, 0.78);
 }
 
 .familyTimetableSlotRemove:not(:disabled):hover,
 .familyTimetableSlotRemove:not(:disabled):focus-visible,
 .familyTimetableAddSlotButton:hover,
 .familyTimetableAddSlotButton:focus-visible {
-  border-color: rgba(141, 63, 93, 0.5);
   background: rgba(255, 216, 229, 0.62);
   outline: none;
+}
+
+.familyTimetableAddSlotButton:hover,
+.familyTimetableAddSlotButton:focus-visible {
+  border-color: rgba(141, 63, 93, 0.5);
 }
 
 .familyTimetableColorField,
@@ -339,8 +360,8 @@
 
 @media (max-width: 430px) {
   .familyTimetableSlotRow {
-    grid-template-columns: 56px minmax(0, 1fr) minmax(0, 1fr) 36px;
-    column-gap: 6px;
+    grid-template-columns: 56px minmax(0, 1fr) 14px minmax(0, 1fr) 36px;
+    column-gap: 4px;
     row-gap: 8px;
     max-width: 100%;
   }
@@ -356,6 +377,10 @@
   .familyTimetableSlotRow select,
   .familyTimetableSlotRow input[type="time"] {
     padding: 0 6px;
+  }
+
+  .familyTimetableSlotSeparator {
+    height: 36px;
   }
 
   .familyTimetableSlotRemove {
