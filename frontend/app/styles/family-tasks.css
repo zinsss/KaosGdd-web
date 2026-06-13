@@ -1,0 +1,328 @@
+.familyHomeNav {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.familyHomeNavLink,
+.familyHeaderLink,
+.familyTaskActionButton,
+.familyTaskCancel {
+  text-decoration: none;
+}
+
+.familyHomeNavLink {
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: rgba(78, 37, 54, 0.62);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.familyHomeNavLinkActive {
+  background: #ffd8e5;
+  color: #5a283d;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.24);
+}
+
+.familyDashboard {
+  flex: 1 1 auto;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  background: #fff8fb;
+}
+
+.familyTaskSection,
+.familyTaskForm,
+.familyDoneTasks {
+  border: 1px solid rgba(214, 128, 157, 0.2);
+  border-radius: 8px;
+  background: #fffafd;
+  box-shadow: 0 8px 18px rgba(151, 69, 98, 0.1);
+}
+
+.familyTaskSection {
+  display: grid;
+  gap: 12px;
+  align-self: start;
+  padding: 14px;
+}
+
+.familyTaskSectionHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.familyTaskSectionHeader h2,
+.familyTaskSectionHeader p,
+.familyTaskCard h3,
+.familyDoneTaskRow h2 {
+  margin: 0;
+}
+
+.familyTaskSectionHeader h2 {
+  color: #4b2536;
+  font-size: 22px;
+  line-height: 1.15;
+}
+
+.familyTaskSectionHeader p {
+  margin-top: 3px;
+  color: rgba(78, 37, 54, 0.58);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.familyTaskHeaderActions,
+.familyTaskFormActions,
+.familyDoneTaskActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.familyTaskActionButton,
+.familyTaskSave,
+.familyTaskCancel,
+.familyTaskDelete,
+.familyDoneTaskActions button {
+  appearance: none;
+  border: 0;
+  min-height: 38px;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.familyTaskActionButton,
+.familyTaskCancel,
+.familyDoneTaskActions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff0f5;
+  color: #8d3f5d;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.22);
+}
+
+.familyTaskActionButtonPrimary,
+.familyTaskSave {
+  background: #d86f98;
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(151, 69, 98, 0.14);
+}
+
+.familyTaskList {
+  display: grid;
+  gap: 8px;
+}
+
+.familyTaskCard {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 10px;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff5f8;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.16);
+}
+
+.familyTaskCheck,
+.familyTaskEdit {
+  appearance: none;
+  border: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  background: transparent;
+  color: #8d3f5d;
+  font-size: 19px;
+  line-height: 1;
+  text-decoration: none;
+}
+
+.familyTaskCheck:hover,
+.familyTaskCheck:focus-visible,
+.familyTaskEdit:hover,
+.familyTaskEdit:focus-visible {
+  background: rgba(255, 216, 229, 0.72);
+  outline: none;
+}
+
+.familyTaskCardBody {
+  min-width: 0;
+}
+
+.familyTaskCard h3 {
+  overflow: hidden;
+  color: #4b2536;
+  font-size: 17px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.familyTaskMeta {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+  color: rgba(78, 37, 54, 0.58);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.familyTaskMeta span {
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: #fffdf7;
+}
+
+.familyTaskEmpty {
+  margin: 0;
+  border-radius: 8px;
+  padding: 18px 12px;
+  background: #fff5f8;
+  color: rgba(78, 37, 54, 0.58);
+  font-weight: 800;
+  text-align: center;
+}
+
+.familyTaskPageCard {
+  min-height: auto;
+}
+
+.familyTaskForm,
+.familyDoneTasks {
+  display: grid;
+  gap: 12px;
+  margin: 16px;
+  padding: 14px;
+}
+
+.familyTaskForm label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  color: rgba(78, 37, 54, 0.68);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.familyTaskForm input,
+.familyTaskForm select,
+.familyTaskForm textarea {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(214, 128, 157, 0.28);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: #fff;
+  color: #4b2536;
+  font-size: 16px;
+  outline: none;
+}
+
+.familyTaskForm textarea {
+  resize: vertical;
+}
+
+.familyTaskForm input:focus,
+.familyTaskForm select:focus,
+.familyTaskForm textarea:focus {
+  border-color: rgba(176, 91, 123, 0.74);
+  box-shadow: 0 0 0 3px rgba(255, 216, 229, 0.72);
+}
+
+.familyTaskFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.familyTaskFormError {
+  margin: -6px 0 0;
+  color: #9d3657;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.familyTaskDelete,
+.familyDoneTaskActions button:last-child {
+  background: #fff0f5;
+  color: #9d3657;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.22);
+}
+
+.familyDoneTaskRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 8px;
+  padding: 10px;
+  background: #fff5f8;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.16);
+}
+
+.familyDoneTaskRow h2 {
+  color: #4b2536;
+  font-size: 17px;
+  line-height: 1.25;
+}
+
+.familyDoneTaskRow time {
+  display: block;
+  margin-top: 4px;
+  color: rgba(78, 37, 54, 0.56);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+@media (max-width: 640px) {
+  .familyHomeNav {
+    justify-content: flex-start;
+  }
+
+  .familyDashboard,
+  .familyTaskForm,
+  .familyDoneTasks {
+    padding: 12px;
+  }
+
+  .familyTaskSectionHeader,
+  .familyDoneTaskRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .familyTaskHeaderActions,
+  .familyTaskFormActions,
+  .familyDoneTaskActions {
+    justify-content: stretch;
+  }
+
+  .familyTaskActionButton,
+  .familyTaskSave,
+  .familyTaskCancel,
+  .familyTaskDelete,
+  .familyDoneTaskActions button {
+    flex: 1 1 auto;
+  }
+
+  .familyTaskFormGrid {
+    grid-template-columns: 1fr;
+  }
+}
