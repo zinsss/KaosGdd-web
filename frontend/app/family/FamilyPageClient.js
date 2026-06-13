@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import FamilyTimetable from "./FamilyTimetable";
+import FamilyHeader from "./FamilyHeader";
 
 const STORAGE_KEY = "kaosgdd:family-quick-pad-v0";
 
@@ -104,8 +104,8 @@ function loadMessages() {
 
 function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onToggleChecklistItem }) {
   const isChecklist = message.type === "checklist";
-  const deleteLabel = isChecklist ? "체크리스트 삭제" : "메모 삭제";
-  const editLabel = isChecklist ? "체크리스트 수정" : "메모 수정";
+  const deleteLabel = isChecklist ? "체크리스트 치아라" : "메모 치아라";
+  const editLabel = isChecklist ? "체크리스트 고치까" : "메모 고치까";
 
   return (
     <div className={`familyBubbleRow${isEditing ? " familyBubbleEditing" : ""}`}>
@@ -157,7 +157,6 @@ function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onT
 
 export default function FamilyPageClient() {
   const inputRef = useRef(null);
-  const [familyMode, setFamilyMode] = useState("memo");
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
   const [draft, setDraft] = useState("");
   const [checklistMode, setChecklistMode] = useState(false);
@@ -308,83 +307,56 @@ export default function FamilyPageClient() {
   }
 
   return (
-    <section className="familyPage" aria-label="가족">
+    <section className="familyPage" aria-label="모라노">
       <div className="familyCard">
-        <header className="familyHeader">
-          <div>
-            <p className="familyKicker">우리집</p>
-            <h1>가족 메모</h1>
-          </div>
-          <span className="familyHeaderBadge">빠른 기록</span>
-        </header>
+        <FamilyHeader active="memo" />
 
-        <div className="familyModeSwitch" aria-label="가족 보기 선택">
-          <button
-            className={`familyModeButton${familyMode === "memo" ? " familyModeButtonActive" : ""}`}
-            type="button"
-            aria-pressed={familyMode === "memo"}
-            onClick={() => setFamilyMode("memo")}
-          >
-            메모
-          </button>
-          <button
-            className={`familyModeButton${familyMode === "timetable" ? " familyModeButtonActive" : ""}`}
-            type="button"
-            aria-pressed={familyMode === "timetable"}
-            onClick={() => setFamilyMode("timetable")}
-          >
-            기본 시간표
-          </button>
+        <div className="familyQuickPadTitle">
+          <h2>모라노</h2>
         </div>
 
-        {familyMode === "memo" ? (
-          <>
-            <div className="familyStream" aria-live="polite">
-              {messages.map((message) => (
-                <MessageBubble
-                  isEditing={message.id === editingMessageId}
-                  message={message}
-                  key={message.id}
-                  onDeleteMessage={deleteMessage}
-                  onEditMessage={startEditMessage}
-                  onToggleChecklistItem={toggleChecklistItem}
-                />
-              ))}
-            </div>
+        <div className="familyStream" aria-live="polite">
+          {messages.map((message) => (
+            <MessageBubble
+              isEditing={message.id === editingMessageId}
+              message={message}
+              key={message.id}
+              onDeleteMessage={deleteMessage}
+              onEditMessage={startEditMessage}
+              onToggleChecklistItem={toggleChecklistItem}
+            />
+          ))}
+        </div>
 
-            <div className="familyComposer">
-              <button
-                className={`familyChecklistToggle${checklistMode ? " familyChecklistToggleActive" : ""}`}
-                type="button"
-                aria-label="체크리스트 모드"
-                aria-pressed={checklistMode}
-                onClick={() => setChecklistMode((current) => !current)}
-              >
-                
-              </button>
-              <textarea
-                ref={inputRef}
-                className="familyInput"
-                value={draft}
-                rows={checklistMode ? 4 : 1}
-                placeholder={getInputPlaceholder(checklistMode)}
-                aria-label="가족 메모 입력"
-                onChange={handleDraftChange}
-                onKeyDown={onDraftKeyDown}
-              />
-              <button className="familySend" type="button" disabled={!canSend} onClick={sendMessage}>
-                {isEditing ? "저장" : "보내기"}
-              </button>
-              {isEditing ? (
-                <button className="familyCancel" type="button" onClick={resetComposer}>
-                  취소
-                </button>
-              ) : null}
-            </div>
-          </>
-        ) : (
-          <FamilyTimetable />
-        )}
+        <div className="familyComposer">
+          <button
+            className={`familyChecklistToggle${checklistMode ? " familyChecklistToggleActive" : ""}`}
+            type="button"
+            aria-label="체크리스트 모드"
+            aria-pressed={checklistMode}
+            onClick={() => setChecklistMode((current) => !current)}
+          >
+            
+          </button>
+          <textarea
+            ref={inputRef}
+            className="familyInput"
+            value={draft}
+            rows={checklistMode ? 4 : 1}
+            placeholder={getInputPlaceholder(checklistMode)}
+            aria-label="가족 메모 입력"
+            onChange={handleDraftChange}
+            onKeyDown={onDraftKeyDown}
+          />
+          <button className="familySend" type="button" disabled={!canSend} onClick={sendMessage}>
+            {isEditing ? "되따" : "보내기"}
+          </button>
+          {isEditing ? (
+            <button className="familyCancel" type="button" onClick={resetComposer}>
+              고마하자
+            </button>
+          ) : null}
+        </div>
       </div>
     </section>
   );
