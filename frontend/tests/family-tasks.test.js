@@ -48,6 +48,8 @@ test("family task add and edit forms validate, save, cancel, and delete", async 
   for (const text of ["제목 *", "설명", "담당자", "날짜", "저장", "취소", "삭제", "제목을 입력해주세요."]) {
     assert.ok(formSource.includes(text));
   }
+  assert.ok(formSource.includes("FAMILY_TASK_ASSIGNEES"));
+  assert.ok(formSource.includes("FAMILY_TASK_ASSIGNEES.map"));
   assert.ok(formSource.includes("const title = draft.title.trim();"));
   assert.ok(formSource.includes("normalizeFamilyTask"));
   assert.ok(formSource.includes("createFamilyTaskId()"));
@@ -56,7 +58,6 @@ test("family task add and edit forms validate, save, cancel, and delete", async 
   assert.ok(formSource.includes("tasks.map((task) =>"));
   assert.ok(formSource.includes("tasks.filter((task) => task.id !== taskId)"));
   assert.doesNotMatch(formSource, /window\.confirm/);
-  for (const assignee of ["엄마", "아빠", "모두"]) assert.ok(formSource.includes(assignee));
   for (const selector of [".familyTaskForm", ".familyTaskFormGrid", ".familyTaskFormError"]) {
     assert.ok(taskCss.includes(selector));
   }
