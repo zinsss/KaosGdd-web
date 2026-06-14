@@ -20,13 +20,16 @@ test("family tasks use local structured task storage", async () => {
   assert.ok(taskHelperSource.includes("sortDoneFamilyTasks"));
 });
 
-test("family dashboard renders active task cards and completion flow", async () => {
+test("family dashboard renders calendar and active task cards", async () => {
   const dashboardSource = await readFile(new URL("../app/family/FamilyDashboardClient.js", import.meta.url), "utf8");
   const dashboardPageSource = await readFile(new URL("../app/family/page.js", import.meta.url), "utf8");
   const taskCss = await readFile(new URL("../app/styles/family-tasks.css", import.meta.url), "utf8");
 
   assert.ok(dashboardPageSource.includes("FamilyDashboardClient"));
-  for (const text of ["뭔날", "뭔일", "뭔일이고", "하그라", "+ 하그라", "다했데이", "개 남음", "□", "✎"]) assert.ok(dashboardSource.includes(text));
+  for (const text of ["달력", "로니", "하그라", "+ 하그라", "다했데이", "개 남음", "□", "✎"]) assert.ok(dashboardSource.includes(text));
+  assert.ok(dashboardSource.includes("/family/calendar"));
+  assert.doesNotMatch(dashboardSource, /aria-label="뭔일"/);
+  assert.doesNotMatch(dashboardSource, /뭔일이고/);
   assert.ok(dashboardSource.includes("tasks.filter((task) => !task.done)"));
   assert.ok(dashboardSource.includes("sortActiveFamilyTasks"));
   assert.ok(dashboardSource.includes("function completeTask"));
