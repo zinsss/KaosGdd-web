@@ -1,0 +1,209 @@
+.familyPage {
+  overflow-x: hidden;
+  font-size: 22px;
+}
+
+.familyCard,
+.familyCard * {
+  box-sizing: border-box;
+}
+
+.familyHeader {
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.familyHeader h1 {
+  color: #d86f98;
+  font-size: 30px;
+  font-weight: 950;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.74);
+}
+
+.familyHomeNavLink {
+  font-size: 17px;
+  line-height: 1.1;
+}
+
+.familyQuickPadTitle {
+  flex: 0 0 auto;
+  padding: 8px 16px 4px;
+  border-bottom: 1px solid rgba(214, 128, 157, 0.1);
+  background: #fff8fb;
+}
+
+.familyQuickPadTitle h2 {
+  margin: 0;
+  color: rgba(78, 37, 54, 0.74);
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.familyBubbleText,
+.familyBubbleTitle,
+.familyChecklistRow,
+.familyInput,
+.familyTimetableIntro p,
+.familyTimetableEditor input,
+.familyTimetableEditor select,
+.familyTimetableEditor textarea,
+.familyTaskCard h3,
+.familyTaskForm input,
+.familyTaskForm select,
+.familyTaskForm textarea,
+.familyDoneTaskRow h2 {
+  font-size: 18px;
+}
+
+.familyTimetableIntro h2,
+.familyTaskSectionHeader h2,
+.familyTaskPageTitle {
+  font-size: 25px;
+}
+
+.familyTaskSectionHeader p,
+.familyTaskMeta,
+.familyDoneTaskRow time,
+.familyTimetableDayHeader,
+.familyTimetableHourLabel,
+.familyTimetableEntryTitle,
+.familyTimetableEditor label,
+.familyTimetableSlotField,
+.familyTimetableColorField,
+.familyTimetableCopyField {
+  font-size: 15px;
+}
+
+.familyTaskActionButton,
+.familyTaskSave,
+.familyTaskCancel,
+.familyTaskDelete,
+.familyDoneTaskActions button,
+.familyTimetableAddButton,
+.familyTimetableSave,
+.familyTimetableCancel,
+.familyTimetableEditorDelete,
+.familyTimetableAddSlotButton,
+.familySend,
+.familyCancel,
+.familyChecklistToggle {
+  font-size: 18px;
+}
+
+.familyTaskPageCard,
+.familyTaskForm,
+.familyDoneTasks,
+.familyTaskFormGrid,
+.familyTaskForm label,
+.familyTaskFormActions,
+.familyTaskForm input,
+.familyTaskForm select,
+.familyTaskForm textarea {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.familyTaskForm,
+.familyDoneTasks {
+  overflow: hidden;
+}
+
+.familyTaskForm input,
+.familyTaskForm select,
+.familyTaskForm textarea {
+  box-sizing: border-box;
+}
+
+.familyTaskFormActions,
+.familyDoneTaskActions,
+.familyTaskHeaderActions {
+  min-width: 0;
+}
+
+.familyTaskSave,
+.familyTaskCancel,
+.familyTaskDelete,
+.familyDoneTaskActions button {
+  min-width: 0;
+  white-space: normal;
+}
+
+.familyComposer {
+  min-width: 0;
+}
+
+.familyInput {
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .familyPage {
+    width: calc(100% - 16px);
+  }
+
+  .familyHeader {
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .familyHeader h1 {
+    font-size: 27px;
+  }
+
+  .familyHomeNav {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .familyHomeNavLink {
+    font-size: 16px;
+  }
+
+  .familyQuickPadTitle {
+    padding: 7px 12px 4px;
+  }
+
+  .familyQuickPadTitle h2 {
+    font-size: 20px;
+  }
+
+  .familyDashboard {
+    padding: 12px;
+  }
+
+  .familyTaskSectionHeader {
+    gap: 10px;
+  }
+
+  .familyTaskActionButton,
+  .familyTaskSave,
+  .familyTaskCancel,
+  .familyTaskDelete,
+  .familyDoneTaskActions button {
+    width: 100%;
+  }
+
+  .familyTaskForm,
+  .familyDoneTasks {
+    margin: 12px;
+  }
+
+  .familyTaskFormActions,
+  .familyDoneTaskActions {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .familyBubbleText,
+  .familyBubbleTitle,
+  .familyChecklistRow,
+  .familyInput,
+  .familyTaskCard h3,
+  .familyTaskForm input,
+  .familyTaskForm select,
+  .familyTaskForm textarea,
+  .familyDoneTaskRow h2 {
+    font-size: 17px;
+  }
+}
