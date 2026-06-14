@@ -2,39 +2,66 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-test("family tasks use local structured task storage", async () => {
+test("family tasks use local structured task storage with manual order", async () => {
   const taskHelperSource = await readFile(new URL("../app/family/familyTasks.js", import.meta.url), "utf8");
 
   assert.ok(taskHelperSource.includes("kaosgdd.family.tasks.v1"));
   for (const value of ["내가 하께", "니가 해라", "아무나 하자", "😐 알아서 하그라", "😡 앵간하면 빨리해라이", "🤬 안하면 안될낀데?"]) {
     assert.ok(taskHelperSource.includes(value));
   }
-  for (const field of ["id", "title", "description", "assignee", "priority", "due_date", "done", "created_at", "updated_at", "completed_at"]) {
+  for (const field of ["id", "title", "description", "assignee", "priority", "due_date", "done", "sort_order", "created_at", "updated_at", "completed_at"]) {
     assert.ok(taskHelperSource.includes(field));
   }
+  assert.ok(taskHelperSource.includes("fallbackSortOrder"));
+  assert.ok(taskHelperSource.includes("sort_order: sortOrder"));
+  assert.ok(taskHelperSource.includes("orderA !== orderB"));
   assert.ok(taskHelperSource.includes("localStorage.getItem"));
   assert.ok(taskHelperSource.includes("localStorage.setItem"));
   assert.ok(taskHelperSource.includes("sortActiveFamilyTasks"));
   assert.ok(taskHelperSource.includes("sortDoneFamilyTasks"));
 });
 
-test("family dashboard renders calendar and active task cards", async () => {
+test("family dashboard renders calendar, active task cards, and drag handles", async () => {
   const dashboardSource = await readFile(new URL("../app/family/FamilyDashboardClient.js", import.meta.url), "utf8");
   const dashboardPageSource = await readFile(new URL("../app/family/page.js", import.meta.url), "utf8");
   const taskCss = await readFile(new URL("../app/styles/family-tasks.css", import.meta.url), "utf8");
 
   assert.ok(dashboardPageSource.includes("FamilyDashboardClient"));
-  for (const text of ["달력", "로니", "하그라", "+ 하그라", "다했데이", "개 남음", "□", "✎", "/family/calendar", "/family/tasks/new", "/family/tasks/done"]) {
+  for (const text of ["달력", "로니", "하그라", "+ 하그라", "다했데이", "개 남음", "☰", "□", "✎", "/family/calendar", "/family/tasks/new", "/family/tasks/done"]) {
     assert.ok(dashboardSource.includes(text));
   }
   assert.ok(!dashboardSource.includes('aria-label="뭔일"'));
   assert.ok(!dashboardSource.includes("뭔일이고"));
-  for (const value of ["tasks.filter((task) => !task.done)", "sortActiveFamilyTasks", "function completeTask", "done: true", "completed_at: now", "/family/tasks/${task.id}/edit"]) {
+  for (const value of [
+    "tasks.filter((task) => !task.done)",
+    "sortActiveFamilyTasks",
+    "function completeTask",
+    "function moveTaskId",
+    "function reorderActiveTasks",
+    "function startTaskDrag",
+    "function enterTaskDropTarget",
+    "function dropTaskOnTarget",
+    "function endTaskDrag",
+    "setDraggingTaskId",
+    "setDragOverTaskId",
+    "event.dataTransfer.setData",
+    "sort_order: orderById.get(task.id)",
+    "className=\"familyTaskDragHandle\"",
+    "draggable",
+    "onDragStart={(event) => startTaskDrag(event, task.id)}",
+    "onDrop={(event) => dropTaskOnTarget(event, task.id)}",
+    "done: true",
+    "completed_at: now",
+    "/family/tasks/${task.id}/edit",
+  ]) {
     assert.ok(dashboardSource.includes(value));
   }
-  for (const selector of [".familyTaskSection", ".familyDashboardPanel", ".familyTaskCard", ".familyTaskCheck", ".familyTaskEdit"]) {
+  assert.ok(!dashboardSource.includes("<article draggable"));
+  for (const selector of [".familyTaskSection", ".familyDashboardPanel", ".familyTaskCard", ".familyTaskDragHandle", ".familyTaskCardDragging", ".familyTaskCardDropTarget", ".familyTaskCheck", ".familyTaskEdit"]) {
     assert.ok(taskCss.includes(selector));
   }
+  assert.ok(taskCss.includes("grid-template-columns: 28px 32px minmax(0, 1fr) 28px"));
+  assert.ok(taskCss.includes("cursor: grab"));
 });
 
 test("family task add and edit forms validate, save, cancel, and delete", async () => {
