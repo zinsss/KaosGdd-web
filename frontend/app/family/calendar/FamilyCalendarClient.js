@@ -16,6 +16,7 @@ import {
   loadFamilyRoniItems,
   parseFamilyDateKey,
   padFamilyDatePart,
+  saveFamilyCalendarItems,
   timeHourLabel,
 } from "./familyCalendarData";
 
@@ -26,6 +27,9 @@ const FAMILY_CALENDAR_EDIT_END_HOUR = 22;
 const FAMILY_CALENDAR_EDIT_HOUR_HEIGHT = 60;
 const FAMILY_CALENDAR_LONG_PRESS_MS = 600;
 const FAMILY_CALENDAR_LONG_PRESS_MOVE_LIMIT = 10;
+const FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT = 8;
+const FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX = 48;
+const FAMILY_CALENDAR_AUTO_SCROLL_STEP_PX = 14;
 const FAMILY_CALENDAR_DEFAULT_EVENT_DURATION_MINUTES = 40;
 const FAMILY_CALENDAR_EDIT_HOURS = Array.from(
   { length: FAMILY_CALENDAR_EDIT_END_HOUR - FAMILY_CALENDAR_EDIT_START_HOUR + 1 },
@@ -62,6 +66,13 @@ function parseTimeMinutes(timeString) {
   return hour * 60 + minute;
 }
 
+function eventDurationMinutes(item) {
+  const start = parseTimeMinutes(item.startTime);
+  const end = parseTimeMinutes(item.endTime);
+  if (start === null || end === null || end <= start) return FAMILY_CALENDAR_DEFAULT_EVENT_DURATION_MINUTES;
+  return end - start;
+}
+
 function editItemStyle(item) {
   const rangeStart = FAMILY_CALENDAR_EDIT_START_HOUR * 60;
   const rangeEnd = FAMILY_CALENDAR_EDIT_END_HOUR * 60;
@@ -79,7 +90,11 @@ function editItemStyle(item) {
 
 function slotTimeFromPointer(event) {
   const rect = event.currentTarget.getBoundingClientRect();
-  const y = Math.max(0, Math.min(rect.height - 1, event.clientY - rect.top));
+  return slotTimeFromPoint(event.clientY, rect);
+}
+
+function slotTimeFromPoint(clientY, rect) {
+  const y = Math.max(0, Math.min(rect.height - 1, clientY - rect.top));
   const minutesFromStart = Math.floor(y / FAMILY_CALENDAR_EDIT_HOUR_HEIGHT * 60);
   const snappedMinutes = Math.floor(minutesFromStart / 10) * 10;
   return FAMILY_CALENDAR_EDIT_START_HOUR * 60 + snappedMinutes;
@@ -121,14 +136,19 @@ function groupItemsByHour(items) {
   return [...rows.entries()].sort((a, b) => Number(a[0]) - Number(b[0]));
 }
 
-function CalendarItemLink({ item, className = "" }) {
+function CalendarItemLink({ item, className = "", dragging = false, onStartDatedDrag = null }) {
   const href = item.type === "roni" ? "/family/calendar/roni" : `/family/calendar/events/${item.id}/edit`;
+  const editableDatedItem = className.includes("familyCalendarEditItem") && item.type === "dated";
   return (
     <Link
-      className={`familyCalendarItem familyCalendarItem${item.type === "roni" ? "Roni" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${className ? ` ${className}` : ""}`}
+      className={`familyCalendarItem familyCalendarItem${item.type === "roni" ? "Roni" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${className ? ` ${className}` : ""}${dragging ? " familyCalendarEditItemDragging" : ""}`}
       href={href}
       key={`${item.type}-${item.id}`}
-      onPointerDown={className.includes("familyCalendarEditItem") ? (event) => event.stopPropagation() : undefined}
+      onClick={dragging ? (event) => event.preventDefault() : undefined}
+      onPointerDown={className.includes("familyCalendarEditItem") ? (event) => {
+        event.stopPropagation();
+        if (editableDatedItem && onStartDatedDrag) onStartDatedDrag(event, item);
+      } : undefined}
       style={className.includes("familyCalendarEditItem") ? editItemStyle(item) : undefined}
       title={`${item.title} ${item.startTime}`}
     >
@@ -137,11 +157,16 @@ function CalendarItemLink({ item, className = "" }) {
   );
 }
 
-function FamilyCalendarEditWeek({ selectedWeekItems, selectedWeekStart }) {
+function FamilyCalendarEditWeek({ datedItems, onMoveDatedItem, selectedWeekItems, selectedWeekStart }) {
   const router = useRouter();
+  const editScrollRef = useRef(null);
   const longPressTimerRef = useRef(null);
   const longPressStartRef = useRef(null);
+  const dragStartRef = useRef(null);
+  const autoScrollIntervalRef = useRef(null);
+  const autoScrollDirectionRef = useRef(0);
   const [pendingSlotKey, setPendingSlotKey] = useState("");
+  const [dragState, setDragState] = useState(null);
 
   function clearPendingLongPress() {
     if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
@@ -150,11 +175,18 @@ function FamilyCalendarEditWeek({ selectedWeekItems, selectedWeekStart }) {
     setPendingSlotKey("");
   }
 
+  function stopAutoScroll() {
+    if (autoScrollIntervalRef.current) window.clearInterval(autoScrollIntervalRef.current);
+    autoScrollIntervalRef.current = null;
+    autoScrollDirectionRef.current = 0;
+  }
+
   useEffect(() => {
     return () => {
       if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
       longPressTimerRef.current = null;
       longPressStartRef.current = null;
+      stopAutoScroll();
     };
   }, []);
 
@@ -192,16 +224,111 @@ function FamilyCalendarEditWeek({ selectedWeekItems, selectedWeekStart }) {
     if (moved > FAMILY_CALENDAR_LONG_PRESS_MOVE_LIMIT) clearPendingLongPress();
   }
 
+  function findDropTarget(clientX, clientY) {
+    const elements = document.elementsFromPoint(clientX, clientY);
+    const dropElement = elements.find((element) => element instanceof HTMLElement && element.dataset.familyCalendarDrop);
+    if (!dropElement) return null;
+    const dayIndex = Number(dropElement.dataset.dayIndex);
+    if (!Number.isInteger(dayIndex) || dayIndex < 0 || dayIndex > 6) return null;
+    const date = formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex));
+    if (dropElement.dataset.familyCalendarDrop === "date") {
+      return { type: "date", dayIndex, date };
+    }
+    const startMinutes = slotTimeFromPoint(clientY, dropElement.getBoundingClientRect());
+    return { type: "time", dayIndex, date, startMinutes };
+  }
+
+  function updateAutoScroll(clientY) {
+    const container = editScrollRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    let direction = 0;
+    if (clientY - rect.top < FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX) direction = -1;
+    if (rect.bottom - clientY < FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX) direction = 1;
+    if (!direction) {
+      stopAutoScroll();
+      return;
+    }
+    autoScrollDirectionRef.current = direction;
+    if (autoScrollIntervalRef.current) return;
+    autoScrollIntervalRef.current = window.setInterval(() => {
+      const current = editScrollRef.current;
+      if (!current || !autoScrollDirectionRef.current) return;
+      current.scrollTop += autoScrollDirectionRef.current * FAMILY_CALENDAR_AUTO_SCROLL_STEP_PX;
+    }, 40);
+  }
+
+  function startDatedDrag(event, item) {
+    if (event.button !== undefined && event.button !== 0) return;
+    clearPendingLongPress();
+    const sourceItem = datedItems.find((candidate) => candidate.id === item.id) || item;
+    dragStartRef.current = {
+      item: sourceItem,
+      pointerId: event.pointerId,
+      x: event.clientX,
+      y: event.clientY,
+    };
+    setDragState(null);
+  }
+
+  function moveDatedDrag(event) {
+    const pending = dragStartRef.current;
+    if (!pending || pending.pointerId !== event.pointerId) {
+      moveSlotLongPress(event);
+      return;
+    }
+    const moved = Math.hypot(event.clientX - pending.x, event.clientY - pending.y);
+    if (moved < FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT && !dragState) return;
+    event.preventDefault();
+    const target = findDropTarget(event.clientX, event.clientY);
+    updateAutoScroll(event.clientY);
+    setDragState({
+      itemId: pending.item.id,
+      title: pending.item.title,
+      x: event.clientX,
+      y: event.clientY,
+      target,
+    });
+  }
+
+  function finishDatedDrag(event) {
+    const pending = dragStartRef.current;
+    const currentDragState = dragState;
+    stopAutoScroll();
+    dragStartRef.current = null;
+    setDragState(null);
+    if (!pending || pending.pointerId !== event.pointerId) {
+      clearPendingLongPress();
+      return;
+    }
+    if (!currentDragState?.target) return;
+    event.preventDefault();
+    onMoveDatedItem(pending.item.id, currentDragState.target);
+  }
+
+  const targetDay = dragState?.target?.dayIndex;
+  const targetSlotTop = dragState?.target?.type === "time"
+    ? dragState.target.startMinutes - FAMILY_CALENDAR_EDIT_START_HOUR * 60
+    : null;
+
   return (
-    <div className="familyCalendarEditWeek" aria-label="고치까 주간 시간표">
+    <div className="familyCalendarEditWeek" aria-label="고치까 주간 시간표" ref={editScrollRef}>
       <p className="familyCalendarEditHelp">길게 눌러 뭔날 추가</p>
       <div
         className="familyCalendarEditGrid"
+        onPointerCancel={finishDatedDrag}
+        onPointerMove={moveDatedDrag}
+        onPointerUp={finishDatedDrag}
         style={{ "--family-calendar-edit-body-height": `${FAMILY_CALENDAR_EDIT_BODY_HEIGHT}px` }}
       >
         <span className="familyCalendarEditCorner" aria-hidden="true" />
-        {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
-          <span className="familyCalendarEditDayHeader" key={label}>
+        {FAMILY_CALENDAR_DAY_LABELS.map((label, dayIndex) => (
+          <span
+            className={`familyCalendarEditDayHeader${dragState?.target?.type === "date" && targetDay === dayIndex ? " familyCalendarDropTargetActive" : ""}`}
+            data-day-index={dayIndex}
+            data-family-calendar-drop="date"
+            key={label}
+          >
             {label}
           </span>
         ))}
@@ -215,6 +342,8 @@ function FamilyCalendarEditWeek({ selectedWeekItems, selectedWeekStart }) {
         {FAMILY_CALENDAR_DAY_LABELS.map((label, dayIndex) => (
           <div
             className="familyCalendarEditDayColumn"
+            data-day-index={dayIndex}
+            data-family-calendar-drop="time"
             key={label}
             onPointerCancel={clearPendingLongPress}
             onPointerDown={(event) => startSlotLongPress(event, dayIndex)}
@@ -238,13 +367,31 @@ function FamilyCalendarEditWeek({ selectedWeekItems, selectedWeekStart }) {
                 style={{ top: `${Number(pendingSlotKey.split("-")[1]) - FAMILY_CALENDAR_EDIT_START_HOUR * 60}px` }}
               />
             ) : null}
+            {dragState?.target?.type === "time" && targetDay === dayIndex ? (
+              <span
+                className="familyCalendarDropSlotTarget"
+                aria-hidden="true"
+                style={{ top: `${targetSlotTop}px` }}
+              />
+            ) : null}
             {selectedWeekItems
               .filter((item) => item.dayIndex === dayIndex)
               .map((item) => (
-                <CalendarItemLink className="familyCalendarEditItem" item={item} key={`${item.type}-${item.id}`} />
+                <CalendarItemLink
+                  className="familyCalendarEditItem"
+                  dragging={dragState?.itemId === item.id}
+                  item={item}
+                  key={`${item.type}-${item.id}`}
+                  onStartDatedDrag={startDatedDrag}
+                />
               ))}
           </div>
         ))}
+        {dragState ? (
+          <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
+            {dragState.title}
+          </span>
+        ) : null}
       </div>
     </div>
   );
@@ -287,6 +434,26 @@ export default function FamilyCalendarClient() {
 
   function exitEditMode() {
     setCalendarMode(FAMILY_CALENDAR_MODE_VIEW);
+  }
+
+  function moveDatedItem(itemId, target) {
+    setDatedItems((current) => {
+      const nextItems = current.map((item) => {
+        if (item.id !== itemId) return item;
+        if (target.type === "date") return { ...item, date: target.date };
+        const duration = eventDurationMinutes(item);
+        const startTime = minutesToFamilyTime(target.startMinutes);
+        const endTime = minutesToFamilyTime(target.startMinutes + duration);
+        return {
+          ...item,
+          date: target.date,
+          startTime,
+          endTime,
+        };
+      });
+      saveFamilyCalendarItems(nextItems);
+      return nextItems;
+    });
   }
 
   return (
@@ -355,7 +522,12 @@ export default function FamilyCalendarClient() {
                   })}
                 </button>
               ) : editingCalendar ? (
-                <FamilyCalendarEditWeek selectedWeekItems={selectedWeekItems} selectedWeekStart={selectedWeekStart} />
+                <FamilyCalendarEditWeek
+                  datedItems={datedItems}
+                  onMoveDatedItem={moveDatedItem}
+                  selectedWeekItems={selectedWeekItems}
+                  selectedWeekStart={selectedWeekStart}
+                />
               ) : (
                 <div className="familyCalendarExpandedWeek" aria-label="선택한 주">
                   {selectedWeekRows.length ? (
