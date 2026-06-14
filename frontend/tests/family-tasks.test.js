@@ -21,7 +21,7 @@ test("family tasks use local structured task storage with manual order", async (
   assert.ok(taskHelperSource.includes("sortDoneFamilyTasks"));
 });
 
-test("family dashboard renders calendar, active task cards, and drag handles", async () => {
+test("family dashboard renders calendar, active task cards, drag handles, and badges", async () => {
   const dashboardSource = await readFile(new URL("../app/family/FamilyDashboardClient.js", import.meta.url), "utf8");
   const dashboardPageSource = await readFile(new URL("../app/family/page.js", import.meta.url), "utf8");
   const taskCss = await readFile(new URL("../app/styles/family-tasks.css", import.meta.url), "utf8");
@@ -42,6 +42,9 @@ test("family dashboard renders calendar, active task cards, and drag handles", a
     "function enterTaskDropTarget",
     "function dropTaskOnTarget",
     "function endTaskDrag",
+    "function getTaskAssigneeBadge",
+    "FAMILY_TASK_DEFAULT_ASSIGNEE",
+    "FAMILY_TASK_PRIORITY_ASSIGNEE",
     "setDraggingTaskId",
     "setDragOverTaskId",
     "event.dataTransfer.setData",
@@ -50,6 +53,11 @@ test("family dashboard renders calendar, active task cards, and drag handles", a
     "draggable",
     "onDragStart={(event) => startTaskDrag(event, task.id)}",
     "onDrop={(event) => dropTaskOnTarget(event, task.id)}",
+    "familyTaskDateBadge",
+    "familyTaskAssigneeBadge",
+    "familyTaskAssigneeSelf",
+    "familyTaskAssigneeShared",
+    "familyTaskAssigneeAny",
     "done: true",
     "completed_at: now",
     "/family/tasks/${task.id}/edit",
@@ -57,10 +65,25 @@ test("family dashboard renders calendar, active task cards, and drag handles", a
     assert.ok(dashboardSource.includes(value));
   }
   assert.ok(!dashboardSource.includes("<article draggable"));
-  for (const selector of [".familyTaskSection", ".familyDashboardPanel", ".familyTaskCard", ".familyTaskDragHandle", ".familyTaskCardDragging", ".familyTaskCardDropTarget", ".familyTaskCheck", ".familyTaskEdit"]) {
+  assert.ok(dashboardSource.indexOf('className="familyTaskEdit"') < dashboardSource.indexOf('className="familyTaskDragHandle"'));
+  for (const selector of [
+    ".familyTaskSection",
+    ".familyDashboardPanel",
+    ".familyTaskCard",
+    ".familyTaskDragHandle",
+    ".familyTaskCardDragging",
+    ".familyTaskCardDropTarget",
+    ".familyTaskCheck",
+    ".familyTaskEdit",
+    ".familyTaskDateBadge",
+    ".familyTaskAssigneeBadge",
+    ".familyTaskAssigneeSelf",
+    ".familyTaskAssigneeShared",
+    ".familyTaskAssigneeAny",
+  ]) {
     assert.ok(taskCss.includes(selector));
   }
-  assert.ok(taskCss.includes("grid-template-columns: 28px 32px minmax(0, 1fr) 28px"));
+  assert.ok(taskCss.includes("grid-template-columns: 32px minmax(0, 1fr) 28px 28px"));
   assert.ok(taskCss.includes("cursor: grab"));
 });
 
