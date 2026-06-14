@@ -2,8 +2,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 5px;
+  flex-wrap: nowrap;
 }
 
 .familyHomeNavLink,
@@ -15,10 +15,11 @@
 
 .familyHomeNavLink {
   border-radius: 999px;
-  padding: 7px 10px;
+  padding: 7px 9px;
   color: rgba(78, 37, 54, 0.62);
   font-size: 14px;
   font-weight: 900;
+  white-space: nowrap;
 }
 
 .familyHomeNavLinkActive {
@@ -352,6 +353,11 @@
 @media (max-width: 640px) {
   .familyHomeNav {
     justify-content: flex-start;
+  }
+
+  .familyHomeNavLink {
+    padding: 7px 8px;
+    font-size: 13px;
   }
 
   .familyDashboard,
