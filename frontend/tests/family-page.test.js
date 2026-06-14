@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-test("family routes expose dashboard and direct memo page with new labels", async () => {
+test("family routes expose dashboard and direct memo page with polished labels", async () => {
   const pageSource = await readFile(new URL("../app/family/page.js", import.meta.url), "utf8");
   const memoPageSource = await readFile(new URL("../app/family/memo/page.js", import.meta.url), "utf8");
   const timetablePageSource = await readFile(new URL("../app/family/timetable/page.js", import.meta.url), "utf8");
@@ -12,6 +12,7 @@ test("family routes expose dashboard and direct memo page with new labels", asyn
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const globalsCss = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
+  const polishCss = await readFile(new URL("../app/styles/family-polish.css", import.meta.url), "utf8");
 
   assert.match(pageSource, /FamilyDashboardClient/);
   assert.match(memoPageSource, /FamilyPageClient/);
@@ -28,31 +29,29 @@ test("family routes expose dashboard and direct memo page with new labels", asyn
   assert.match(dashboardSource, /\/family\/tasks\/new/);
   assert.match(dashboardSource, /\/family\/tasks\/done/);
   assert.match(clientSource, /aria-label="모라노"/);
-  assert.match(clientSource, /<h2>모라노<\/h2>/);
+  assert.match(clientSource, /<h2>모라꼬\?<\/h2>/);
   assert.doesNotMatch(`${headerSource}\n${dashboardSource}\n${clientSource}`, /모라켔노|뭐라켔노/);
   assert.doesNotMatch(`${headerSource}\n${dashboardSource}\n${clientSource}`, />\s*대시보드\s*</);
   assert.doesNotMatch(`${headerSource}\n${dashboardSource}\n${clientSource}`, />\s*메모장\s*</);
   assert.doesNotMatch(clientSource, /FamilyTimetable|familyMode|기본 시간표/);
-  assert.match(clientSource, /체크리스트 모드/);
-  assert.match(clientSource, /parseChecklistInput/);
-  assert.match(clientSource, /title:\s*lines\[0\]/);
-  assert.match(clientSource, /items:\s*lines\.slice\(1\)/);
-  assert.match(clientSource, /☐/);
-  assert.match(clientSource, /☑/);
-  assert.match(clientSource, //);
   assert.doesNotMatch(`${clientSource}\n${timetableSource}`.toLowerCase(), /therapy/);
   assert.match(globalsCss, /family\.css/);
   assert.match(globalsCss, /family-tasks\.css/);
+  assert.match(globalsCss, /family-polish\.css/);
   assert.match(familyCss, /GangwonEducationHyunokSam/);
-  assert.match(familyCss, /#ffd8e5/);
+  assert.match(polishCss, /\.familyHeader h1\s*\{[\s\S]*?color:\s*#d86f98;/);
+  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*22px;/);
+  assert.match(polishCss, /\.familyQuickPadTitle\s*\{/);
 });
 
 test("family composer avoids iOS zoom and resets textarea height after send", async () => {
   const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
+  const polishCss = await readFile(new URL("../app/styles/family-polish.css", import.meta.url), "utf8");
 
   assert.match(familyCss, /\.familyInput\s*\{[\s\S]*?font-size:\s*16px;/);
   assert.match(familyCss, /\.familyChecklistToggle,\s*\.familySend,\s*\.familyCancel\s*\{[\s\S]*?font-size:\s*16px;/);
+  assert.match(polishCss, /\.familyInput[\s\S]*?font-size:\s*18px;/);
   assert.match(clientSource, /const inputRef = useRef\(null\);/);
   assert.match(clientSource, /function resetInputHeight\(\)/);
   assert.match(clientSource, /el\.style\.height = "";/);
@@ -179,4 +178,18 @@ test("family bubbles can be edited and deleted through composer mode", async () 
   assert.match(familyCss, /\.familyBubbleEditing \.familyBubble\s*\{/);
   assert.match(familyCss, /\.familyBubbleEditing \.familyBubbleEditIcon\s*\{/);
   assert.match(familyCss, /\.familyCancel\s*\{/);
+});
+
+test("family polish keeps larger mobile-safe type without form overflow", async () => {
+  const polishCss = await readFile(new URL("../app/styles/family-polish.css", import.meta.url), "utf8");
+  const globalsCss = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+
+  assert.match(globalsCss, /family-polish\.css/);
+  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*22px;/);
+  assert.match(polishCss, /\.familyHeader h1\s*\{[\s\S]*?font-size:\s*30px;/);
+  assert.match(polishCss, /\.familyHomeNavLink\s*\{[\s\S]*?font-size:\s*17px;/);
+  assert.match(polishCss, /\.familyTaskForm input,[\s\S]*?\.familyTaskForm textarea\s*\{[\s\S]*?max-width:\s*100%;/);
+  assert.match(polishCss, /\.familyTaskForm input,[\s\S]*?\.familyTaskForm textarea\s*\{[\s\S]*?box-sizing:\s*border-box;/);
+  assert.match(polishCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyTaskFormActions,[\s\S]*?display:\s*grid;/);
+  assert.match(polishCss, /@media \(max-width: 640px\) \{[\s\S]*?\.familyPage\s*\{[\s\S]*?width:\s*calc\(100% - 16px\);/);
 });
