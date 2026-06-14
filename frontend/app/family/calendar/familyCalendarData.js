@@ -1,5 +1,6 @@
 export const FAMILY_CALENDAR_STORAGE_KEY = "kaosgdd.family.calendarItems.v1";
 export const FAMILY_RONI_STORAGE_KEY = "kaosgdd.family.defaultTimetable.v1";
+export const FAMILY_RONI_OVERRIDE_STORAGE_KEY = "kaosgdd.family.roniOverrides.v1";
 export const FAMILY_CALENDAR_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 export const FAMILY_CALENDAR_WEEKDAY_OPTIONS = [
   { dayOfWeek: 0, label: "일요일" },
@@ -124,6 +125,23 @@ export function normalizeFamilyCalendarItem(item) {
   };
 }
 
+export function normalizeFamilyRoniOverride(override) {
+  if (!override || typeof override !== "object") return null;
+  const sourceRoniId = String(override.sourceRoniId || "");
+  const parsedDate = parseFamilyDateKey(override.date);
+  if (!sourceRoniId || !parsedDate) return null;
+
+  return {
+    id: String(override.id || createFamilyCalendarId()),
+    sourceRoniId,
+    date: formatFamilyDateKey(parsedDate),
+    startTime: String(override.startTime || ""),
+    endTime: String(override.endTime || ""),
+    title: String(override.title || "").trim(),
+    deleted: override.deleted === true,
+  };
+}
+
 export function normalizeFamilyRoniDayOfWeek(dayOfWeek) {
   const value = Number(dayOfWeek);
   if (value === 7) return 0;
@@ -195,6 +213,14 @@ export function loadFamilyRoniItems() {
 
 export function saveFamilyRoniItems(items) {
   writeFamilyStorageArray(FAMILY_RONI_STORAGE_KEY, items.map(normalizeFamilyRoniItem).filter(Boolean));
+}
+
+export function loadFamilyRoniOverrides() {
+  return readFamilyStorageArray(FAMILY_RONI_OVERRIDE_STORAGE_KEY).map(normalizeFamilyRoniOverride).filter(Boolean);
+}
+
+export function saveFamilyRoniOverrides(overrides) {
+  writeFamilyStorageArray(FAMILY_RONI_OVERRIDE_STORAGE_KEY, overrides.map(normalizeFamilyRoniOverride).filter(Boolean));
 }
 
 export function timeHourLabel(timeString) {
