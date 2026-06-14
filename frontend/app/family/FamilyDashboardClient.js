@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import FamilyHeader from "./FamilyHeader";
 import { formatFamilyDate, loadFamilyTasks, saveFamilyTasks, sortActiveFamilyTasks } from "./familyTasks";
 
 export default function FamilyDashboardClient() {
@@ -40,34 +41,43 @@ export default function FamilyDashboardClient() {
   return (
     <section className="familyPage" aria-label="우짜노우짤꼬">
       <div className="familyCard">
-        <header className="familyHeader">
-          <div>
-            <p className="familyKicker">우리집</p>
-            <h1>우짜노우짤꼬</h1>
-          </div>
-          <nav className="familyHomeNav" aria-label="가족 화면">
-            <Link className="familyHomeNavLink familyHomeNavLinkActive" href="/family">
-              모하노
-            </Link>
-            <Link className="familyHomeNavLink" href="/family/memo">
-              뭐라켔노
-            </Link>
-          </nav>
-        </header>
+        <FamilyHeader active="home" />
 
         <main className="familyDashboard">
-          <section className="familyTaskSection" aria-label="할 일">
+          <section className="familyTaskSection familyDashboardPanel" aria-label="뭔날">
             <div className="familyTaskSectionHeader">
               <div>
-                <h2>할 일</h2>
+                <h2>뭔날</h2>
+                <p>가족 달력은 여기에 이어 붙일 거예요.</p>
+              </div>
+              <span className="familyTaskActionButton familyTaskActionButtonMuted">뭔날이고</span>
+            </div>
+          </section>
+
+          <section className="familyTaskSection familyDashboardPanel" aria-label="뭔일">
+            <div className="familyTaskSectionHeader">
+              <div>
+                <h2>뭔일</h2>
+                <p>매주 반복되는 일을 챙겨요.</p>
+              </div>
+              <Link className="familyTaskActionButton familyTaskActionButtonPrimary" href="/family/timetable">
+                뭔일이고
+              </Link>
+            </div>
+          </section>
+
+          <section className="familyTaskSection" aria-label="하그라">
+            <div className="familyTaskSectionHeader">
+              <div>
+                <h2>하그라</h2>
                 <p>{activeTasks.length}개 남음</p>
               </div>
               <div className="familyTaskHeaderActions">
                 <Link className="familyTaskActionButton familyTaskActionButtonPrimary" href="/family/tasks/new">
-                  + 추가
+                  + 하그라
                 </Link>
                 <Link className="familyTaskActionButton" href="/family/tasks/done">
-                  완료 보기
+                  다했데이
                 </Link>
               </div>
             </div>
@@ -91,13 +101,13 @@ export default function FamilyDashboardClient() {
                         {task.assignee ? <span>{task.assignee}</span> : null}
                       </div>
                     </div>
-                    <Link className="familyTaskEdit" href={`/family/tasks/${task.id}/edit`} aria-label={`${task.title} 수정`}>
+                    <Link className="familyTaskEdit" href={`/family/tasks/${task.id}/edit`} aria-label={`${task.title} 고치까`}>
                       ✎
                     </Link>
                   </article>
                 ))
               ) : (
-                <p className="familyTaskEmpty">아직 남은 할 일이 없어요.</p>
+                <p className="familyTaskEmpty">아직 하그라가 없어요.</p>
               )}
             </div>
           </section>

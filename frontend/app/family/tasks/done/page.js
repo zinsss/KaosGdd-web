@@ -1,7 +1,7 @@
 import FamilyDoneTasksClient from "./FamilyDoneTasksClient";
 
 export const metadata = {
-  title: "완료한 할 일 - KaosGdd",
+  title: "다했데이 - KaosGdd",
 };
 
 export default function FamilyDoneTasksPage() {

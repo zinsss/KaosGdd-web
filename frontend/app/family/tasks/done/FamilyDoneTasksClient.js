@@ -1,8 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
+import FamilyHeader from "../../FamilyHeader";
 import { formatFamilyDateTime, loadFamilyTasks, saveFamilyTasks, sortDoneFamilyTasks } from "../../familyTasks";
 
 export default function FamilyDoneTasksClient() {
@@ -42,19 +42,12 @@ export default function FamilyDoneTasksClient() {
   }
 
   return (
-    <section className="familyPage" aria-label="완료한 할 일">
+    <section className="familyPage" aria-label="다했데이">
       <div className="familyCard familyTaskPageCard">
-        <header className="familyHeader">
-          <div>
-            <p className="familyKicker">할 일</p>
-            <h1>완료한 할 일</h1>
-          </div>
-          <Link className="familyHeaderBadge familyHeaderLink" href="/family">
-            대시보드
-          </Link>
-        </header>
+        <FamilyHeader active="home" />
 
         <main className="familyDoneTasks">
+          <h2 className="familyTaskPageTitle">다했데이</h2>
           {doneTasks.length ? (
             doneTasks.map((task) => (
               <article className="familyDoneTaskRow" key={task.id}>
@@ -64,16 +57,16 @@ export default function FamilyDoneTasksClient() {
                 </div>
                 <div className="familyDoneTaskActions">
                   <button type="button" onClick={() => restoreTask(task.id)}>
-                    복원
+                    도로묵이다
                   </button>
                   <button type="button" onClick={() => deleteTask(task.id)}>
-                    삭제
+                    치아라
                   </button>
                 </div>
               </article>
             ))
           ) : (
-            <p className="familyTaskEmpty">완료한 할 일이 아직 없어요.</p>
+            <p className="familyTaskEmpty">다했데이가 아직 없어요.</p>
           )}
         </main>
       </div>

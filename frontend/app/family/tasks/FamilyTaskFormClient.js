@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import FamilyHeader from "../FamilyHeader";
 import {
   FAMILY_TASK_ASSIGNEES,
   createFamilyTaskId,
@@ -35,7 +36,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
     if (!taskId) return;
     const task = loadedTasks.find((candidate) => candidate.id === taskId);
     if (!task) {
-      setError("할 일을 찾을 수 없어요.");
+      setError("하그라를 찾을 수 없어요.");
       return;
     }
 
@@ -47,7 +48,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
     });
   }, [taskId]);
 
-  const pageTitle = useMemo(() => (isEditing ? "할 일 수정" : "할 일 추가"), [isEditing]);
+  const pageTitle = useMemo(() => (isEditing ? "고치까" : "하그라"), [isEditing]);
 
   function updateDraft(field, value) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -110,17 +111,10 @@ export default function FamilyTaskFormClient({ taskId = null }) {
   return (
     <section className="familyPage" aria-label={pageTitle}>
       <div className="familyCard familyTaskPageCard">
-        <header className="familyHeader">
-          <div>
-            <p className="familyKicker">할 일</p>
-            <h1>{pageTitle}</h1>
-          </div>
-          <Link className="familyHeaderBadge familyHeaderLink" href="/family">
-            대시보드
-          </Link>
-        </header>
+        <FamilyHeader active="home" />
 
         <form className="familyTaskForm" onSubmit={saveTask}>
+          <h2 className="familyTaskPageTitle">{pageTitle}</h2>
           <label>
             <span>제목 *</span>
             <input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} />
@@ -157,14 +151,14 @@ export default function FamilyTaskFormClient({ taskId = null }) {
 
           <div className="familyTaskFormActions">
             <button className="familyTaskSave" type="submit">
-              저장
+              되따
             </button>
             <Link className="familyTaskCancel" href="/family">
-              취소
+              고마하자
             </Link>
             {isEditing ? (
               <button className="familyTaskDelete" type="button" onClick={deleteTask}>
-                삭제
+                치아라
               </button>
             ) : null}
           </div>

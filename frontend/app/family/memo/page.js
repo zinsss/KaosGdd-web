@@ -1,7 +1,7 @@
 import FamilyPageClient from "../FamilyPageClient";
 
 export const metadata = {
-  title: "가족 메모장 - KaosGdd",
+  title: "모라노 - KaosGdd",
 };
 
 export default function FamilyMemoPage() {

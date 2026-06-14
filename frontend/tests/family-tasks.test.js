@@ -22,7 +22,7 @@ test("family dashboard renders active task cards and completion flow", async () 
   const taskCss = await readFile(new URL("../app/styles/family-tasks.css", import.meta.url), "utf8");
 
   assert.ok(dashboardPageSource.includes("FamilyDashboardClient"));
-  for (const text of ["할 일", "+ 추가", "완료 보기", "개 남음", "□", "✎"]) assert.ok(dashboardSource.includes(text));
+  for (const text of ["뭔날", "뭔일", "뭔일이고", "하그라", "+ 하그라", "다했데이", "개 남음", "□", "✎"]) assert.ok(dashboardSource.includes(text));
   assert.ok(dashboardSource.includes("tasks.filter((task) => !task.done)"));
   assert.ok(dashboardSource.includes("sortActiveFamilyTasks"));
   assert.ok(dashboardSource.includes("function completeTask"));
@@ -31,7 +31,7 @@ test("family dashboard renders active task cards and completion flow", async () 
   assert.ok(dashboardSource.includes("/family/tasks/new"));
   assert.ok(dashboardSource.includes("/family/tasks/done"));
   assert.ok(dashboardSource.includes("/family/tasks/${task.id}/edit"));
-  for (const selector of [".familyTaskSection", ".familyTaskCard", ".familyTaskCheck", ".familyTaskEdit"]) {
+  for (const selector of [".familyTaskSection", ".familyDashboardPanel", ".familyTaskCard", ".familyTaskCheck", ".familyTaskEdit"]) {
     assert.ok(taskCss.includes(selector));
   }
 });
@@ -43,9 +43,12 @@ test("family task add and edit forms validate, save, cancel, and delete", async 
   const taskCss = await readFile(new URL("../app/styles/family-tasks.css", import.meta.url), "utf8");
 
   assert.ok(newPageSource.includes("FamilyTaskFormClient"));
+  assert.ok(newPageSource.includes("하그라 - KaosGdd"));
   assert.ok(editPageSource.includes("await params"));
   assert.ok(editPageSource.includes("taskId={id}"));
-  for (const text of ["제목 *", "설명", "담당자", "날짜", "저장", "취소", "삭제", "제목을 입력해주세요."]) {
+  assert.ok(editPageSource.includes("고치까 - KaosGdd"));
+  assert.ok(formSource.includes("FamilyHeader"));
+  for (const text of ["하그라", "고치까", "제목 *", "설명", "담당자", "날짜", "되따", "고마하자", "치아라", "제목을 입력해주세요."]) {
     assert.ok(formSource.includes(text));
   }
   assert.ok(formSource.includes("FAMILY_TASK_ASSIGNEES"));
@@ -58,7 +61,7 @@ test("family task add and edit forms validate, save, cancel, and delete", async 
   assert.ok(formSource.includes("tasks.map((task) =>"));
   assert.ok(formSource.includes("tasks.filter((task) => task.id !== taskId)"));
   assert.doesNotMatch(formSource, /window\.confirm/);
-  for (const selector of [".familyTaskForm", ".familyTaskFormGrid", ".familyTaskFormError"]) {
+  for (const selector of [".familyTaskForm", ".familyTaskPageTitle", ".familyTaskFormGrid", ".familyTaskFormError"]) {
     assert.ok(taskCss.includes(selector));
   }
 });
@@ -69,7 +72,9 @@ test("family done archive renders newest completed tasks and supports restore/de
   const taskCss = await readFile(new URL("../app/styles/family-tasks.css", import.meta.url), "utf8");
 
   assert.ok(donePageSource.includes("FamilyDoneTasksClient"));
-  for (const text of ["완료한 할 일", "복원", "삭제"]) assert.ok(doneSource.includes(text));
+  assert.ok(donePageSource.includes("다했데이 - KaosGdd"));
+  for (const text of ["다했데이", "도로묵이다", "치아라"]) assert.ok(doneSource.includes(text));
+  assert.ok(doneSource.includes("FamilyHeader"));
   assert.ok(doneSource.includes("tasks.filter((task) => task.done)"));
   assert.ok(doneSource.includes("sortDoneFamilyTasks"));
   assert.ok(doneSource.includes("function restoreTask"));

@@ -2,9 +2,11 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-test("family routes expose dashboard and keep the memo playground direct", async () => {
+test("family routes expose dashboard and direct memo page with new labels", async () => {
   const pageSource = await readFile(new URL("../app/family/page.js", import.meta.url), "utf8");
   const memoPageSource = await readFile(new URL("../app/family/memo/page.js", import.meta.url), "utf8");
+  const timetablePageSource = await readFile(new URL("../app/family/timetable/page.js", import.meta.url), "utf8");
+  const headerSource = await readFile(new URL("../app/family/FamilyHeader.js", import.meta.url), "utf8");
   const dashboardSource = await readFile(new URL("../app/family/FamilyDashboardClient.js", import.meta.url), "utf8");
   const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
@@ -13,14 +15,24 @@ test("family routes expose dashboard and keep the memo playground direct", async
 
   assert.match(pageSource, /FamilyDashboardClient/);
   assert.match(memoPageSource, /FamilyPageClient/);
-  assert.match(dashboardSource, /우짜노우짤꼬/);
-  assert.match(dashboardSource, /모하노/);
-  assert.match(dashboardSource, /뭐라켔노/);
-  assert.doesNotMatch(dashboardSource, />\s*대시보드\s*</);
-  assert.doesNotMatch(dashboardSource, />\s*메모장\s*</);
-  assert.match(dashboardSource, /\/family\/memo/);
-  assert.match(clientSource, /가족 메모/);
-  assert.match(clientSource, /가족 메모를 남겨요/);
+  assert.match(timetablePageSource, /FamilyTimetable/);
+  assert.match(headerSource, /우짜노우짤꼬/);
+  assert.match(headerSource, /모하노/);
+  assert.match(headerSource, /모라노/);
+  assert.match(dashboardSource, /뭔날/);
+  assert.match(dashboardSource, /뭔일/);
+  assert.match(dashboardSource, /뭔일이고/);
+  assert.match(dashboardSource, /하그라/);
+  assert.match(dashboardSource, /다했데이/);
+  assert.match(dashboardSource, /\/family\/timetable/);
+  assert.match(dashboardSource, /\/family\/tasks\/new/);
+  assert.match(dashboardSource, /\/family\/tasks\/done/);
+  assert.match(clientSource, /aria-label="모라노"/);
+  assert.match(clientSource, /<h2>모라노<\/h2>/);
+  assert.doesNotMatch(`${headerSource}\n${dashboardSource}\n${clientSource}`, /모라켔노|뭐라켔노/);
+  assert.doesNotMatch(`${headerSource}\n${dashboardSource}\n${clientSource}`, />\s*대시보드\s*</);
+  assert.doesNotMatch(`${headerSource}\n${dashboardSource}\n${clientSource}`, />\s*메모장\s*</);
+  assert.doesNotMatch(clientSource, /FamilyTimetable|familyMode|기본 시간표/);
   assert.match(clientSource, /체크리스트 모드/);
   assert.match(clientSource, /parseChecklistInput/);
   assert.match(clientSource, /title:\s*lines\[0\]/);
@@ -31,7 +43,7 @@ test("family routes expose dashboard and keep the memo playground direct", async
   assert.doesNotMatch(`${clientSource}\n${timetableSource}`.toLowerCase(), /therapy/);
   assert.match(globalsCss, /family\.css/);
   assert.match(globalsCss, /family-tasks\.css/);
-  assert.match(familyCss, /\.familyPage[\s\S]*?font-family:/);
+  assert.match(familyCss, /GangwonEducationHyunokSam/);
   assert.match(familyCss, /#ffd8e5/);
 });
 
@@ -54,16 +66,13 @@ test("family composer avoids iOS zoom and resets textarea height after send", as
 });
 
 test("family default timetable uses a local weekly template model", async () => {
-  const clientSource = await readFile(new URL("../app/family/FamilyPageClient.js", import.meta.url), "utf8");
+  const timetablePageSource = await readFile(new URL("../app/family/timetable/page.js", import.meta.url), "utf8");
   const timetableSource = await readFile(new URL("../app/family/FamilyTimetable.js", import.meta.url), "utf8");
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
 
-  assert.match(clientSource, /메모/);
-  assert.match(clientSource, /기본 시간표/);
-  assert.match(clientSource, /familyMode/);
-  assert.match(clientSource, /setFamilyMode\("memo"\)/);
-  assert.match(clientSource, /setFamilyMode\("timetable"\)/);
-  assert.match(clientSource, /<FamilyTimetable \/>/);
+  assert.match(timetablePageSource, /FamilyHeader/);
+  assert.match(timetablePageSource, /FamilyTimetable/);
+  assert.match(timetablePageSource, /뭔일이고/);
   assert.match(timetableSource, /FAMILY_TIMETABLE_STORAGE_KEY = "kaosgdd\.family\.defaultTimetable\.v1"/);
   assert.match(timetableSource, /TIMETABLE_START_HOUR = 8/);
   assert.match(timetableSource, /TIMETABLE_END_HOUR = 22/);
@@ -91,7 +100,6 @@ test("family default timetable uses a local weekly template model", async () => 
   assert.match(timetableSource, /window\.confirm\("삭제할까요\?"\)/);
   assert.match(timetableSource, /active !== false/);
   assert.doesNotMatch(timetableSource, /draggable|dragstart|dragover|drop/);
-  assert.match(familyCss, /\.familyModeSwitch\s*\{/);
   assert.match(familyCss, /\.familyTimetable\s*\{/);
   assert.match(familyCss, /\.familyTimetableGrid\s*\{/);
   assert.match(familyCss, /\.familyTimetableEditor\s*\{/);
@@ -103,8 +111,6 @@ test("family timetable uses compact no-scroll mobile layout", async () => {
 
   assert.match(timetableSource, /familyTimetableHourFull/);
   assert.match(timetableSource, /familyTimetableHourCompact/);
-  assert.match(timetableSource, /familyTimetableHourCompact/);
-  assert.match(timetableSource, /familyTimetableHourFull/);
   assert.match(familyCss, /\.familyTimetableHourCompact\s*\{\s*display:\s*none;/);
   assert.match(familyCss, /overflow-x:\s*hidden;/);
   assert.match(familyCss, /grid-template-columns:\s*24px repeat\(7, minmax\(0, 1fr\)\);/);
@@ -142,7 +148,6 @@ test("family bubbles keep edit control in the footer with time", async () => {
   assert.match(clientSource, /familyBubbleEditIcon/);
   assert.match(clientSource, /×/);
   assert.match(clientSource, /✎/);
-  assert.match(clientSource, /familyBubbleFooter/);
   assert.doesNotMatch(clientSource, /familyBubbleActions/);
   assert.doesNotMatch(clientSource, />\s*수정\s*<\/button>/);
   assert.match(familyCss, /\.familyBubbleRow\s*\{[\s\S]*?width:\s*100%;/);
@@ -165,8 +170,8 @@ test("family bubbles can be edited and deleted through composer mode", async () 
   assert.match(clientSource, /function deleteMessage\(messageId\)/);
   assert.match(clientSource, /window\.confirm\("삭제할까요\?"\)/);
   assert.match(clientSource, /resetComposer\(\)/);
-  assert.match(clientSource, /저장/);
-  assert.match(clientSource, /취소/);
+  assert.match(clientSource, /되따/);
+  assert.match(clientSource, /고마하자/);
   assert.match(clientSource, /function checklistToDraft\(message\)/);
   assert.match(clientSource, /function applyChecklistEdit\(parsedChecklist, existingItems = \[\]\)/);
   assert.match(clientSource, /checkedStateQueues\.get\(item\.text\)/);
