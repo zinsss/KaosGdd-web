@@ -41,7 +41,7 @@ test("family dated event add and edit routes exist with Korean form labels", asy
     "saveFamilyCalendarItems",
     "normalizeFamilyCalendarItem",
     "router.push(\"/family/calendar\")",
-    "items.filter((item) => item.id !== eventId)",
+    "current.filter((item) => item.id !== eventId)",
   ]) {
     assert.ok(formSource.includes(value));
   }
