@@ -4,7 +4,14 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import FamilyHeader from "./FamilyHeader";
-import { formatFamilyDate, loadFamilyTasks, saveFamilyTasks, sortActiveFamilyTasks } from "./familyTasks";
+import {
+  FAMILY_TASK_DEFAULT_ASSIGNEE,
+  FAMILY_TASK_PRIORITY_ASSIGNEE,
+  formatFamilyDate,
+  loadFamilyTasks,
+  saveFamilyTasks,
+  sortActiveFamilyTasks,
+} from "./familyTasks";
 
 function moveTaskId(taskIds, sourceId, targetId) {
   const sourceIndex = taskIds.indexOf(sourceId);
@@ -15,6 +22,18 @@ function moveTaskId(taskIds, sourceId, targetId) {
   const [movedId] = nextIds.splice(sourceIndex, 1);
   nextIds.splice(targetIndex, 0, movedId);
   return nextIds;
+}
+
+function getTaskAssigneeBadge(assignee) {
+  if (assignee === FAMILY_TASK_PRIORITY_ASSIGNEE) {
+    return { className: "familyTaskAssigneeShared", label: "니가" };
+  }
+
+  if (assignee === "아무나 하자") {
+    return { className: "familyTaskAssigneeAny", label: "아무나" };
+  }
+
+  return { className: "familyTaskAssigneeSelf", label: "내가" };
 }
 
 export default function FamilyDashboardClient() {
@@ -134,44 +153,50 @@ export default function FamilyDashboardClient() {
 
             <div className="familyTaskList">
               {activeTasks.length ? (
-                activeTasks.map((task) => (
-                  <article
-                    className={`familyTaskCard${task.id === draggingTaskId ? " familyTaskCardDragging" : ""}${task.id === dragOverTaskId ? " familyTaskCardDropTarget" : ""}`}
-                    key={task.id}
-                    onDragEnter={(event) => enterTaskDropTarget(event, task.id)}
-                    onDragOver={(event) => enterTaskDropTarget(event, task.id)}
-                    onDrop={(event) => dropTaskOnTarget(event, task.id)}
-                  >
-                    <button
-                      className="familyTaskDragHandle"
-                      type="button"
-                      draggable
-                      aria-label={`${task.title} 순서 옮기기`}
-                      onDragStart={(event) => startTaskDrag(event, task.id)}
-                      onDragEnd={endTaskDrag}
+                activeTasks.map((task) => {
+                  const assigneeBadge = getTaskAssigneeBadge(task.assignee || FAMILY_TASK_DEFAULT_ASSIGNEE);
+
+                  return (
+                    <article
+                      className={`familyTaskCard${task.id === draggingTaskId ? " familyTaskCardDragging" : ""}${task.id === dragOverTaskId ? " familyTaskCardDropTarget" : ""}`}
+                      key={task.id}
+                      onDragEnter={(event) => enterTaskDropTarget(event, task.id)}
+                      onDragOver={(event) => enterTaskDropTarget(event, task.id)}
+                      onDrop={(event) => dropTaskOnTarget(event, task.id)}
                     >
-                      ☰
-                    </button>
-                    <button
-                      className="familyTaskCheck"
-                      type="button"
-                      aria-label={`${task.title} 완료`}
-                      onClick={() => completeTask(task.id)}
-                    >
-                      □
-                    </button>
-                    <div className="familyTaskCardBody">
-                      <h3>{task.title}</h3>
-                      <div className="familyTaskMeta">
-                        {task.due_date ? <span>{formatFamilyDate(task.due_date)}</span> : null}
-                        {task.assignee ? <span>{task.assignee}</span> : null}
+                      <button
+                        className="familyTaskCheck"
+                        type="button"
+                        aria-label={`${task.title} 완료`}
+                        onClick={() => completeTask(task.id)}
+                      >
+                        □
+                      </button>
+                      <div className="familyTaskCardBody">
+                        <h3>{task.title}</h3>
+                        <div className="familyTaskMeta">
+                          {task.due_date ? <span className="familyTaskDateBadge">{formatFamilyDate(task.due_date)}</span> : null}
+                          <span className={`familyTaskAssigneeBadge ${assigneeBadge.className}`} title={task.assignee}>
+                            {assigneeBadge.label}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                    <Link className="familyTaskEdit" href={`/family/tasks/${task.id}/edit`} aria-label={`${task.title} 고치까`}>
-                      ✎
-                    </Link>
-                  </article>
-                ))
+                      <Link className="familyTaskEdit" href={`/family/tasks/${task.id}/edit`} aria-label={`${task.title} 고치까`}>
+                        ✎
+                      </Link>
+                      <button
+                        className="familyTaskDragHandle"
+                        type="button"
+                        draggable
+                        aria-label={`${task.title} 순서 옮기기`}
+                        onDragStart={(event) => startTaskDrag(event, task.id)}
+                        onDragEnd={endTaskDrag}
+                      >
+                        ☰
+                      </button>
+                    </article>
+                  );
+                })
               ) : (
                 <p className="familyTaskEmpty">아직 하그라가 없어요.</p>
               )}
