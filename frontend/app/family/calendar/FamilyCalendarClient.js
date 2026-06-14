@@ -28,12 +28,18 @@ function buildSelectedWeekItems(selectedWeekStart, datedItems, roniItems) {
     .filter((item) => weekDates.includes(item.date) && item.startTime)
     .map((item) => ({ ...item, type: "dated", dayIndex: weekDates.indexOf(item.date) }));
 
-  const weekRoniItems = roniItems.map((item) => ({
-    ...item,
-    date: weekDates[item.dayOfWeek],
-    dayIndex: item.dayOfWeek,
-    type: "roni",
-  }));
+  const weekRoniItems = roniItems.flatMap((item) =>
+    (item.slots || [item]).map((slot, slotIndex) => ({
+      ...item,
+      id: `${item.id}-${slotIndex}`,
+      sourceId: item.id,
+      date: weekDates[slot.dayOfWeek],
+      dayIndex: slot.dayOfWeek,
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+      type: "roni",
+    })),
+  );
 
   return [...weekRoniItems, ...weekDatedItems]
     .filter((item) => item.dayIndex >= 0 && item.dayIndex <= 6 && item.startTime)
