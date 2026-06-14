@@ -34,7 +34,7 @@ test("family calendar 고치까 mode swaps compact week for full timetable", asy
     assert.ok(calendarSource.includes(value));
   }
   assert.ok(calendarSource.includes("editingCalendar ?"));
-  assert.ok(calendarSource.includes("<FamilyCalendarEditWeek selectedWeekItems={selectedWeekItems} selectedWeekStart={selectedWeekStart} />"));
+  assert.ok(calendarSource.includes("<FamilyCalendarEditWeek"));
   assert.ok(calendarSource.includes("familyCalendarExpandedWeek"));
   assert.ok(calendarSource.includes("selectedWeekRows.map"));
   assert.ok(calendarSource.includes("const FAMILY_CALENDAR_EDIT_START_HOUR = 8"));
@@ -85,6 +85,43 @@ test("family calendar edit mode long press opens new event with slot prefill", a
 
   assert.match(calendarCss, /\.familyCalendarEditDayColumn[\s\S]*?touch-action:\s*pan-y;/);
   assert.match(calendarCss, /\.familyCalendarLongPressTarget[\s\S]*?pointer-events:\s*none;/);
+});
+
+test("family calendar edit mode moves 뭔날 items without enabling Roni drag", async () => {
+  const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
+  const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
+
+  assert.ok(calendarSource.includes("saveFamilyCalendarItems"));
+  assert.ok(calendarSource.includes("function eventDurationMinutes(item)"));
+  assert.ok(calendarSource.includes("return FAMILY_CALENDAR_DEFAULT_EVENT_DURATION_MINUTES"));
+  assert.ok(calendarSource.includes("function startDatedDrag(event, item)"));
+  assert.ok(calendarSource.includes('const editableDatedItem = className.includes("familyCalendarEditItem") && item.type === "dated"'));
+  assert.ok(calendarSource.includes("if (editableDatedItem && onStartDatedDrag) onStartDatedDrag(event, item);"));
+  assert.ok(calendarSource.includes("function findDropTarget(clientX, clientY)"));
+  assert.ok(calendarSource.includes('dropElement.dataset.familyCalendarDrop === "date"'));
+  assert.ok(calendarSource.includes("slotTimeFromPoint(clientY, dropElement.getBoundingClientRect())"));
+  assert.ok(calendarSource.includes("function moveDatedItem(itemId, target)"));
+  assert.ok(calendarSource.includes('if (target.type === "date") return { ...item, date: target.date };'));
+  assert.ok(calendarSource.includes("const duration = eventDurationMinutes(item);"));
+  assert.ok(calendarSource.includes("startTime,"));
+  assert.ok(calendarSource.includes("endTime,"));
+  assert.ok(calendarSource.includes("saveFamilyCalendarItems(nextItems)"));
+  assert.ok(calendarSource.includes('data-family-calendar-drop="date"'));
+  assert.ok(calendarSource.includes('data-family-calendar-drop="time"'));
+  assert.ok(calendarSource.includes("Math.floor(minutesFromStart / 10) * 10"));
+  assert.doesNotMatch(calendarSource, /item\.type === "roni"[\s\S]{0,160}onStartDatedDrag/);
+  assert.doesNotMatch(calendarSource, /saveFamilyRoniItems|override/i);
+
+  assert.ok(calendarSource.includes("const FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX = 48"));
+  assert.ok(calendarSource.includes("function updateAutoScroll(clientY)"));
+  assert.ok(calendarSource.includes("window.setInterval"));
+  assert.ok(calendarSource.includes("function stopAutoScroll()"));
+  assert.ok(calendarSource.includes("stopAutoScroll();"));
+
+  assert.match(calendarCss, /\.familyCalendarEditItemDragging[\s\S]*?opacity:/);
+  assert.match(calendarCss, /\.familyCalendarDragGhost[\s\S]*?position:\s*fixed;/);
+  assert.match(calendarCss, /\.familyCalendarDropSlotTarget[\s\S]*?pointer-events:\s*none;/);
+  assert.match(calendarCss, /\.familyCalendarDropTargetActive[\s\S]*?box-shadow:/);
 });
 
 test("family dated event add and edit routes exist with Korean form labels", async () => {

@@ -248,6 +248,11 @@
   background: rgba(219, 234, 254, 0.42);
 }
 
+.familyCalendarDropTargetActive {
+  background: rgba(216, 111, 152, 0.2);
+  box-shadow: inset 0 0 0 2px rgba(216, 111, 152, 0.36);
+}
+
 .familyCalendarEditTimeRail,
 .familyCalendarEditDayColumn {
   position: relative;
@@ -316,7 +321,8 @@
   top: 50px;
 }
 
-.familyCalendarLongPressTarget {
+.familyCalendarLongPressTarget,
+.familyCalendarDropSlotTarget {
   position: absolute;
   left: 2px;
   right: 2px;
@@ -326,6 +332,12 @@
   background: rgba(216, 111, 152, 0.18);
   box-shadow: inset 0 0 0 1px rgba(216, 111, 152, 0.32);
   pointer-events: none;
+}
+
+.familyCalendarDropSlotTarget {
+  height: 18px;
+  background: rgba(216, 111, 152, 0.22);
+  box-shadow: inset 0 0 0 2px rgba(216, 111, 152, 0.36);
 }
 
 .familyCalendarEditItem {
@@ -338,6 +350,31 @@
   min-height: 18px;
   padding: 2px 4px;
   font-size: 12px;
+  touch-action: none;
+}
+
+.familyCalendarEditItemDragging {
+  opacity: 0.38;
+  transform: scale(0.98);
+}
+
+.familyCalendarDragGhost {
+  position: fixed;
+  z-index: 1000;
+  max-width: 120px;
+  border-radius: 999px;
+  padding: 4px 8px;
+  pointer-events: none;
+  transform: translate(8px, 8px);
+  background: rgba(216, 111, 152, 0.92);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1.15;
+  box-shadow: 0 10px 22px rgba(151, 69, 98, 0.24);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .familyCalendarItem {
