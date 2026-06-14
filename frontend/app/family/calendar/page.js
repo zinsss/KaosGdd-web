@@ -9,7 +9,7 @@ export default function FamilyCalendarPage() {
   return (
     <section className="familyPage" aria-label="달력">
       <div className="familyCard familyCalendarPageCard">
-        <FamilyHeader active="home" />
+        <FamilyHeader active="calendar" />
         <FamilyCalendarClient />
       </div>
     </section>
