@@ -312,7 +312,7 @@ export default function FamilyPageClient() {
         <FamilyHeader active="memo" />
 
         <div className="familyQuickPadTitle">
-          <h2>모라노</h2>
+          <h2>모라꼬?</h2>
         </div>
 
         <div className="familyStream" aria-live="polite">
