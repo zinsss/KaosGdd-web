@@ -13,6 +13,13 @@ export function createFamilyTaskId() {
   return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function fallbackSortOrder(task) {
+  const created = Date.parse(task?.created_at || "");
+  if (Number.isFinite(created)) return created;
+
+  return Date.now();
+}
+
 export function normalizeFamilyTask(task) {
   if (!task || typeof task !== "object") return null;
   const title = String(task.title || "").trim();
@@ -26,6 +33,7 @@ export function normalizeFamilyTask(task) {
       : assignee === FAMILY_TASK_PRIORITY_ASSIGNEE
         ? FAMILY_TASK_DEFAULT_PRIORITY
         : "";
+  const sortOrder = Number.isFinite(Number(task.sort_order)) ? Number(task.sort_order) : fallbackSortOrder(task);
 
   return {
     id: String(task.id || createFamilyTaskId()),
@@ -35,6 +43,7 @@ export function normalizeFamilyTask(task) {
     priority,
     due_date: String(task.due_date || ""),
     done: Boolean(task.done),
+    sort_order: sortOrder,
     created_at: String(task.created_at || now),
     updated_at: String(task.updated_at || task.created_at || now),
     completed_at: task.done ? String(task.completed_at || task.updated_at || now) : "",
@@ -43,10 +52,10 @@ export function normalizeFamilyTask(task) {
 
 export function sortActiveFamilyTasks(tasks) {
   return [...tasks].sort((a, b) => {
-    if (a.due_date && b.due_date && a.due_date !== b.due_date) return a.due_date.localeCompare(b.due_date);
-    if (a.due_date && !b.due_date) return -1;
-    if (!a.due_date && b.due_date) return 1;
-    return a.created_at.localeCompare(b.created_at);
+    const orderA = Number.isFinite(Number(a.sort_order)) ? Number(a.sort_order) : fallbackSortOrder(a);
+    const orderB = Number.isFinite(Number(b.sort_order)) ? Number(b.sort_order) : fallbackSortOrder(b);
+    if (orderA !== orderB) return orderA - orderB;
+    return String(a.created_at || "").localeCompare(String(b.created_at || ""));
   });
 }
 
