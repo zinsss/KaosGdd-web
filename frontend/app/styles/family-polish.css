@@ -112,6 +112,25 @@
 .familyTaskForm input,
 .familyTaskForm select,
 .familyTaskForm textarea {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.familyTaskPriorityField {
+  grid-column: 1 / -1;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.familyTaskDateInput {
+  appearance: none;
+  -webkit-appearance: none;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   box-sizing: border-box;
 }
 
@@ -187,6 +206,10 @@
   .familyTaskForm,
   .familyDoneTasks {
     margin: 12px;
+  }
+
+  .familyTaskFormGrid {
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .familyTaskFormActions,
