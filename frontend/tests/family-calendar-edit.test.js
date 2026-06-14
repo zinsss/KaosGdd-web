@@ -34,20 +34,57 @@ test("family calendar 고치까 mode swaps compact week for full timetable", asy
     assert.ok(calendarSource.includes(value));
   }
   assert.ok(calendarSource.includes("editingCalendar ?"));
-  assert.ok(calendarSource.includes("<FamilyCalendarEditWeek selectedWeekItems={selectedWeekItems} />"));
+  assert.ok(calendarSource.includes("<FamilyCalendarEditWeek selectedWeekItems={selectedWeekItems} selectedWeekStart={selectedWeekStart} />"));
   assert.ok(calendarSource.includes("familyCalendarExpandedWeek"));
   assert.ok(calendarSource.includes("selectedWeekRows.map"));
   assert.ok(calendarSource.includes("const FAMILY_CALENDAR_EDIT_START_HOUR = 8"));
   assert.ok(calendarSource.includes("const FAMILY_CALENDAR_EDIT_END_HOUR = 22"));
   assert.ok(calendarSource.includes("FAMILY_CALENDAR_EDIT_VISIBLE_HOURS"));
   assert.ok(calendarSource.includes("formatEditHourLabel(hour)"));
-  assert.doesNotMatch(calendarSource, /draggable|onDrag|longPress|onPointerDown|onMouseDown/);
+  assert.doesNotMatch(calendarSource, /draggable|onDrag/);
 
   assert.match(calendarCss, /\.familyCalendarEditWeek[\s\S]*?overflow-y:\s*auto;/);
   assert.match(calendarCss, /\.familyCalendarEditGrid[\s\S]*?grid-template-columns:\s*42px repeat\(7, minmax\(0, 1fr\)\);/);
   assert.match(calendarCss, /\.familyCalendarEditGrid[\s\S]*?overflow-x:\s*hidden;/);
   assert.match(calendarCss, /\.familyCalendarEditHour span:nth-child\(5\)[\s\S]*?top:\s*50px;/);
   assert.match(calendarCss, /@media \(max-width:\s*640px\)[\s\S]*?\.familyCalendarEditGrid[\s\S]*?grid-template-columns:\s*28px repeat\(7, minmax\(0, 1fr\)\);/);
+});
+
+test("family calendar edit mode long press opens new event with slot prefill", async () => {
+  const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
+  const eventFormSource = await readFile(new URL("../app/family/calendar/events/FamilyCalendarEventFormClient.js", import.meta.url), "utf8");
+  const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
+
+  assert.ok(calendarSource.includes("const FAMILY_CALENDAR_LONG_PRESS_MS = 600"));
+  assert.ok(calendarSource.includes("const FAMILY_CALENDAR_LONG_PRESS_MOVE_LIMIT = 10"));
+  assert.ok(calendarSource.includes("const FAMILY_CALENDAR_DEFAULT_EVENT_DURATION_MINUTES = 40"));
+  assert.ok(calendarSource.includes("function slotTimeFromPointer(event)"));
+  assert.ok(calendarSource.includes("Math.floor(minutesFromStart / 10) * 10"));
+  assert.ok(calendarSource.includes("formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex))"));
+  assert.ok(calendarSource.includes("start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}"));
+  assert.ok(calendarSource.includes("window.setTimeout"));
+  assert.ok(calendarSource.includes("FAMILY_CALENDAR_LONG_PRESS_MS"));
+  assert.ok(calendarSource.includes("onPointerDown={(event) => startSlotLongPress(event, dayIndex)}"));
+  assert.ok(calendarSource.includes("onPointerMove={moveSlotLongPress}"));
+  assert.ok(calendarSource.includes("onPointerUp={clearPendingLongPress}"));
+  assert.ok(calendarSource.includes("onPointerCancel={clearPendingLongPress}"));
+  assert.ok(calendarSource.includes("event.stopPropagation()"));
+  assert.ok(calendarSource.includes("className=\"familyCalendarLongPressTarget\""));
+  assert.ok(calendarSource.includes("editingCalendar ?"));
+  assert.doesNotMatch(calendarSource, /onClick=\{\(event\) => startSlotLongPress/);
+  assert.doesNotMatch(calendarSource, /onClick=\{\(\) => openNewEventForSlot/);
+
+  assert.ok(eventFormSource.includes("eventPrefillFromLocation"));
+  assert.ok(eventFormSource.includes("new URLSearchParams(window.location.search)"));
+  assert.ok(eventFormSource.includes('params.get("date")'));
+  assert.ok(eventFormSource.includes('params.get("start")'));
+  assert.ok(eventFormSource.includes('params.get("end")'));
+  assert.ok(eventFormSource.includes("FAMILY_CALENDAR_EVENT_DEFAULT_DURATION_MINUTES = 40"));
+  assert.ok(eventFormSource.includes("addMinutesToTime(startTime, FAMILY_CALENDAR_EVENT_DEFAULT_DURATION_MINUTES)"));
+  assert.ok(eventFormSource.includes("setDraft((current) => ({ ...current, ...eventPrefillFromLocation() }))"));
+
+  assert.match(calendarCss, /\.familyCalendarEditDayColumn[\s\S]*?touch-action:\s*pan-y;/);
+  assert.match(calendarCss, /\.familyCalendarLongPressTarget[\s\S]*?pointer-events:\s*none;/);
 });
 
 test("family dated event add and edit routes exist with Korean form labels", async () => {
