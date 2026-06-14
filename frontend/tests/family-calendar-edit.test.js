@@ -154,11 +154,34 @@ test("family Roni override foundation stores and applies weekly exceptions", asy
   assert.ok(calendarSource.includes("function createRoniOverride"));
   assert.ok(calendarSource.includes("setRoniOverrides"));
   assert.ok(calendarSource.includes("sourceRoniId: `${item.id}:${slotIndex}`"));
-  assert.ok(calendarSource.includes("roniOverrideKey(override.sourceRoniId, override.date) !== roniOverrideKey(sourceRoniId, moved.date)"));
+  assert.ok(calendarSource.includes("roniOverrideKey(override.sourceRoniId, override.date) !== roniOverrideKey(sourceRoniId, values.date)"));
 
   for (const value of ["로니 예외", "이번 주만 바꾸기", "로니도 바꾸기", "고마하자", "familyCalendarRoniOverrideBadge", "familyCalendarRoniChoiceSheet"]) {
     assert.ok(calendarSource.includes(value) || calendarCss.includes(value));
   }
+});
+
+test("family Roni can be hidden and restored for only this week", async () => {
+  const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
+  const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
+
+  assert.ok(calendarSource.includes("이번 주만 치아라"));
+  assert.ok(calendarSource.includes("function chooseDeleteThisWeek()"));
+  assert.ok(calendarSource.includes("function deleteRoniThisWeek(roniItem)"));
+  assert.ok(calendarSource.includes("deleted: true"));
+  assert.ok(calendarSource.includes("onDeleteRoniThisWeek={deleteRoniThisWeek}"));
+  assert.ok(calendarSource.includes("groupDeletedRoniOverridesByDate"));
+  assert.ok(calendarSource.includes("deletedRoniOverridesByDate"));
+  assert.ok(calendarSource.includes("familyCalendarRoniRestoreButton"));
+  assert.ok(calendarSource.includes("도로묵이다"));
+  assert.ok(calendarSource.includes("function restoreRoniOverride(overrideId)"));
+  assert.ok(calendarSource.includes("current.filter((override) => override.id !== overrideId)"));
+  assert.ok(calendarSource.includes("saveFamilyRoniOverrides(nextOverrides)"));
+  assert.ok(calendarSource.includes("onRestoreRoniOverride={restoreRoniOverride}"));
+  assert.ok(calendarSource.includes("saveFamilyRoniItems(nextItems)"));
+  assert.ok(calendarSource.indexOf("function deleteRoniThisWeek") < calendarSource.indexOf("function moveRoniTemplate"));
+  assert.match(calendarCss, /\.familyCalendarRoniRestoreStack[\s\S]*?position:\s*absolute;/);
+  assert.match(calendarCss, /\.familyCalendarRoniRestoreButton[\s\S]*?border:\s*0;/);
 });
 
 test("family dated event add and edit routes exist with Korean form labels", async () => {
