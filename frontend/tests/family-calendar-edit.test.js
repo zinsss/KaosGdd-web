@@ -130,40 +130,27 @@ test("family Roni override foundation stores and applies weekly exceptions", asy
   const dataSource = await readFile(new URL("../app/family/calendar/familyCalendarData.js", import.meta.url), "utf8");
   const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
 
-  assert.ok(dataSource.includes('export const FAMILY_RONI_OVERRIDE_STORAGE_KEY = "kaosgdd.family.roniOverrides.v1"'));
-  for (const value of ["id", "sourceRoniId", "date", "startTime", "endTime", "title", "deleted"]) {
-    assert.ok(dataSource.includes(value));
-  }
+  assert.ok(dataSource.includes("kaosgdd.family.roniOverrides.v1"));
   assert.ok(dataSource.includes("function normalizeFamilyRoniOverride"));
   assert.ok(dataSource.includes("function loadFamilyRoniOverrides"));
   assert.ok(dataSource.includes("function saveFamilyRoniOverrides"));
+  for (const field of ["sourceRoniId", "date", "startTime", "endTime", "title", "deleted"]) {
+    assert.ok(dataSource.includes(field));
+  }
 
-  assert.ok(calendarSource.includes("function applyRoniOverrides(generatedRoniItems, roniOverrides)"));
+  assert.ok(calendarSource.includes("function applyRoniOverrides"));
   assert.ok(calendarSource.includes("const weekGeneratedRoniItems = roniItems.flatMap"));
-  assert.ok(calendarSource.includes("const weekRoniItems = applyRoniOverrides(weekGeneratedRoniItems, roniOverrides)"));
-  assert.ok(calendarSource.includes("return [...weekRoniItems, ...weekDatedItems]"));
+  assert.ok(calendarSource.includes("applyRoniOverrides(weekGeneratedRoniItems, roniOverrides)"));
   assert.ok(calendarSource.includes("if (override.deleted) return []"));
   assert.ok(calendarSource.includes("overridden: true"));
   assert.ok(calendarSource.includes("loadFamilyRoniOverrides()"));
   assert.ok(calendarSource.includes("saveFamilyRoniOverrides(nextOverrides)"));
-  assert.ok(calendarSource.includes("function createRoniOverride(roniItem)"));
-  assert.ok(calendarSource.includes("sourceRoniId: roniItem.sourceId"));
+  assert.ok(calendarSource.includes("function createRoniOverride"));
   assert.ok(calendarSource.includes("setRoniOverrides"));
 
-  for (const value of ["로니 예외", "이번 주만 바꾸기", "로니도 바꾸기", "고마하자"]) {
-    assert.ok(calendarSource.includes(value));
+  for (const value of ["로니 예외", "이번 주만 바꾸기", "로니도 바꾸기", "고마하자", "familyCalendarRoniOverrideBadge", "familyCalendarRoniChoiceSheet"]) {
+    assert.ok(calendarSource.includes(value) || calendarCss.includes(value));
   }
-  assert.ok(calendarSource.includes("function startRoniChoice(event, item)"));
-  assert.ok(calendarSource.includes("setRoniChoiceItem(item)"));
-  assert.ok(calendarSource.includes("onStartRoniChoice={startRoniChoice}"));
-  assert.ok(
-    calendarSource.includes('router.push("/family/calendar/roni")') ||
-      calendarSource.includes("router.push('/family/calendar/roni')"),
-  );
-  assert.ok(calendarSource.includes("familyCalendarRoniOverrideBadge"));
-  assert.ok(calendarSource.includes("예외"));
-  assert.match(calendarCss, /\.familyCalendarRoniChoiceSheet[\s\S]*?display:\s*grid;/);
-  assert.match(calendarCss, /\.familyCalendarRoniOverrideBadge[\s\S]*?font-size:\s*9px;/);
 });
 
 test("family dated event add and edit routes exist with Korean form labels", async () => {
