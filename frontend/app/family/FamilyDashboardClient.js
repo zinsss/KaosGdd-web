@@ -44,24 +44,14 @@ export default function FamilyDashboardClient() {
         <FamilyHeader active="home" />
 
         <main className="familyDashboard">
-          <section className="familyTaskSection familyDashboardPanel" aria-label="뭔날">
+          <section className="familyTaskSection familyDashboardPanel familyCalendarDashboardCard" aria-label="달력">
             <div className="familyTaskSectionHeader">
               <div>
-                <h2>뭔날</h2>
-                <p>가족 달력은 여기에 이어 붙일 거예요.</p>
+                <h2>달력</h2>
+                <p>뭔날하고 로니를 같이 봐요.</p>
               </div>
-              <span className="familyTaskActionButton familyTaskActionButtonMuted">뭔날이고</span>
-            </div>
-          </section>
-
-          <section className="familyTaskSection familyDashboardPanel" aria-label="뭔일">
-            <div className="familyTaskSectionHeader">
-              <div>
-                <h2>뭔일</h2>
-                <p>매주 반복되는 일을 챙겨요.</p>
-              </div>
-              <Link className="familyTaskActionButton familyTaskActionButtonPrimary" href="/family/timetable">
-                뭔일이고
+              <Link className="familyTaskActionButton familyTaskActionButtonPrimary" href="/family/calendar">
+                달력
               </Link>
             </div>
           </section>
