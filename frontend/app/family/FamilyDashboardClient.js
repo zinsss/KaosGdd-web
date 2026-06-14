@@ -6,6 +6,8 @@ import { useEffect, useMemo, useState } from "react";
 import FamilyHeader from "./FamilyHeader";
 import {
   FAMILY_TASK_DEFAULT_ASSIGNEE,
+  FAMILY_TASK_DEFAULT_PRIORITY,
+  FAMILY_TASK_PRIORITIES,
   FAMILY_TASK_PRIORITY_ASSIGNEE,
   formatFamilyDate,
   loadFamilyTasks,
@@ -24,16 +26,23 @@ function moveTaskId(taskIds, sourceId, targetId) {
   return nextIds;
 }
 
-function getTaskAssigneeBadge(assignee) {
+function getPriorityEmoji(priority) {
+  const normalizedPriority = FAMILY_TASK_PRIORITIES.includes(priority) ? priority : FAMILY_TASK_DEFAULT_PRIORITY;
+  return normalizedPriority.split(" ")[0];
+}
+
+function getTaskCardBadges(task) {
+  const assignee = task.assignee || FAMILY_TASK_DEFAULT_ASSIGNEE;
+
   if (assignee === FAMILY_TASK_PRIORITY_ASSIGNEE) {
-    return { className: "familyTaskAssigneeShared", label: "니가" };
+    return [{ className: "familyTaskBadgePriority", label: getPriorityEmoji(task.priority), title: task.priority || FAMILY_TASK_DEFAULT_PRIORITY }];
   }
 
   if (assignee === "아무나 하자") {
-    return { className: "familyTaskAssigneeAny", label: "아무나" };
+    return [{ className: "familyTaskBadgeAny", label: "👫", title: assignee }];
   }
 
-  return { className: "familyTaskAssigneeSelf", label: "내가" };
+  return [{ className: "familyTaskBadgeSelf", label: "👸🏻", title: FAMILY_TASK_DEFAULT_ASSIGNEE }];
 }
 
 export default function FamilyDashboardClient() {
@@ -154,7 +163,7 @@ export default function FamilyDashboardClient() {
             <div className="familyTaskList">
               {activeTasks.length ? (
                 activeTasks.map((task) => {
-                  const assigneeBadge = getTaskAssigneeBadge(task.assignee || FAMILY_TASK_DEFAULT_ASSIGNEE);
+                  const taskBadges = getTaskCardBadges(task);
 
                   return (
                     <article
@@ -176,9 +185,11 @@ export default function FamilyDashboardClient() {
                         <h3>{task.title}</h3>
                         <div className="familyTaskMeta">
                           {task.due_date ? <span className="familyTaskDateBadge">{formatFamilyDate(task.due_date)}</span> : null}
-                          <span className={`familyTaskAssigneeBadge ${assigneeBadge.className}`} title={task.assignee}>
-                            {assigneeBadge.label}
-                          </span>
+                          {taskBadges.map((badge) => (
+                            <span className={`familyTaskBadge ${badge.className}`} title={badge.title} key={badge.className}>
+                              {badge.label}
+                            </span>
+                          ))}
                         </div>
                       </div>
                       <Link className="familyTaskEdit" href={`/family/tasks/${task.id}/edit`} aria-label={`${task.title} 고치까`}>
