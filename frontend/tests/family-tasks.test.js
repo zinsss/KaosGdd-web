@@ -6,8 +6,12 @@ test("family tasks use local structured task storage", async () => {
   const taskHelperSource = await readFile(new URL("../app/family/familyTasks.js", import.meta.url), "utf8");
 
   assert.ok(taskHelperSource.includes("kaosgdd.family.tasks.v1"));
-  for (const value of ["엄마", "아빠", "모두"]) assert.ok(taskHelperSource.includes(value));
-  for (const field of ["id", "title", "description", "assignee", "due_date", "done", "created_at", "updated_at", "completed_at"]) {
+  for (const value of ["내가 하께", "니가 해라", "아무나 하자"]) assert.ok(taskHelperSource.includes(value));
+  for (const value of ["😐 알아서 하그라", "😡 앵간하면 빨리해라이", "🤬 안하면 안될낀데?"]) assert.ok(taskHelperSource.includes(value));
+  assert.ok(taskHelperSource.includes("FAMILY_TASK_DEFAULT_ASSIGNEE = \"내가 하께\""));
+  assert.ok(taskHelperSource.includes("FAMILY_TASK_PRIORITY_ASSIGNEE = \"니가 해라\""));
+  assert.ok(taskHelperSource.includes("FAMILY_TASK_DEFAULT_PRIORITY = \"😐 알아서 하그라\""));
+  for (const field of ["id", "title", "description", "assignee", "priority", "due_date", "done", "created_at", "updated_at", "completed_at"]) {
     assert.ok(taskHelperSource.includes(field));
   }
   assert.ok(taskHelperSource.includes("localStorage.getItem"));
@@ -41,6 +45,7 @@ test("family task add and edit forms validate, save, cancel, and delete", async 
   const editPageSource = await readFile(new URL("../app/family/tasks/[id]/edit/page.js", import.meta.url), "utf8");
   const formSource = await readFile(new URL("../app/family/tasks/FamilyTaskFormClient.js", import.meta.url), "utf8");
   const taskCss = await readFile(new URL("../app/styles/family-tasks.css", import.meta.url), "utf8");
+  const polishCss = await readFile(new URL("../app/styles/family-polish.css", import.meta.url), "utf8");
 
   assert.ok(newPageSource.includes("FamilyTaskFormClient"));
   assert.ok(newPageSource.includes("하그라 - KaosGdd"));
@@ -48,11 +53,22 @@ test("family task add and edit forms validate, save, cancel, and delete", async 
   assert.ok(editPageSource.includes("taskId={id}"));
   assert.ok(editPageSource.includes("고치까 - KaosGdd"));
   assert.ok(formSource.includes("FamilyHeader"));
-  for (const text of ["하그라", "고치까", "제목 *", "설명", "담당자", "날짜", "되따", "고마하자", "치아라", "제목을 입력해주세요."]) {
+  for (const text of ["하그라", "고치까", "모할꼬 *", "머라? 좀 더 지끼봐라", "누가하꼬", "언제하꼬", "되따", "고마하자", "치아라", "제목을 입력해주세요."]) {
     assert.ok(formSource.includes(text));
+  }
+  for (const oldLabel of ["<span>제목 *</span>", "<span>설명</span>", "<span>담당자</span>", "<span>날짜</span>"]) {
+    assert.ok(!formSource.includes(oldLabel));
   }
   assert.ok(formSource.includes("FAMILY_TASK_ASSIGNEES"));
   assert.ok(formSource.includes("FAMILY_TASK_ASSIGNEES.map"));
+  assert.ok(formSource.includes("FAMILY_TASK_DEFAULT_ASSIGNEE"));
+  assert.ok(formSource.includes("FAMILY_TASK_PRIORITY_ASSIGNEE"));
+  assert.ok(formSource.includes("FAMILY_TASK_PRIORITIES.map"));
+  assert.ok(formSource.includes("FAMILY_TASK_DEFAULT_PRIORITY"));
+  assert.ok(formSource.includes("draft.assignee === FAMILY_TASK_PRIORITY_ASSIGNEE"));
+  assert.ok(formSource.includes("value === FAMILY_TASK_PRIORITY_ASSIGNEE ? current.priority || FAMILY_TASK_DEFAULT_PRIORITY : \"\""));
+  assert.ok(formSource.includes("className=\"familyTaskPriorityField\""));
+  assert.ok(formSource.includes("className=\"familyTaskDateInput\""));
   assert.ok(formSource.includes("const title = draft.title.trim();"));
   assert.ok(formSource.includes("normalizeFamilyTask"));
   assert.ok(formSource.includes("createFamilyTaskId()"));
@@ -64,6 +80,11 @@ test("family task add and edit forms validate, save, cancel, and delete", async 
   for (const selector of [".familyTaskForm", ".familyTaskPageTitle", ".familyTaskFormGrid", ".familyTaskFormError"]) {
     assert.ok(taskCss.includes(selector));
   }
+  assert.match(polishCss, /\.familyTaskDateInput[\s\S]*?max-width:\s*100%;/);
+  assert.match(polishCss, /\.familyTaskDateInput[\s\S]*?min-width:\s*0;/);
+  assert.match(polishCss, /\.familyTaskDateInput[\s\S]*?box-sizing:\s*border-box;/);
+  assert.match(polishCss, /\.familyTaskPriorityField[\s\S]*?grid-column:\s*1 \/ -1;/);
+  assert.match(polishCss, /\.familyTaskFormGrid[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\);/);
 });
 
 test("family done archive renders newest completed tasks and supports restore/delete", async () => {
