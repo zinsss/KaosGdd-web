@@ -21,6 +21,35 @@ test("family calendar exposes dated event and Roni edit actions", async () => {
   assert.ok(calendarCss.includes(".familyCalendarForm"));
 });
 
+test("family calendar 고치까 mode swaps compact week for full timetable", async () => {
+  const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
+  const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
+
+  assert.ok(calendarSource.includes('const FAMILY_CALENDAR_MODE_VIEW = "view"'));
+  assert.ok(calendarSource.includes('const FAMILY_CALENDAR_MODE_EDIT = "edit"'));
+  assert.ok(calendarSource.includes("useState(FAMILY_CALENDAR_MODE_VIEW)"));
+  assert.ok(calendarSource.includes("setCalendarMode(FAMILY_CALENDAR_MODE_EDIT)"));
+  assert.ok(calendarSource.includes("setCalendarMode(FAMILY_CALENDAR_MODE_VIEW)"));
+  for (const value of ["고치까", "고치는 중", "되따", "고마하자", "길게 눌러 뭔날 추가"]) {
+    assert.ok(calendarSource.includes(value));
+  }
+  assert.ok(calendarSource.includes("editingCalendar ?"));
+  assert.ok(calendarSource.includes("<FamilyCalendarEditWeek selectedWeekItems={selectedWeekItems} />"));
+  assert.ok(calendarSource.includes("familyCalendarExpandedWeek"));
+  assert.ok(calendarSource.includes("selectedWeekRows.map"));
+  assert.ok(calendarSource.includes("const FAMILY_CALENDAR_EDIT_START_HOUR = 8"));
+  assert.ok(calendarSource.includes("const FAMILY_CALENDAR_EDIT_END_HOUR = 22"));
+  assert.ok(calendarSource.includes("FAMILY_CALENDAR_EDIT_VISIBLE_HOURS"));
+  assert.ok(calendarSource.includes("formatEditHourLabel(hour)"));
+  assert.doesNotMatch(calendarSource, /draggable|onDrag|longPress|onPointerDown|onMouseDown/);
+
+  assert.match(calendarCss, /\.familyCalendarEditWeek[\s\S]*?overflow-y:\s*auto;/);
+  assert.match(calendarCss, /\.familyCalendarEditGrid[\s\S]*?grid-template-columns:\s*42px repeat\(7, minmax\(0, 1fr\)\);/);
+  assert.match(calendarCss, /\.familyCalendarEditGrid[\s\S]*?overflow-x:\s*hidden;/);
+  assert.match(calendarCss, /\.familyCalendarEditHour span:nth-child\(5\)[\s\S]*?top:\s*50px;/);
+  assert.match(calendarCss, /@media \(max-width:\s*640px\)[\s\S]*?\.familyCalendarEditGrid[\s\S]*?grid-template-columns:\s*28px repeat\(7, minmax\(0, 1fr\)\);/);
+});
+
 test("family dated event add and edit routes exist with Korean form labels", async () => {
   const newPageSource = await readFile(new URL("../app/family/calendar/events/new/page.js", import.meta.url), "utf8");
   const editPageSource = await readFile(new URL("../app/family/calendar/events/[id]/edit/page.js", import.meta.url), "utf8");
