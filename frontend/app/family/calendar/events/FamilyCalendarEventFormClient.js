@@ -12,6 +12,27 @@ import {
   saveFamilyCalendarItems,
 } from "../familyCalendarData";
 
+const FAMILY_CALENDAR_EVENT_DEFAULT_DURATION_MINUTES = 40;
+
+function addMinutesToTime(timeString, minutesToAdd) {
+  const match = String(timeString || "").match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return "09:40";
+  const totalMinutes = Number(match[1]) * 60 + Number(match[2]) + minutesToAdd;
+  const minutesInDay = 24 * 60;
+  const normalized = ((totalMinutes % minutesInDay) + minutesInDay) % minutesInDay;
+  const hour = Math.floor(normalized / 60);
+  const minute = normalized % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function validDateParam(value) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(value || "")) ? value : "";
+}
+
+function validTimeParam(value) {
+  return /^\d{2}:\d{2}$/.test(String(value || "")) ? value : "";
+}
+
 function eventToDraft(item) {
   return {
     id: item.id,
@@ -21,6 +42,19 @@ function eventToDraft(item) {
     endTime: item.endTime || "09:40",
     memo: item.memo || "",
     color: item.color || "pink",
+  };
+}
+
+function eventPrefillFromLocation() {
+  if (typeof window === "undefined") return {};
+  const params = new URLSearchParams(window.location.search);
+  const date = validDateParam(params.get("date"));
+  const startTime = validTimeParam(params.get("start"));
+  const endTime = validTimeParam(params.get("end")) || (startTime ? addMinutesToTime(startTime, FAMILY_CALENDAR_EVENT_DEFAULT_DURATION_MINUTES) : "");
+  return {
+    ...(date ? { date } : {}),
+    ...(startTime ? { startTime } : {}),
+    ...(endTime ? { endTime } : {}),
   };
 }
 
@@ -38,6 +72,8 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
     if (editing) {
       const existing = loadedItems.find((item) => item.id === eventId);
       if (existing) setDraft(eventToDraft(existing));
+    } else {
+      setDraft((current) => ({ ...current, ...eventPrefillFromLocation() }));
     }
     setLoaded(true);
   }, [editing, eventId]);
