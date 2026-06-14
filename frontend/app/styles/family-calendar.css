@@ -77,6 +77,14 @@
   font-weight: 950;
 }
 
+.familyCalendarEditStatus {
+  border-radius: 999px;
+  padding: 7px 10px;
+  background: rgba(255, 216, 229, 0.72);
+  color: #8d3f5d;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.18);
+}
+
 .familyCalendarGrid {
   display: grid;
   gap: 8px;
@@ -184,6 +192,139 @@
   gap: 3px;
   min-width: 0;
   min-height: 20px;
+}
+
+.familyCalendarEditWeek {
+  display: grid;
+  gap: 8px;
+  margin-top: 3px;
+  max-height: min(64vh, 760px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.familyCalendarEditHelp {
+  margin: 0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(255, 216, 229, 0.5);
+  color: rgba(78, 37, 54, 0.68);
+  font-size: 14px;
+  font-weight: 950;
+  text-align: center;
+}
+
+.familyCalendarEditGrid {
+  --family-calendar-edit-body-height: 840px;
+  display: grid;
+  grid-template-columns: 42px repeat(7, minmax(0, 1fr));
+  grid-template-rows: 28px var(--family-calendar-edit-body-height);
+  min-width: 0;
+  overflow-x: hidden;
+  border: 1px solid rgba(214, 128, 157, 0.18);
+  border-radius: 8px;
+  background: #fffafd;
+}
+
+.familyCalendarEditCorner,
+.familyCalendarEditDayHeader {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  border-bottom: 1px solid rgba(214, 128, 157, 0.18);
+  background: rgba(255, 248, 251, 0.84);
+  color: rgba(78, 37, 54, 0.66);
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.familyCalendarEditDayHeader:first-of-type {
+  background: rgba(255, 216, 229, 0.38);
+}
+
+.familyCalendarEditDayHeader:last-of-type {
+  background: rgba(219, 234, 254, 0.42);
+}
+
+.familyCalendarEditTimeRail,
+.familyCalendarEditDayColumn {
+  position: relative;
+  height: var(--family-calendar-edit-body-height);
+  min-width: 0;
+}
+
+.familyCalendarEditTimeRail {
+  border-right: 1px solid rgba(214, 128, 157, 0.16);
+  background: rgba(255, 248, 251, 0.78);
+}
+
+.familyCalendarEditHourLabel {
+  position: absolute;
+  right: 4px;
+  transform: translateY(-50%);
+  color: rgba(78, 37, 54, 0.52);
+  font-size: 11px;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.familyCalendarEditDayColumn {
+  border-right: 1px solid rgba(214, 128, 157, 0.08);
+  overflow: hidden;
+}
+
+.familyCalendarEditDayColumn:last-child {
+  border-right: 0;
+}
+
+.familyCalendarEditHour {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 60px;
+  border-top: 1px solid rgba(214, 128, 157, 0.22);
+}
+
+.familyCalendarEditHour span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgba(214, 128, 157, 0.08);
+}
+
+.familyCalendarEditHour span:nth-child(1) {
+  top: 10px;
+}
+
+.familyCalendarEditHour span:nth-child(2) {
+  top: 20px;
+}
+
+.familyCalendarEditHour span:nth-child(3) {
+  top: 30px;
+}
+
+.familyCalendarEditHour span:nth-child(4) {
+  top: 40px;
+}
+
+.familyCalendarEditHour span:nth-child(5) {
+  top: 50px;
+}
+
+.familyCalendarEditItem {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  min-height: 18px;
+  padding: 2px 4px;
+  font-size: 12px;
 }
 
 .familyCalendarItem {
@@ -408,6 +549,32 @@
   .familyCalendarTimeRow {
     grid-template-columns: 20px repeat(7, minmax(0, 1fr));
     gap: 2px;
+  }
+
+  .familyCalendarEditWeek {
+    max-height: 62vh;
+  }
+
+  .familyCalendarEditGrid {
+    grid-template-columns: 28px repeat(7, minmax(0, 1fr));
+    grid-template-rows: 24px var(--family-calendar-edit-body-height);
+  }
+
+  .familyCalendarEditCorner,
+  .familyCalendarEditDayHeader {
+    font-size: 12px;
+  }
+
+  .familyCalendarEditHourLabel {
+    right: 2px;
+    font-size: 9px;
+  }
+
+  .familyCalendarEditItem {
+    left: 1px;
+    right: 1px;
+    padding: 2px 3px;
+    font-size: 11px;
   }
 
   .familyCalendarItem {
