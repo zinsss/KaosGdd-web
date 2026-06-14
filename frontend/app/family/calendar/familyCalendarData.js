@@ -131,18 +131,33 @@ export function normalizeFamilyRoniDayOfWeek(dayOfWeek) {
   return 1;
 }
 
+function normalizeFamilyRoniSlot(slot, fallback = {}) {
+  return {
+    dayOfWeek: normalizeFamilyRoniDayOfWeek(slot?.dayOfWeek ?? fallback.dayOfWeek),
+    startTime: String(slot?.startTime || fallback.startTime || "09:00"),
+    endTime: String(slot?.endTime || fallback.endTime || "09:40"),
+  };
+}
+
 export function normalizeFamilyRoniItem(item) {
   if (!item || typeof item !== "object" || item.active === false) return null;
   const title = String(item.title || "").trim();
   if (!title) return null;
 
-  const firstSlot = Array.isArray(item.slots) && item.slots.length > 0 ? item.slots[0] : item;
+  const fallback = {
+    dayOfWeek: item.dayOfWeek,
+    startTime: item.startTime,
+    endTime: item.endTime,
+  };
+  const slots = Array.isArray(item.slots) && item.slots.length > 0 ? item.slots.map((slot) => normalizeFamilyRoniSlot(slot, fallback)) : [normalizeFamilyRoniSlot(item, fallback)];
+  const firstSlot = slots[0];
   return {
     id: String(item.id || createFamilyCalendarId()),
     title,
-    dayOfWeek: normalizeFamilyRoniDayOfWeek(firstSlot?.dayOfWeek ?? item.dayOfWeek),
-    startTime: String(firstSlot?.startTime || item.startTime || "09:00"),
-    endTime: String(firstSlot?.endTime || item.endTime || "09:40"),
+    dayOfWeek: firstSlot.dayOfWeek,
+    startTime: firstSlot.startTime,
+    endTime: firstSlot.endTime,
+    slots,
     memo: String(item.memo || ""),
     color: normalizeFamilyCalendarColor(item.color),
     active: item.active !== false,
@@ -209,6 +224,13 @@ export function createDefaultFamilyRoniItem() {
     dayOfWeek: today.getDay(),
     startTime: "09:00",
     endTime: "09:40",
+    slots: [
+      {
+        dayOfWeek: today.getDay(),
+        startTime: "09:00",
+        endTime: "09:40",
+      },
+    ],
     memo: "",
     color: DEFAULT_FAMILY_CALENDAR_COLOR,
     active: true,
