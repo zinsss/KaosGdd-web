@@ -55,7 +55,7 @@ function editItemStyle(item) {
   const rangeEnd = FAMILY_CALENDAR_EDIT_END_HOUR * 60;
   const parsedStart = parseTimeMinutes(item.startTime);
   const parsedEnd = parseTimeMinutes(item.endTime);
-  const start = Math.max(rangeStart, Math.min(rangeEnd, parsedStart ?? rangeStart));
+  const start = Math.max(rangeStart, Math.min(rangeEnd - 10, parsedStart ?? rangeStart));
   const fallbackEnd = start + 40;
   const end = Math.max(start + 10, Math.min(rangeEnd, parsedEnd ?? fallbackEnd));
 
