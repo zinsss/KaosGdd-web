@@ -150,7 +150,13 @@ function FamilyCalendarEditWeek({ selectedWeekItems, selectedWeekStart }) {
     setPendingSlotKey("");
   }
 
-  useEffect(() => clearPendingLongPress, []);
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+      longPressStartRef.current = null;
+    };
+  }, []);
 
   function openNewEventForSlot(dayIndex, startMinutes) {
     const date = formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex));
