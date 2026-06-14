@@ -7,6 +7,10 @@ import { useEffect, useMemo, useState } from "react";
 import FamilyHeader from "../FamilyHeader";
 import {
   FAMILY_TASK_ASSIGNEES,
+  FAMILY_TASK_DEFAULT_ASSIGNEE,
+  FAMILY_TASK_DEFAULT_PRIORITY,
+  FAMILY_TASK_PRIORITIES,
+  FAMILY_TASK_PRIORITY_ASSIGNEE,
   createFamilyTaskId,
   loadFamilyTasks,
   normalizeFamilyTask,
@@ -16,7 +20,8 @@ import {
 const EMPTY_DRAFT = {
   title: "",
   description: "",
-  assignee: "",
+  assignee: FAMILY_TASK_DEFAULT_ASSIGNEE,
+  priority: "",
   due_date: "",
 };
 
@@ -40,18 +45,31 @@ export default function FamilyTaskFormClient({ taskId = null }) {
       return;
     }
 
+    const assignee = task.assignee || FAMILY_TASK_DEFAULT_ASSIGNEE;
     setDraft({
       title: task.title,
       description: task.description,
-      assignee: task.assignee,
+      assignee,
+      priority: assignee === FAMILY_TASK_PRIORITY_ASSIGNEE ? task.priority || FAMILY_TASK_DEFAULT_PRIORITY : "",
       due_date: task.due_date,
     });
   }, [taskId]);
 
   const pageTitle = useMemo(() => (isEditing ? "고치까" : "하그라"), [isEditing]);
+  const showPriority = draft.assignee === FAMILY_TASK_PRIORITY_ASSIGNEE;
 
   function updateDraft(field, value) {
-    setDraft((current) => ({ ...current, [field]: value }));
+    setDraft((current) => {
+      if (field === "assignee") {
+        return {
+          ...current,
+          assignee: value,
+          priority: value === FAMILY_TASK_PRIORITY_ASSIGNEE ? current.priority || FAMILY_TASK_DEFAULT_PRIORITY : "",
+        };
+      }
+
+      return { ...current, [field]: value };
+    });
     if (field === "title" && value.trim()) setError("");
   }
 
@@ -92,6 +110,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
       title,
       description: draft.description,
       assignee: draft.assignee,
+      priority: draft.priority,
       due_date: draft.due_date,
       done: false,
       created_at: now,
@@ -116,7 +135,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
         <form className="familyTaskForm" onSubmit={saveTask}>
           <h2 className="familyTaskPageTitle">{pageTitle}</h2>
           <label>
-            <span>제목 *</span>
+            <span>모할꼬 *</span>
             <input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} />
           </label>
           {error ? (
@@ -126,15 +145,14 @@ export default function FamilyTaskFormClient({ taskId = null }) {
           ) : null}
 
           <label>
-            <span>설명</span>
+            <span>머라? 좀 더 지끼봐라</span>
             <textarea rows={4} value={draft.description} onChange={(event) => updateDraft("description", event.target.value)} />
           </label>
 
           <div className="familyTaskFormGrid">
             <label>
-              <span>담당자</span>
+              <span>누가하꼬</span>
               <select value={draft.assignee} onChange={(event) => updateDraft("assignee", event.target.value)}>
-                <option value="">선택 안 함</option>
                 {FAMILY_TASK_ASSIGNEES.map((assignee) => (
                   <option value={assignee} key={assignee}>
                     {assignee}
@@ -143,9 +161,27 @@ export default function FamilyTaskFormClient({ taskId = null }) {
               </select>
             </label>
 
+            {showPriority ? (
+              <label className="familyTaskPriorityField">
+                <span>얼매나 급하노</span>
+                <select value={draft.priority || FAMILY_TASK_DEFAULT_PRIORITY} onChange={(event) => updateDraft("priority", event.target.value)}>
+                  {FAMILY_TASK_PRIORITIES.map((priority) => (
+                    <option value={priority} key={priority}>
+                      {priority}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+
             <label>
-              <span>날짜</span>
-              <input type="date" value={draft.due_date} onChange={(event) => updateDraft("due_date", event.target.value)} />
+              <span>언제하꼬</span>
+              <input
+                className="familyTaskDateInput"
+                type="date"
+                value={draft.due_date}
+                onChange={(event) => updateDraft("due_date", event.target.value)}
+              />
             </label>
           </div>
 

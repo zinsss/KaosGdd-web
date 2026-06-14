@@ -1,5 +1,9 @@
 export const FAMILY_TASKS_STORAGE_KEY = "kaosgdd.family.tasks.v1";
-export const FAMILY_TASK_ASSIGNEES = ["엄마", "아빠", "모두"];
+export const FAMILY_TASK_ASSIGNEES = ["내가 하께", "니가 해라", "아무나 하자"];
+export const FAMILY_TASK_DEFAULT_ASSIGNEE = "내가 하께";
+export const FAMILY_TASK_PRIORITY_ASSIGNEE = "니가 해라";
+export const FAMILY_TASK_PRIORITIES = ["😐 알아서 하그라", "😡 앵간하면 빨리해라이", "🤬 안하면 안될낀데?"];
+export const FAMILY_TASK_DEFAULT_PRIORITY = "😐 알아서 하그라";
 
 export function createFamilyTaskId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -15,13 +19,20 @@ export function normalizeFamilyTask(task) {
   if (!title) return null;
 
   const now = new Date().toISOString();
-  const assignee = FAMILY_TASK_ASSIGNEES.includes(task.assignee) ? task.assignee : "";
+  const assignee = FAMILY_TASK_ASSIGNEES.includes(task.assignee) ? task.assignee : FAMILY_TASK_DEFAULT_ASSIGNEE;
+  const priority =
+    assignee === FAMILY_TASK_PRIORITY_ASSIGNEE && FAMILY_TASK_PRIORITIES.includes(task.priority)
+      ? task.priority
+      : assignee === FAMILY_TASK_PRIORITY_ASSIGNEE
+        ? FAMILY_TASK_DEFAULT_PRIORITY
+        : "";
 
   return {
     id: String(task.id || createFamilyTaskId()),
     title,
     description: String(task.description || ""),
     assignee,
+    priority,
     due_date: String(task.due_date || ""),
     done: Boolean(task.done),
     created_at: String(task.created_at || now),
