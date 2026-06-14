@@ -19,6 +19,7 @@ import {
   parseFamilyDateKey,
   padFamilyDatePart,
   saveFamilyCalendarItems,
+  saveFamilyRoniItems,
   saveFamilyRoniOverrides,
   timeHourLabel,
 } from "./familyCalendarData";
@@ -76,6 +77,27 @@ function eventDurationMinutes(item) {
   return end - start;
 }
 
+function movedItemValues(item, target) {
+  if (target.type === "date") {
+    return {
+      date: target.date,
+      dayIndex: target.dayIndex,
+      startTime: item.startTime,
+      endTime: item.endTime,
+    };
+  }
+
+  const duration = eventDurationMinutes(item);
+  const startTime = minutesToFamilyTime(target.startMinutes);
+  const endTime = minutesToFamilyTime(target.startMinutes + duration);
+  return {
+    date: target.date,
+    dayIndex: target.dayIndex,
+    startTime,
+    endTime,
+  };
+}
+
 function editItemStyle(item) {
   const rangeStart = FAMILY_CALENDAR_EDIT_START_HOUR * 60;
   const rangeEnd = FAMILY_CALENDAR_EDIT_END_HOUR * 60;
@@ -103,29 +125,63 @@ function slotTimeFromPoint(clientY, rect) {
   return FAMILY_CALENDAR_EDIT_START_HOUR * 60 + snappedMinutes;
 }
 
+function roniSourceKeys(item) {
+  return [item.sourceRoniId, item.sourceId].filter(Boolean);
+}
+
 function roniOverrideKey(sourceRoniId, date) {
   return `${sourceRoniId}|${date}`;
 }
 
-function applyRoniOverrides(generatedRoniItems, roniOverrides) {
-  const overrideByRoniDate = new Map(
-    roniOverrides.map((override) => [roniOverrideKey(override.sourceRoniId, override.date), override]),
-  );
+function applyRoniOverrideToItem(item, override, weekDates) {
+  const dayIndex = weekDates.indexOf(override.date);
+  if (dayIndex < 0) return null;
+  return {
+    ...item,
+    id: `${item.id}-override-${override.id}`,
+    overrideId: override.id,
+    date: override.date,
+    dayIndex,
+    title: override.title || item.title,
+    startTime: override.startTime || item.startTime,
+    endTime: override.endTime || item.endTime,
+    overridden: true,
+  };
+}
 
-  return generatedRoniItems.flatMap((item) => {
-    const override = overrideByRoniDate.get(roniOverrideKey(item.sourceId, item.date));
-    if (!override) return [item];
-    if (override.deleted) return [];
-    return [{
-      ...item,
-      id: `${item.id}-override-${override.id}`,
-      overrideId: override.id,
-      title: override.title || item.title,
-      startTime: override.startTime || item.startTime,
-      endTime: override.endTime || item.endTime,
-      overridden: true,
-    }];
+function applyRoniOverrides(generatedRoniItems, roniOverrides, weekDates) {
+  const weekOverrides = roniOverrides.filter((override) => weekDates.includes(override.date));
+  const overrideByRoniDate = new Map(
+    weekOverrides.map((override) => [roniOverrideKey(override.sourceRoniId, override.date), override]),
+  );
+  const overriddenSources = new Set(weekOverrides.map((override) => override.sourceRoniId));
+  const appliedOverrideKeys = new Set();
+
+  const baseItems = generatedRoniItems.flatMap((item) => {
+    const sourceKeys = roniSourceKeys(item);
+    const exactOverride = sourceKeys
+      .map((sourceKey) => overrideByRoniDate.get(roniOverrideKey(sourceKey, item.date)))
+      .find(Boolean);
+    if (exactOverride) {
+      appliedOverrideKeys.add(roniOverrideKey(exactOverride.sourceRoniId, exactOverride.date));
+      if (exactOverride.deleted) return [];
+      const overriddenItem = applyRoniOverrideToItem(item, exactOverride, weekDates);
+      return overriddenItem ? [overriddenItem] : [];
+    }
+    if (sourceKeys.some((sourceKey) => overriddenSources.has(sourceKey))) return [];
+    return [item];
   });
+
+  const movedOverrideItems = weekOverrides.flatMap((override) => {
+    const overrideKey = roniOverrideKey(override.sourceRoniId, override.date);
+    if (appliedOverrideKeys.has(overrideKey) || override.deleted) return [];
+    const sourceItem = generatedRoniItems.find((item) => roniSourceKeys(item).includes(override.sourceRoniId));
+    if (!sourceItem) return [];
+    const overriddenItem = applyRoniOverrideToItem(sourceItem, override, weekDates);
+    return overriddenItem ? [overriddenItem] : [];
+  });
+
+  return [...baseItems, ...movedOverrideItems];
 }
 
 function buildSelectedWeekItems(selectedWeekStart, datedItems, roniItems, roniOverrides) {
@@ -139,6 +195,8 @@ function buildSelectedWeekItems(selectedWeekStart, datedItems, roniItems, roniOv
       ...item,
       id: `${item.id}-${slotIndex}`,
       sourceId: item.id,
+      sourceRoniId: `${item.id}:${slotIndex}`,
+      sourceSlotIndex: slotIndex,
       date: weekDates[slot.dayOfWeek],
       dayIndex: slot.dayOfWeek,
       startTime: slot.startTime,
@@ -146,7 +204,7 @@ function buildSelectedWeekItems(selectedWeekStart, datedItems, roniItems, roniOv
       type: "roni",
     })),
   );
-  const weekRoniItems = applyRoniOverrides(weekGeneratedRoniItems, roniOverrides);
+  const weekRoniItems = applyRoniOverrides(weekGeneratedRoniItems, roniOverrides, weekDates);
 
   return [...weekRoniItems, ...weekDatedItems]
     .filter((item) => item.dayIndex >= 0 && item.dayIndex <= 6 && item.startTime)
@@ -165,23 +223,37 @@ function groupItemsByHour(items) {
   return [...rows.entries()].sort((a, b) => Number(a[0]) - Number(b[0]));
 }
 
-function CalendarItemLink({ dragging = false, item, className = "", onStartDatedDrag = null, onStartRoniChoice = null, roniChoiceItemId = "" }) {
+function CalendarItemLink({
+  dragging = false,
+  item,
+  className = "",
+  onCancelRoniChoice = null,
+  onStartDatedDrag = null,
+  onStartRoniChoice = null,
+  onStartRoniDrag = null,
+  roniChoiceItemId = "",
+}) {
   const href = item.type === "roni" ? "/family/calendar/roni" : `/family/calendar/events/${item.id}/edit`;
   const editItem = className.includes("familyCalendarEditItem");
   const editableDatedItem = editItem && item.type === "dated";
   const editableRoniItem = editItem && item.type === "roni";
   const suppressRoniNavigation = editableRoniItem && roniChoiceItemId === item.id;
+  const cancelRoniChoice = editableRoniItem && onCancelRoniChoice ? onCancelRoniChoice : undefined;
   return (
     <Link
       className={`familyCalendarItem familyCalendarItem${item.type === "roni" ? "Roni" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${className ? ` ${className}` : ""}${dragging ? " familyCalendarEditItemDragging" : ""}`}
       href={href}
       key={`${item.type}-${item.id}`}
       onClick={dragging || suppressRoniNavigation ? (event) => event.preventDefault() : undefined}
+      onPointerCancel={cancelRoniChoice}
       onPointerDown={editItem ? (event) => {
         event.stopPropagation();
         if (editableDatedItem && onStartDatedDrag) onStartDatedDrag(event, item);
+        if (editableRoniItem && onStartRoniDrag) onStartRoniDrag(event, item);
         if (editableRoniItem && onStartRoniChoice) onStartRoniChoice(event, item);
       } : undefined}
+      onPointerLeave={cancelRoniChoice}
+      onPointerUp={cancelRoniChoice}
       style={editItem ? editItemStyle(item) : undefined}
       title={`${item.title} ${item.startTime}`}
     >
@@ -191,7 +263,7 @@ function CalendarItemLink({ dragging = false, item, className = "", onStartDated
   );
 }
 
-function FamilyCalendarEditWeek({ datedItems, onCreateRoniOverride, onMoveDatedItem, selectedWeekItems, selectedWeekStart }) {
+function FamilyCalendarEditWeek({ datedItems, onCreateRoniOverride, onMoveDatedItem, onMoveRoniTemplate, selectedWeekItems, selectedWeekStart }) {
   const router = useRouter();
   const editScrollRef = useRef(null);
   const longPressTimerRef = useRef(null);
@@ -202,6 +274,7 @@ function FamilyCalendarEditWeek({ datedItems, onCreateRoniOverride, onMoveDatedI
   const autoScrollDirectionRef = useRef(0);
   const [pendingSlotKey, setPendingSlotKey] = useState("");
   const [dragState, setDragState] = useState(null);
+  const [pendingRoniMove, setPendingRoniMove] = useState(null);
   const [roniChoiceItem, setRoniChoiceItem] = useState(null);
 
   function clearPendingLongPress() {
@@ -214,6 +287,12 @@ function FamilyCalendarEditWeek({ datedItems, onCreateRoniOverride, onMoveDatedI
   function clearRoniChoiceTimer() {
     if (roniChoiceTimerRef.current) window.clearTimeout(roniChoiceTimerRef.current);
     roniChoiceTimerRef.current = null;
+  }
+
+  function closeRoniChoiceSheet() {
+    clearRoniChoiceTimer();
+    setPendingRoniMove(null);
+    setRoniChoiceItem(null);
   }
 
   function stopAutoScroll() {
@@ -301,18 +380,27 @@ function FamilyCalendarEditWeek({ datedItems, onCreateRoniOverride, onMoveDatedI
     }, 40);
   }
 
-  function startDatedDrag(event, item) {
+  function startCalendarItemDrag(event, item) {
     if (event.button !== undefined && event.button !== 0) return;
     clearPendingLongPress();
     clearRoniChoiceTimer();
-    const sourceItem = datedItems.find((candidate) => candidate.id === item.id) || item;
+    const sourceItem = item.type === "dated" ? datedItems.find((candidate) => candidate.id === item.id) || item : item;
     dragStartRef.current = {
       item: sourceItem,
+      itemType: item.type,
       pointerId: event.pointerId,
       x: event.clientX,
       y: event.clientY,
     };
     setDragState(null);
+  }
+
+  function startDatedDrag(event, item) {
+    startCalendarItemDrag(event, item);
+  }
+
+  function startRoniDrag(event, item) {
+    startCalendarItemDrag(event, item);
   }
 
   function startRoniChoice(event, item) {
@@ -333,11 +421,13 @@ function FamilyCalendarEditWeek({ datedItems, onCreateRoniOverride, onMoveDatedI
     }
     const moved = Math.hypot(event.clientX - pending.x, event.clientY - pending.y);
     if (moved < FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT && !dragState) return;
+    clearRoniChoiceTimer();
     event.preventDefault();
     const target = findDropTarget(event.clientX, event.clientY);
     updateAutoScroll(event.clientY);
     setDragState({
       itemId: pending.item.id,
+      itemType: pending.itemType,
       title: pending.item.title,
       x: event.clientX,
       y: event.clientY,
@@ -358,13 +448,32 @@ function FamilyCalendarEditWeek({ datedItems, onCreateRoniOverride, onMoveDatedI
     }
     if (!currentDragState?.target) return;
     event.preventDefault();
+    if (pending.itemType === "roni") {
+      setPendingRoniMove({ item: pending.item, target: currentDragState.target });
+      setRoniChoiceItem(pending.item);
+      return;
+    }
     onMoveDatedItem(pending.item.id, currentDragState.target);
   }
 
   function chooseThisWeekOnly() {
     if (!roniChoiceItem) return;
+    if (pendingRoniMove) {
+      onCreateRoniOverride(pendingRoniMove.item, pendingRoniMove.target);
+      closeRoniChoiceSheet();
+      return;
+    }
     onCreateRoniOverride(roniChoiceItem);
-    setRoniChoiceItem(null);
+    closeRoniChoiceSheet();
+  }
+
+  function chooseRoniTemplate() {
+    if (pendingRoniMove) {
+      onMoveRoniTemplate(pendingRoniMove.item, pendingRoniMove.target);
+      closeRoniChoiceSheet();
+      return;
+    }
+    router.push("/family/calendar/roni");
   }
 
   const targetDay = dragState?.target?.dayIndex;
@@ -443,8 +552,10 @@ function FamilyCalendarEditWeek({ datedItems, onCreateRoniOverride, onMoveDatedI
                   dragging={dragState?.itemId === item.id}
                   item={item}
                   key={`${item.type}-${item.id}`}
+                  onCancelRoniChoice={clearRoniChoiceTimer}
                   onStartDatedDrag={startDatedDrag}
                   onStartRoniChoice={startRoniChoice}
+                  onStartRoniDrag={startRoniDrag}
                   roniChoiceItemId={roniChoiceItem?.id || ""}
                 />
               ))}
@@ -460,8 +571,8 @@ function FamilyCalendarEditWeek({ datedItems, onCreateRoniOverride, onMoveDatedI
         <div className="familyCalendarRoniChoiceSheet" role="dialog" aria-label="로니 예외">
           <p>로니 예외</p>
           <button type="button" onClick={chooseThisWeekOnly}>이번 주만 바꾸기</button>
-          <button type="button" onClick={() => router.push("/family/calendar/roni")}>로니도 바꾸기</button>
-          <button type="button" onClick={() => setRoniChoiceItem(null)}>고마하자</button>
+          <button type="button" onClick={chooseRoniTemplate}>로니도 바꾸기</button>
+          <button type="button" onClick={closeRoniChoiceSheet}>고마하자</button>
         </div>
       ) : null}
     </div>
@@ -513,15 +624,12 @@ export default function FamilyCalendarClient() {
     setDatedItems((current) => {
       const nextItems = current.map((item) => {
         if (item.id !== itemId) return item;
-        if (target.type === "date") return { ...item, date: target.date };
-        const duration = eventDurationMinutes(item);
-        const startTime = minutesToFamilyTime(target.startMinutes);
-        const endTime = minutesToFamilyTime(target.startMinutes + duration);
+        const moved = movedItemValues(item, target);
         return {
           ...item,
-          date: target.date,
-          startTime,
-          endTime,
+          date: moved.date,
+          startTime: moved.startTime,
+          endTime: moved.endTime,
         };
       });
       saveFamilyCalendarItems(nextItems);
@@ -529,24 +637,64 @@ export default function FamilyCalendarClient() {
     });
   }
 
-  function createRoniOverride(roniItem) {
+  function createRoniOverride(roniItem, target = null) {
     setRoniOverrides((current) => {
-      const sourceRoniId = roniItem.sourceId;
-      const date = roniItem.date;
+      const moved = target ? movedItemValues(roniItem, target) : {
+        date: roniItem.date,
+        startTime: roniItem.startTime,
+        endTime: roniItem.endTime,
+      };
+      const sourceRoniId = roniItem.sourceRoniId || roniItem.sourceId;
       const nextOverride = {
         id: createFamilyCalendarId(),
         sourceRoniId,
-        date,
-        startTime: roniItem.startTime,
-        endTime: roniItem.endTime,
+        date: moved.date,
+        startTime: moved.startTime,
+        endTime: moved.endTime,
         title: roniItem.title,
         deleted: false,
       };
       const nextOverrides = current
-        .filter((override) => roniOverrideKey(override.sourceRoniId, override.date) !== roniOverrideKey(sourceRoniId, date))
+        .filter((override) => roniOverrideKey(override.sourceRoniId, override.date) !== roniOverrideKey(sourceRoniId, moved.date))
         .concat(nextOverride);
       saveFamilyRoniOverrides(nextOverrides);
       return nextOverrides;
+    });
+  }
+
+  function moveRoniTemplate(roniItem, target) {
+    const moved = movedItemValues(roniItem, target);
+    const sourceId = roniItem.sourceId;
+    const sourceSlotIndex = Number.isInteger(roniItem.sourceSlotIndex) ? roniItem.sourceSlotIndex : 0;
+    setRoniItems((current) => {
+      const nextItems = current.map((item) => {
+        if (item.id !== sourceId) return item;
+        const currentSlots = Array.isArray(item.slots) && item.slots.length ? item.slots : [{
+          dayOfWeek: item.dayOfWeek,
+          startTime: item.startTime,
+          endTime: item.endTime,
+        }];
+        const nextSlots = currentSlots.map((slot, slotIndex) => (
+          slotIndex === sourceSlotIndex
+            ? {
+              ...slot,
+              dayOfWeek: moved.dayIndex,
+              startTime: moved.startTime,
+              endTime: moved.endTime,
+            }
+            : slot
+        ));
+        const firstSlot = nextSlots[0];
+        return {
+          ...item,
+          dayOfWeek: firstSlot.dayOfWeek,
+          startTime: firstSlot.startTime,
+          endTime: firstSlot.endTime,
+          slots: nextSlots,
+        };
+      });
+      saveFamilyRoniItems(nextItems);
+      return nextItems;
     });
   }
 
@@ -620,6 +768,7 @@ export default function FamilyCalendarClient() {
                   datedItems={datedItems}
                   onCreateRoniOverride={createRoniOverride}
                   onMoveDatedItem={moveDatedItem}
+                  onMoveRoniTemplate={moveRoniTemplate}
                   selectedWeekItems={selectedWeekItems}
                   selectedWeekStart={selectedWeekStart}
                 />
