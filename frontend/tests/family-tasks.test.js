@@ -21,7 +21,7 @@ test("family tasks use local structured task storage with manual order", async (
   assert.ok(taskHelperSource.includes("sortDoneFamilyTasks"));
 });
 
-test("family dashboard renders calendar, active task cards, and drag handles", async () => {
+test("family dashboard renders calendar, active task cards, drag handles, and emoji-only badges", async () => {
   const dashboardSource = await readFile(new URL("../app/family/FamilyDashboardClient.js", import.meta.url), "utf8");
   const dashboardPageSource = await readFile(new URL("../app/family/page.js", import.meta.url), "utf8");
   const taskCss = await readFile(new URL("../app/styles/family-tasks.css", import.meta.url), "utf8");
@@ -42,6 +42,12 @@ test("family dashboard renders calendar, active task cards, and drag handles", a
     "function enterTaskDropTarget",
     "function dropTaskOnTarget",
     "function endTaskDrag",
+    "function getTaskCardBadges",
+    "function getPriorityEmoji",
+    "FAMILY_TASK_DEFAULT_ASSIGNEE",
+    "FAMILY_TASK_DEFAULT_PRIORITY",
+    "FAMILY_TASK_PRIORITIES",
+    "FAMILY_TASK_PRIORITY_ASSIGNEE",
     "setDraggingTaskId",
     "setDragOverTaskId",
     "event.dataTransfer.setData",
@@ -50,17 +56,52 @@ test("family dashboard renders calendar, active task cards, and drag handles", a
     "draggable",
     "onDragStart={(event) => startTaskDrag(event, task.id)}",
     "onDrop={(event) => dropTaskOnTarget(event, task.id)}",
+    "familyTaskDateBadge",
+    "familyTaskBadge",
+    "familyTaskBadgeSelf",
+    "familyTaskBadgePriority",
+    "familyTaskBadgeAny",
+    "label: \"👸🏻\"",
+    "label: \"👫\"",
+    "getPriorityEmoji(task.priority)",
     "done: true",
     "completed_at: now",
     "/family/tasks/${task.id}/edit",
   ]) {
     assert.ok(dashboardSource.includes(value));
   }
+  for (const priority of ["😐", "😡", "🤬"]) assert.ok(dashboardSource.includes(priority) || dashboardSource.includes("FAMILY_TASK_PRIORITIES"));
+  assert.ok(!dashboardSource.includes('label: "니가"'));
+  assert.ok(!dashboardSource.includes('label: "아무나"'));
+  assert.ok(!dashboardSource.includes('label: "내가"'));
+  assert.ok(dashboardSource.includes("if (assignee === FAMILY_TASK_PRIORITY_ASSIGNEE)"));
+  assert.ok(dashboardSource.includes("return [{ className: \"familyTaskBadgePriority\""));
+  assert.ok(dashboardSource.includes("if (assignee === \"아무나 하자\")"));
+  assert.ok(!dashboardSource.includes("familyTaskAssigneeBadge"));
+  assert.ok(!dashboardSource.includes("familyTaskAssigneeSelf"));
+  assert.ok(!dashboardSource.includes("familyTaskAssigneeShared"));
+  assert.ok(!dashboardSource.includes("familyTaskAssigneeAny"));
   assert.ok(!dashboardSource.includes("<article draggable"));
-  for (const selector of [".familyTaskSection", ".familyDashboardPanel", ".familyTaskCard", ".familyTaskDragHandle", ".familyTaskCardDragging", ".familyTaskCardDropTarget", ".familyTaskCheck", ".familyTaskEdit"]) {
+  assert.ok(dashboardSource.indexOf('className="familyTaskEdit"') < dashboardSource.indexOf('className="familyTaskDragHandle"'));
+  for (const selector of [
+    ".familyTaskSection",
+    ".familyDashboardPanel",
+    ".familyTaskCard",
+    ".familyTaskDragHandle",
+    ".familyTaskCardDragging",
+    ".familyTaskCardDropTarget",
+    ".familyTaskCheck",
+    ".familyTaskEdit",
+    ".familyTaskDateBadge",
+    ".familyTaskBadge",
+    ".familyTaskBadgeSelf",
+    ".familyTaskBadgePriority",
+    ".familyTaskBadgeAny",
+  ]) {
     assert.ok(taskCss.includes(selector));
   }
-  assert.ok(taskCss.includes("grid-template-columns: 28px 32px minmax(0, 1fr) 28px"));
+  assert.ok(!taskCss.includes(".familyTaskAssigneeBadge"));
+  assert.ok(taskCss.includes("grid-template-columns: 32px minmax(0, 1fr) 28px 28px"));
   assert.ok(taskCss.includes("cursor: grab"));
 });
 
