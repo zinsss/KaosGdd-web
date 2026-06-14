@@ -18,12 +18,16 @@ test("family dashboard links to the calendar foundation", async () => {
 
 test("family calendar source keeps dated items and Roni foundation separate", async () => {
   const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
+  const calendarDataSource = await readFile(new URL("../app/family/calendar/familyCalendarData.js", import.meta.url), "utf8");
   const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
 
-  for (const value of ["kaosgdd.family.calendarItems.v1", "kaosgdd.family.defaultTimetable.v1", "selectedWeekKey", "datedItemsByDate", "buildSelectedWeekItems", 'type: "roni"', 'type: "dated"']) {
+  for (const value of ["kaosgdd.family.calendarItems.v1", "kaosgdd.family.defaultTimetable.v1", "FAMILY_CALENDAR_DAY_LABELS", "normalizeFamilyCalendarItem", "normalizeFamilyRoniItem"]) {
+    assert.ok(calendarDataSource.includes(value));
+  }
+  for (const value of ["selectedWeekKey", "datedItemsByDate", "buildSelectedWeekItems", 'type: "roni"', 'type: "dated"', "loadFamilyCalendarItems", "loadFamilyRoniItems"]) {
     assert.ok(calendarSource.includes(value));
   }
-  for (const day of ["일", "월", "화", "수", "목", "금", "토"]) assert.ok(calendarSource.includes(day));
+  for (const day of ["일", "월", "화", "수", "목", "금", "토"]) assert.ok(calendarDataSource.includes(day));
   assert.ok(calendarCss.includes("repeat(7, minmax(0, 1fr))"));
   assert.ok(calendarCss.includes(".familyCalendarItemRoni"));
   assert.ok(calendarCss.includes(".familyCalendarItemDated"));
