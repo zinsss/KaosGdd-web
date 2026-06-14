@@ -6,9 +6,22 @@ import { useEffect, useMemo, useState } from "react";
 import FamilyHeader from "./FamilyHeader";
 import { formatFamilyDate, loadFamilyTasks, saveFamilyTasks, sortActiveFamilyTasks } from "./familyTasks";
 
+function moveTaskId(taskIds, sourceId, targetId) {
+  const sourceIndex = taskIds.indexOf(sourceId);
+  const targetIndex = taskIds.indexOf(targetId);
+  if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return taskIds;
+
+  const nextIds = [...taskIds];
+  const [movedId] = nextIds.splice(sourceIndex, 1);
+  nextIds.splice(targetIndex, 0, movedId);
+  return nextIds;
+}
+
 export default function FamilyDashboardClient() {
   const [tasks, setTasks] = useState([]);
   const [loaded, setLoaded] = useState(false);
+  const [draggingTaskId, setDraggingTaskId] = useState(null);
+  const [dragOverTaskId, setDragOverTaskId] = useState(null);
 
   useEffect(() => {
     setTasks(loadFamilyTasks());
@@ -36,6 +49,53 @@ export default function FamilyDashboardClient() {
           : task,
       ),
     );
+  }
+
+  function reorderActiveTasks(sourceTaskId, targetTaskId) {
+    if (!sourceTaskId || !targetTaskId || sourceTaskId === targetTaskId) return;
+
+    const now = new Date().toISOString();
+    setTasks((current) => {
+      const activeIds = sortActiveFamilyTasks(current.filter((task) => !task.done)).map((task) => task.id);
+      const reorderedIds = moveTaskId(activeIds, sourceTaskId, targetTaskId);
+      if (reorderedIds === activeIds) return current;
+
+      const orderById = new Map(reorderedIds.map((taskId, index) => [taskId, index]));
+      return current.map((task) => {
+        if (!orderById.has(task.id)) return task;
+        return {
+          ...task,
+          sort_order: orderById.get(task.id),
+          updated_at: now,
+        };
+      });
+    });
+  }
+
+  function startTaskDrag(event, taskId) {
+    setDraggingTaskId(taskId);
+    setDragOverTaskId(null);
+    event.dataTransfer.effectAllowed = "move";
+    event.dataTransfer.setData("text/plain", taskId);
+  }
+
+  function enterTaskDropTarget(event, taskId) {
+    if (!draggingTaskId || draggingTaskId === taskId) return;
+    event.preventDefault();
+    setDragOverTaskId(taskId);
+  }
+
+  function dropTaskOnTarget(event, targetTaskId) {
+    event.preventDefault();
+    const sourceTaskId = event.dataTransfer.getData("text/plain") || draggingTaskId;
+    reorderActiveTasks(sourceTaskId, targetTaskId);
+    setDraggingTaskId(null);
+    setDragOverTaskId(null);
+  }
+
+  function endTaskDrag() {
+    setDraggingTaskId(null);
+    setDragOverTaskId(null);
   }
 
   return (
@@ -75,7 +135,23 @@ export default function FamilyDashboardClient() {
             <div className="familyTaskList">
               {activeTasks.length ? (
                 activeTasks.map((task) => (
-                  <article className="familyTaskCard" key={task.id}>
+                  <article
+                    className={`familyTaskCard${task.id === draggingTaskId ? " familyTaskCardDragging" : ""}${task.id === dragOverTaskId ? " familyTaskCardDropTarget" : ""}`}
+                    key={task.id}
+                    onDragEnter={(event) => enterTaskDropTarget(event, task.id)}
+                    onDragOver={(event) => enterTaskDropTarget(event, task.id)}
+                    onDrop={(event) => dropTaskOnTarget(event, task.id)}
+                  >
+                    <button
+                      className="familyTaskDragHandle"
+                      type="button"
+                      draggable
+                      aria-label={`${task.title} 순서 옮기기`}
+                      onDragStart={(event) => startTaskDrag(event, task.id)}
+                      onDragEnd={endTaskDrag}
+                    >
+                      ☰
+                    </button>
                     <button
                       className="familyTaskCheck"
                       type="button"
