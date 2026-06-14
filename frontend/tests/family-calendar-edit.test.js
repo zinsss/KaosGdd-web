@@ -156,7 +156,7 @@ test("family Roni override foundation stores and applies weekly exceptions", asy
   assert.ok(calendarSource.includes("function startRoniChoice(event, item)"));
   assert.ok(calendarSource.includes("setRoniChoiceItem(item)"));
   assert.ok(calendarSource.includes("onStartRoniChoice={startRoniChoice}"));
-  assert.ok(calendarSource.includes("router.push(\"/family/calendar/roni\")"));
+  assert.match(calendarSource, /router\.push\(["']\/family\/calendar\/roni["']\)/);
   assert.ok(calendarSource.includes("familyCalendarRoniOverrideBadge"));
   assert.ok(calendarSource.includes("예외"));
   assert.match(calendarCss, /\.familyCalendarRoniChoiceSheet[\s\S]*?display:\s*grid;/);
