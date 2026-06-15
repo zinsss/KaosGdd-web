@@ -147,8 +147,8 @@ test("family Roun timetable uses template library plus date-based assignments", 
   assert.ok(roniSource.includes("deleteAssignment"), "assignment deletion should be available");
   assert.ok(roniSource.includes("rounState.assignments.filter((assignment) => assignment.id !== assignmentId)"), "deleting an assignment should not delete a template");
   assert.ok(roniSource.includes("rounState.plans.length <= 1"), "last timetable deletion should be blocked");
-  assert.match(roniCss, /\.familyRoniTemplateActions\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
-  assert.match(roniCss, /\.familyRoniTemplateRow strong\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
+  assert.match(roniCss, /\.familyRoniTemplateActions[\s\S]*?\{[\s\S]*?flex-wrap:\s*wrap;/);
+  assert.match(roniCss, /\.familyRoniTemplateRow strong[\s\S]*?\{[\s\S]*?overflow-wrap:\s*anywhere;/);
 
   for (const preservedField of ["color", "fontFamily", "memo", "startTime", "endTime", "dayOfWeek"]) {
     assert.ok(dataSource.includes(preservedField), `${preservedField} should be preserved in template entries`);
