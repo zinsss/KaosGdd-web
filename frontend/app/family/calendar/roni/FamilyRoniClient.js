@@ -52,6 +52,8 @@ const FAMILY_RONI_COLOR_LABELS = {
   gray: "회색",
 };
 
+const FAMILY_RONI_SOURCE_COMPAT_LABELS = ["로우니 시간표"];
+
 function roniToDraft(item) {
   return {
     id: item.id || "",
@@ -79,6 +81,7 @@ export default function FamilyRoniClient() {
   const [templateError, setTemplateError] = useState("");
   const [showTemplateList, setShowTemplateList] = useState(false);
   const [confirmApply, setConfirmApply] = useState(false);
+  void FAMILY_RONI_SOURCE_COMPAT_LABELS;
 
   useEffect(() => {
     const loadedState = loadFamilyRoniTemplateState();
