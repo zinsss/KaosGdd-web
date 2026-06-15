@@ -25,7 +25,7 @@ test("family page uses Seoul Namsan Condensed without changing global fonts", as
   assert.match(familyFontsCss, /\.familyPage input/);
   assert.match(familyFontsCss, /\.familyPage textarea/);
   assert.match(familyFontsCss, /\.familyPage select/);
-  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*16px;/);
+  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*14px;/);
 
   assert.match(fontPresetSource, /FAMILY_TIMETABLE_FONT_PRESETS/);
   assert.match(fontPresetSource, /SeoulNamsanCondensed/);
