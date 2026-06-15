@@ -1,6 +1,7 @@
 .familyRoniTemplateStatus,
 .familyRoniTemplateSheet,
-.familyRoniApplyConfirm {
+.familyRoniApplyConfirm,
+.familyRounActionSheet {
   display: grid;
   gap: 8px;
   min-width: 0;
@@ -12,7 +13,8 @@
 
 .familyRoniTemplateStatus p,
 .familyRoniApplyConfirm p,
-.familyRoniTemplateEmpty p {
+.familyRoniTemplateEmpty p,
+.familyRounActionSheet p {
   margin: 0;
   color: #4b2536;
   font-weight: 950;
@@ -40,7 +42,8 @@
 .familyRoniTemplateStatus button,
 .familyRoniTemplateRow button,
 .familyRoniTemplateEmpty button,
-.familyRoniApplyConfirm button {
+.familyRoniApplyConfirm button,
+.familyRounActionSheet button {
   appearance: none;
   border: 0;
   min-height: 34px;
@@ -69,7 +72,8 @@
   overflow-wrap: anywhere;
 }
 
-.familyRoniTemplateActions {
+.familyRoniTemplateActions,
+.familyRounActionSheet {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -100,6 +104,136 @@
   overflow-wrap: anywhere;
 }
 
+.familyRounEditorToolbar {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.familyRounWeeklyGrid {
+  --family-roun-body-height: 672px;
+  display: grid;
+  grid-template-columns: 30px repeat(7, minmax(0, 1fr));
+  grid-template-rows: 30px var(--family-roun-body-height);
+  min-width: 0;
+  max-width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  border: 1px solid rgba(214, 128, 157, 0.2);
+  border-radius: 8px;
+  background: #fffdf7;
+  touch-action: pan-y;
+}
+
+.familyRounGridCorner,
+.familyRounDayHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  border-bottom: 1px solid rgba(214, 128, 157, 0.18);
+  background: #fffafd;
+  color: #8d3f5d;
+  font-size: 13px;
+  font-weight: 950;
+}
+
+.familyRounDayHeader {
+  border-left: 1px solid rgba(214, 128, 157, 0.12);
+}
+
+.familyRounTimeRail,
+.familyRounDayColumn {
+  position: relative;
+  height: var(--family-roun-body-height);
+}
+
+.familyRounTimeRail {
+  background: #fffafd;
+  border-right: 1px solid rgba(214, 128, 157, 0.18);
+}
+
+.familyRounHourLabel {
+  position: absolute;
+  right: 3px;
+  transform: translateY(-0.5em);
+  color: rgba(78, 37, 54, 0.58);
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.familyRounDayColumn {
+  min-width: 0;
+  border-left: 1px solid rgba(214, 128, 157, 0.1);
+  background: #fff8fb;
+}
+
+.familyRounDayColumnTarget {
+  background: rgba(255, 216, 229, 0.5);
+}
+
+.familyRounHour {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 48px;
+  border-top: 1px solid rgba(214, 128, 157, 0.18);
+  pointer-events: none;
+}
+
+.familyRounHour span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-top: 1px solid rgba(214, 128, 157, 0.07);
+}
+
+.familyRounHour span:nth-child(1) { top: 8px; }
+.familyRounHour span:nth-child(2) { top: 16px; }
+.familyRounHour span:nth-child(3) { top: 24px; }
+.familyRounHour span:nth-child(4) { top: 32px; }
+.familyRounHour span:nth-child(5) { top: 40px; }
+
+.familyRounBlock {
+  appearance: none;
+  position: absolute;
+  z-index: 3;
+  left: 2px;
+  right: 2px;
+  overflow: hidden;
+  border: 1px solid rgba(151, 69, 98, 0.12);
+  border-radius: 7px;
+  padding: 4px 3px;
+  color: #4b2536;
+  text-align: left;
+  box-shadow: 0 5px 12px rgba(151, 69, 98, 0.12);
+  cursor: grab;
+  touch-action: none;
+}
+
+.familyRounBlock span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 12px;
+  font-weight: 950;
+  line-height: 1.18;
+}
+
+.familyRounBlockDragging {
+  opacity: 0.62;
+  cursor: grabbing;
+  outline: 2px solid rgba(216, 111, 152, 0.52);
+}
+
+.familyRounActionSheet {
+  justify-content: flex-start;
+}
+
 @media (max-width: 640px) {
   .familyRoniTemplateRow,
   .familyRoniApplyConfirm {
@@ -114,8 +248,33 @@
   .familyRoniTemplateStatus button,
   .familyRoniTemplateRow button,
   .familyRoniTemplateEmpty button,
-  .familyRoniApplyConfirm button {
+  .familyRoniApplyConfirm button,
+  .familyRounActionSheet button {
     min-height: 32px;
     padding: 0 10px;
+  }
+
+  .familyRounWeeklyGrid {
+    grid-template-columns: 24px repeat(7, minmax(0, 1fr));
+  }
+
+  .familyRounDayHeader {
+    font-size: 12px;
+  }
+
+  .familyRounHourLabel {
+    right: 2px;
+    font-size: 9px;
+  }
+
+  .familyRounBlock {
+    left: 1px;
+    right: 1px;
+    border-radius: 6px;
+    padding: 3px 2px;
+  }
+
+  .familyRounBlock span {
+    font-size: 11px;
   }
 }
