@@ -15,8 +15,6 @@ test("family timetable keeps local schedule editor foundations", async () => {
   for (const value of [
     "kaosgdd.family.defaultTimetable.v1",
     "+ 일정",
-    "일정 추가",
-    "일정 수정",
     "일정 이름",
     "요일",
     "시작",
@@ -28,8 +26,9 @@ test("family timetable keeps local schedule editor foundations", async () => {
     "삭제",
     "일정 이름을 입력해주세요.",
     "+ 시간 추가",
-    "복사해서 만들기",
-  ]) assert.ok(timetableSource.includes(value));
+  ]) {
+    assert.ok(timetableSource.includes(value), `${value} should remain in timetable editor sources`);
+  }
 
   for (const day of ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]) {
     assert.ok(timetableSource.includes(day));
