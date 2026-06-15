@@ -6,16 +6,19 @@ async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
 }
 
-test("family shared header uses finalized tab wording and routes", async () => {
+test("family shared header uses polished tab wording and routes", async () => {
   const headerSource = await readSource("../app/family/FamilyHeader.js");
 
-  for (const label of ["메모장", "달력", "할 일"]) {
+  for (const label of ["달력", "할일", "로운이", "메모장"]) {
     assert.ok(headerSource.includes(label), `${label} should be in the Family header`);
   }
-  for (const route of ["/family/memo", "/family/calendar", "/family"]) {
-    assert.ok(headerSource.includes(route), `${route} should remain unchanged`);
+  assert.ok(headerSource.indexOf("달력") < headerSource.indexOf("할일"));
+  assert.ok(headerSource.indexOf("할일") < headerSource.indexOf("로운이"));
+  assert.ok(headerSource.indexOf("로운이") < headerSource.indexOf("메모장"));
+  for (const route of ["/family/calendar", "/family", "/family/roun", "/family/memo"]) {
+    assert.ok(headerSource.includes(route), `${route} should remain available`);
   }
-  for (const oldLabel of ["모하꼬?", "뭐라꼬?", "은제?", "모라노", "대시보드"]) {
+  for (const oldLabel of ["모하꼬?", "뭐라꼬?", "은제?", "모라노", "대시보드", "로니", "로우니"]) {
     assert.ok(!headerSource.includes(oldLabel), `${oldLabel} should not remain in the Family header`);
   }
 });
@@ -54,6 +57,9 @@ test("family dashboard and calendar expose standard labels", async () => {
   for (const label of ["달력", "할 일", "로운이 시간표", "일정", "+ 일정"]) {
     assert.ok((dashboardSource + calendarSource + roniSource).includes(label), `${label} should appear in dashboard/calendar UI`);
   }
+  for (const oldLabel of ["로니", "로우니", "뭐라꼬?", "은제?", "모하꼬?"]) {
+    assert.ok(!(dashboardSource + calendarSource + roniSource).includes(oldLabel), `${oldLabel} should not appear in visible Family sources`);
+  }
   for (const value of [
     "kaosgdd.family.calendarItems.v1",
     "kaosgdd.family.defaultTimetable.v1",
@@ -65,4 +71,14 @@ test("family dashboard and calendar expose standard labels", async () => {
   }
   assert.ok(globalsCss.includes("family-calendar.css"));
   assert.ok(globalsCss.includes("family-roni-templates.css"));
+});
+
+test("family polish keeps the baseline compact and overflow-safe", async () => {
+  const polishCss = await readSource("../app/styles/family-polish.css");
+  const roniCss = await readSource("../app/styles/family-roni-templates.css");
+
+  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*14px;/);
+  assert.match(roniCss, /\.familyRoniTemplateRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;/);
+  assert.match(roniCss, /\.familyRoniTemplateActions\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
+  assert.match(roniCss, /overflow-wrap:\s*anywhere;/);
 });
