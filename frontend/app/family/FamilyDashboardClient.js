@@ -38,7 +38,7 @@ function getTaskCardBadges(task) {
     return [{ className: "familyTaskBadgePriority", label: getPriorityEmoji(task.priority), title: task.priority || FAMILY_TASK_DEFAULT_PRIORITY }];
   }
 
-  if (assignee === "아무나 하자") {
+  if (assignee === "전체") {
     return [{ className: "familyTaskBadgeAny", label: "👫", title: assignee }];
   }
 
@@ -127,7 +127,7 @@ export default function FamilyDashboardClient() {
   }
 
   return (
-    <section className="familyPage" aria-label="우짜노우짤꼬">
+    <section className="familyPage" aria-label="가족">
       <div className="familyCard">
         <FamilyHeader active="home" />
 
@@ -136,7 +136,7 @@ export default function FamilyDashboardClient() {
             <div className="familyTaskSectionHeader">
               <div>
                 <h2>달력</h2>
-                <p>뭔날하고 로니를 같이 봐요.</p>
+                <p>일정과 로우니 시간표를 함께 봐요.</p>
               </div>
               <Link className="familyTaskActionButton familyTaskActionButtonPrimary" href="/family/calendar">
                 달력
@@ -144,18 +144,18 @@ export default function FamilyDashboardClient() {
             </div>
           </section>
 
-          <section className="familyTaskSection" aria-label="하그라">
+          <section className="familyTaskSection" aria-label="할 일">
             <div className="familyTaskSectionHeader">
               <div>
-                <h2>하그라</h2>
+                <h2>할 일</h2>
                 <p>{activeTasks.length}개 남음</p>
               </div>
               <div className="familyTaskHeaderActions">
                 <Link className="familyTaskActionButton familyTaskActionButtonPrimary" href="/family/tasks/new">
-                  + 하그라
+                  + 할 일
                 </Link>
                 <Link className="familyTaskActionButton" href="/family/tasks/done">
-                  다했데이
+                  완료
                 </Link>
               </div>
             </div>
@@ -192,7 +192,7 @@ export default function FamilyDashboardClient() {
                           ))}
                         </div>
                       </div>
-                      <Link className="familyTaskEdit" href={`/family/tasks/${task.id}/edit`} aria-label={`${task.title} 고치까`}>
+                      <Link className="familyTaskEdit" href={`/family/tasks/${task.id}/edit`} aria-label={`${task.title} 수정`}>
                         ✎
                       </Link>
                       <button
@@ -209,7 +209,7 @@ export default function FamilyDashboardClient() {
                   );
                 })
               ) : (
-                <p className="familyTaskEmpty">아직 하그라가 없어요.</p>
+                <p className="familyTaskEmpty">아직 할 일이 없어요.</p>
               )}
             </div>
           </section>
