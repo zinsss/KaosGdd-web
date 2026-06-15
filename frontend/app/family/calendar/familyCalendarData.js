@@ -1,6 +1,10 @@
+import { FAMILY_TIMETABLE_DEFAULT_FONT, normalizeFamilyTimetableFont } from "../familyTimetableFonts";
+
 export const FAMILY_CALENDAR_STORAGE_KEY = "kaosgdd.family.calendarItems.v1";
 export const FAMILY_RONI_STORAGE_KEY = "kaosgdd.family.defaultTimetable.v1";
+export const FAMILY_RONI_TEMPLATE_STORAGE_KEY = "kaosgdd.family.roniTimetableTemplates.v1";
 export const FAMILY_RONI_OVERRIDE_STORAGE_KEY = "kaosgdd.family.roniOverrides.v1";
+export const FAMILY_RONI_DEFAULT_TEMPLATE_NAME = "기본 시간표";
 export const FAMILY_CALENDAR_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 export const FAMILY_CALENDAR_WEEKDAY_OPTIONS = [
   { dayOfWeek: 0, label: "일요일" },
@@ -178,8 +182,46 @@ export function normalizeFamilyRoniItem(item) {
     slots,
     memo: String(item.memo || ""),
     color: normalizeFamilyCalendarColor(item.color),
+    fontFamily: normalizeFamilyTimetableFont(item.fontFamily || FAMILY_TIMETABLE_DEFAULT_FONT),
     active: item.active !== false,
   };
+}
+
+export function normalizeFamilyRoniTemplate(template) {
+  if (!template || typeof template !== "object") return null;
+  const name = String(template.name || "").trim();
+  if (!name) return null;
+  const entries = Array.isArray(template.entries) ? template.entries.map(normalizeFamilyRoniItem).filter(Boolean) : [];
+  const now = new Date().toISOString();
+
+  return {
+    id: String(template.id || createFamilyCalendarId()),
+    name,
+    createdAt: String(template.createdAt || now),
+    updatedAt: String(template.updatedAt || template.createdAt || now),
+    entries,
+  };
+}
+
+export function createFamilyRoniTemplate(name = FAMILY_RONI_DEFAULT_TEMPLATE_NAME, entries = []) {
+  const now = new Date().toISOString();
+  return normalizeFamilyRoniTemplate({
+    id: createFamilyCalendarId(),
+    name,
+    createdAt: now,
+    updatedAt: now,
+    entries,
+  });
+}
+
+function normalizeFamilyRoniTemplateState(state) {
+  const templates = Array.isArray(state?.templates) ? state.templates.map(normalizeFamilyRoniTemplate).filter(Boolean) : [];
+  const safeTemplates = templates.length ? templates : [createFamilyRoniTemplate(FAMILY_RONI_DEFAULT_TEMPLATE_NAME, [])];
+  const activeTemplateId = safeTemplates.some((template) => template.id === state?.activeTemplateId)
+    ? String(state.activeTemplateId)
+    : safeTemplates[0].id;
+
+  return { activeTemplateId, templates: safeTemplates };
 }
 
 export function readFamilyStorageArray(storageKey) {
@@ -199,6 +241,58 @@ export function writeFamilyStorageArray(storageKey, items) {
   }
 }
 
+function readFamilyStorageObject(storageKey) {
+  try {
+    const parsed = JSON.parse(window.localStorage.getItem(storageKey) || "null");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeFamilyStorageObject(storageKey, value) {
+  try {
+    window.localStorage.setItem(storageKey, JSON.stringify(value));
+  } catch {
+    return;
+  }
+}
+
+function migrateLegacyRoniItemsToTemplate() {
+  const legacyItems = readFamilyStorageArray(FAMILY_RONI_STORAGE_KEY).map(normalizeFamilyRoniItem).filter(Boolean);
+  return normalizeFamilyRoniTemplateState({
+    activeTemplateId: "",
+    templates: [createFamilyRoniTemplate(FAMILY_RONI_DEFAULT_TEMPLATE_NAME, legacyItems)],
+  });
+}
+
+export function loadFamilyRoniTemplateState() {
+  const storedState = readFamilyStorageObject(FAMILY_RONI_TEMPLATE_STORAGE_KEY);
+  if (storedState) return normalizeFamilyRoniTemplateState(storedState);
+
+  const migratedState = migrateLegacyRoniItemsToTemplate();
+  writeFamilyStorageObject(FAMILY_RONI_TEMPLATE_STORAGE_KEY, migratedState);
+  return migratedState;
+}
+
+export function saveFamilyRoniTemplateState(state) {
+  const normalized = normalizeFamilyRoniTemplateState(state);
+  writeFamilyStorageObject(FAMILY_RONI_TEMPLATE_STORAGE_KEY, normalized);
+  return normalized;
+}
+
+export function updateFamilyRoniTemplateEntries(templateState, templateId, entries) {
+  const now = new Date().toISOString();
+  return normalizeFamilyRoniTemplateState({
+    ...templateState,
+    templates: templateState.templates.map((template) => (
+      template.id === templateId
+        ? { ...template, entries, updatedAt: now }
+        : template
+    )),
+  });
+}
+
 export function loadFamilyCalendarItems() {
   return readFamilyStorageArray(FAMILY_CALENDAR_STORAGE_KEY).map(normalizeFamilyCalendarItem).filter(Boolean);
 }
@@ -208,11 +302,16 @@ export function saveFamilyCalendarItems(items) {
 }
 
 export function loadFamilyRoniItems() {
-  return readFamilyStorageArray(FAMILY_RONI_STORAGE_KEY).map(normalizeFamilyRoniItem).filter(Boolean);
+  const templateState = loadFamilyRoniTemplateState();
+  const activeTemplate = templateState.templates.find((template) => template.id === templateState.activeTemplateId) || templateState.templates[0];
+  return activeTemplate.entries.map(normalizeFamilyRoniItem).filter(Boolean);
 }
 
 export function saveFamilyRoniItems(items) {
-  writeFamilyStorageArray(FAMILY_RONI_STORAGE_KEY, items.map(normalizeFamilyRoniItem).filter(Boolean));
+  const templateState = loadFamilyRoniTemplateState();
+  const activeTemplateId = templateState.activeTemplateId || templateState.templates[0]?.id;
+  const nextState = updateFamilyRoniTemplateEntries(templateState, activeTemplateId, items.map(normalizeFamilyRoniItem).filter(Boolean));
+  saveFamilyRoniTemplateState(nextState);
 }
 
 export function loadFamilyRoniOverrides() {
@@ -259,6 +358,7 @@ export function createDefaultFamilyRoniItem() {
     ],
     memo: "",
     color: DEFAULT_FAMILY_CALENDAR_COLOR,
+    fontFamily: FAMILY_TIMETABLE_DEFAULT_FONT,
     active: true,
   };
 }
