@@ -14,14 +14,16 @@ import {
   getFamilyMonthWeeks,
   getFamilyWeekStart,
   loadFamilyCalendarItems,
-  loadFamilyRoniItems,
   loadFamilyRoniOverrides,
+  loadFamilyRounState,
   parseFamilyDateKey,
   padFamilyDatePart,
+  resolveFamilyRounPlanForDate,
   saveFamilyCalendarItems,
-  saveFamilyRoniItems,
   saveFamilyRoniOverrides,
+  saveFamilyRounState,
   timeHourLabel,
+  updateFamilyRounPlanItems,
 } from "./familyCalendarData";
 
 const FAMILY_CALENDAR_MODE_VIEW = "view";
@@ -64,9 +66,7 @@ function parseTimeMinutes(timeString) {
   if (!match) return null;
   const hour = Number(match[1]);
   const minute = Number(match[2]);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-    return null;
-  }
+  if (!Number.isFinite(hour) || !Number.isFinite(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
   return hour * 60 + minute;
 }
 
@@ -194,26 +194,33 @@ function applyRoniOverrides(generatedRoniItems, roniOverrides, weekDates) {
   return [...baseItems, ...movedOverrideItems];
 }
 
-function buildSelectedWeekItems(selectedWeekStart, datedItems, roniItems, roniOverrides) {
+function buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOverrides) {
   const weekDates = FAMILY_CALENDAR_DAY_LABELS.map((_, dayIndex) => formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex)));
   const weekDatedItems = datedItems
     .filter((item) => weekDates.includes(item.date) && item.startTime)
     .map((item) => ({ ...item, type: "dated", dayIndex: weekDates.indexOf(item.date) }));
 
-  const weekGeneratedRoniItems = roniItems.flatMap((item) =>
-    (item.slots || [item]).map((slot, slotIndex) => ({
-      ...item,
-      id: `${item.id}-${slotIndex}`,
-      sourceId: item.id,
-      sourceRoniId: `${item.id}:${slotIndex}`,
-      sourceSlotIndex: slotIndex,
-      date: weekDates[slot.dayOfWeek],
-      dayIndex: slot.dayOfWeek,
-      startTime: slot.startTime,
-      endTime: slot.endTime,
-      type: "roni",
-    })),
-  );
+  const weekGeneratedRoniItems = weekDates.flatMap((date, dayIndex) => {
+    const plan = resolveFamilyRounPlanForDate(date, rounState);
+    return (plan?.items || []).flatMap((item) =>
+      (item.slots || [item]).flatMap((slot, slotIndex) => {
+        if (slot.dayOfWeek !== dayIndex) return [];
+        return [{
+          ...item,
+          id: `${plan.id}-${item.id}-${slotIndex}-${date}`,
+          planId: plan.id,
+          sourceId: item.id,
+          sourceRoniId: `${plan.id}:${item.id}:${slotIndex}`,
+          sourceSlotIndex: slotIndex,
+          date,
+          dayIndex,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          type: "roni",
+        }];
+      }),
+    );
+  });
   const weekRoniItems = applyRoniOverrides(weekGeneratedRoniItems, roniOverrides, weekDates);
 
   return [...weekRoniItems, ...weekDatedItems]
@@ -243,7 +250,7 @@ function CalendarItemLink({
   onStartRoniDrag = null,
   roniChoiceItemId = "",
 }) {
-  const href = item.type === "roni" ? "/family/calendar/roni" : `/family/calendar/events/${item.id}/edit`;
+  const href = item.type === "roni" ? "/family/roun" : `/family/calendar/events/${item.id}/edit`;
   const editItem = className.includes("familyCalendarEditItem");
   const editableDatedItem = editItem && item.type === "dated";
   const editableRoniItem = editItem && item.type === "roni";
@@ -499,7 +506,7 @@ function FamilyCalendarEditWeek({
       closeRoniChoiceSheet();
       return;
     }
-    router.push("/family/calendar/roni");
+    router.push("/family/roun");
   }
 
   const targetDay = dragState?.target?.dayIndex;
@@ -620,7 +627,7 @@ function FamilyCalendarEditWeek({
           <p>일정 옵션</p>
           <button type="button" onClick={chooseThisWeekOnly}>이번 주만 변경</button>
           <button type="button" onClick={chooseDeleteThisWeek}>이번 주만 일정 취소</button>
-          <button type="button" onClick={chooseRoniTemplate}>로우니 기본 시간표도 변경</button>
+          <button type="button" onClick={chooseRoniTemplate}>로운이 시간표 변경</button>
           <button type="button" onClick={closeRoniChoiceSheet}>취소</button>
         </div>
       ) : null}
@@ -630,7 +637,7 @@ function FamilyCalendarEditWeek({
 
 export default function FamilyCalendarClient() {
   const [datedItems, setDatedItems] = useState([]);
-  const [roniItems, setRoniItems] = useState([]);
+  const [rounState, setRounState] = useState({ plans: [], assignments: [] });
   const [roniOverrides, setRoniOverrides] = useState([]);
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedWeekKey, setSelectedWeekKey] = useState(() => formatFamilyDateKey(getFamilyWeekStart(new Date())));
@@ -638,7 +645,7 @@ export default function FamilyCalendarClient() {
 
   useEffect(() => {
     setDatedItems(loadFamilyCalendarItems());
-    setRoniItems(loadFamilyRoniItems());
+    setRounState(loadFamilyRounState());
     setRoniOverrides(loadFamilyRoniOverrides());
   }, []);
 
@@ -653,8 +660,8 @@ export default function FamilyCalendarClient() {
   }, [datedItems]);
   const deletedRoniOverridesByDate = useMemo(() => groupDeletedRoniOverridesByDate(roniOverrides), [roniOverrides]);
   const selectedWeekItems = useMemo(
-    () => buildSelectedWeekItems(selectedWeekStart, datedItems, roniItems, roniOverrides),
-    [selectedWeekStart, datedItems, roniItems, roniOverrides],
+    () => buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOverrides),
+    [selectedWeekStart, datedItems, rounState, roniOverrides],
   );
   const selectedWeekRows = useMemo(() => groupItemsByHour(selectedWeekItems), [selectedWeekItems]);
 
@@ -737,8 +744,10 @@ export default function FamilyCalendarClient() {
     const moved = movedItemValues(roniItem, target);
     const sourceId = roniItem.sourceId;
     const sourceSlotIndex = Number.isInteger(roniItem.sourceSlotIndex) ? roniItem.sourceSlotIndex : 0;
-    setRoniItems((current) => {
-      const nextItems = current.map((item) => {
+    setRounState((current) => {
+      const plan = current.plans.find((candidate) => candidate.id === roniItem.planId) || resolveFamilyRounPlanForDate(roniItem.date, current);
+      if (!plan) return current;
+      const nextItems = plan.items.map((item) => {
         if (item.id !== sourceId) return item;
         const currentSlots = Array.isArray(item.slots) && item.slots.length ? item.slots : [{
           dayOfWeek: item.dayOfWeek,
@@ -764,8 +773,9 @@ export default function FamilyCalendarClient() {
           slots: nextSlots,
         };
       });
-      saveFamilyRoniItems(nextItems);
-      return nextItems;
+      const nextState = updateFamilyRounPlanItems(current, plan.id, nextItems);
+      saveFamilyRounState(nextState);
+      return nextState;
     });
   }
 
@@ -774,14 +784,14 @@ export default function FamilyCalendarClient() {
       <div className="familyCalendarIntro">
         <div>
           <h2>달력</h2>
-          <p>일정과 로우니 시간표를 함께 봐요.</p>
+          <p>일정과 로운이 시간표를 함께 봐요.</p>
         </div>
         <div className="familyCalendarActions">
           <Link className="familyCalendarActionLink familyCalendarActionLinkPrimary" href="/family/calendar/events/new">
             + 일정
           </Link>
-          <Link className="familyCalendarActionLink" href="/family/calendar/roni">
-            로우니 시간표 수정
+          <Link className="familyCalendarActionLink" href="/family/roun">
+            로운이 시간표 수정
           </Link>
           {editingCalendar ? (
             <>
