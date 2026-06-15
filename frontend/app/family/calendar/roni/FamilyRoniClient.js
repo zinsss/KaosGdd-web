@@ -9,6 +9,7 @@ import {
   FAMILY_RONI_DEFAULT_TEMPLATE_NAME,
   createDefaultFamilyRoniItem,
   createFamilyRoniTemplate,
+  familyCalendarColorClassName,
   loadFamilyRoniTemplateState,
   normalizeFamilyRoniItem,
   saveFamilyRoniTemplateState,
@@ -20,6 +21,36 @@ import {
   getFamilyTimetableFontFamily,
   normalizeFamilyTimetableFont,
 } from "../../familyTimetableFonts.js";
+
+const FAMILY_RONI_COLORS = [
+  "pink",
+  "rose",
+  "cream",
+  "yellow",
+  "peach",
+  "mint",
+  "green",
+  "sky",
+  "blue",
+  "purple",
+  "lavender",
+  "gray",
+];
+
+const FAMILY_RONI_COLOR_LABELS = {
+  pink: "분홍",
+  rose: "연분홍",
+  cream: "크림",
+  yellow: "노랑",
+  peach: "살구",
+  mint: "민트",
+  green: "초록",
+  sky: "하늘",
+  blue: "파랑",
+  purple: "보라",
+  lavender: "라벤더",
+  gray: "회색",
+};
 
 function roniToDraft(item) {
   return {
@@ -318,6 +349,22 @@ export default function FamilyRoniClient() {
                   <span>끝</span>
                   <input type="time" value={draft.endTime} onChange={(event) => updateDraft("endTime", event.target.value)} />
                 </label>
+              </div>
+
+              <div className="familyTimetableColorField">
+                <span>색상</span>
+                <div className="familyTimetableColorChips" role="radiogroup" aria-label="색상">
+                  {FAMILY_RONI_COLORS.map((color) => (
+                    <button
+                      aria-label={FAMILY_RONI_COLOR_LABELS[color]}
+                      className={`familyTimetableColorChip familyTimetableColorChip${familyCalendarColorClassName(color)}${draft.color === color ? " familyTimetableColorChipActive" : ""}`}
+                      key={color}
+                      onClick={() => updateDraft("color", color)}
+                      title={FAMILY_RONI_COLOR_LABELS[color]}
+                      type="button"
+                    />
+                  ))}
+                </div>
               </div>
 
               <label>
