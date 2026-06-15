@@ -17,6 +17,7 @@ test("family shared header uses polished tab wording and routes", async () => {
   assert.ok(headerSource.includes("width={68}"));
   assert.ok(headerSource.includes("height={68}"));
   assert.ok(headerSource.includes("priority"));
+  assert.ok(headerSource.includes("unoptimized"), "SVG logo should bypass Next image optimization");
   assert.ok(!headerSource.includes("<img"), "raw img should not be used for the Family logo");
   assert.ok(!headerSource.includes("<h1>가족</h1>"), "old text banner title should not remain");
   assert.ok(logoSource.includes("<svg"));
