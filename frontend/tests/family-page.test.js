@@ -57,7 +57,8 @@ test("family dashboard and calendar expose standard labels", async () => {
   for (const value of [
     "kaosgdd.family.calendarItems.v1",
     "kaosgdd.family.defaultTimetable.v1",
-    "kaosgdd.family.roniTimetableTemplates.v1",
+    "kaosgdd.family.rounWeeklyPlans.v1",
+    "kaosgdd.family.rounAssignments.v1",
     "FAMILY_CALENDAR_DAY_LABELS",
   ]) {
     assert.ok(calendarDataSource.includes(value));
