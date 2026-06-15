@@ -48,3 +48,24 @@ test("family calendar uses finalized standard Korean wording", async () => {
     assert.ok(!combinedSource.includes(oldString), `${oldString} should not remain in Family calendar UI`);
   }
 });
+
+test("family calendar mobile header uses compact two-row actions", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const calendarCss = await readSource("../app/styles/family-calendar.css");
+
+  for (const label of ["+ 일정", "로우니 시간표 수정", "수정"]) {
+    assert.ok(calendarSource.includes(label), `${label} should remain in calendar header actions`);
+  }
+  assert.ok(calendarSource.includes("changeMonth(-1)"));
+  assert.ok(calendarSource.includes("changeMonth(1)"));
+
+  assert.match(calendarCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarIntro\s*\{[\s\S]*?display:\s*grid;/);
+  assert.match(calendarCss, /\.familyCalendarActions\s*\{[\s\S]*?grid-template-areas:\s*\n\s*"prev month next"\s*\n\s*"add roni edit";/);
+  assert.match(calendarCss, /\.familyCalendarActions\s*\{[\s\S]*?gap:\s*6px;/);
+  assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink\s*\{[\s\S]*?font-size:\s*13px;[\s\S]*?min-height:\s*32px;[\s\S]*?white-space:\s*nowrap;/);
+  assert.match(calendarCss, /@media\s*\(max-width:\s*420px\)\s*\{[\s\S]*?\.familyCalendarIntro\s*\{[\s\S]*?grid-template-columns:\s*1fr;/);
+
+  for (const oldString of ["고치까", "치아라", "다했데이", "도로묵이다", "고마하자"]) {
+    assert.ok(!calendarSource.includes(oldString), `${oldString} should not return in calendar source`);
+  }
+});

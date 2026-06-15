@@ -726,3 +726,86 @@
     flex: 1 1 auto;
   }
 }
+
+@media (max-width: 640px) {
+  .familyCalendarIntro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 10px;
+  }
+
+  .familyCalendarIntro > div:first-child {
+    min-width: 0;
+  }
+
+  .familyCalendarIntro h2 {
+    font-size: 22px;
+  }
+
+  .familyCalendarIntro p {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .familyCalendarActions {
+    display: grid;
+    grid-template-columns: auto auto auto;
+    grid-template-areas:
+      "prev month next"
+      "add roni edit";
+    justify-content: end;
+    justify-items: end;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .familyCalendarActions .familyCalendarActionLinkPrimary {
+    grid-area: add;
+  }
+
+  .familyCalendarActions .familyCalendarActionLink:not(.familyCalendarActionLinkPrimary) {
+    grid-area: roni;
+  }
+
+  .familyCalendarActions > button:nth-of-type(1) {
+    grid-area: edit;
+  }
+
+  .familyCalendarActions > button:nth-of-type(2) {
+    grid-area: prev;
+  }
+
+  .familyCalendarActions > span:not(.familyCalendarEditStatus) {
+    grid-area: month;
+    white-space: nowrap;
+  }
+
+  .familyCalendarActions > button:nth-of-type(3) {
+    grid-area: next;
+  }
+
+  .familyCalendarActions button,
+  .familyCalendarActionLink {
+    min-height: 32px;
+    border-radius: 999px;
+    padding: 0 10px;
+    font-size: 13px;
+    line-height: 1;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 420px) {
+  .familyCalendarIntro {
+    grid-template-columns: 1fr;
+  }
+
+  .familyCalendarActions {
+    width: 100%;
+    justify-content: start;
+    justify-items: start;
+    grid-template-columns: auto auto auto;
+  }
+}
