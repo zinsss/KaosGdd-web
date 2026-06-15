@@ -23,8 +23,10 @@ const FAMILY_TIMETABLE_COLOR_KEYS = [
 
 const FAMILY_TIMETABLE_COLOR_LABELS = [
   "분홍",
+  "연분홍",
   "크림",
   "노랑",
+  "살구",
   "민트",
   "초록",
   "하늘",
@@ -36,6 +38,7 @@ const FAMILY_TIMETABLE_COLOR_LABELS = [
 
 test("family timetable keeps local schedule editor foundations", async () => {
   const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
+  const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const globalsCss = await readSource("../app/globals.css");
   const addCss = await readSource("../app/styles/family-timetable-add.css");
 
@@ -57,8 +60,9 @@ test("family timetable keeps local schedule editor foundations", async () => {
     assert.ok(roniSource.includes(value), `${value} should remain in Roni timetable editor sources`);
   }
 
+  const weekdaySources = `${roniSource}\n${dataSource}`;
   for (const day of ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]) {
-    assert.ok(roniSource.includes(day));
+    assert.ok(weekdaySources.includes(day), `${day} should remain available to the Roni editor`);
   }
   for (const value of ["dayOfWeek", "startTime", "endTime", "color", "fontFamily", "normalizeFamilyRoniItem"]) {
     assert.ok(roniSource.includes(value));
