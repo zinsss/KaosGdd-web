@@ -83,7 +83,7 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
     saveFamilyCalendarItems(items);
   }, [items, loaded]);
 
-  const pageTitle = useMemo(() => (editing ? "뭔날이고" : "+ 뭔날"), [editing]);
+  const pageTitle = useMemo(() => (editing ? "일정 수정" : "일정 추가"), [editing]);
 
   function updateDraft(field, value) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -98,7 +98,7 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
     event.preventDefault();
     const normalized = normalizeFamilyCalendarItem({ ...draft, title: draft.title.trim() });
     if (!normalized) {
-      setError("모할꼬를 입력해주세요.");
+      setError("일정 이름을 입력해주세요.");
       return;
     }
 
@@ -119,30 +119,30 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
   }
 
   return (
-    <section className="familyPage" aria-label="뭔날이고">
+    <section className="familyPage" aria-label={pageTitle}>
       <div className="familyCard familyCalendarPageCard">
-        <FamilyHeader active="home" />
+        <FamilyHeader active="calendar" />
         <main className="familyCalendarFormPage">
           <form className="familyCalendarForm" onSubmit={saveEvent}>
             <div className="familyCalendarFormHeader">
               <div>
                 <h2>{pageTitle}</h2>
-                <p>달력에 적어둘 뭔날을 써요.</p>
+                <p>달력에 적어둘 일정을 써요.</p>
               </div>
               <Link className="familyTaskActionButton" href="/family/calendar">
-                고마하자
+                취소
               </Link>
             </div>
 
             <label>
-              <span>모할꼬</span>
+              <span>일정 이름</span>
               <input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} />
             </label>
             {error ? <p className="familyCalendarFormError">{error}</p> : null}
 
             <div className="familyCalendarFormGrid">
               <label>
-                <span>언제고</span>
+                <span>날짜</span>
                 <input type="date" value={draft.date} onChange={(event) => updateDraft("date", event.target.value)} />
               </label>
               <label>
@@ -156,20 +156,20 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
             </div>
 
             <label>
-              <span>머라? 좀 더 지끼봐라</span>
+              <span>메모</span>
               <textarea rows={3} value={draft.memo} onChange={(event) => updateDraft("memo", event.target.value)} />
             </label>
 
             <div className="familyCalendarFormActions">
               <button className="familyTaskSave" type="submit">
-                되따
+                저장
               </button>
               <button className="familyTaskCancel" type="button" onClick={goBack}>
-                고마하자
+                취소
               </button>
               {editing ? (
                 <button className="familyTaskDelete" type="button" onClick={deleteEvent}>
-                  치아라
+                  삭제
                 </button>
               ) : null}
             </div>
