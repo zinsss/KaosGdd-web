@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import FamilyHeader from "../../FamilyHeader";
 import {
+  FAMILY_CALENDAR_DAY_LABELS,
   FAMILY_CALENDAR_WEEKDAY_OPTIONS,
   FAMILY_RONI_DEFAULT_TEMPLATE_NAME,
   createDefaultFamilyRoniItem,
@@ -54,13 +55,57 @@ const FAMILY_RONI_COLOR_LABELS = {
   gray: "회색",
 };
 
-function roniToDraft(item) {
+const ROUN_TIMETABLE_START_HOUR = 8;
+const ROUN_TIMETABLE_END_HOUR = 22;
+const ROUN_TIMETABLE_SLOT_MINUTES = 10;
+const ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES = 40;
+const ROUN_TIMETABLE_HOUR_HEIGHT = 48;
+const ROUN_TIMETABLE_DRAG_MOVE_LIMIT = 8;
+const ROUN_TIMETABLE_HOURS = Array.from(
+  { length: ROUN_TIMETABLE_END_HOUR - ROUN_TIMETABLE_START_HOUR + 1 },
+  (_, index) => ROUN_TIMETABLE_START_HOUR + index,
+);
+const ROUN_TIMETABLE_VISIBLE_HOURS = ROUN_TIMETABLE_HOURS.slice(0, -1);
+const ROUN_TIMETABLE_BODY_HEIGHT =
+  (ROUN_TIMETABLE_END_HOUR - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT;
+
+function parseTimeMinutes(timeString) {
+  const match = String(timeString || "").match(/^(\d{1,2}):(\d{2})$/);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  return hour * 60 + minute;
+}
+
+function minutesToFamilyTime(totalMinutes) {
+  const minutesInDay = 24 * 60;
+  const normalized = ((totalMinutes % minutesInDay) + minutesInDay) % minutesInDay;
+  const hour = Math.floor(normalized / 60);
+  const minute = normalized % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function snapRounMinutes(totalMinutes) {
+  return Math.floor(totalMinutes / ROUN_TIMETABLE_SLOT_MINUTES) * ROUN_TIMETABLE_SLOT_MINUTES;
+}
+
+function slotMinutesFromPoint(clientY, rect) {
+  const y = Math.max(0, Math.min(rect.height - 1, clientY - rect.top));
+  const minutesFromStart = Math.floor(y / ROUN_TIMETABLE_HOUR_HEIGHT * 60);
+  return ROUN_TIMETABLE_START_HOUR * 60 + snapRounMinutes(minutesFromStart);
+}
+
+function roniToDraft(item, slotIndex = 0) {
+  const slots = Array.isArray(item.slots) && item.slots.length ? item.slots : [item];
+  const slot = slots[slotIndex] || slots[0] || item;
   return {
     id: item.id || "",
+    slotIndex,
     title: item.title || "",
-    dayOfWeek: String(item.dayOfWeek ?? 0),
-    startTime: item.startTime || "09:00",
-    endTime: item.endTime || "09:40",
+    dayOfWeek: String(slot.dayOfWeek ?? item.dayOfWeek ?? 0),
+    startTime: slot.startTime || item.startTime || "09:00",
+    endTime: slot.endTime || item.endTime || "09:40",
     memo: item.memo || "",
     color: item.color || "pink",
     fontFamily: normalizeFamilyTimetableFont(item.fontFamily || FAMILY_TIMETABLE_DEFAULT_FONT),
@@ -76,6 +121,37 @@ function todayDateKey() {
   return formatFamilyDateKey(new Date());
 }
 
+function buildRounBlocks(items) {
+  return items.flatMap((item) => {
+    const slots = Array.isArray(item.slots) && item.slots.length ? item.slots : [item];
+    return slots.flatMap((slot, slotIndex) => {
+      const start = parseTimeMinutes(slot.startTime || item.startTime);
+      const end = parseTimeMinutes(slot.endTime || item.endTime);
+      const dayOfWeek = Number(slot.dayOfWeek ?? item.dayOfWeek);
+      if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6 || start === null) return [];
+      const safeStart = Math.max(ROUN_TIMETABLE_START_HOUR * 60, Math.min(ROUN_TIMETABLE_END_HOUR * 60 - 10, start));
+      const safeEnd = end && end > safeStart ? Math.min(ROUN_TIMETABLE_END_HOUR * 60, end) : safeStart + ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES;
+      return [{
+        ...item,
+        blockId: `${item.id}:${slotIndex}`,
+        slotIndex,
+        dayOfWeek,
+        startTime: minutesToFamilyTime(safeStart),
+        endTime: minutesToFamilyTime(safeEnd),
+        startMinutes: safeStart,
+        endMinutes: safeEnd,
+      }];
+    });
+  });
+}
+
+function rounBlockStyle(block) {
+  const rangeStart = ROUN_TIMETABLE_START_HOUR * 60;
+  const top = (block.startMinutes - rangeStart) / 60 * ROUN_TIMETABLE_HOUR_HEIGHT;
+  const height = Math.max(20, (block.endMinutes - block.startMinutes) / 60 * ROUN_TIMETABLE_HOUR_HEIGHT);
+  return { top: `${top}px`, height: `${height}px`, fontFamily: getFamilyTimetableFontFamily(block.fontFamily) || undefined };
+}
+
 export default function FamilyRoniClient() {
   const [rounState, setRounState] = useState({ plans: [], assignments: [] });
   const [openedPlanId, setOpenedPlanId] = useState("");
@@ -85,6 +161,9 @@ export default function FamilyRoniClient() {
   const [planError, setPlanError] = useState("");
   const [applyPlanId, setApplyPlanId] = useState("");
   const [applyDate, setApplyDate] = useState(todayDateKey());
+  const [actionBlock, setActionBlock] = useState(null);
+  const [dragState, setDragState] = useState(null);
+  const suppressBlockClickRef = useRef(false);
 
   useEffect(() => {
     const loadedState = loadFamilyRounState();
@@ -102,6 +181,8 @@ export default function FamilyRoniClient() {
       .filter((item) => item.active !== false)
       .sort((a, b) => a.dayOfWeek - b.dayOfWeek || String(a.startTime).localeCompare(String(b.startTime)));
   }, [openedPlan]);
+
+  const visibleBlocks = useMemo(() => buildRounBlocks(visibleItems), [visibleItems]);
 
   const assignmentRows = useMemo(() => {
     return [...rounState.assignments]
@@ -159,6 +240,7 @@ export default function FamilyRoniClient() {
   function openPlan(planId) {
     setOpenedPlanId(planId);
     setDraft(null);
+    setActionBlock(null);
     setError("");
     setPlanError("");
   }
@@ -187,6 +269,7 @@ export default function FamilyRoniClient() {
     const savedState = persistRounState({ plans: nextPlans, assignments: nextAssignments });
     setOpenedPlanId(savedState.plans[0]?.id || "");
     setDraft(null);
+    setActionBlock(null);
     setPlanError("");
   }
 
@@ -213,13 +296,27 @@ export default function FamilyRoniClient() {
     });
   }
 
-  function startNewRoni() {
-    setDraft(roniToDraft(createDefaultFamilyRoniItem()));
+  function draftForSlot(dayOfWeek, startMinutes) {
+    const startTime = minutesToFamilyTime(startMinutes);
+    const endTime = minutesToFamilyTime(startMinutes + ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES);
+    return roniToDraft({
+      ...createDefaultFamilyRoniItem(),
+      dayOfWeek,
+      startTime,
+      endTime,
+      slots: [{ dayOfWeek, startTime, endTime }],
+    });
+  }
+
+  function startNewRoni(dayOfWeek = new Date().getDay(), startMinutes = ROUN_TIMETABLE_START_HOUR * 60 + 60) {
+    setDraft(draftForSlot(dayOfWeek, startMinutes));
+    setActionBlock(null);
     setError("");
   }
 
-  function startEditRoni(item) {
-    setDraft(roniToDraft(item));
+  function startEditRoni(block) {
+    setDraft(roniToDraft(block, block.slotIndex));
+    setActionBlock(null);
     setError("");
   }
 
@@ -233,28 +330,63 @@ export default function FamilyRoniClient() {
     if (field === "title" && value.trim()) setError("");
   }
 
+  function replaceItemSlot(item, slotIndex, slotValues) {
+    const currentSlots = Array.isArray(item.slots) && item.slots.length ? item.slots : [{
+      dayOfWeek: item.dayOfWeek,
+      startTime: item.startTime,
+      endTime: item.endTime,
+    }];
+    const nextSlots = currentSlots.map((slot, index) => (index === slotIndex ? { ...slot, ...slotValues } : slot));
+    const firstSlot = nextSlots[0];
+    return {
+      ...item,
+      dayOfWeek: firstSlot.dayOfWeek,
+      startTime: firstSlot.startTime,
+      endTime: firstSlot.endTime,
+      slots: nextSlots,
+    };
+  }
+
   function saveRoni(event) {
     event.preventDefault();
     if (!draft?.title?.trim()) {
-      setError("일정 이름을 입력해주세요.");
+      setError("제목을 입력해주세요.");
       return;
     }
 
+    const slotValues = {
+      dayOfWeek: Number(draft.dayOfWeek),
+      startTime: draft.startTime,
+      endTime: draft.endTime,
+    };
     const normalized = normalizeFamilyRoniItem({
       ...draft,
       title: draft.title.trim(),
-      dayOfWeek: Number(draft.dayOfWeek),
+      dayOfWeek: slotValues.dayOfWeek,
+      startTime: slotValues.startTime,
+      endTime: slotValues.endTime,
+      slots: [slotValues],
       fontFamily: normalizeFamilyTimetableFont(draft.fontFamily),
     });
     if (!normalized) {
-      setError("일정 이름을 입력해주세요.");
+      setError("제목을 입력해주세요.");
       return;
     }
 
     const currentItems = openedPlan?.items || [];
     const exists = currentItems.some((item) => item.id === normalized.id);
     const nextItems = exists
-      ? currentItems.map((item) => (item.id === normalized.id ? normalized : item))
+      ? currentItems.map((item) => {
+        if (item.id !== normalized.id) return item;
+        return replaceItemSlot({
+          ...item,
+          title: normalized.title,
+          memo: normalized.memo,
+          color: normalized.color,
+          fontFamily: normalized.fontFamily,
+          active: normalized.active,
+        }, draft.slotIndex || 0, slotValues);
+      })
       : [...currentItems, normalized];
     updateOpenedPlanItems(nextItems);
     cancelEdit();
@@ -262,8 +394,83 @@ export default function FamilyRoniClient() {
 
   function deleteRoni(itemId = draft?.id) {
     if (!itemId || !openedPlan) return;
+    if (!window.confirm("삭제할까요?")) return;
     updateOpenedPlanItems((openedPlan.items || []).filter((item) => item.id !== itemId));
     if (draft?.id === itemId) cancelEdit();
+    if (actionBlock?.id === itemId) setActionBlock(null);
+  }
+
+  function copyRoni(block) {
+    if (!openedPlan || !block) return;
+    const copy = normalizeFamilyRoniItem({
+      ...block,
+      id: createFamilyCalendarId(),
+      title: block.title,
+      slots: [{ dayOfWeek: block.dayOfWeek, startTime: block.startTime, endTime: block.endTime }],
+    });
+    if (!copy) return;
+    updateOpenedPlanItems([...(openedPlan.items || []), copy]);
+    setActionBlock(null);
+  }
+
+  function updateBlockTime(block, dayOfWeek, startMinutes) {
+    if (!openedPlan || !block) return;
+    const duration = Math.max(
+      ROUN_TIMETABLE_SLOT_MINUTES,
+      (parseTimeMinutes(block.endTime) ?? block.startMinutes + ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES) - block.startMinutes,
+    );
+    const slotValues = {
+      dayOfWeek,
+      startTime: minutesToFamilyTime(startMinutes),
+      endTime: minutesToFamilyTime(startMinutes + duration),
+    };
+    const nextItems = (openedPlan.items || []).map((item) => (
+      item.id === block.id ? replaceItemSlot(item, block.slotIndex, slotValues) : item
+    ));
+    updateOpenedPlanItems(nextItems);
+  }
+
+  function targetFromPoint(clientX, clientY) {
+    const elements = document.elementsFromPoint(clientX, clientY);
+    const column = elements.find((element) => element instanceof HTMLElement && element.dataset.rounDayColumn);
+    if (!column) return null;
+    const dayOfWeek = Number(column.dataset.dayIndex);
+    if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) return null;
+    return { dayOfWeek, startMinutes: slotMinutesFromPoint(clientY, column.getBoundingClientRect()) };
+  }
+
+  function startBlockDrag(event, block) {
+    if (event.button !== undefined && event.button !== 0) return;
+    event.stopPropagation();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+    setDragState({ block, startX: event.clientX, startY: event.clientY, moved: false, target: null });
+  }
+
+  function moveBlockDrag(event) {
+    if (!dragState) return;
+    const moved = dragState.moved || Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY) >= ROUN_TIMETABLE_DRAG_MOVE_LIMIT;
+    if (!moved) return;
+    event.preventDefault();
+    setDragState({ ...dragState, moved, target: targetFromPoint(event.clientX, event.clientY) });
+  }
+
+  function finishBlockDrag(event) {
+    if (!dragState) return;
+    event.preventDefault();
+    if (dragState.moved && dragState.target) {
+      updateBlockTime(dragState.block, dragState.target.dayOfWeek, dragState.target.startMinutes);
+      suppressBlockClickRef.current = true;
+      window.setTimeout(() => {
+        suppressBlockClickRef.current = false;
+      }, 0);
+    }
+    setDragState(null);
+  }
+
+  function clickEmptySlot(event, dayOfWeek) {
+    if (event.target !== event.currentTarget) return;
+    const startMinutes = slotMinutesFromPoint(event.clientY, event.currentTarget.getBoundingClientRect());
+    startNewRoni(dayOfWeek, startMinutes);
   }
 
   if (!loaded) return null;
@@ -277,7 +484,7 @@ export default function FamilyRoniClient() {
             <div className="familyCalendarFormHeader">
               <div>
                 <h2>로운이</h2>
-                <p>주간시간표를 여러 개 저장하고, 날짜별 적용 이력으로 달력에 반영해요.</p>
+                <p>주간시간표 템플릿을 여러 개 저장하고, 날짜별 적용 이력으로 달력에 반영해요.</p>
               </div>
               <div className="familyCalendarFormActions familyCalendarFormActionsInline">
                 <button className="familyTaskActionButton" type="button" onClick={saveOpenedPlan}>
@@ -285,9 +492,6 @@ export default function FamilyRoniClient() {
                 </button>
                 <button className="familyTaskActionButton" type="button" onClick={startNewPlan}>
                   새 시간표
-                </button>
-                <button className="familyTaskActionButton familyTaskActionButtonPrimary" type="button" onClick={startNewRoni}>
-                  + 시간표
                 </button>
                 <Link className="familyTaskActionButton" href="/family/calendar">
                   취소
@@ -329,32 +533,81 @@ export default function FamilyRoniClient() {
 
             <div className="familyRoniTemplateStatus">
               <p>주간시간표: {openedPlan?.name || FAMILY_RONI_DEFAULT_TEMPLATE_NAME}</p>
+              <small>이 시간표는 달력 생성에 사용됩니다.</small>
             </div>
 
-            <div className="familyRoniList">
-              {visibleItems.length ? (
-                visibleItems.map((item) => (
-                  <article className="familyRoniRow" key={item.id}>
-                    <div>
-                      <h3 style={{ fontFamily: getFamilyTimetableFontFamily(item.fontFamily) || undefined }}>{item.title}</h3>
-                      <p>
-                        {weekdayLabel(item.dayOfWeek)} {item.startTime} - {item.endTime}
-                      </p>
-                    </div>
-                    <div className="familyRoniRowActions">
-                      <button type="button" onClick={() => startEditRoni(item)}>
-                        수정
-                      </button>
-                      <button type="button" onClick={() => deleteRoni(item.id)}>
-                        삭제
-                      </button>
-                    </div>
-                  </article>
-                ))
-              ) : (
-                <p className="familyTaskEmpty">아직 로운이 시간표가 없어요.</p>
-              )}
+            <div className="familyRounEditorToolbar">
+              <button className="familyTaskActionButton familyTaskActionButtonPrimary" type="button" onClick={() => startNewRoni()}>
+                + 시간표
+              </button>
             </div>
+
+            <div
+              className="familyRounWeeklyGrid"
+              aria-label="주간시간표 템플릿"
+              onPointerMove={moveBlockDrag}
+              onPointerUp={finishBlockDrag}
+              onPointerCancel={() => setDragState(null)}
+              style={{ "--family-roun-body-height": `${ROUN_TIMETABLE_BODY_HEIGHT}px` }}
+            >
+              <span className="familyRounGridCorner" aria-hidden="true" />
+              {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
+                <span className="familyRounDayHeader" key={label}>{label}</span>
+              ))}
+              <div className="familyRounTimeRail" aria-label="시간">
+                {ROUN_TIMETABLE_HOURS.map((hour) => (
+                  <span className="familyRounHourLabel" key={hour} style={{ top: `${(hour - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT}px` }}>
+                    {String(hour).padStart(2, "0")}:00
+                  </span>
+                ))}
+              </div>
+              {FAMILY_CALENDAR_DAY_LABELS.map((label, dayIndex) => (
+                <div
+                  className={`familyRounDayColumn${dragState?.target?.dayOfWeek === dayIndex ? " familyRounDayColumnTarget" : ""}`}
+                  data-day-index={dayIndex}
+                  data-roun-day-column="true"
+                  key={label}
+                  onClick={(event) => clickEmptySlot(event, dayIndex)}
+                >
+                  {ROUN_TIMETABLE_VISIBLE_HOURS.map((hour) => (
+                    <div className="familyRounHour" key={hour} style={{ top: `${(hour - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT}px` }}>
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                    </div>
+                  ))}
+                  {visibleBlocks.filter((block) => block.dayOfWeek === dayIndex).map((block) => (
+                    <button
+                      className={`familyRounBlock familyTimetableEntry${familyCalendarColorClassName(block.color)}${dragState?.block?.blockId === block.blockId ? " familyRounBlockDragging" : ""}`}
+                      key={block.blockId}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        if (suppressBlockClickRef.current) return;
+                        setActionBlock(block);
+                      }}
+                      onPointerDown={(event) => startBlockDrag(event, block)}
+                      style={rounBlockStyle(block)}
+                      title={`${block.title} ${block.startTime}-${block.endTime}`}
+                      type="button"
+                    >
+                      <span>{block.title}</span>
+                    </button>
+                  ))}
+                </div>
+              ))}
+            </div>
+
+            {actionBlock ? (
+              <div className="familyRounActionSheet" role="dialog" aria-label="시간표 항목">
+                <p>{actionBlock.title}</p>
+                <button type="button" onClick={() => startEditRoni(actionBlock)}>고치기</button>
+                <button type="button" onClick={() => copyRoni(actionBlock)}>복사</button>
+                <button type="button" onClick={() => deleteRoni(actionBlock.id)}>삭제</button>
+                <button type="button" onClick={() => setActionBlock(null)}>취소</button>
+              </div>
+            ) : null}
           </section>
 
           <section className="familyRoniPanel" aria-label="적용 이력">
@@ -386,22 +639,12 @@ export default function FamilyRoniClient() {
               </div>
 
               <label>
-                <span>일정 이름</span>
+                <span>제목</span>
                 <input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} />
               </label>
               {error ? <p className="familyCalendarFormError">{error}</p> : null}
 
               <div className="familyCalendarFormGrid">
-                <label>
-                  <span>요일</span>
-                  <select value={draft.dayOfWeek} onChange={(event) => updateDraft("dayOfWeek", event.target.value)}>
-                    {FAMILY_CALENDAR_WEEKDAY_OPTIONS.map((option) => (
-                      <option value={option.dayOfWeek} key={option.dayOfWeek}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
                 <label>
                   <span>시작</span>
                   <input type="time" value={draft.startTime} onChange={(event) => updateDraft("startTime", event.target.value)} />
