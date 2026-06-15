@@ -1,0 +1,14 @@
+@font-face {
+  font-family: "NanumBarunPen";
+  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_two@1.0/NanumBarunpen.woff") format("woff");
+  font-weight: normal;
+  font-display: swap;
+}
+
+.familyPage,
+.familyPage button,
+.familyPage input,
+.familyPage textarea,
+.familyPage select {
+  font-family: "NanumBarunPen", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+}
