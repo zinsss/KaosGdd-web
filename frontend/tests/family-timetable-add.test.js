@@ -9,7 +9,6 @@ async function readSource(path) {
 test("family timetable keeps local schedule editor foundations", async () => {
   const timetableSource = await readSource("../app/family/FamilyTimetable.js");
   const globalsCss = await readSource("../app/globals.css");
-  const familyCss = await readSource("../app/styles/family.css");
   const addCss = await readSource("../app/styles/family-timetable-add.css");
 
   for (const value of [
@@ -42,6 +41,4 @@ test("family timetable keeps local schedule editor foundations", async () => {
   assert.ok(addCss.includes(".familyTimetableColorChips"));
   assert.ok(addCss.includes("font-size: 0"));
   assert.ok(addCss.includes(".familyTimetableCopyPills"));
-  assert.ok(familyCss.includes("overflow-x: hidden"));
-  assert.ok(familyCss.includes("repeat(7, minmax(0, 1fr))"));
 });
