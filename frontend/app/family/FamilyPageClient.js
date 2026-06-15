@@ -104,8 +104,8 @@ function loadMessages() {
 
 function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onToggleChecklistItem }) {
   const isChecklist = message.type === "checklist";
-  const deleteLabel = isChecklist ? "체크리스트 치아라" : "메모 치아라";
-  const editLabel = isChecklist ? "체크리스트 고치까" : "메모 고치까";
+  const deleteLabel = isChecklist ? "체크리스트 삭제" : "메모 삭제";
+  const editLabel = isChecklist ? "체크리스트 수정" : "메모 수정";
 
   return (
     <div className={`familyBubbleRow${isEditing ? " familyBubbleEditing" : ""}`}>
@@ -307,12 +307,12 @@ export default function FamilyPageClient() {
   }
 
   return (
-    <section className="familyPage" aria-label="모라노">
+    <section className="familyPage" aria-label="메모장">
       <div className="familyCard">
         <FamilyHeader active="memo" />
 
         <div className="familyQuickPadTitle">
-          <h2>모라꼬?</h2>
+          <h2>메모장</h2>
         </div>
 
         <div className="familyStream" aria-live="polite">
@@ -349,11 +349,11 @@ export default function FamilyPageClient() {
             onKeyDown={onDraftKeyDown}
           />
           <button className="familySend" type="button" disabled={!canSend} onClick={sendMessage}>
-            {isEditing ? "되따" : "보내기"}
+            {isEditing ? "저장" : "보내기"}
           </button>
           {isEditing ? (
             <button className="familyCancel" type="button" onClick={resetComposer}>
-              고마하자
+              취소
             </button>
           ) : null}
         </div>
