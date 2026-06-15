@@ -1,6 +1,6 @@
 .familyPage {
   overflow-x: hidden;
-  font-size: 16px;
+  font-size: 14px;
 }
 
 .familyCard,
@@ -15,13 +15,13 @@
 
 .familyHeader h1 {
   color: #d86f98;
-  font-size: 30px;
+  font-size: 26px;
   font-weight: 950;
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.74);
 }
 
 .familyHomeNavLink {
-  font-size: 17px;
+  font-size: 14px;
   line-height: 1.1;
 }
 
@@ -35,7 +35,7 @@
 .familyQuickPadTitle h2 {
   margin: 0;
   color: rgba(78, 37, 54, 0.74);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   line-height: 1.15;
 }
@@ -43,7 +43,6 @@
 .familyBubbleText,
 .familyBubbleTitle,
 .familyChecklistRow,
-.familyInput,
 .familyTimetableIntro p,
 .familyTimetableEditor input,
 .familyTimetableEditor select,
@@ -53,13 +52,17 @@
 .familyTaskForm select,
 .familyTaskForm textarea,
 .familyDoneTaskRow h2 {
-  font-size: 18px;
+  font-size: 14px;
+}
+
+.familyInput {
+  font-size: 16px;
 }
 
 .familyTimetableIntro h2,
 .familyTaskSectionHeader h2,
 .familyTaskPageTitle {
-  font-size: 25px;
+  font-size: 21px;
 }
 
 .familyTaskSectionHeader p,
@@ -72,7 +75,7 @@
 .familyTimetableSlotField,
 .familyTimetableColorField,
 .familyTimetableCopyField {
-  font-size: 15px;
+  font-size: 13px;
 }
 
 .familyTaskActionButton,
@@ -88,7 +91,7 @@
 .familySend,
 .familyCancel,
 .familyChecklistToggle {
-  font-size: 18px;
+  font-size: 14px;
 }
 
 .familyTaskPageCard,
@@ -191,7 +194,7 @@
   }
 
   .familyHeader h1 {
-    font-size: 27px;
+    font-size: 24px;
   }
 
   .familyHomeNav {
@@ -200,7 +203,7 @@
   }
 
   .familyHomeNavLink {
-    font-size: 16px;
+    font-size: 14px;
   }
 
   .familyQuickPadTitle {
@@ -208,7 +211,7 @@
   }
 
   .familyQuickPadTitle h2 {
-    font-size: 20px;
+    font-size: 19px;
   }
 
   .familyDashboard {
@@ -245,12 +248,15 @@
   .familyBubbleText,
   .familyBubbleTitle,
   .familyChecklistRow,
-  .familyInput,
   .familyTaskCard h3,
   .familyTaskForm input,
   .familyTaskForm select,
   .familyTaskForm textarea,
   .familyDoneTaskRow h2 {
-    font-size: 17px;
+    font-size: 14px;
+  }
+
+  .familyInput {
+    font-size: 16px;
   }
 }

@@ -3,9 +3,10 @@
 import Link from "next/link";
 
 const FAMILY_NAV_ITEMS = [
-  { key: "memo", href: "/family/memo", label: "메모장" },
   { key: "calendar", href: "/family/calendar", label: "달력" },
-  { key: "home", href: "/family", label: "할 일" },
+  { key: "home", href: "/family", label: "할일" },
+  { key: "roun", href: "/family/roun", label: "로운이" },
+  { key: "memo", href: "/family/memo", label: "메모장" },
 ];
 
 export default function FamilyHeader({ active = "home" }) {

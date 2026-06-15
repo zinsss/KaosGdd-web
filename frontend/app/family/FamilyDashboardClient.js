@@ -136,7 +136,7 @@ export default function FamilyDashboardClient() {
             <div className="familyTaskSectionHeader">
               <div>
                 <h2>달력</h2>
-                <p>일정과 로우니 시간표를 함께 봐요.</p>
+                <p>일정과 로운이 시간표를 함께 봐요.</p>
               </div>
               <Link className="familyTaskActionButton familyTaskActionButtonPrimary" href="/family/calendar">
                 달력
