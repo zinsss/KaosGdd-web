@@ -18,7 +18,7 @@ test("family calendar uses finalized standard Korean wording", async () => {
   for (const label of [
     "달력",
     "+ 일정",
-    "로우니 시간표",
+    "로운이 시간표",
     "일정 옵션",
     "이번 주만 변경",
     "이번 주만 일정 취소",
@@ -36,7 +36,12 @@ test("family calendar uses finalized standard Korean wording", async () => {
     assert.ok(combinedSource.includes(label), `${label} should appear in Family calendar sources`);
   }
 
-  for (const value of ["kaosgdd.family.calendarItems.v1", "kaosgdd.family.defaultTimetable.v1", "kaosgdd.family.roniOverrides.v1"]) {
+  for (const value of [
+    "kaosgdd.family.calendarItems.v1",
+    "kaosgdd.family.defaultTimetable.v1",
+    "kaosgdd.family.roniTimetableTemplates.v1",
+    "kaosgdd.family.roniOverrides.v1",
+  ]) {
     assert.ok(dataSource.includes(value));
   }
   assert.ok(calendarCss.includes(".familyCalendarItemRoni"));
