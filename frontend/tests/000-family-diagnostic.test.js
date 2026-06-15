@@ -1,24 +1,32 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
-const FAMILY_TESTS = [
-  "frontend/tests/family-calendar-edit.test.js",
-  "frontend/tests/family-font-palette.test.js",
-  "frontend/tests/family-font.test.js",
-  "frontend/tests/family-page.test.js",
-  "frontend/tests/family-timetable-add.test.js",
-  "frontend/tests/family-tasks.test.js",
-];
+const testsDir = dirname(fileURLToPath(import.meta.url));
+const repoRoot = join(testsDir, "..", "..");
 
-test("temporary family subset diagnostic", () => {
-  const result = spawnSync(process.execPath, ["--test", ...FAMILY_TESTS], {
-    cwd: new URL("../..", import.meta.url),
-    encoding: "utf8",
-  });
-  if (result.status !== 0) {
-    console.error(result.stdout);
-    console.error(result.stderr);
+test("temporary frontend per-file diagnostic", () => {
+  const failures = [];
+  const files = readdirSync(testsDir)
+    .filter((file) => file.endsWith(".test.js") && file !== "000-family-diagnostic.test.js")
+    .sort();
+
+  for (const file of files) {
+    const testPath = `frontend/tests/${file}`;
+    const result = spawnSync(process.execPath, ["--test", testPath], {
+      cwd: repoRoot,
+      encoding: "utf8",
+    });
+    if (result.status !== 0) {
+      failures.push(file);
+      console.error(`FAILED ${file}`);
+      console.error(result.stdout);
+      console.error(result.stderr);
+    }
   }
-  assert.equal(result.status, 0);
+
+  assert.deepEqual(failures, []);
 });
