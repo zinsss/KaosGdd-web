@@ -77,22 +77,22 @@ test("family timetable keeps local schedule editor foundations", async () => {
 });
 
 test("family timetable exposes twelve fixed pastel color options", async () => {
-  const timetableSource = await readSource("../app/family/FamilyTimetable.js");
+  const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
+  const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const addCss = await readSource("../app/styles/family-timetable-add.css");
 
-  assert.match(timetableSource, /FAMILY_TIMETABLE_COLORS\s*=\s*\[/);
+  assert.match(roniSource, /FAMILY_RONI_COLORS\s*=\s*\[/);
   assert.equal(FAMILY_TIMETABLE_COLOR_KEYS.length, 12);
   for (const color of FAMILY_TIMETABLE_COLOR_KEYS) {
-    assert.ok(timetableSource.includes(`"${color}"`), `${color} should be in the color preset list`);
+    assert.ok(`${roniSource}\n${dataSource}`.includes(`"${color}"`), `${color} should be in the color preset list`);
     const className = `${color[0].toUpperCase()}${color.slice(1)}`;
     assert.match(addCss, new RegExp(`\\.familyTimetableEntry${className}`));
     assert.match(addCss, new RegExp(`\\.familyTimetableColorChip${className}`));
   }
   for (const label of FAMILY_TIMETABLE_COLOR_LABELS) {
-    assert.ok(timetableSource.includes(label), `${label} should remain as a Korean color label`);
+    assert.ok(roniSource.includes(label), `${label} should remain as a Korean color label`);
   }
-  assert.match(timetableSource, /normalizeTimetableColor\(color, fallback = "pink"\)/);
-  assert.match(timetableSource, /color:\s*"pink"/);
+  assert.match(dataSource, /DEFAULT_FAMILY_CALENDAR_COLOR\s*=\s*"pink"/);
   assert.match(addCss, /\.familyTimetableColorChipActive/);
 });
 
