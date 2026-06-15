@@ -177,13 +177,17 @@ export default function FamilyRoniClient() {
   }
 
   function deletePlan(planId) {
-    if (rounState.plans.length <= 1) return;
-    if (!window.confirm("이 시간표를 삭제할까요?")) return;
+    if (rounState.plans.length <= 1) {
+      setPlanError("마지막 시간표는 삭제할 수 없습니다.");
+      return;
+    }
+    if (!window.confirm("삭제할까요?")) return;
     const nextPlans = rounState.plans.filter((plan) => plan.id !== planId);
     const nextAssignments = rounState.assignments.filter((assignment) => assignment.planId !== planId);
     const savedState = persistRounState({ plans: nextPlans, assignments: nextAssignments });
     setOpenedPlanId(savedState.plans[0]?.id || "");
     setDraft(null);
+    setPlanError("");
   }
 
   function startApplyPlan(planId) {
@@ -267,7 +271,7 @@ export default function FamilyRoniClient() {
   return (
     <section className="familyPage" aria-label="로운이">
       <div className="familyCard familyCalendarPageCard">
-        <FamilyHeader active="calendar" />
+        <FamilyHeader active="roun" />
         <main className="familyCalendarFormPage">
           <section className="familyRoniPanel">
             <div className="familyCalendarFormHeader">
@@ -294,15 +298,22 @@ export default function FamilyRoniClient() {
             {planError ? <p className="familyCalendarFormError">{planError}</p> : null}
 
             <div className="familyRoniTemplateSheet" aria-label="주간시간표 목록">
-              {rounState.plans.map((plan) => (
+              {rounState.plans.length ? rounState.plans.map((plan) => (
                 <div className="familyRoniTemplateRow" key={plan.id}>
                   <strong>{plan.name}</strong>
-                  <button type="button" onClick={() => openPlan(plan.id)}>고치기</button>
-                  <button type="button" onClick={() => copyPlan(plan)}>복사</button>
-                  <button type="button" onClick={() => startApplyPlan(plan.id)}>적용하기</button>
-                  <button type="button" onClick={() => deletePlan(plan.id)}>삭제</button>
+                  <div className="familyRoniTemplateActions">
+                    <button type="button" onClick={() => openPlan(plan.id)}>고치기</button>
+                    <button type="button" onClick={() => copyPlan(plan)}>복사</button>
+                    <button type="button" onClick={() => startApplyPlan(plan.id)}>적용하기</button>
+                    <button type="button" onClick={() => deletePlan(plan.id)}>삭제</button>
+                  </div>
                 </div>
-              ))}
+              )) : (
+                <div className="familyRoniTemplateEmpty">
+                  <p>아직 시간표가 없습니다.</p>
+                  <button type="button" onClick={startNewPlan}>새 시간표</button>
+                </div>
+              )}
             </div>
 
             {applyPlanId ? (
@@ -355,9 +366,11 @@ export default function FamilyRoniClient() {
                 <div className="familyRoniTemplateRow" key={assignment.id}>
                   <strong>{assignment.planName}</strong>
                   <span>{assignment.startDate} ~</span>
-                  <button type="button" onClick={() => deleteAssignment(assignment.id)}>삭제</button>
+                  <div className="familyRoniTemplateActions">
+                    <button type="button" onClick={() => deleteAssignment(assignment.id)}>삭제</button>
+                  </div>
                 </div>
-              )) : <p className="familyTaskEmpty">아직 적용 이력이 없어요.</p>}
+              )) : <p className="familyTaskEmpty">적용 이력이 없습니다.</p>}
             </div>
           </section>
 
