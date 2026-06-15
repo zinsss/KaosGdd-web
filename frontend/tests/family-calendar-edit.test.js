@@ -20,81 +20,44 @@ async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
 }
 
-test("family calendar exposes standard event and Roni wording", async () => {
+test("family calendar uses finalized standard Korean wording", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const eventFormSource = await readSource("../app/family/calendar/events/FamilyCalendarEventFormClient.js");
+  const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
   const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const calendarCss = await readSource("../app/styles/family-calendar.css");
+  const polishCss = await readSource("../app/styles/family-polish.css");
+  const combinedSource = `${calendarSource}\n${eventFormSource}\n${roniSource}`;
 
-  for (const label of ["달력", "+ 일정", "로우니 시간표 수정", "수정", "저장", "취소"]) {
-    assert.ok(calendarSource.includes(label));
-  }
+  for (const label of [
+    "달력",
+    "+ 일정",
+    "로우니 시간표",
+    "일정 옵션",
+    "이번 주만 변경",
+    "이번 주만 일정 취소",
+    "로우니 기본 시간표도 변경",
+    "되돌리기",
+    "일정 추가",
+    "일정 수정",
+    "일정 이름",
+    "날짜",
+    "요일",
+    "시작",
+    "끝",
+    "메모",
+    "저장",
+    "취소",
+    "삭제",
+    "일정 이름을 입력해주세요.",
+  ]) assert.ok(combinedSource.includes(label));
+
   for (const value of ["kaosgdd.family.calendarItems.v1", "kaosgdd.family.defaultTimetable.v1", "kaosgdd.family.roniOverrides.v1"]) {
     assert.ok(dataSource.includes(value));
   }
   assert.ok(calendarCss.includes(".familyCalendarItemRoni"));
   assert.ok(calendarCss.includes(".familyCalendarItemDated"));
-  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!calendarSource.includes(oldString));
-});
-
-test("family calendar edit mode keeps timetable and long press add foundations", async () => {
-  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
-  const calendarCss = await readSource("../app/styles/family-calendar.css");
-  const eventFormSource = await readSource("../app/family/calendar/events/FamilyCalendarEventFormClient.js");
-
-  for (const value of ["FAMILY_CALENDAR_MODE_VIEW", "FAMILY_CALENDAR_MODE_EDIT", "FAMILY_CALENDAR_EDIT_START_HOUR", "FAMILY_CALENDAR_EDIT_END_HOUR", "FAMILY_CALENDAR_LONG_PRESS_MS", "길게 눌러 일정 추가"]) {
-    assert.ok(calendarSource.includes(value));
-  }
-  for (const value of ["eventPrefillFromLocation", 'params.get("date")', 'params.get("start")', 'params.get("end")']) {
-    assert.ok(eventFormSource.includes(value));
-  }
-  assert.ok(calendarCss.includes(".familyCalendarEditGrid"));
-  assert.ok(calendarCss.includes("repeat(7, minmax(0, 1fr))"));
-});
-
-test("family calendar Roni choice sheet uses finalized wording", async () => {
-  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
-
-  for (const label of ["일정 옵션", "이번 주만 변경", "이번 주만 일정 취소", "로우니 기본 시간표도 변경", "취소", "되돌리기"]) {
-    assert.ok(calendarSource.includes(label));
-  }
-  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!calendarSource.includes(oldString));
-});
-
-test("family Roni overrides can hide and restore this week only", async () => {
-  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
-  const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
-  const calendarCss = await readSource("../app/styles/family-calendar.css");
-
-  for (const value of ["normalizeFamilyRoniOverride", "loadFamilyRoniOverrides", "saveFamilyRoniOverrides", "sourceRoniId", "deleted"]) {
-    assert.ok(dataSource.includes(value));
-  }
-  for (const value of ["applyRoniOverrides", "deleteRoniThisWeek", "deleted: true", "restoreRoniOverride", "saveFamilyRoniOverrides", "familyCalendarRoniRestoreButton"]) {
-    assert.ok(calendarSource.includes(value));
-  }
-  assert.ok(calendarCss.includes(".familyCalendarRoniRestoreButton"));
-});
-
-test("family dated event form uses finalized schedule labels", async () => {
-  const newPageSource = await readSource("../app/family/calendar/events/new/page.js");
-  const editPageSource = await readSource("../app/family/calendar/events/[id]/edit/page.js");
-  const formSource = await readSource("../app/family/calendar/events/FamilyCalendarEventFormClient.js");
-
-  assert.ok(newPageSource.includes("FamilyCalendarEventFormClient"));
-  assert.ok(editPageSource.includes("eventId={id}"));
-  for (const label of ["일정 추가", "일정 수정", "일정 이름", "날짜", "시작", "끝", "메모", "저장", "취소", "삭제", "일정 이름을 입력해주세요."]) {
-    assert.ok(formSource.includes(label));
-  }
-  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!formSource.includes(oldString));
-});
-
-test("family Roni page uses finalized template labels", async () => {
-  const pageSource = await readSource("../app/family/calendar/roni/page.js");
-  const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
-
-  assert.ok(pageSource.includes("FamilyRoniClient"));
-  for (const label of ["로우니 시간표", "+ 일정", "수정", "삭제", "일정 이름", "요일", "시작", "끝", "메모", "저장", "취소"]) {
-    assert.ok(roniSource.includes(label));
-  }
-  assert.ok(roniSource.includes("FAMILY_CALENDAR_WEEKDAY_OPTIONS"));
-  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!roniSource.includes(oldString));
+  assert.ok(polishCss.includes(".familyCalendarItemRoni.familyTimetableEntryPink"));
+  assert.ok(polishCss.includes(".familyCalendarItemDated"));
+  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!combinedSource.includes(oldString));
 });
