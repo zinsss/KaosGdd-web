@@ -508,8 +508,8 @@ function FamilyCalendarEditWeek({
     : null;
 
   return (
-    <div className="familyCalendarEditWeek" aria-label="고치까 주간 시간표" ref={editScrollRef}>
-      <p className="familyCalendarEditHelp">길게 눌러 뭔날 추가</p>
+    <div className="familyCalendarEditWeek" aria-label="수정 주간 시간표" ref={editScrollRef}>
+      <p className="familyCalendarEditHelp">길게 눌러 일정 추가</p>
       <div
         className="familyCalendarEditGrid"
         onPointerCancel={finishDatedDrag}
@@ -566,12 +566,13 @@ function FamilyCalendarEditWeek({
                       className="familyCalendarRoniRestoreButton"
                       key={override.id}
                       type="button"
+                      onPointerDown={(event) => event.stopPropagation()}
                       onClick={(event) => {
                         event.stopPropagation();
                         onRestoreRoniOverride(override.id);
                       }}
                     >
-                      도로묵이다
+                      되돌리기
                     </button>
                   ))}
                 </div>
@@ -615,12 +616,12 @@ function FamilyCalendarEditWeek({
         ) : null}
       </div>
       {roniChoiceItem ? (
-        <div className="familyCalendarRoniChoiceSheet" role="dialog" aria-label="로니 예외">
-          <p>로니 예외</p>
-          <button type="button" onClick={chooseThisWeekOnly}>이번 주만 바꾸기</button>
-          <button type="button" onClick={chooseDeleteThisWeek}>이번 주만 치아라</button>
-          <button type="button" onClick={chooseRoniTemplate}>로니도 바꾸기</button>
-          <button type="button" onClick={closeRoniChoiceSheet}>고마하자</button>
+        <div className="familyCalendarRoniChoiceSheet" role="dialog" aria-label="일정 옵션">
+          <p>일정 옵션</p>
+          <button type="button" onClick={chooseThisWeekOnly}>이번 주만 변경</button>
+          <button type="button" onClick={chooseDeleteThisWeek}>이번 주만 일정 취소</button>
+          <button type="button" onClick={chooseRoniTemplate}>로우니 기본 시간표도 변경</button>
+          <button type="button" onClick={closeRoniChoiceSheet}>취소</button>
         </div>
       ) : null}
     </div>
@@ -773,28 +774,28 @@ export default function FamilyCalendarClient() {
       <div className="familyCalendarIntro">
         <div>
           <h2>달력</h2>
-          <p>뭔날은 날짜별로, 로니는 매주 흐름으로 같이 봐요.</p>
+          <p>일정과 로우니 시간표를 함께 봐요.</p>
         </div>
         <div className="familyCalendarActions">
           <Link className="familyCalendarActionLink familyCalendarActionLinkPrimary" href="/family/calendar/events/new">
-            + 뭔날
+            + 일정
           </Link>
           <Link className="familyCalendarActionLink" href="/family/calendar/roni">
-            로니 고치까
+            로우니 시간표 수정
           </Link>
           {editingCalendar ? (
             <>
-              <span className="familyCalendarEditStatus">고치는 중</span>
+              <span className="familyCalendarEditStatus">수정 중</span>
               <button type="button" onClick={exitEditMode}>
-                되따
+                저장
               </button>
               <button type="button" onClick={exitEditMode}>
-                고마하자
+                취소
               </button>
             </>
           ) : (
             <button type="button" onClick={() => setCalendarMode(FAMILY_CALENDAR_MODE_EDIT)}>
-              고치까
+              수정
             </button>
           )}
           <button type="button" onClick={() => changeMonth(-1)} aria-label="이전 달">
@@ -827,7 +828,7 @@ export default function FamilyCalendarClient() {
               </button>
 
               {!selected ? (
-                <button className="familyCalendarWeekCounts" type="button" onClick={() => setSelectedWeekKey(week.key)} aria-label="뭔날 개수">
+                <button className="familyCalendarWeekCounts" type="button" onClick={() => setSelectedWeekKey(week.key)} aria-label="일정 개수">
                   {week.days.map((day) => {
                     const count = datedItemsByDate[day.dateKey] || 0;
                     return <span key={day.dateKey}>{count ? count : ""}</span>;
@@ -861,7 +862,7 @@ export default function FamilyCalendarClient() {
                       </div>
                     ))
                   ) : (
-                    <p className="familyCalendarEmptyWeek">이번 주에는 아직 적힌 게 없어요.</p>
+                    <p className="familyCalendarEmptyWeek">이번 주에는 아직 적힌 일정이 없어요.</p>
                   )}
                 </div>
               )}
