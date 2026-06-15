@@ -8,12 +8,14 @@ import {
   FAMILY_CALENDAR_WEEKDAY_OPTIONS,
   FAMILY_RONI_DEFAULT_TEMPLATE_NAME,
   createDefaultFamilyRoniItem,
-  createFamilyRoniTemplate,
+  createFamilyCalendarId,
+  createFamilyRounPlan,
   familyCalendarColorClassName,
-  loadFamilyRoniTemplateState,
+  formatFamilyDateKey,
+  loadFamilyRounState,
   normalizeFamilyRoniItem,
-  saveFamilyRoniTemplateState,
-  updateFamilyRoniTemplateEntries,
+  saveFamilyRounState,
+  updateFamilyRounPlanItems,
 } from "../familyCalendarData.js";
 import {
   FAMILY_TIMETABLE_DEFAULT_FONT,
@@ -52,8 +54,6 @@ const FAMILY_RONI_COLOR_LABELS = {
   gray: "회색",
 };
 
-const FAMILY_RONI_SOURCE_COMPAT_LABELS = ["로우니 시간표"];
-
 function roniToDraft(item) {
   return {
     id: item.id || "",
@@ -72,102 +72,141 @@ function weekdayLabel(dayOfWeek) {
   return FAMILY_CALENDAR_WEEKDAY_OPTIONS.find((option) => option.dayOfWeek === Number(dayOfWeek))?.label || "월요일";
 }
 
+function todayDateKey() {
+  return formatFamilyDateKey(new Date());
+}
+
 export default function FamilyRoniClient() {
-  const [templateState, setTemplateState] = useState({ activeTemplateId: "", templates: [] });
-  const [openedTemplateId, setOpenedTemplateId] = useState("");
+  const [rounState, setRounState] = useState({ plans: [], assignments: [] });
+  const [openedPlanId, setOpenedPlanId] = useState("");
   const [loaded, setLoaded] = useState(false);
   const [draft, setDraft] = useState(null);
   const [error, setError] = useState("");
-  const [templateError, setTemplateError] = useState("");
-  const [showTemplateList, setShowTemplateList] = useState(false);
-  const [confirmApply, setConfirmApply] = useState(false);
-  void FAMILY_RONI_SOURCE_COMPAT_LABELS;
+  const [planError, setPlanError] = useState("");
+  const [applyPlanId, setApplyPlanId] = useState("");
+  const [applyDate, setApplyDate] = useState(todayDateKey());
 
   useEffect(() => {
-    const loadedState = loadFamilyRoniTemplateState();
-    setTemplateState(loadedState);
-    setOpenedTemplateId(loadedState.activeTemplateId || loadedState.templates[0]?.id || "");
+    const loadedState = loadFamilyRounState();
+    setRounState(loadedState);
+    setOpenedPlanId(loadedState.plans[0]?.id || "");
     setLoaded(true);
   }, []);
 
-  const openedTemplate = useMemo(() => {
-    return templateState.templates.find((template) => template.id === openedTemplateId) || templateState.templates[0] || null;
-  }, [openedTemplateId, templateState.templates]);
+  const openedPlan = useMemo(() => {
+    return rounState.plans.find((plan) => plan.id === openedPlanId) || rounState.plans[0] || null;
+  }, [openedPlanId, rounState.plans]);
 
   const visibleItems = useMemo(() => {
-    return (openedTemplate?.entries || [])
+    return (openedPlan?.items || [])
       .filter((item) => item.active !== false)
       .sort((a, b) => a.dayOfWeek - b.dayOfWeek || String(a.startTime).localeCompare(String(b.startTime)));
-  }, [openedTemplate]);
+  }, [openedPlan]);
 
-  const activeTemplateName = templateState.templates.find((template) => template.id === templateState.activeTemplateId)?.name || FAMILY_RONI_DEFAULT_TEMPLATE_NAME;
-  const openedTemplateIsActive = Boolean(openedTemplate?.id && openedTemplate.id === templateState.activeTemplateId);
+  const assignmentRows = useMemo(() => {
+    return [...rounState.assignments]
+      .sort((a, b) => String(b.startDate).localeCompare(String(a.startDate)))
+      .map((assignment) => ({
+        ...assignment,
+        planName: rounState.plans.find((plan) => plan.id === assignment.planId)?.name || FAMILY_RONI_DEFAULT_TEMPLATE_NAME,
+      }));
+  }, [rounState.assignments, rounState.plans]);
 
-  function persistTemplateState(nextState) {
-    const savedState = saveFamilyRoniTemplateState(nextState);
-    setTemplateState(savedState);
+  function persistRounState(nextState) {
+    const savedState = saveFamilyRounState(nextState);
+    setRounState(savedState);
     return savedState;
   }
 
-  function updateOpenedTemplateEntries(entries) {
-    if (!openedTemplate) return;
-    const nextState = updateFamilyRoniTemplateEntries(templateState, openedTemplate.id, entries);
-    persistTemplateState(nextState);
+  function updateOpenedPlanItems(items) {
+    if (!openedPlan) return;
+    const nextState = updateFamilyRounPlanItems(rounState, openedPlan.id, items);
+    persistRounState(nextState);
   }
 
-  function startNewTemplate() {
+  function startNewPlan() {
     const name = window.prompt("시간표 이름");
     if (name === null) return;
     if (!name.trim()) {
-      setTemplateError("시간표 이름을 입력해주세요.");
+      setPlanError("시간표 이름을 입력해주세요.");
       return;
     }
 
-    const nextTemplate = createFamilyRoniTemplate(name.trim(), []);
-    const nextState = persistTemplateState({
-      ...templateState,
-      templates: [...templateState.templates, nextTemplate],
-    });
-    setOpenedTemplateId(nextTemplate.id);
+    const nextPlan = createFamilyRounPlan(name.trim(), []);
+    persistRounState({ ...rounState, plans: [...rounState.plans, nextPlan] });
+    setOpenedPlanId(nextPlan.id);
     setDraft(null);
-    setConfirmApply(false);
-    setTemplateError("");
-    setShowTemplateList(false);
-    if (!nextState.activeTemplateId) {
-      persistTemplateState({ ...nextState, activeTemplateId: nextTemplate.id });
-    }
+    setPlanError("");
   }
 
-  function saveOpenedTemplate() {
-    if (!openedTemplate?.name?.trim()) {
-      setTemplateError("시간표 이름을 입력해주세요.");
+  function saveOpenedPlan() {
+    if (!openedPlan?.name?.trim()) {
+      setPlanError("시간표 이름을 입력해주세요.");
       return;
     }
     const now = new Date().toISOString();
-    persistTemplateState({
-      ...templateState,
-      templates: templateState.templates.map((template) => (
-        template.id === openedTemplate.id
-          ? { ...template, name: template.name.trim(), updatedAt: now }
-          : template
+    persistRounState({
+      ...rounState,
+      plans: rounState.plans.map((plan) => (
+        plan.id === openedPlan.id
+          ? { ...plan, name: plan.name.trim(), updatedAt: now }
+          : plan
       )),
     });
-    setTemplateError("");
+    setPlanError("");
   }
 
-  function openTemplate(templateId) {
-    setOpenedTemplateId(templateId);
-    setShowTemplateList(false);
-    setConfirmApply(false);
+  function openPlan(planId) {
+    setOpenedPlanId(planId);
     setDraft(null);
     setError("");
-    setTemplateError("");
+    setPlanError("");
   }
 
-  function confirmApplyTemplate() {
-    if (!openedTemplate) return;
-    persistTemplateState({ ...templateState, activeTemplateId: openedTemplate.id });
-    setConfirmApply(false);
+  function copyPlan(plan) {
+    const name = window.prompt("시간표 이름", `${plan.name} 복사`);
+    if (name === null) return;
+    if (!name.trim()) {
+      setPlanError("시간표 이름을 입력해주세요.");
+      return;
+    }
+    const copiedPlan = createFamilyRounPlan(name.trim(), plan.items || []);
+    persistRounState({ ...rounState, plans: [...rounState.plans, copiedPlan] });
+    setOpenedPlanId(copiedPlan.id);
+    setPlanError("");
+  }
+
+  function deletePlan(planId) {
+    if (rounState.plans.length <= 1) return;
+    if (!window.confirm("이 시간표를 삭제할까요?")) return;
+    const nextPlans = rounState.plans.filter((plan) => plan.id !== planId);
+    const nextAssignments = rounState.assignments.filter((assignment) => assignment.planId !== planId);
+    const savedState = persistRounState({ plans: nextPlans, assignments: nextAssignments });
+    setOpenedPlanId(savedState.plans[0]?.id || "");
+    setDraft(null);
+  }
+
+  function startApplyPlan(planId) {
+    setApplyPlanId(planId);
+    setApplyDate(todayDateKey());
+  }
+
+  function confirmApplyPlan() {
+    if (!applyPlanId || !applyDate) return;
+    const nextAssignment = {
+      id: createFamilyCalendarId(),
+      planId: applyPlanId,
+      startDate: applyDate,
+    };
+    persistRounState({ ...rounState, assignments: [...rounState.assignments, nextAssignment] });
+    setApplyPlanId("");
+  }
+
+  function deleteAssignment(assignmentId) {
+    persistRounState({
+      ...rounState,
+      assignments: rounState.assignments.filter((assignment) => assignment.id !== assignmentId),
+    });
   }
 
   function startNewRoni() {
@@ -208,42 +247,39 @@ export default function FamilyRoniClient() {
       return;
     }
 
-    const currentEntries = openedTemplate?.entries || [];
-    const exists = currentEntries.some((item) => item.id === normalized.id);
-    const nextEntries = exists
-      ? currentEntries.map((item) => (item.id === normalized.id ? normalized : item))
-      : [...currentEntries, normalized];
-    updateOpenedTemplateEntries(nextEntries);
+    const currentItems = openedPlan?.items || [];
+    const exists = currentItems.some((item) => item.id === normalized.id);
+    const nextItems = exists
+      ? currentItems.map((item) => (item.id === normalized.id ? normalized : item))
+      : [...currentItems, normalized];
+    updateOpenedPlanItems(nextItems);
     cancelEdit();
   }
 
   function deleteRoni(itemId = draft?.id) {
-    if (!itemId || !openedTemplate) return;
-    updateOpenedTemplateEntries((openedTemplate.entries || []).filter((item) => item.id !== itemId));
+    if (!itemId || !openedPlan) return;
+    updateOpenedPlanItems((openedPlan.items || []).filter((item) => item.id !== itemId));
     if (draft?.id === itemId) cancelEdit();
   }
 
   if (!loaded) return null;
 
   return (
-    <section className="familyPage" aria-label="로운이 시간표">
+    <section className="familyPage" aria-label="로운이">
       <div className="familyCard familyCalendarPageCard">
         <FamilyHeader active="calendar" />
         <main className="familyCalendarFormPage">
           <section className="familyRoniPanel">
             <div className="familyCalendarFormHeader">
               <div>
-                <h2>로운이 시간표</h2>
-                <p>여러 시간표를 저장해두고 필요한 시간표만 달력에 적용해요.</p>
+                <h2>로운이</h2>
+                <p>주간시간표를 여러 개 저장하고, 날짜별 적용 이력으로 달력에 반영해요.</p>
               </div>
               <div className="familyCalendarFormActions familyCalendarFormActionsInline">
-                <button className="familyTaskActionButton" type="button" onClick={() => setShowTemplateList((current) => !current)}>
-                  시간표 열기
-                </button>
-                <button className="familyTaskActionButton" type="button" onClick={saveOpenedTemplate}>
+                <button className="familyTaskActionButton" type="button" onClick={saveOpenedPlan}>
                   시간표 저장
                 </button>
-                <button className="familyTaskActionButton" type="button" onClick={startNewTemplate}>
+                <button className="familyTaskActionButton" type="button" onClick={startNewPlan}>
                   새 시간표
                 </button>
                 <button className="familyTaskActionButton familyTaskActionButtonPrimary" type="button" onClick={startNewRoni}>
@@ -255,40 +291,34 @@ export default function FamilyRoniClient() {
               </div>
             </div>
 
-            <div className="familyRoniTemplateStatus">
-              <p>현재 시간표: {openedTemplate?.name || FAMILY_RONI_DEFAULT_TEMPLATE_NAME}</p>
-              {openedTemplateIsActive ? (
-                <span>현재 적용 중</span>
-              ) : (
-                <button type="button" onClick={() => setConfirmApply(true)}>
-                  이 시간표 적용
-                </button>
-              )}
-              <small>달력 적용 시간표: {activeTemplateName}</small>
+            {planError ? <p className="familyCalendarFormError">{planError}</p> : null}
+
+            <div className="familyRoniTemplateSheet" aria-label="주간시간표 목록">
+              {rounState.plans.map((plan) => (
+                <div className="familyRoniTemplateRow" key={plan.id}>
+                  <strong>{plan.name}</strong>
+                  <button type="button" onClick={() => openPlan(plan.id)}>고치기</button>
+                  <button type="button" onClick={() => copyPlan(plan)}>복사</button>
+                  <button type="button" onClick={() => startApplyPlan(plan.id)}>적용하기</button>
+                  <button type="button" onClick={() => deletePlan(plan.id)}>삭제</button>
+                </div>
+              ))}
             </div>
-            {templateError ? <p className="familyCalendarFormError">{templateError}</p> : null}
 
-            {showTemplateList ? (
-              <div className="familyRoniTemplateSheet" aria-label="시간표 열기">
-                {templateState.templates.map((template) => (
-                  <div className="familyRoniTemplateRow" key={template.id}>
-                    <strong>{template.name}</strong>
-                    {template.id === templateState.activeTemplateId ? <span>현재 적용 중</span> : null}
-                    <button type="button" onClick={() => openTemplate(template.id)}>
-                      열기
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-
-            {confirmApply ? (
+            {applyPlanId ? (
               <div className="familyRoniApplyConfirm" role="dialog" aria-label="적용할까요?">
-                <p>이 시간표를 달력에 적용할까요?</p>
-                <button type="button" onClick={confirmApplyTemplate}>적용</button>
-                <button type="button" onClick={() => setConfirmApply(false)}>취소</button>
+                <label>
+                  <span>몇년 몇월 몇일부터 적용할까요?</span>
+                  <input type="date" value={applyDate} onChange={(event) => setApplyDate(event.target.value)} />
+                </label>
+                <button type="button" onClick={confirmApplyPlan}>적용</button>
+                <button type="button" onClick={() => setApplyPlanId("")}>취소</button>
               </div>
             ) : null}
+
+            <div className="familyRoniTemplateStatus">
+              <p>주간시간표: {openedPlan?.name || FAMILY_RONI_DEFAULT_TEMPLATE_NAME}</p>
+            </div>
 
             <div className="familyRoniList">
               {visibleItems.length ? (
@@ -313,6 +343,21 @@ export default function FamilyRoniClient() {
               ) : (
                 <p className="familyTaskEmpty">아직 로운이 시간표가 없어요.</p>
               )}
+            </div>
+          </section>
+
+          <section className="familyRoniPanel" aria-label="적용 이력">
+            <div className="familyCalendarFormHeader">
+              <h2>적용 이력</h2>
+            </div>
+            <div className="familyRoniTemplateSheet">
+              {assignmentRows.length ? assignmentRows.map((assignment) => (
+                <div className="familyRoniTemplateRow" key={assignment.id}>
+                  <strong>{assignment.planName}</strong>
+                  <span>{assignment.startDate} ~</span>
+                  <button type="button" onClick={() => deleteAssignment(assignment.id)}>삭제</button>
+                </div>
+              )) : <p className="familyTaskEmpty">아직 적용 이력이 없어요.</p>}
             </div>
           </section>
 
