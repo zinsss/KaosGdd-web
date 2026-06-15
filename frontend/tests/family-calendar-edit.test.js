@@ -2,12 +2,22 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-test("family calendar exposes dated event and Roni edit actions", async () => {
+const OLD_FAMILY_STRINGS = [
+  "고치까",
+  "치아라",
+  "다했데이",
+  "도로묵이다",
+  "고마하자",
+  "이번 주만 치아라",
+  "로니도 바꾸기",
+];
+
+test("family calendar exposes standard event and Roni edit actions", async () => {
   const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
   const dataSource = await readFile(new URL("../app/family/calendar/familyCalendarData.js", import.meta.url), "utf8");
   const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
 
-  for (const value of ["+ 뭔날", "로니 고치까", "/family/calendar/events/new", "/family/calendar/roni", "getDefaultSelectedWeekKeyForMonth(nextMonth)"]) {
+  for (const value of ["+ 일정", "로우니 시간표 수정", "/family/calendar/events/new", "/family/calendar/roni", "getDefaultSelectedWeekKeyForMonth(nextMonth)"]) {
     assert.ok(calendarSource.includes(value));
   }
   assert.ok(calendarSource.includes('item.type === "roni" ? "/family/calendar/roni" : `/family/calendar/events/${item.id}/edit`'));
@@ -20,9 +30,10 @@ test("family calendar exposes dated event and Roni edit actions", async () => {
   assert.ok(dataSource.includes("today.getFullYear() === monthDate.getFullYear()"));
   assert.ok(calendarCss.includes(".familyCalendarActionLink"));
   assert.ok(calendarCss.includes(".familyCalendarForm"));
+  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!calendarSource.includes(oldString));
 });
 
-test("family calendar 고치까 mode swaps compact week for full timetable", async () => {
+test("family calendar edit mode swaps compact week for full timetable", async () => {
   const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
   const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
 
@@ -31,9 +42,7 @@ test("family calendar 고치까 mode swaps compact week for full timetable", asy
   assert.ok(calendarSource.includes("useState(FAMILY_CALENDAR_MODE_VIEW)"));
   assert.ok(calendarSource.includes("setCalendarMode(FAMILY_CALENDAR_MODE_EDIT)"));
   assert.ok(calendarSource.includes("setCalendarMode(FAMILY_CALENDAR_MODE_VIEW)"));
-  for (const value of ["고치까", "고치는 중", "되따", "고마하자", "길게 눌러 뭔날 추가"]) {
-    assert.ok(calendarSource.includes(value));
-  }
+  for (const value of ["수정", "수정 중", "저장", "취소", "길게 눌러 일정 추가"]) assert.ok(calendarSource.includes(value));
   assert.ok(calendarSource.includes("editingCalendar ?"));
   assert.ok(calendarSource.includes("<FamilyCalendarEditWeek"));
   assert.ok(calendarSource.includes("familyCalendarExpandedWeek"));
@@ -70,7 +79,7 @@ test("family calendar edit mode long press opens new event with slot prefill", a
   assert.ok(calendarSource.includes("onPointerUp={clearPendingLongPress}"));
   assert.ok(calendarSource.includes("onPointerCancel={clearPendingLongPress}"));
   assert.ok(calendarSource.includes("event.stopPropagation()"));
-  assert.ok(calendarSource.includes("className=\"familyCalendarLongPressTarget\""));
+  assert.ok(calendarSource.includes('className="familyCalendarLongPressTarget"'));
   assert.ok(calendarSource.includes("editingCalendar ?"));
   assert.doesNotMatch(calendarSource, /onClick=\{\(event\) => startSlotLongPress/);
   assert.doesNotMatch(calendarSource, /onClick=\{\(\) => openNewEventForSlot/);
@@ -88,42 +97,42 @@ test("family calendar edit mode long press opens new event with slot prefill", a
   assert.match(calendarCss, /\.familyCalendarLongPressTarget[\s\S]*?pointer-events:\s*none;/);
 });
 
-test("family calendar edit mode moves 뭔날 and 로니 items through the correct save paths", async () => {
+test("family calendar edit mode moves dated and Roni items through the correct save paths", async () => {
   const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
   const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
 
-  assert.ok(calendarSource.includes("saveFamilyCalendarItems"));
-  assert.ok(calendarSource.includes("saveFamilyRoniItems"));
-  assert.ok(calendarSource.includes("function eventDurationMinutes(item)"));
-  assert.ok(calendarSource.includes("return FAMILY_CALENDAR_DEFAULT_EVENT_DURATION_MINUTES"));
-  assert.ok(calendarSource.includes("function movedItemValues(item, target)"));
-  assert.ok(calendarSource.includes("function startDatedDrag(event, item)"));
-  assert.ok(calendarSource.includes("function startRoniDrag(event, item)"));
-  assert.ok(calendarSource.includes("function startCalendarItemDrag(event, item)"));
-  assert.ok(calendarSource.includes('const editableDatedItem = editItem && item.type === "dated"'));
-  assert.ok(calendarSource.includes('const editableRoniItem = editItem && item.type === "roni"'));
-  assert.ok(calendarSource.includes("if (editableDatedItem && onStartDatedDrag) onStartDatedDrag(event, item);"));
-  assert.ok(calendarSource.includes("if (editableRoniItem && onStartRoniDrag) onStartRoniDrag(event, item);"));
-  assert.ok(calendarSource.includes("function findDropTarget(clientX, clientY)"));
-  assert.ok(calendarSource.includes('dropElement.dataset.familyCalendarDrop === "date"'));
-  assert.ok(calendarSource.includes("slotTimeFromPoint(clientY, dropElement.getBoundingClientRect())"));
-  assert.ok(calendarSource.includes("function moveDatedItem(itemId, target)"));
-  assert.ok(calendarSource.includes("function moveRoniTemplate(roniItem, target)"));
-  assert.ok(calendarSource.includes("if (pending.itemType === \"roni\")"));
-  assert.ok(calendarSource.includes("setPendingRoniMove({ item: pending.item, target: currentDragState.target })"));
-  assert.ok(calendarSource.includes("onCreateRoniOverride(pendingRoniMove.item, pendingRoniMove.target)"));
-  assert.ok(calendarSource.includes("onMoveRoniTemplate(pendingRoniMove.item, pendingRoniMove.target)"));
-  assert.ok(calendarSource.includes("saveFamilyCalendarItems(nextItems)"));
-  assert.ok(calendarSource.includes("saveFamilyRoniItems(nextItems)"));
-  assert.ok(calendarSource.includes('data-family-calendar-drop="date"'));
-  assert.ok(calendarSource.includes('data-family-calendar-drop="time"'));
-  assert.ok(calendarSource.includes("Math.floor(minutesFromStart / 10) * 10"));
-
-  assert.ok(calendarSource.includes("const FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX = 48"));
-  assert.ok(calendarSource.includes("function updateAutoScroll(clientY)"));
-  assert.ok(calendarSource.includes("window.setInterval"));
-  assert.ok(calendarSource.includes("function stopAutoScroll()"));
-  assert.ok(calendarSource.includes("stopAutoScroll();"));
+  for (const value of [
+    "saveFamilyCalendarItems",
+    "saveFamilyRoniItems",
+    "function eventDurationMinutes(item)",
+    "return FAMILY_CALENDAR_DEFAULT_EVENT_DURATION_MINUTES",
+    "function movedItemValues(item, target)",
+    "function startDatedDrag(event, item)",
+    "function startRoniDrag(event, item)",
+    "function startCalendarItemDrag(event, item)",
+    'const editableDatedItem = editItem && item.type === "dated"',
+    'const editableRoniItem = editItem && item.type === "roni"',
+    "if (editableDatedItem && onStartDatedDrag) onStartDatedDrag(event, item);",
+    "if (editableRoniItem && onStartRoniDrag) onStartRoniDrag(event, item);",
+    "function findDropTarget(clientX, clientY)",
+    'dropElement.dataset.familyCalendarDrop === "date"',
+    "slotTimeFromPoint(clientY, dropElement.getBoundingClientRect())",
+    "function moveDatedItem(itemId, target)",
+    "function moveRoniTemplate(roniItem, target)",
+    'if (pending.itemType === "roni")',
+    "setPendingRoniMove({ item: pending.item, target: currentDragState.target })",
+    "onCreateRoniOverride(pendingRoniMove.item, pendingRoniMove.target)",
+    "onMoveRoniTemplate(pendingRoniMove.item, pendingRoniMove.target)",
+    "saveFamilyCalendarItems(nextItems)",
+    "saveFamilyRoniItems(nextItems)",
+    'data-family-calendar-drop="date"',
+    'data-family-calendar-drop="time"',
+    "Math.floor(minutesFromStart / 10) * 10",
+    "const FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX = 48",
+    "function updateAutoScroll(clientY)",
+    "window.setInterval",
+    "function stopAutoScroll()",
+  ]) assert.ok(calendarSource.includes(value));
 
   assert.match(calendarCss, /\.familyCalendarEditItemDragging[\s\S]*?opacity:/);
   assert.match(calendarCss, /\.familyCalendarDragGhost[\s\S]*?position:\s*fixed;/);
@@ -140,32 +149,37 @@ test("family Roni override foundation stores and applies weekly exceptions", asy
   assert.ok(dataSource.includes("function normalizeFamilyRoniOverride"));
   assert.ok(dataSource.includes("function loadFamilyRoniOverrides"));
   assert.ok(dataSource.includes("function saveFamilyRoniOverrides"));
-  for (const field of ["sourceRoniId", "date", "startTime", "endTime", "title", "deleted"]) {
-    assert.ok(dataSource.includes(field));
-  }
+  for (const field of ["sourceRoniId", "date", "startTime", "endTime", "title", "deleted"]) assert.ok(dataSource.includes(field));
 
-  assert.ok(calendarSource.includes("function applyRoniOverrides"));
-  assert.ok(calendarSource.includes("const weekGeneratedRoniItems = roniItems.flatMap"));
-  assert.ok(calendarSource.includes("applyRoniOverrides(weekGeneratedRoniItems, roniOverrides"));
-  assert.ok(calendarSource.includes("if (exactOverride.deleted) return []"));
-  assert.ok(calendarSource.includes("overridden: true"));
-  assert.ok(calendarSource.includes("loadFamilyRoniOverrides()"));
-  assert.ok(calendarSource.includes("saveFamilyRoniOverrides(nextOverrides)"));
-  assert.ok(calendarSource.includes("function createRoniOverride"));
-  assert.ok(calendarSource.includes("setRoniOverrides"));
-  assert.ok(calendarSource.includes("sourceRoniId: `${item.id}:${slotIndex}`"));
-  assert.ok(calendarSource.includes("roniOverrideKey(override.sourceRoniId, override.date) !== roniOverrideKey(sourceRoniId, values.date)"));
-
-  for (const value of ["로니 예외", "이번 주만 바꾸기", "로니도 바꾸기", "고마하자", "familyCalendarRoniOverrideBadge", "familyCalendarRoniChoiceSheet"]) {
-    assert.ok(calendarSource.includes(value) || calendarCss.includes(value));
-  }
+  for (const value of [
+    "function applyRoniOverrides",
+    "const weekGeneratedRoniItems = roniItems.flatMap",
+    "applyRoniOverrides(weekGeneratedRoniItems, roniOverrides",
+    "if (exactOverride.deleted) return []",
+    "overridden: true",
+    "loadFamilyRoniOverrides()",
+    "saveFamilyRoniOverrides(nextOverrides)",
+    "function createRoniOverride",
+    "setRoniOverrides",
+    "sourceRoniId: `${item.id}:${slotIndex}`",
+    "roniOverrideKey(override.sourceRoniId, override.date) !== roniOverrideKey(sourceRoniId, values.date)",
+    "일정 옵션",
+    "이번 주만 변경",
+    "이번 주만 일정 취소",
+    "로우니 기본 시간표도 변경",
+    "취소",
+    "되돌리기",
+    "familyCalendarRoniOverrideBadge",
+    "familyCalendarRoniChoiceSheet",
+  ]) assert.ok(calendarSource.includes(value) || calendarCss.includes(value));
+  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!calendarSource.includes(oldString));
 });
 
 test("family Roni can be hidden and restored for only this week", async () => {
   const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
   const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
 
-  assert.ok(calendarSource.includes("이번 주만 치아라"));
+  assert.ok(calendarSource.includes("이번 주만 일정 취소"));
   assert.ok(calendarSource.includes("function chooseDeleteThisWeek()"));
   assert.ok(calendarSource.includes("function deleteRoniThisWeek(roniItem)"));
   assert.ok(calendarSource.includes("deleted: true"));
@@ -173,7 +187,7 @@ test("family Roni can be hidden and restored for only this week", async () => {
   assert.ok(calendarSource.includes("groupDeletedRoniOverridesByDate"));
   assert.ok(calendarSource.includes("deletedRoniOverridesByDate"));
   assert.ok(calendarSource.includes("familyCalendarRoniRestoreButton"));
-  assert.ok(calendarSource.includes("도로묵이다"));
+  assert.ok(calendarSource.includes("되돌리기"));
   assert.ok(calendarSource.includes("function restoreRoniOverride(overrideId)"));
   assert.ok(calendarSource.includes("current.filter((override) => override.id !== overrideId)"));
   assert.ok(calendarSource.includes("saveFamilyRoniOverrides(nextOverrides)"));
@@ -182,9 +196,10 @@ test("family Roni can be hidden and restored for only this week", async () => {
   assert.ok(calendarSource.indexOf("function deleteRoniThisWeek") < calendarSource.indexOf("function moveRoniTemplate"));
   assert.match(calendarCss, /\.familyCalendarRoniRestoreStack[\s\S]*?position:\s*absolute;/);
   assert.match(calendarCss, /\.familyCalendarRoniRestoreButton[\s\S]*?border:\s*0;/);
+  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!calendarSource.includes(oldString));
 });
 
-test("family dated event add and edit routes exist with Korean form labels", async () => {
+test("family dated event add and edit routes exist with standard form labels", async () => {
   const newPageSource = await readFile(new URL("../app/family/calendar/events/new/page.js", import.meta.url), "utf8");
   const editPageSource = await readFile(new URL("../app/family/calendar/events/[id]/edit/page.js", import.meta.url), "utf8");
   const formSource = await readFile(new URL("../app/family/calendar/events/FamilyCalendarEventFormClient.js", import.meta.url), "utf8");
@@ -192,59 +207,60 @@ test("family dated event add and edit routes exist with Korean form labels", asy
   assert.ok(newPageSource.includes("FamilyCalendarEventFormClient"));
   assert.ok(editPageSource.includes("eventId={id}"));
   for (const value of [
-    "모할꼬",
-    "언제고",
+    "일정 추가",
+    "일정 수정",
+    "일정 이름",
+    "날짜",
     "시작",
     "끝",
-    "머라? 좀 더 지끼봐라",
-    "되따",
-    "고마하자",
-    "치아라",
+    "메모",
+    "저장",
+    "취소",
+    "삭제",
+    "일정 이름을 입력해주세요.",
     "loadFamilyCalendarItems",
     "saveFamilyCalendarItems",
     "normalizeFamilyCalendarItem",
     "router.push(\"/family/calendar\")",
     "current.filter((item) => item.id !== eventId)",
-  ]) {
-    assert.ok(formSource.includes(value));
-  }
+  ]) assert.ok(formSource.includes(value));
+  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!formSource.includes(oldString));
 });
 
-test("family Roni page lists and edits weekly template items", async () => {
+test("family Roni page lists and edits weekly template items with standard labels", async () => {
   const pageSource = await readFile(new URL("../app/family/calendar/roni/page.js", import.meta.url), "utf8");
   const roniSource = await readFile(new URL("../app/family/calendar/roni/FamilyRoniClient.js", import.meta.url), "utf8");
 
   assert.ok(pageSource.includes("FamilyRoniClient"));
   for (const value of [
-    "로니",
-    "+ 로니",
-    "고치까",
-    "치아라",
-    "모할꼬",
-    "무슨요일",
+    "로우니 시간표",
+    "+ 일정",
+    "수정",
+    "삭제",
+    "일정 이름",
+    "요일",
     "시작",
     "끝",
-    "머라? 좀 더 지끼봐라",
-    "되따",
-    "고마하자",
+    "메모",
+    "저장",
+    "취소",
     "loadFamilyRoniItems",
     "saveFamilyRoniItems",
     "normalizeFamilyRoniItem",
     "current.filter((item) => item.id !== itemId)",
-  ]) {
-    assert.ok(roniSource.includes(value));
-  }
+  ]) assert.ok(roniSource.includes(value));
   for (const weekday of ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]) {
     assert.ok(roniSource.includes(weekday) || roniSource.includes("FAMILY_CALENDAR_WEEKDAY_OPTIONS"));
   }
+  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!roniSource.includes(oldString));
 });
 
-test("family calendar add edit foundation keeps visible wording clean", async () => {
+test("family calendar add edit foundation keeps removed wording out of visible sources", async () => {
   const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
   const eventFormSource = await readFile(new URL("../app/family/calendar/events/FamilyCalendarEventFormClient.js", import.meta.url), "utf8");
   const roniSource = await readFile(new URL("../app/family/calendar/roni/FamilyRoniClient.js", import.meta.url), "utf8");
 
   for (const source of [calendarSource, eventFormSource, roniSource]) {
-    assert.ok(!source.includes("뭔일"));
+    for (const oldString of [...OLD_FAMILY_STRINGS, "뭔날", "뭔일", "로니 고치까"]) assert.ok(!source.includes(oldString));
   }
 });
