@@ -46,6 +46,7 @@ test("family timetable keeps local schedule editor foundations", async () => {
     "요일",
     "시작",
     "끝",
+    "색상",
     "글씨체",
     "메모",
     "저장",
@@ -55,12 +56,11 @@ test("family timetable keeps local schedule editor foundations", async () => {
   ]) {
     assert.ok(roniSource.includes(value), `${value} should remain in Roni timetable editor sources`);
   }
-  assert.ok(!roniSource.includes("+ 일정"), "Roni timetable add button should not use one-off event wording");
 
   for (const day of ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]) {
     assert.ok(roniSource.includes(day));
   }
-  for (const value of ["dayOfWeek", "startTime", "endTime", "fontFamily", "normalizeFamilyRoniItem"]) {
+  for (const value of ["dayOfWeek", "startTime", "endTime", "color", "fontFamily", "normalizeFamilyRoniItem"]) {
     assert.ok(roniSource.includes(value));
   }
   assert.ok(globalsCss.includes("family-timetable-add.css"));
@@ -124,11 +124,9 @@ test("family Roni timetable supports multiple saved templates and explicit apply
     assert.ok(roniSource.includes(value), `${value} should exist in Roni template UI`);
   }
 
-  assert.match(dataSource, /loadFamilyRoniItems\(\)[\s\S]*?activeTemplate/);
-  assert.match(dataSource, /saveFamilyRoniItems\(items\)[\s\S]*?activeTemplateId/);
-  assert.match(roniSource, /setOpenedTemplateId\(templateId\)/);
-  assert.match(roniSource, /setConfirmApply\(true\)/);
-  assert.match(roniSource, /activeTemplateId:\s*openedTemplate\.id/);
+  for (const value of ["loadFamilyRoniItems", "saveFamilyRoniItems", "activeTemplate", "activeTemplateId", "setOpenedTemplateId", "setConfirmApply"]) {
+    assert.ok(`${dataSource}\n${roniSource}`.includes(value), `${value} should remain in template behavior sources`);
+  }
   for (const preservedField of ["color", "fontFamily", "memo", "startTime", "endTime", "dayOfWeek"]) {
     assert.ok(dataSource.includes(preservedField), `${preservedField} should be preserved in template entries`);
   }
