@@ -17,6 +17,7 @@
 @import "./styles/family-tasks.css";
 @import "./styles/family-calendar.css";
 @import "./styles/family-polish.css";
+@import "./styles/family-fonts.css";
 
 .markdownBody {
   line-height: 1.5;
