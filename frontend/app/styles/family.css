@@ -1,18 +1,11 @@
-@font-face {
-  font-family: "GangwonEducationHyunokSam";
-  src: url("https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2201-2@1.0/GangwonEduHyeonokT_OTFMediumA.woff") format("woff");
-  font-weight: normal;
-  font-display: swap;
-}
-
-.familyPage {
+ .familyPage {
   width: calc(100% - (var(--app-column-edge-padding) * 2));
   max-width: var(--app-column-max-width);
   min-height: 100%;
   margin: 0 auto;
   padding: 0 0 var(--app-card-gap);
   color: #4e2536;
-  font-family: "GangwonEducationHyunokSam", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  font-family: "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
 }
 
 .familyPage button,
