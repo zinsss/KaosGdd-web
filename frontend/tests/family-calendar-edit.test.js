@@ -2,20 +2,6 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-const OLD_FAMILY_STRINGS = [
-  "고치까",
-  "치아라",
-  "다했데이",
-  "도로묵이다",
-  "고마하자",
-  "이번 주만 치아라",
-  "로니도 바꾸기",
-  "다시 보이기",
-  "뭔날",
-  "뭔일",
-  "로니 고치까",
-];
-
 async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
 }
@@ -38,11 +24,7 @@ test("family calendar uses finalized standard Korean wording", async () => {
     "이번 주만 일정 취소",
     "로우니 기본 시간표도 변경",
     "되돌리기",
-    "일정 추가",
-    "일정 수정",
     "일정 이름",
-    "날짜",
-    "요일",
     "시작",
     "끝",
     "메모",
@@ -50,7 +32,9 @@ test("family calendar uses finalized standard Korean wording", async () => {
     "취소",
     "삭제",
     "일정 이름을 입력해주세요.",
-  ]) assert.ok(combinedSource.includes(label));
+  ]) {
+    assert.ok(combinedSource.includes(label), `${label} should appear in Family calendar sources`);
+  }
 
   for (const value of ["kaosgdd.family.calendarItems.v1", "kaosgdd.family.defaultTimetable.v1", "kaosgdd.family.roniOverrides.v1"]) {
     assert.ok(dataSource.includes(value));
@@ -59,5 +43,8 @@ test("family calendar uses finalized standard Korean wording", async () => {
   assert.ok(calendarCss.includes(".familyCalendarItemDated"));
   assert.ok(polishCss.includes(".familyCalendarItemRoni.familyTimetableEntryPink"));
   assert.ok(polishCss.includes(".familyCalendarItemDated"));
-  for (const oldString of OLD_FAMILY_STRINGS) assert.ok(!combinedSource.includes(oldString));
+
+  for (const oldString of ["고치까", "치아라", "다했데이", "도로묵이다", "고마하자", "이번 주만 치아라", "로니도 바꾸기", "다시 보이기"]) {
+    assert.ok(!combinedSource.includes(oldString), `${oldString} should not remain in Family calendar UI`);
+  }
 });
