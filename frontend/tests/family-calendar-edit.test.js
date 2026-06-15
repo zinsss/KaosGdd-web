@@ -18,11 +18,11 @@ test("family calendar uses finalized standard Korean wording", async () => {
   for (const label of [
     "달력",
     "+ 일정",
-    "로우니 시간표",
+    "로운이 시간표",
     "일정 옵션",
     "이번 주만 변경",
     "이번 주만 일정 취소",
-    "로우니 기본 시간표도 변경",
+    "로운이 시간표 변경",
     "되돌리기",
     "일정 이름",
     "시작",
@@ -36,9 +36,17 @@ test("family calendar uses finalized standard Korean wording", async () => {
     assert.ok(combinedSource.includes(label), `${label} should appear in Family calendar sources`);
   }
 
-  for (const value of ["kaosgdd.family.calendarItems.v1", "kaosgdd.family.defaultTimetable.v1", "kaosgdd.family.roniOverrides.v1"]) {
+  for (const value of [
+    "kaosgdd.family.calendarItems.v1",
+    "kaosgdd.family.defaultTimetable.v1",
+    "kaosgdd.family.rounWeeklyPlans.v1",
+    "kaosgdd.family.rounAssignments.v1",
+    "kaosgdd.family.roniOverrides.v1",
+  ]) {
     assert.ok(dataSource.includes(value));
   }
+  assert.ok(dataSource.includes("resolveFamilyRounPlanForDate"));
+  assert.ok(calendarSource.includes("resolveFamilyRounPlanForDate"));
   assert.ok(calendarCss.includes(".familyCalendarItemRoni"));
   assert.ok(calendarCss.includes(".familyCalendarItemDated"));
   assert.ok(polishCss.includes(".familyCalendarItemRoni.familyTimetableEntryPink"));
@@ -53,7 +61,7 @@ test("family calendar mobile header uses compact two-row actions", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const calendarCss = await readSource("../app/styles/family-calendar.css");
 
-  for (const label of ["+ 일정", "로우니 시간표 수정", "수정"]) {
+  for (const label of ["+ 일정", "로운이 시간표 수정", "수정"]) {
     assert.ok(calendarSource.includes(label), `${label} should remain in calendar header actions`);
   }
   assert.ok(calendarSource.includes("changeMonth(-1)"));

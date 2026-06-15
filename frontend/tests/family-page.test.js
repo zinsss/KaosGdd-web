@@ -47,14 +47,22 @@ test("family font no longer exposes Hyunok and remains Family-scoped", async () 
 test("family dashboard and calendar expose standard labels", async () => {
   const dashboardSource = await readSource("../app/family/FamilyDashboardClient.js");
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
   const calendarDataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const globalsCss = await readSource("../app/globals.css");
 
-  for (const label of ["달력", "할 일", "로우니 시간표", "일정", "+ 일정"]) {
-    assert.ok((dashboardSource + calendarSource).includes(label), `${label} should appear in dashboard/calendar UI`);
+  for (const label of ["달력", "할 일", "로운이 시간표", "일정", "+ 일정"]) {
+    assert.ok((dashboardSource + calendarSource + roniSource).includes(label), `${label} should appear in dashboard/calendar UI`);
   }
-  for (const value of ["kaosgdd.family.calendarItems.v1", "kaosgdd.family.defaultTimetable.v1", "FAMILY_CALENDAR_DAY_LABELS"]) {
+  for (const value of [
+    "kaosgdd.family.calendarItems.v1",
+    "kaosgdd.family.defaultTimetable.v1",
+    "kaosgdd.family.rounWeeklyPlans.v1",
+    "kaosgdd.family.rounAssignments.v1",
+    "FAMILY_CALENDAR_DAY_LABELS",
+  ]) {
     assert.ok(calendarDataSource.includes(value));
   }
   assert.ok(globalsCss.includes("family-calendar.css"));
+  assert.ok(globalsCss.includes("family-roni-templates.css"));
 });
