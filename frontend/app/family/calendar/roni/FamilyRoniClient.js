@@ -13,13 +13,13 @@ import {
   normalizeFamilyRoniItem,
   saveFamilyRoniTemplateState,
   updateFamilyRoniTemplateEntries,
-} from "../familyCalendarData";
+} from "../familyCalendarData.js";
 import {
   FAMILY_TIMETABLE_DEFAULT_FONT,
   FAMILY_TIMETABLE_FONT_PRESETS,
   getFamilyTimetableFontFamily,
   normalizeFamilyTimetableFont,
-} from "../../familyTimetableFonts";
+} from "../../familyTimetableFonts.js";
 
 function roniToDraft(item) {
   return {
