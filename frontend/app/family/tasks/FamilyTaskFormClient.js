@@ -41,7 +41,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
     if (!taskId) return;
     const task = loadedTasks.find((candidate) => candidate.id === taskId);
     if (!task) {
-      setError("하그라를 찾을 수 없어요.");
+      setError("할 일을 찾을 수 없어요.");
       return;
     }
 
@@ -55,7 +55,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
     });
   }, [taskId]);
 
-  const pageTitle = useMemo(() => (isEditing ? "고치까" : "하그라"), [isEditing]);
+  const pageTitle = useMemo(() => (isEditing ? "할 일 수정" : "할 일 추가"), [isEditing]);
   const showPriority = draft.assignee === FAMILY_TASK_PRIORITY_ASSIGNEE;
 
   function updateDraft(field, value) {
@@ -135,7 +135,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
         <form className="familyTaskForm" onSubmit={saveTask}>
           <h2 className="familyTaskPageTitle">{pageTitle}</h2>
           <label>
-            <span>모할꼬 *</span>
+            <span>제목 *</span>
             <input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} />
           </label>
           {error ? (
@@ -145,13 +145,13 @@ export default function FamilyTaskFormClient({ taskId = null }) {
           ) : null}
 
           <label>
-            <span>머라? 좀 더 지끼봐라</span>
+            <span>설명</span>
             <textarea rows={4} value={draft.description} onChange={(event) => updateDraft("description", event.target.value)} />
           </label>
 
           <div className="familyTaskFormGrid">
             <label>
-              <span>누가하꼬</span>
+              <span>담당자</span>
               <select value={draft.assignee} onChange={(event) => updateDraft("assignee", event.target.value)}>
                 {FAMILY_TASK_ASSIGNEES.map((assignee) => (
                   <option value={assignee} key={assignee}>
@@ -163,7 +163,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
 
             {showPriority ? (
               <label className="familyTaskPriorityField">
-                <span>얼매나 급하노</span>
+                <span>중요도</span>
                 <select value={draft.priority || FAMILY_TASK_DEFAULT_PRIORITY} onChange={(event) => updateDraft("priority", event.target.value)}>
                   {FAMILY_TASK_PRIORITIES.map((priority) => (
                     <option value={priority} key={priority}>
@@ -175,7 +175,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
             ) : null}
 
             <label>
-              <span>언제하꼬</span>
+              <span>날짜</span>
               <input
                 className="familyTaskDateInput"
                 type="date"
@@ -187,14 +187,14 @@ export default function FamilyTaskFormClient({ taskId = null }) {
 
           <div className="familyTaskFormActions">
             <button className="familyTaskSave" type="submit">
-              되따
+              저장
             </button>
             <Link className="familyTaskCancel" href="/family">
-              고마하자
+              취소
             </Link>
             {isEditing ? (
               <button className="familyTaskDelete" type="button" onClick={deleteTask}>
-                치아라
+                삭제
               </button>
             ) : null}
           </div>
