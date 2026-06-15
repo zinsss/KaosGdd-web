@@ -17,22 +17,24 @@ const TIMETABLE_COLORS = [
   ["Gray", "#ded8d2"],
 ];
 
-test("family page uses larger standard Korean font sizing without affecting global UI", async () => {
+test("family page uses larger NanumBarunPen font sizing without affecting global UI", async () => {
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
+  const familyFontsCss = await readFile(new URL("../app/styles/family-fonts.css", import.meta.url), "utf8");
   const polishCss = await readFile(new URL("../app/styles/family-polish.css", import.meta.url), "utf8");
   const baseCss = await readFile(new URL("../app/styles/base.css", import.meta.url), "utf8");
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
 
-  assert.match(familyCss, /\.familyPage[\s\S]*?font-family:\s*"Apple SD Gothic Neo",\s*"Noto Sans KR",\s*system-ui,\s*sans-serif;/);
+  assert.match(familyFontsCss, /@font-face[\s\S]*?NanumBarunPen/);
+  assert.match(familyFontsCss, /\.familyPage[\s\S]*?font-family:\s*"NanumBarunPen",\s*"Apple SD Gothic Neo",\s*"Noto Sans KR",\s*sans-serif;/);
   assert.match(polishCss, /\.familyPage[\s\S]*?font-size:\s*22px;/);
-  assert.match(familyCss, /\.familyPage button[\s\S]*?font-family:\s*inherit;/);
-  assert.match(familyCss, /\.familyPage input/);
-  assert.match(familyCss, /\.familyPage textarea/);
-  assert.match(familyCss, /\.familyPage select/);
+  assert.match(familyFontsCss, /\.familyPage button/);
+  assert.match(familyFontsCss, /\.familyPage input/);
+  assert.match(familyFontsCss, /\.familyPage textarea/);
+  assert.match(familyFontsCss, /\.familyPage select/);
   assert.match(familyCss, /\.familyInput[\s\S]*?font-size:\s*16px;/);
-  assert.doesNotMatch(familyCss, /GangwonEducationHyunokSam|Hyunok|현옥/);
-  assert.doesNotMatch(baseCss, /GangwonEducationHyunokSam|Hyunok|현옥/);
-  assert.doesNotMatch(shellCss, /GangwonEducationHyunokSam|Hyunok|현옥/);
+  assert.doesNotMatch(familyFontsCss, /GangwonEducationHyunokSam|Hyunok|현옥/);
+  assert.doesNotMatch(baseCss, /NanumBarunPen|GangwonEducationHyunokSam|Hyunok|현옥/);
+  assert.doesNotMatch(shellCss, /NanumBarunPen|GangwonEducationHyunokSam|Hyunok|현옥/);
 });
 
 test("family timetable palette uses distinct pastel schedule colors", async () => {
