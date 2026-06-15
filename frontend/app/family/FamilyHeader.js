@@ -12,7 +12,9 @@ const FAMILY_NAV_ITEMS = [
 export default function FamilyHeader({ active = "home" }) {
   return (
     <header className="familyHeader">
-      <h1>가족</h1>
+      <Link className="familyLogoLink" href="/family" aria-label="가족 홈">
+        <img className="familyLogo" src="/family-logo.svg" alt="가족" />
+      </Link>
       <nav className="familyHomeNav" aria-label="가족 화면">
         {FAMILY_NAV_ITEMS.map((item) => (
           <Link

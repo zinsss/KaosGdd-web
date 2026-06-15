@@ -9,20 +9,79 @@
 }
 
 .familyHeader {
-  flex-wrap: wrap;
+  display: flex;
   align-items: center;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: 14px;
+  min-height: 72px;
+  padding: 6px 14px;
+  overflow: hidden;
+}
+
+.familyLogoLink {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 68px;
+  min-width: 60px;
+  text-decoration: none;
+}
+
+.familyLogo {
+  display: block;
+  width: 68px;
+  height: auto;
+  max-height: 68px;
+  object-fit: contain;
 }
 
 .familyHeader h1 {
-  color: #d86f98;
-  font-size: 26px;
-  font-weight: 950;
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.74);
+  display: none;
+}
+
+.familyHomeNav {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: nowrap;
+  gap: clamp(10px, 4vw, 22px);
+  overflow: hidden;
 }
 
 .familyHomeNavLink {
-  font-size: 14px;
-  line-height: 1.1;
+  position: relative;
+  flex: 0 1 auto;
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 8px 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(78, 37, 54, 0.62);
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.familyHomeNavLinkActive {
+  color: #b84f78;
+}
+
+.familyHomeNavLinkActive::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1px;
+  height: 2px;
+  border-radius: 999px;
+  background: rgba(216, 111, 152, 0.72);
 }
 
 .familyQuickPadTitle {
@@ -189,21 +248,35 @@
   }
 
   .familyHeader {
-    align-items: flex-start;
-    gap: 8px;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 10px;
+    min-height: 72px;
+    padding: 5px 8px;
   }
 
-  .familyHeader h1 {
-    font-size: 24px;
+  .familyLogoLink {
+    width: 62px;
+    min-width: 58px;
+  }
+
+  .familyLogo {
+    width: 62px;
+    max-height: 62px;
   }
 
   .familyHomeNav {
-    width: 100%;
+    width: auto;
+    flex: 1 1 auto;
     justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: clamp(8px, 3vw, 14px);
+    overflow: hidden;
   }
 
   .familyHomeNavLink {
     font-size: 14px;
+    padding: 6px 0;
   }
 
   .familyQuickPadTitle {
@@ -258,5 +331,31 @@
 
   .familyInput {
     font-size: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .familyHeader {
+    gap: 8px;
+    min-height: 68px;
+    padding-inline: 7px;
+  }
+
+  .familyLogoLink {
+    width: 56px;
+    min-width: 52px;
+  }
+
+  .familyLogo {
+    width: 56px;
+    max-height: 56px;
+  }
+
+  .familyHomeNav {
+    gap: 7px;
+  }
+
+  .familyHomeNavLink {
+    font-size: 13px;
   }
 }
