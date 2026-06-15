@@ -1,9 +1,9 @@
 export const FAMILY_TASKS_STORAGE_KEY = "kaosgdd.family.tasks.v1";
-export const FAMILY_TASK_ASSIGNEES = ["내가 하께", "니가 해라", "아무나 하자"];
-export const FAMILY_TASK_DEFAULT_ASSIGNEE = "내가 하께";
-export const FAMILY_TASK_PRIORITY_ASSIGNEE = "니가 해라";
-export const FAMILY_TASK_PRIORITIES = ["😐 알아서 하그라", "😡 앵간하면 빨리해라이", "🤬 안하면 안될낀데?"];
-export const FAMILY_TASK_DEFAULT_PRIORITY = "😐 알아서 하그라";
+export const FAMILY_TASK_ASSIGNEES = ["내 할 일", "쏭 할 일", "전체"];
+export const FAMILY_TASK_DEFAULT_ASSIGNEE = "내 할 일";
+export const FAMILY_TASK_PRIORITY_ASSIGNEE = "쏭 할 일";
+export const FAMILY_TASK_PRIORITIES = ["😐 보통", "🙂 조금 빨리", "⭐ 중요"];
+export const FAMILY_TASK_DEFAULT_PRIORITY = "😐 보통";
 
 export function createFamilyTaskId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {

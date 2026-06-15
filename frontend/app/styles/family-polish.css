@@ -156,6 +156,30 @@
   min-width: 0;
 }
 
+.familyCalendarItemRoni.familyTimetableEntryPink { background: #ffc6dc; }
+.familyCalendarItemRoni.familyTimetableEntryRose { background: #ffb3c7; }
+.familyCalendarItemRoni.familyTimetableEntryPeach { background: #ffd2ba; }
+.familyCalendarItemRoni.familyTimetableEntryYellow { background: #ffe08a; }
+.familyCalendarItemRoni.familyTimetableEntryMint { background: #c9f2d2; }
+.familyCalendarItemRoni.familyTimetableEntryGreen { background: #bcebc2; }
+.familyCalendarItemRoni.familyTimetableEntrySky { background: #c9f2ff; }
+.familyCalendarItemRoni.familyTimetableEntryBlue { background: #c7dcff; }
+.familyCalendarItemRoni.familyTimetableEntryLavender { background: #e0c8ff; }
+.familyCalendarItemRoni.familyTimetableEntryPurple { background: #e8bff0; }
+.familyCalendarItemRoni.familyTimetableEntryCream { background: #fff1b8; }
+.familyCalendarItemRoni.familyTimetableEntryGray { background: #ded8d2; }
+
+.familyCalendarItemRoni {
+  box-shadow: inset 0 0 0 1px rgba(78, 37, 54, 0.08);
+  opacity: 1;
+}
+
+.familyCalendarItemDated {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px rgba(216, 111, 152, 0.36);
+  opacity: 0.92;
+}
+
 @media (max-width: 640px) {
   .familyPage {
     width: calc(100% - 16px);

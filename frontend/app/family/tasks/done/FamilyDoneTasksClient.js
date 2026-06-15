@@ -42,12 +42,12 @@ export default function FamilyDoneTasksClient() {
   }
 
   return (
-    <section className="familyPage" aria-label="다했데이">
+    <section className="familyPage" aria-label="완료">
       <div className="familyCard familyTaskPageCard">
         <FamilyHeader active="home" />
 
         <main className="familyDoneTasks">
-          <h2 className="familyTaskPageTitle">다했데이</h2>
+          <h2 className="familyTaskPageTitle">완료</h2>
           {doneTasks.length ? (
             doneTasks.map((task) => (
               <article className="familyDoneTaskRow" key={task.id}>
@@ -57,16 +57,16 @@ export default function FamilyDoneTasksClient() {
                 </div>
                 <div className="familyDoneTaskActions">
                   <button type="button" onClick={() => restoreTask(task.id)}>
-                    도로묵이다
+                    완료 취소
                   </button>
                   <button type="button" onClick={() => deleteTask(task.id)}>
-                    치아라
+                    삭제
                   </button>
                 </div>
               </article>
             ))
           ) : (
-            <p className="familyTaskEmpty">다했데이가 아직 없어요.</p>
+            <p className="familyTaskEmpty">완료된 할 일이 아직 없어요.</p>
           )}
         </main>
       </div>

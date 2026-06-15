@@ -74,13 +74,13 @@ export default function FamilyRoniClient() {
   function saveRoni(event) {
     event.preventDefault();
     if (!draft?.title?.trim()) {
-      setError("모할꼬를 입력해주세요.");
+      setError("일정 이름을 입력해주세요.");
       return;
     }
 
     const normalized = normalizeFamilyRoniItem({ ...draft, title: draft.title.trim(), dayOfWeek: Number(draft.dayOfWeek) });
     if (!normalized) {
-      setError("모할꼬를 입력해주세요.");
+      setError("일정 이름을 입력해주세요.");
       return;
     }
 
@@ -99,22 +99,22 @@ export default function FamilyRoniClient() {
   }
 
   return (
-    <section className="familyPage" aria-label="로니">
+    <section className="familyPage" aria-label="로우니 시간표">
       <div className="familyCard familyCalendarPageCard">
-        <FamilyHeader active="home" />
+        <FamilyHeader active="calendar" />
         <main className="familyCalendarFormPage">
           <section className="familyRoniPanel">
             <div className="familyCalendarFormHeader">
               <div>
-                <h2>로니</h2>
-                <p>매주 반복되는 흐름을 적어두는 곳이에요.</p>
+                <h2>로우니 시간표</h2>
+                <p>매주 반복되는 일정을 적어두는 곳이에요.</p>
               </div>
               <div className="familyCalendarFormActions familyCalendarFormActionsInline">
                 <button className="familyTaskActionButton familyTaskActionButtonPrimary" type="button" onClick={startNewRoni}>
-                  + 로니
+                  + 일정
                 </button>
                 <Link className="familyTaskActionButton" href="/family/calendar">
-                  고마하자
+                  취소
                 </Link>
               </div>
             </div>
@@ -131,16 +131,16 @@ export default function FamilyRoniClient() {
                     </div>
                     <div className="familyRoniRowActions">
                       <button type="button" onClick={() => startEditRoni(item)}>
-                        고치까
+                        수정
                       </button>
                       <button type="button" onClick={() => deleteRoni(item.id)}>
-                        치아라
+                        삭제
                       </button>
                     </div>
                   </article>
                 ))
               ) : (
-                <p className="familyTaskEmpty">아직 로니가 없어요.</p>
+                <p className="familyTaskEmpty">아직 로우니 시간표가 없어요.</p>
               )}
             </div>
           </section>
@@ -148,23 +148,23 @@ export default function FamilyRoniClient() {
           {draft ? (
             <form className="familyCalendarForm" onSubmit={saveRoni}>
               <div className="familyCalendarFormHeader">
-                <h2>{draft.id && visibleItems.some((item) => item.id === draft.id) ? "로니 고치까" : "+ 로니"}</h2>
+                <h2>{draft.id && visibleItems.some((item) => item.id === draft.id) ? "일정 수정" : "일정 추가"}</h2>
                 {draft.id && visibleItems.some((item) => item.id === draft.id) ? (
                   <button className="familyTaskDelete" type="button" onClick={() => deleteRoni()}>
-                    치아라
+                    삭제
                   </button>
                 ) : null}
               </div>
 
               <label>
-                <span>모할꼬</span>
+                <span>일정 이름</span>
                 <input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} />
               </label>
               {error ? <p className="familyCalendarFormError">{error}</p> : null}
 
               <div className="familyCalendarFormGrid">
                 <label>
-                  <span>무슨요일</span>
+                  <span>요일</span>
                   <select value={draft.dayOfWeek} onChange={(event) => updateDraft("dayOfWeek", event.target.value)}>
                     {FAMILY_CALENDAR_WEEKDAY_OPTIONS.map((option) => (
                       <option value={option.dayOfWeek} key={option.dayOfWeek}>
@@ -184,16 +184,16 @@ export default function FamilyRoniClient() {
               </div>
 
               <label>
-                <span>머라? 좀 더 지끼봐라</span>
+                <span>메모</span>
                 <textarea rows={3} value={draft.memo} onChange={(event) => updateDraft("memo", event.target.value)} />
               </label>
 
               <div className="familyCalendarFormActions">
                 <button className="familyTaskSave" type="submit">
-                  되따
+                  저장
                 </button>
                 <button className="familyTaskCancel" type="button" onClick={cancelEdit}>
-                  고마하자
+                  취소
                 </button>
               </div>
             </form>

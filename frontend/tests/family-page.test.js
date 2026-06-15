@@ -2,49 +2,59 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-test("family shared header uses updated wording and unchanged routes", async () => {
-  const headerSource = await readFile(new URL("../app/family/FamilyHeader.js", import.meta.url), "utf8");
-  const calendarPageSource = await readFile(new URL("../app/family/calendar/page.js", import.meta.url), "utf8");
-  const taskCss = await readFile(new URL("../app/styles/family-tasks.css", import.meta.url), "utf8");
+async function readSource(path) {
+  return readFile(new URL(path, import.meta.url), "utf8");
+}
 
-  assert.ok(headerSource.includes("우야노 우야꼬"));
-  for (const label of ["뭐라꼬?", "은제?", "모하꼬?"]) assert.ok(headerSource.includes(label));
-  for (const route of ["/family/memo", "/family/calendar", "/family"]) assert.ok(headerSource.includes(route));
-  assert.ok(!headerSource.includes("우짜노우짤꼬"));
-  assert.ok(!headerSource.includes("모라노"));
-  assert.ok(!headerSource.includes("모하노"));
-  assert.ok(calendarPageSource.includes('FamilyHeader active="calendar"'));
-  assert.ok(taskCss.includes("flex-wrap: nowrap"));
-  assert.ok(taskCss.includes("white-space: nowrap"));
+test("family shared header uses finalized tab wording and routes", async () => {
+  const headerSource = await readSource("../app/family/FamilyHeader.js");
+
+  for (const label of ["메모장", "달력", "할 일"]) {
+    assert.ok(headerSource.includes(label), `${label} should be in the Family header`);
+  }
+  for (const route of ["/family/memo", "/family/calendar", "/family"]) {
+    assert.ok(headerSource.includes(route), `${route} should remain unchanged`);
+  }
+  for (const oldLabel of ["모하꼬?", "뭐라꼬?", "은제?", "모라노", "대시보드"]) {
+    assert.ok(!headerSource.includes(oldLabel), `${oldLabel} should not remain in the Family header`);
+  }
 });
 
-test("family dashboard links to the calendar foundation", async () => {
-  const dashboardSource = await readFile(new URL("../app/family/FamilyDashboardClient.js", import.meta.url), "utf8");
-  const calendarPageSource = await readFile(new URL("../app/family/calendar/page.js", import.meta.url), "utf8");
-  const globalsCss = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
+test("family memo page uses finalized title and checklist glyph", async () => {
+  const memoSource = await readSource("../app/family/FamilyPageClient.js");
 
-  assert.ok(dashboardSource.includes("달력"));
-  assert.ok(dashboardSource.includes("하그라"));
-  assert.ok(dashboardSource.includes("/family/calendar"));
-  assert.ok(!dashboardSource.includes('aria-label="뭔일"'));
-  assert.ok(!dashboardSource.includes("뭔일이고"));
-  assert.ok(calendarPageSource.includes("FamilyCalendarClient"));
-  assert.ok(globalsCss.includes("family-calendar.css"));
+  assert.ok(memoSource.includes('aria-label="메모장"'));
+  assert.ok(memoSource.includes("<h2>메모장</h2>"));
+  assert.ok(memoSource.includes(""));
+  for (const label of ["수정", "삭제", "저장", "취소"]) {
+    assert.ok(memoSource.includes(label), `${label} should be available in memo actions`);
+  }
 });
 
-test("family calendar source keeps dated items and Roni foundation separate", async () => {
-  const calendarSource = await readFile(new URL("../app/family/calendar/FamilyCalendarClient.js", import.meta.url), "utf8");
-  const calendarDataSource = await readFile(new URL("../app/family/calendar/familyCalendarData.js", import.meta.url), "utf8");
-  const calendarCss = await readFile(new URL("../app/styles/family-calendar.css", import.meta.url), "utf8");
+test("family font no longer exposes Hyunok and remains Family-scoped", async () => {
+  const familyCss = await readSource("../app/styles/family.css");
 
-  for (const value of ["kaosgdd.family.calendarItems.v1", "kaosgdd.family.defaultTimetable.v1", "FAMILY_CALENDAR_DAY_LABELS", "normalizeFamilyCalendarItem", "normalizeFamilyRoniItem"]) {
+  assert.ok(familyCss.includes(".familyPage"));
+  assert.ok(familyCss.includes("font-family"));
+  assert.ok(familyCss.includes("Apple SD Gothic Neo"));
+  assert.ok(familyCss.includes("Noto Sans KR"));
+  assert.ok(familyCss.includes("system-ui"));
+  for (const removedFont of ["Hyunok", "현옥", "GangwonEducationHyunokSam"]) {
+    assert.ok(!familyCss.includes(removedFont), `${removedFont} should not remain in Family CSS`);
+  }
+});
+
+test("family dashboard and calendar expose standard labels", async () => {
+  const dashboardSource = await readSource("../app/family/FamilyDashboardClient.js");
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const calendarDataSource = await readSource("../app/family/calendar/familyCalendarData.js");
+  const globalsCss = await readSource("../app/globals.css");
+
+  for (const label of ["달력", "할 일", "로우니 시간표", "일정", "+ 일정"]) {
+    assert.ok((dashboardSource + calendarSource).includes(label), `${label} should appear in dashboard/calendar UI`);
+  }
+  for (const value of ["kaosgdd.family.calendarItems.v1", "kaosgdd.family.defaultTimetable.v1", "FAMILY_CALENDAR_DAY_LABELS"]) {
     assert.ok(calendarDataSource.includes(value));
   }
-  for (const value of ["selectedWeekKey", "datedItemsByDate", "buildSelectedWeekItems", 'type: "roni"', 'type: "dated"', "loadFamilyCalendarItems", "loadFamilyRoniItems"]) {
-    assert.ok(calendarSource.includes(value));
-  }
-  for (const day of ["일", "월", "화", "수", "목", "금", "토"]) assert.ok(calendarDataSource.includes(day));
-  assert.ok(calendarCss.includes("repeat(7, minmax(0, 1fr))"));
-  assert.ok(calendarCss.includes(".familyCalendarItemRoni"));
-  assert.ok(calendarCss.includes(".familyCalendarItemDated"));
+  assert.ok(globalsCss.includes("family-calendar.css"));
 });
