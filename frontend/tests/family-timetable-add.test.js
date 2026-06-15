@@ -101,6 +101,7 @@ test("family Roun timetable uses template library plus date-based assignments", 
   const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
   const routeSource = await readSource("../app/family/roun/page.js");
+  const roniCss = await readSource("../app/styles/family-roni-templates.css");
 
   for (const value of [
     "kaosgdd.family.rounWeeklyPlans.v1",
@@ -132,6 +133,10 @@ test("family Roun timetable uses template library plus date-based assignments", 
     "고치기",
     "복사",
     "삭제",
+    "삭제할까요?",
+    "마지막 시간표는 삭제할 수 없습니다.",
+    "아직 시간표가 없습니다.",
+    "적용 이력이 없습니다.",
   ]) {
     assert.ok(roniSource.includes(value), `${value} should exist in Roun template UI`);
   }
@@ -140,6 +145,9 @@ test("family Roun timetable uses template library plus date-based assignments", 
   assert.ok(roniSource.includes("assignments: [...rounState.assignments, nextAssignment]"), "repeated template assignments should be appended as timeline entries");
   assert.ok(roniSource.includes("deleteAssignment"), "assignment deletion should be available");
   assert.ok(roniSource.includes("rounState.assignments.filter((assignment) => assignment.id !== assignmentId)"), "deleting an assignment should not delete a template");
+  assert.ok(roniSource.includes("rounState.plans.length <= 1"), "last timetable deletion should be blocked");
+  assert.match(roniCss, /\.familyRoniTemplateActions\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
+  assert.match(roniCss, /\.familyRoniTemplateRow strong\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
 
   for (const preservedField of ["color", "fontFamily", "memo", "startTime", "endTime", "dayOfWeek"]) {
     assert.ok(dataSource.includes(preservedField), `${preservedField} should be preserved in template entries`);
@@ -147,7 +155,7 @@ test("family Roun timetable uses template library plus date-based assignments", 
   assert.ok(roniSource.includes("+ 시간표"), "+ 시간표 should remain the Roun add-entry action");
   assert.ok(!roniSource.includes("+ 일정"), "+ 일정 should not be used inside the Roun timetable editor");
 
-  for (const oldString of ["고치까", "치아라", "다했데이", "도로묵이다", "고마하자"]) {
+  for (const oldString of ["고치까", "치아라", "다했데이", "도로묵이다", "고마하자", "로니", "로우니"]) {
     assert.ok(!roniSource.includes(oldString), `${oldString} should not appear in Roun template UI`);
   }
 });
