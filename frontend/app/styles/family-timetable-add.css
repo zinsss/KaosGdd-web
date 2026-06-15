@@ -228,62 +228,62 @@
 
 .familyTimetableEntryPink,
 .familyTimetableColorChipPink {
-  background: #ffc6dc;
+  background: #ffd8e5;
 }
 
 .familyTimetableEntryRose,
 .familyTimetableColorChipRose {
-  background: #ffb3c7;
-}
-
-.familyTimetableEntryPeach,
-.familyTimetableColorChipPeach {
-  background: #ffd2ba;
-}
-
-.familyTimetableEntryYellow,
-.familyTimetableColorChipYellow {
-  background: #ffe08a;
-}
-
-.familyTimetableEntryMint,
-.familyTimetableColorChipMint {
-  background: #c9f2d2;
-}
-
-.familyTimetableEntryGreen,
-.familyTimetableColorChipGreen {
-  background: #bcebc2;
-}
-
-.familyTimetableEntrySky,
-.familyTimetableColorChipSky {
-  background: #c9f2ff;
-}
-
-.familyTimetableEntryBlue,
-.familyTimetableColorChipBlue {
-  background: #c7dcff;
-}
-
-.familyTimetableEntryLavender,
-.familyTimetableColorChipLavender {
-  background: #e0c8ff;
-}
-
-.familyTimetableEntryPurple,
-.familyTimetableColorChipPurple {
-  background: #e8bff0;
+  background: #ffe4ec;
 }
 
 .familyTimetableEntryCream,
 .familyTimetableColorChipCream {
-  background: #fff1b8;
+  background: #fff8df;
+}
+
+.familyTimetableEntryYellow,
+.familyTimetableColorChipYellow {
+  background: #fff0a8;
+}
+
+.familyTimetableEntryPeach,
+.familyTimetableColorChipPeach {
+  background: #ffd9b8;
+}
+
+.familyTimetableEntryMint,
+.familyTimetableColorChipMint {
+  background: #d6f5ea;
+}
+
+.familyTimetableEntryGreen,
+.familyTimetableColorChipGreen {
+  background: #dff5cf;
+}
+
+.familyTimetableEntrySky,
+.familyTimetableColorChipSky {
+  background: #d9f1ff;
+}
+
+.familyTimetableEntryBlue,
+.familyTimetableColorChipBlue {
+  background: #dbeafe;
+}
+
+.familyTimetableEntryPurple,
+.familyTimetableColorChipPurple {
+  background: #eadcff;
+}
+
+.familyTimetableEntryLavender,
+.familyTimetableColorChipLavender {
+  background: #f0e7ff;
 }
 
 .familyTimetableEntryGray,
 .familyTimetableColorChipGray {
-  background: #ded8d2;
+  background: #ece8e3;
 }
 
 .familyTimetableColorChipActive {

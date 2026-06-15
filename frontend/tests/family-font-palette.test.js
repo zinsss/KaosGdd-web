@@ -3,18 +3,18 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const TIMETABLE_COLORS = [
-  ["Pink", "#ffc6dc"],
-  ["Rose", "#ffb3c7"],
-  ["Peach", "#ffd2ba"],
-  ["Yellow", "#ffe08a"],
-  ["Mint", "#c9f2d2"],
-  ["Green", "#bcebc2"],
-  ["Sky", "#c9f2ff"],
-  ["Blue", "#c7dcff"],
-  ["Lavender", "#e0c8ff"],
-  ["Purple", "#e8bff0"],
-  ["Cream", "#fff1b8"],
-  ["Gray", "#ded8d2"],
+  ["Pink", "#ffd8e5"],
+  ["Rose", "#ffe4ec"],
+  ["Cream", "#fff8df"],
+  ["Yellow", "#fff0a8"],
+  ["Peach", "#ffd9b8"],
+  ["Mint", "#d6f5ea"],
+  ["Green", "#dff5cf"],
+  ["Sky", "#d9f1ff"],
+  ["Blue", "#dbeafe"],
+  ["Purple", "#eadcff"],
+  ["Lavender", "#f0e7ff"],
+  ["Gray", "#ece8e3"],
 ];
 
 test("family page uses larger NanumBarunPen font sizing without affecting global UI", async () => {
@@ -37,9 +37,10 @@ test("family page uses larger NanumBarunPen font sizing without affecting global
   assert.doesNotMatch(shellCss, /NanumBarunPen|GangwonEducationHyunokSam|Hyunok|현옥/);
 });
 
-test("family timetable palette uses distinct pastel schedule colors", async () => {
+test("family timetable palette uses twelve distinct pastel schedule colors", async () => {
   const addCss = await readFile(new URL("../app/styles/family-timetable-add.css", import.meta.url), "utf8");
 
+  assert.equal(TIMETABLE_COLORS.length, 12);
   for (const [className, color] of TIMETABLE_COLORS) {
     assert.match(addCss, new RegExp(`\\.familyTimetableEntry${className}`));
     assert.match(addCss, new RegExp(`\\.familyTimetableColorChip${className}`));
