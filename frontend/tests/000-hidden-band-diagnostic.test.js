@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 
 const files = [
+  "frontend/tests/event-count-glyphs.test.js",
   "frontend/tests/event-public-holiday-action-id.test.js",
   "frontend/tests/events-calendar-style.test.js",
   "frontend/tests/events-selected-day.test.js",
