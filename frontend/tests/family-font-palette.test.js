@@ -17,24 +17,31 @@ const TIMETABLE_COLORS = [
   ["Gray", "#ece8e3"],
 ];
 
-test("family page uses larger NanumBarunPen font sizing without affecting global UI", async () => {
+test("family page uses Seoul Namsan font sizing without affecting global UI", async () => {
   const familyCss = await readFile(new URL("../app/styles/family.css", import.meta.url), "utf8");
   const familyFontsCss = await readFile(new URL("../app/styles/family-fonts.css", import.meta.url), "utf8");
   const polishCss = await readFile(new URL("../app/styles/family-polish.css", import.meta.url), "utf8");
+  const fontPresetSource = await readFile(new URL("../app/family/familyTimetableFonts.js", import.meta.url), "utf8");
   const baseCss = await readFile(new URL("../app/styles/base.css", import.meta.url), "utf8");
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
 
-  assert.match(familyFontsCss, /@font-face[\s\S]*?NanumBarunPen/);
-  assert.match(familyFontsCss, /\.familyPage[\s\S]*?font-family:\s*"NanumBarunPen",\s*"Apple SD Gothic Neo",\s*"Noto Sans KR",\s*sans-serif;/);
-  assert.match(polishCss, /\.familyPage[\s\S]*?font-size:\s*22px;/);
+  assert.match(familyFontsCss, /@font-face[\s\S]*?Seoul Namsan Condensed/);
+  assert.match(familyFontsCss, /SeoulNamsanCondensed-Medium\.woff2/);
+  assert.match(familyFontsCss, /\.familyPage[\s\S]*?font-family:\s*"Seoul Namsan Condensed",\s*"NanumBarunPen",\s*"Apple SD Gothic Neo",\s*"Noto Sans KR",\s*sans-serif;/);
+  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*16px;/);
   assert.match(familyFontsCss, /\.familyPage button/);
   assert.match(familyFontsCss, /\.familyPage input/);
   assert.match(familyFontsCss, /\.familyPage textarea/);
   assert.match(familyFontsCss, /\.familyPage select/);
   assert.match(familyCss, /\.familyInput[\s\S]*?font-size:\s*16px;/);
+  assert.match(fontPresetSource, /SeoulNamsanCondensed/);
+  assert.match(fontPresetSource, /서울남산/);
+  assert.match(fontPresetSource, /NanumBarunPen/);
+  assert.match(fontPresetSource, /FAMILY_TIMETABLE_DEFAULT_FONT\s*=\s*"system"/);
   assert.doesNotMatch(familyFontsCss, /GangwonEducationHyunokSam|Hyunok|현옥/);
-  assert.doesNotMatch(baseCss, /NanumBarunPen|GangwonEducationHyunokSam|Hyunok|현옥/);
-  assert.doesNotMatch(shellCss, /NanumBarunPen|GangwonEducationHyunokSam|Hyunok|현옥/);
+  assert.doesNotMatch(fontPresetSource, /GangwonEducationHyunokSam|Hyunok|현옥/);
+  assert.doesNotMatch(baseCss, /Seoul Namsan Condensed|NanumBarunPen|GangwonEducationHyunokSam|Hyunok|현옥/);
+  assert.doesNotMatch(shellCss, /Seoul Namsan Condensed|NanumBarunPen|GangwonEducationHyunokSam|Hyunok|현옥/);
 });
 
 test("family timetable palette uses twelve distinct pastel schedule colors", async () => {
