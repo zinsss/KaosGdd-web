@@ -10,9 +10,14 @@ test("family shared header uses polished tab wording and routes", async () => {
   const headerSource = await readSource("../app/family/FamilyHeader.js");
   const logoSource = await readSource("../public/family-logo.svg");
 
+  assert.ok(headerSource.includes('import Image from "next/image"'), "Family logo should use Next Image");
   assert.ok(headerSource.includes("familyLogoLink"), "logo link should be rendered in the Family header");
   assert.ok(headerSource.includes('href="/family"'), "logo should navigate home to /family");
   assert.ok(headerSource.includes('src="/family-logo.svg"'), "Family header should use the Family logo asset");
+  assert.ok(headerSource.includes("width={68}"));
+  assert.ok(headerSource.includes("height={68}"));
+  assert.ok(headerSource.includes("priority"));
+  assert.ok(!headerSource.includes("<img"), "raw img should not be used for the Family logo");
   assert.ok(!headerSource.includes("<h1>가족</h1>"), "old text banner title should not remain");
   assert.ok(logoSource.includes("<svg"));
   assert.ok(logoSource.includes("#f06f9c"));

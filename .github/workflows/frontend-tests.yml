@@ -28,3 +28,7 @@ jobs:
 
       - name: Run all frontend tests
         run: node --test frontend/tests/*.test.js
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
