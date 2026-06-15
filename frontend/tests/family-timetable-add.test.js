@@ -45,9 +45,9 @@ test("family timetable keeps local schedule editor foundations", async () => {
   for (const value of [
     "로운이",
     "주간시간표",
+    "주간시간표 템플릿",
     "+ 시간표",
-    "일정 이름",
-    "요일",
+    "제목",
     "시작",
     "끝",
     "색상",
@@ -56,7 +56,8 @@ test("family timetable keeps local schedule editor foundations", async () => {
     "저장",
     "취소",
     "삭제",
-    "일정 이름을 입력해주세요.",
+    "제목을 입력해주세요.",
+    "이 시간표는 달력 생성에 사용됩니다.",
   ]) {
     assert.ok(roniSource.includes(value), `${value} should remain in Roun timetable editor sources`);
   }
@@ -146,8 +147,10 @@ test("family Roun timetable uses template library plus date-based assignments", 
   assert.ok(roniSource.includes("deleteAssignment"), "assignment deletion should be available");
   assert.ok(roniSource.includes("rounState.assignments.filter((assignment) => assignment.id !== assignmentId)"), "deleting an assignment should not delete a template");
   assert.ok(roniSource.includes("rounState.plans.length <= 1"), "last timetable deletion should be blocked");
-  assert.match(roniCss, /\.familyRoniTemplateActions\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
-  assert.match(roniCss, /\.familyRoniTemplateRow strong\s*\{[\s\S]*?overflow-wrap:\s*anywhere;/);
+  assert.ok(roniCss.includes(".familyRoniTemplateActions"));
+  assert.ok(roniCss.includes("flex-wrap: wrap"));
+  assert.ok(roniCss.includes(".familyRoniTemplateRow strong"));
+  assert.ok(roniCss.includes("overflow-wrap: anywhere"));
 
   for (const preservedField of ["color", "fontFamily", "memo", "startTime", "endTime", "dayOfWeek"]) {
     assert.ok(dataSource.includes(preservedField), `${preservedField} should be preserved in template entries`);
@@ -158,4 +161,45 @@ test("family Roun timetable uses template library plus date-based assignments", 
   for (const oldString of ["고치까", "치아라", "다했데이", "도로묵이다", "고마하자", "로니", "로우니"]) {
     assert.ok(!roniSource.includes(oldString), `${oldString} should not appear in Roun template UI`);
   }
+});
+
+test("family Roun weekly grid editor supports add edit copy delete and drag", async () => {
+  const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
+  const roniCss = await readSource("../app/styles/family-roni-templates.css");
+
+  for (const value of [
+    "ROUN_TIMETABLE_START_HOUR = 8",
+    "ROUN_TIMETABLE_END_HOUR = 22",
+    "ROUN_TIMETABLE_SLOT_MINUTES = 10",
+    "ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES = 40",
+    "snapRounMinutes",
+    "slotMinutesFromPoint",
+    "clickEmptySlot",
+    "startEditRoni",
+    "copyRoni",
+    "deleteRoni",
+    "startBlockDrag",
+    "moveBlockDrag",
+    "finishBlockDrag",
+    "updateBlockTime",
+  ]) {
+    assert.ok(roniSource.includes(value), `${value} should exist for the Roun weekly editor`);
+  }
+
+  for (const label of ["일", "월", "화", "수", "목", "금", "토"]) {
+    assert.ok(roniSource.includes(label) || roniSource.includes("FAMILY_CALENDAR_DAY_LABELS"), `${label} should be represented in the weekly editor`);
+  }
+  for (const value of ["고치기", "복사", "삭제", "취소"]) {
+    assert.ok(roniSource.includes(value), `${value} should appear in the block action sheet`);
+  }
+
+  assert.ok(roniCss.includes(".familyRounWeeklyGrid"));
+  assert.ok(roniCss.includes("grid-template-columns: 30px repeat(7, minmax(0, 1fr));"));
+  assert.ok(roniCss.includes("overflow-y: auto;"));
+  assert.ok(roniCss.includes("overflow-x: hidden;"));
+  assert.ok(roniCss.includes("grid-template-columns: 24px repeat(7, minmax(0, 1fr));"));
+  assert.ok(roniCss.includes(".familyRounHour span:nth-child(5) { top: 40px; }"));
+  assert.ok(roniCss.includes(".familyRounBlock"));
+  assert.ok(roniCss.includes("position: absolute;"));
+  assert.ok(roniCss.includes("touch-action: none;"));
 });

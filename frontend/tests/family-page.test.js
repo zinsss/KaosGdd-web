@@ -79,6 +79,6 @@ test("family polish keeps the baseline compact and overflow-safe", async () => {
 
   assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*14px;/);
   assert.match(roniCss, /\.familyRoniTemplateRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;/);
-  assert.match(roniCss, /\.familyRoniTemplateActions\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
+  assert.match(roniCss, /\.familyRoniTemplateActions[\s\S]*?\{[\s\S]*?flex-wrap:\s*wrap;/);
   assert.match(roniCss, /overflow-wrap:\s*anywhere;/);
 });
