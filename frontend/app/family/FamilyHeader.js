@@ -21,6 +21,7 @@ export default function FamilyHeader({ active = "home" }) {
           width={68}
           height={68}
           priority
+          unoptimized
         />
       </Link>
       <nav className="familyHomeNav" aria-label="가족 화면">
