@@ -2,19 +2,19 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
-function cssBlock(source, selector) {
+function cssBlockForExactSelector(source, selector) {
   const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  const match = source.match(new RegExp(`${escapedSelector}\\s*\\{[^}]*\\}`));
-  return match ? match[0] : "";
+  const match = source.match(new RegExp(`${escapedSelector}\\s*\\{([\\s\\S]*?)\\}`));
+  return match ? match[1] : "";
 }
 
 test("calendar event count renders as a plain yellow glyph", async () => {
   const eventsCss = await readFile(new URL("../app/styles/events.css", import.meta.url), "utf8");
-  const countCss = cssBlock(eventsCss, ".eventCalCount");
-  const selectedCss = cssBlock(eventsCss, ".eventCalCellSelected");
-  const selectedTodayAfterCss = cssBlock(eventsCss, ".eventCalCellSelectedToday::after");
-  const todayAfterCss = cssBlock(eventsCss, ".eventCalCellToday::after");
-  const countChildrenCss = cssBlock(eventsCss, ".eventCalCount *");
+  const countCss = cssBlockForExactSelector(eventsCss, ".eventCalCount");
+  const selectedCss = cssBlockForExactSelector(eventsCss, ".eventCalCellSelected");
+  const selectedTodayAfterCss = cssBlockForExactSelector(eventsCss, ".eventCalCellSelectedToday::after");
+  const todayAfterCss = cssBlockForExactSelector(eventsCss, ".eventCalCellToday::after");
+  const countChildrenCss = cssBlockForExactSelector(eventsCss, ".eventCalCount *");
 
   assert.match(countCss, /display:\s*inline-flex;/);
   assert.match(countCss, /min-width:\s*1\.25em;/);
