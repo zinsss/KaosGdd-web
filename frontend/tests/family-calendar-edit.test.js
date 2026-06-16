@@ -83,7 +83,6 @@ test("family calendar uses one shared 8-column gutter grid with quiet time rail"
   const baseCalendarCss = await readSource("../app/styles/family-calendar.css");
   const compactCss = await readSource("../app/styles/family-calendar-compact-month.css");
   const globalsCss = await readSource("../app/globals.css");
-  const familyFontsCss = await readSource("../app/styles/family-fonts.css");
   const combinedCss = `${baseCalendarCss}\n${compactCss}`;
 
   assert.ok(globalsCss.includes('@import "./styles/family-calendar-compact-month.css";'));
@@ -100,17 +99,16 @@ test("family calendar uses one shared 8-column gutter grid with quiet time rail"
 
   assert.match(
     compactCss,
-    /\.familyCalendarWeekHeader,\s*\n\.familyCalendarWeekDates,\s*\n\.familyCalendarWeekCounts,\s*\n\.familyCalendarTimeRow\s*\{[\s\S]*?grid-template-columns:\s*34px repeat\(7, minmax\(0, 1fr\)\);/,
+    /\.familyCalendarWeekHeader,\s*\n\.familyCalendarWeekDates,\s*\n\.familyCalendarWeekCounts,\s*\n\.familyCalendarTimeRow\s*\{[\s\S]*?--family-calendar-expanded-rail-width:\s*34px;[\s\S]*?grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*34px\) repeat\(7,\s*minmax\(0,\s*1fr\)\);/,
   );
   assert.match(
     compactCss,
-    /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarWeekHeader,\s*\n\s*\.familyCalendarWeekDates,\s*\n\s*\.familyCalendarWeekCounts,\s*\n\s*\.familyCalendarTimeRow\s*\{[\s\S]*?grid-template-columns:\s*28px repeat\(7, minmax\(0, 1fr\)\);/,
+    /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarWeekHeader,\s*\n\s*\.familyCalendarWeekDates,\s*\n\s*\.familyCalendarWeekCounts,\s*\n\s*\.familyCalendarTimeRow\s*\{[\s\S]*?--family-calendar-expanded-rail-width:\s*28px;[\s\S]*?grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*28px\) repeat\(7,\s*minmax\(0,\s*1fr\)\);/,
   );
   assert.match(compactCss, /\.familyCalendarTimeRailSpacer\s*\{[\s\S]*?display:\s*block;[\s\S]*?pointer-events:\s*none;/);
-  assert.match(compactCss, /\.familyCalendarWeekDates \.familyCalendarTimeRailSpacer::before\s*\{[\s\S]*?content:\s*"";/);
-  assert.match(compactCss, /\.familyCalendarWeekSelected \.familyCalendarWeekDates \.familyCalendarTimeRailSpacer::before\s*\{[\s\S]*?content:\s*"";/);
-  assert.match(compactCss, /\.familyCalendarWeekDates \.familyCalendarTimeRailSpacer::before\s*\{[\s\S]*?font-family:\s*"Seoul Namsan Condensed",\s*"Symbols Nerd Font",\s*"Symbols Nerd Font Mono",\s*monospace;/);
-  assert.ok(familyFontsCss.includes('font-family: "Seoul Namsan Condensed"'));
+  assert.match(compactCss, /\.familyCalendarWeekDates \.familyCalendarTimeRailSpacer::before\s*\{[\s\S]*?content:\s*"";[\s\S]*?border-top:\s*5px solid transparent;[\s\S]*?border-bottom:\s*5px solid transparent;[\s\S]*?border-left:\s*7px solid rgba\(92,\s*50,\s*68,\s*0\.42\);/);
+  assert.match(compactCss, /\.familyCalendarWeekSelected \.familyCalendarWeekDates \.familyCalendarTimeRailSpacer::before\s*\{[\s\S]*?border-top:\s*7px solid rgba\(92,\s*50,\s*68,\s*0\.42\);[\s\S]*?border-right:\s*5px solid transparent;[\s\S]*?border-bottom:\s*0;[\s\S]*?border-left:\s*5px solid transparent;/);
+  assert.doesNotMatch(compactCss, /Symbols Nerd Font||/);
   assert.match(compactCss, /\.familyCalendarWeekHeader \.familyCalendarTimeRailSpacer,\s*\n\.familyCalendarWeekCounts \.familyCalendarTimeRailSpacer\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?box-shadow:\s*none;/);
   assert.match(compactCss, /\.familyCalendarExpandedWeek::before,\s*\n\.familyCalendarExpandedWeek::after\s*\{[\s\S]*?width:\s*var\(--family-calendar-expanded-day-width\);/);
   assert.match(compactCss, /\.familyCalendarExpandedWeek::before\s*\{[\s\S]*?left:\s*calc\(var\(--family-calendar-expanded-rail-width\) \+ var\(--family-calendar-expanded-gap\)\);/);
