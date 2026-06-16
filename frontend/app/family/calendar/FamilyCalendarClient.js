@@ -820,6 +820,7 @@ export default function FamilyCalendarClient() {
 
       <div className="familyCalendarGrid" aria-label="달력 월간 보기">
         <div className="familyCalendarWeekHeader">
+          <i className="familyCalendarTimeRailSpacer" aria-hidden="true" />
           {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
             <span key={label}>{label}</span>
           ))}
@@ -829,10 +830,10 @@ export default function FamilyCalendarClient() {
           const selected = week.key === selectedWeekKey;
           return (
             <section className={`familyCalendarWeek${selected ? " familyCalendarWeekSelected" : ""}`} key={week.key}>
-              <button className={`familyCalendarWeekDates${selected ? " familyCalendarSelectedWeekGrid" : ""}`} type="button" onClick={() => setSelectedWeekKey(week.key)}>
-                {selected ? <i className="familyCalendarTimeRailSpacer" aria-hidden="true" /> : null}
+              <button className="familyCalendarWeekDates" type="button" onClick={() => setSelectedWeekKey(week.key)}>
+                <i className="familyCalendarTimeRailSpacer" aria-hidden="true" />
                 {week.days.map((day) => (
-                  <span className={`familyCalendarSelectedWeekDay${day.inMonth ? "" : " familyCalendarDateOutside"}`} key={day.dateKey}>
+                  <span className={`familyCalendarWeekDay${day.inMonth ? "" : " familyCalendarDateOutside"}`} key={day.dateKey}>
                     {day.date.getDate()}
                   </span>
                 ))}
@@ -840,6 +841,7 @@ export default function FamilyCalendarClient() {
 
               {!selected ? (
                 <button className="familyCalendarWeekCounts" type="button" onClick={() => setSelectedWeekKey(week.key)} aria-label="일정 개수">
+                  <i className="familyCalendarTimeRailSpacer" aria-hidden="true" />
                   {week.days.map((day) => {
                     const count = datedItemsByDate[day.dateKey] || 0;
                     return <span key={day.dateKey}>{count ? count : ""}</span>;
