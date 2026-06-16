@@ -1,0 +1,159 @@
+.familyCalendarWeekHeader,
+.familyCalendarWeekDates,
+.familyCalendarWeekCounts {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  width: 100%;
+  min-width: 0;
+}
+
+.familyCalendarTimeRailSpacer {
+  display: none;
+  pointer-events: none;
+}
+
+.familyCalendarWeek {
+  isolation: auto;
+}
+
+.familyCalendarWeek::before,
+.familyCalendarWeek::after {
+  content: none;
+}
+
+.familyCalendarWeekHeader span,
+.familyCalendarWeekDay,
+.familyCalendarWeekCounts span {
+  min-width: 0;
+  text-align: center;
+}
+
+.familyCalendarWeekHeader span:first-of-type,
+.familyCalendarWeekDates .familyCalendarWeekDay:first-of-type,
+.familyCalendarWeekCounts span:first-of-type {
+  background: transparent;
+  color: #d86f98;
+}
+
+.familyCalendarWeekHeader span:last-of-type,
+.familyCalendarWeekDates .familyCalendarWeekDay:last-of-type,
+.familyCalendarWeekCounts span:last-of-type {
+  background: transparent;
+  color: #4f8bcf;
+}
+
+.familyCalendarDateOutside:first-of-type,
+.familyCalendarDateOutside:last-of-type,
+.familyCalendarDateOutside {
+  color: rgba(78, 37, 54, 0.3);
+}
+
+.familyCalendarExpandedWeek {
+  --family-calendar-expanded-gap: 3px;
+  --family-calendar-expanded-rail-width: 34px;
+  --family-calendar-expanded-day-width: calc((100% - var(--family-calendar-expanded-rail-width) - (var(--family-calendar-expanded-gap) * 7)) / 7);
+  position: relative;
+  isolation: isolate;
+  gap: 5px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.familyCalendarExpandedWeek > * {
+  position: relative;
+  z-index: 1;
+}
+
+.familyCalendarExpandedWeek::before,
+.familyCalendarExpandedWeek::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  width: var(--family-calendar-expanded-day-width);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.familyCalendarExpandedWeek::before {
+  left: calc(var(--family-calendar-expanded-rail-width) + var(--family-calendar-expanded-gap));
+  background: rgba(255, 216, 229, 0.22);
+}
+
+.familyCalendarExpandedWeek::after {
+  left: calc(var(--family-calendar-expanded-rail-width) + var(--family-calendar-expanded-gap) + ((var(--family-calendar-expanded-day-width) + var(--family-calendar-expanded-gap)) * 6));
+  background: rgba(219, 234, 254, 0.28);
+}
+
+.familyCalendarTimeRow {
+  display: grid;
+  grid-template-columns: 34px repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  min-width: 0;
+  align-items: stretch;
+}
+
+.familyCalendarTimeLabel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 34px;
+  box-sizing: border-box;
+  padding: 2px 4px 2px 0;
+  overflow: hidden;
+  background: rgba(255, 248, 251, 0.72);
+  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.14);
+  color: rgba(78, 37, 54, 0.54);
+  font-size: 13px;
+  font-weight: 950;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.familyCalendarTimeLabel::after {
+  content: "";
+  display: block;
+  flex: 1 1 auto;
+  min-height: 18px;
+  margin-top: 3px;
+  background:
+    linear-gradient(to bottom, transparent calc(16.666% - 0.5px), rgba(214, 128, 157, 0.12) calc(16.666% - 0.5px) calc(16.666% + 0.5px), transparent calc(16.666% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(33.333% - 0.5px), rgba(214, 128, 157, 0.12) calc(33.333% - 0.5px) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(50% - 0.5px), rgba(214, 128, 157, 0.12) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(66.666% - 0.5px), rgba(214, 128, 157, 0.12) calc(66.666% - 0.5px) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(83.333% - 0.5px), rgba(214, 128, 157, 0.12) calc(83.333% - 0.5px) calc(83.333% + 0.5px), transparent calc(83.333% + 0.5px));
+}
+
+.familyCalendarDaySlot {
+  min-width: 0;
+  overflow: hidden;
+}
+
+@media (max-width: 640px) {
+  .familyCalendarWeekHeader,
+  .familyCalendarWeekDates,
+  .familyCalendarWeekCounts {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .familyCalendarExpandedWeek {
+    --family-calendar-expanded-gap: 2px;
+    --family-calendar-expanded-rail-width: 28px;
+  }
+
+  .familyCalendarTimeRow {
+    grid-template-columns: 28px repeat(7, minmax(0, 1fr));
+    gap: 2px;
+  }
+
+  .familyCalendarTimeLabel {
+    min-height: 32px;
+    padding-right: 2px;
+    font-size: 12px;
+  }
+}
