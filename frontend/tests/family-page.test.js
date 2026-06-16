@@ -92,14 +92,17 @@ test("family polish keeps the baseline compact and overflow-safe", async () => {
   const polishCss = await readSource("../app/styles/family-polish.css");
   const roniCss = await readSource("../app/styles/family-roni-templates.css");
 
-  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*14px;/);
-  assert.match(polishCss, /\.familyHeader\s*\{[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?min-height:\s*72px;[\s\S]*?overflow:\s*hidden;/);
+  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?--family-page-max:\s*var\(--app-column-max-width\);[\s\S]*?width:\s*min\(calc\(100% - \(var\(--app-column-edge-padding\) \* 2\)\), var\(--family-page-max\)\);[\s\S]*?max-width:\s*var\(--family-page-max\);[\s\S]*?box-sizing:\s*border-box;[\s\S]*?font-size:\s*14px;/);
+  assert.match(polishCss, /\.familyCard,[\s\S]*?\.familyDashboard,[\s\S]*?\.familyCalendar,[\s\S]*?\.familyCalendarFormPage,[\s\S]*?\.familyTimetable,[\s\S]*?\.familyStream,[\s\S]*?\.familyTaskForm,[\s\S]*?\.familyDoneTasks\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
+  assert.match(polishCss, /\.familyHeader\s*\{[\s\S]*?justify-content:\s*space-between;[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?min-height:\s*72px;[\s\S]*?overflow:\s*hidden;/);
   assert.match(polishCss, /\.familyLogoLink\s*\{[\s\S]*?width:\s*auto;[\s\S]*?background:\s*transparent;[\s\S]*?text-decoration:\s*none;/);
   assert.match(polishCss, /\.familyTextLogo\s*\{[\s\S]*?font-family:\s*"Lotteria"[\s\S]*?color:\s*var\(--family-highlight, #d86f98\);[\s\S]*?font-size:\s*22px;/);
   assert.ok(!polishCss.includes("familyHeaderLogo"));
-  assert.match(polishCss, /\.familyHomeNav\s*\{[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?overflow:\s*hidden;/);
+  assert.match(polishCss, /\.familyHomeNav\s*\{[\s\S]*?justify-content:\s*flex-end;[\s\S]*?margin-left:\s*auto;[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?overflow:\s*hidden;/);
   assert.match(polishCss, /\.familyHomeNavLink\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?white-space:\s*nowrap;/);
   assert.match(polishCss, /\.familyHomeNavLinkActive::after\s*\{[\s\S]*?height:\s*2px;[\s\S]*?background:\s*rgba\(216, 111, 152, 0\.72\);/);
+  assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyPage\s*\{[\s\S]*?width:\s*min\(calc\(100% - 16px\), var\(--family-page-max\)\);[\s\S]*?max-width:\s*var\(--family-page-max\);/);
+  assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyHomeNav\s*\{[\s\S]*?justify-content:\s*flex-end;[\s\S]*?margin-left:\s*auto;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyTextLogo\s*\{[\s\S]*?font-size:\s*20px;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*?\.familyTextLogo\s*\{[\s\S]*?font-size:\s*18px;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*?\.familyHomeNavLink\s*\{[\s\S]*?font-size:\s*13px;/);
