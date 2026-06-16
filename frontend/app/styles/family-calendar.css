@@ -169,22 +169,29 @@
   display: grid;
   gap: 5px;
   margin-top: 3px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .familyCalendarTimeRow {
   display: grid;
-  grid-template-columns: 24px repeat(7, minmax(0, 1fr));
+  grid-template-columns: 34px repeat(7, minmax(0, 1fr));
   gap: 3px;
   min-width: 0;
   align-items: start;
 }
 
 .familyCalendarTimeLabel {
+  min-width: 0;
+  box-sizing: border-box;
+  padding-right: 4px;
+  overflow: hidden;
   color: rgba(78, 37, 54, 0.54);
   font-size: 13px;
   font-weight: 950;
   line-height: 1.2;
   text-align: right;
+  white-space: nowrap;
 }
 
 .familyCalendarDaySlot {
@@ -192,6 +199,11 @@
   gap: 3px;
   min-width: 0;
   min-height: 20px;
+  overflow: hidden;
+}
+
+.familyCalendarDaySlot > * {
+  min-width: 0;
 }
 
 .familyCalendarEditWeek {
@@ -454,6 +466,8 @@
 .familyCalendarItem {
   display: block;
   min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
   border-radius: 999px;
   padding: 3px 5px;
   overflow: hidden;
@@ -462,6 +476,15 @@
   font-weight: 950;
   line-height: 1.15;
   text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+.familyCalendarDaySlot .familyCalendarItem > span:first-child {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -639,7 +662,6 @@
 .familyRoniRowActions button:last-child {
   color: #9d3657;
 }
-
 @media (max-width: 640px) {
   .familyCalendar,
   .familyCalendarFormPage {
@@ -671,8 +693,13 @@
   }
 
   .familyCalendarTimeRow {
-    grid-template-columns: 20px repeat(7, minmax(0, 1fr));
+    grid-template-columns: 28px repeat(7, minmax(0, 1fr));
     gap: 2px;
+  }
+
+  .familyCalendarTimeLabel {
+    padding-right: 2px;
+    font-size: 12px;
   }
 
   .familyCalendarEditWeek {
@@ -726,6 +753,7 @@
     flex: 1 1 auto;
   }
 }
+
 
 @media (max-width: 640px) {
   .familyCalendarIntro {
