@@ -67,15 +67,10 @@ test("family calendar mobile header uses compact two-row actions", async () => {
   assert.ok(calendarSource.includes("changeMonth(-1)"));
   assert.ok(calendarSource.includes("changeMonth(1)"));
 
-
   assert.match(calendarCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarIntro\s*\{[\s\S]*?display:\s*grid;/);
-
   assert.match(calendarCss, /\.familyCalendarActions\s*\{[\s\S]*?grid-template-areas:\s*\n\s*"prev month next"\s*\n\s*"add roni edit";/);
-
   assert.match(calendarCss, /\.familyCalendarActions\s*\{[\s\S]*?gap:\s*6px;/);
-
   assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink\s*\{[\s\S]*?font-size:\s*13px;[\s\S]*?min-height:\s*32px;[\s\S]*?white-space:\s*nowrap;/);
-
   assert.match(calendarCss, /@media\s*\(max-width:\s*420px\)\s*\{[\s\S]*?\.familyCalendarIntro\s*\{[\s\S]*?grid-template-columns:\s*1fr;/);
 
   for (const oldString of ["고치까", "치아라", "다했데이", "도로묵이다", "고마하자"]) {
@@ -83,12 +78,15 @@ test("family calendar mobile header uses compact two-row actions", async () => {
   }
 });
 
-test("family calendar week rows share a global time rail", async () => {
+test("family calendar keeps month rows compact and selected week timed", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
-  const calendarCss = await readSource("../app/styles/family-calendar.css");
+  const baseCalendarCss = await readSource("../app/styles/family-calendar.css");
+  const compactCss = await readSource("../app/styles/family-calendar-compact-month.css");
+  const globalsCss = await readSource("../app/globals.css");
+  const combinedCss = `${baseCalendarCss}\n${compactCss}`;
 
+  assert.ok(globalsCss.includes('@import "./styles/family-calendar-compact-month.css";'));
   assert.ok(calendarSource.includes('className="familyCalendarExpandedWeek"'));
-  assert.ok(calendarSource.includes('<i className="familyCalendarTimeRailSpacer" aria-hidden="true" />'));
   assert.ok(calendarSource.includes("familyCalendarWeekDay"));
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow"'));
   assert.ok(calendarSource.includes('className="familyCalendarTimeLabel"'));
@@ -99,32 +97,27 @@ test("family calendar week rows share a global time rail", async () => {
     "time label should render before day slots, not inside a day cell",
   );
 
-  const spacerCount = calendarSource.match(/familyCalendarTimeRailSpacer/g)?.length || 0;
-  assert.ok(spacerCount >= 3, "header, date rows, and count rows should all render rail spacers");
-
   assert.match(
-    calendarCss,
-    /\.familyCalendarWeekHeader,\s*\n\.familyCalendarTimeRow,\s*\n\.familyCalendarWeekDates,\s*\n\.familyCalendarWeekCounts\s*\{[\s\S]*?grid-template-columns:\s*34px repeat\(7, minmax\(0, 1fr\)\);/,
+    compactCss,
+    /\.familyCalendarWeekHeader,\s*\n\.familyCalendarWeekDates,\s*\n\.familyCalendarWeekCounts\s*\{[\s\S]*?grid-template-columns:\s*repeat\(7, minmax\(0, 1fr\)\);/,
   );
   assert.match(
-    calendarCss,
-    /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarWeekHeader,\s*\n\s*\.familyCalendarTimeRow,\s*\n\s*\.familyCalendarWeekDates,\s*\n\s*\.familyCalendarWeekCounts\s*\{[\s\S]*?grid-template-columns:\s*28px repeat\(7, minmax\(0, 1fr\)\);/,
+    compactCss,
+    /\.familyCalendarTimeRow\s*\{[\s\S]*?grid-template-columns:\s*34px repeat\(7, minmax\(0, 1fr\)\);/,
   );
-  assert.match(calendarCss, /\.familyCalendarExpandedWeek\s*\{[\s\S]*?overflow:\s*hidden;/);
-  assert.match(calendarCss, /\.familyCalendarTimeLabel\s*\{[\s\S]*?white-space:\s*nowrap;/);
-  assert.match(calendarCss, /\.familyCalendarDaySlot\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*hidden;/);
-  assert.match(calendarCss, /\.familyCalendarDaySlot\s*>\s*\*\s*\{[\s\S]*?min-width:\s*0;/);
-  assert.match(calendarCss, /\.familyCalendarTimeRailSpacer\s*\{[\s\S]*?pointer-events:\s*none;/);
-  assert.match(calendarCss, /\.familyCalendarTimeRailSpacer\s*\{[\s\S]*?background:\s*rgba\(255, 248, 251, 0\.72\);[\s\S]*?box-shadow:\s*inset -1px 0 rgba\(214, 128, 157, 0\.14\);/);
-  assert.match(calendarCss, /\.familyCalendarTimeLabel\s*\{[\s\S]*?background:\s*rgba\(255, 248, 251, 0\.72\);[\s\S]*?box-shadow:\s*inset -1px 0 rgba\(214, 128, 157, 0\.14\);/);
-  assert.match(calendarCss, /\.familyCalendarWeek::before,\s*\n\.familyCalendarWeek::after\s*\{[\s\S]*?top:\s*var\(--family-calendar-week-pad\);[\s\S]*?bottom:\s*var\(--family-calendar-week-pad\);[\s\S]*?width:\s*var\(--family-calendar-day-width\);/);
-  assert.match(calendarCss, /\.familyCalendarWeek::before\s*\{[\s\S]*?left:\s*calc\(var\(--family-calendar-week-pad\) \+ var\(--family-calendar-rail-width\) \+ var\(--family-calendar-week-gap\)\);[\s\S]*?background:\s*rgba\(255, 216, 229, 0\.28\);/);
-  assert.match(calendarCss, /\.familyCalendarWeek::after\s*\{[\s\S]*?\* 6\)\);[\s\S]*?background:\s*rgba\(219, 234, 254, 0\.34\);/);
-  assert.match(calendarCss, /\.familyCalendarWeekDates \.familyCalendarWeekDay:first-of-type,\s*\n\.familyCalendarWeekCounts span:first-of-type,\s*\n\.familyCalendarWeekHeader span:first-of-type/);
-  assert.doesNotMatch(calendarCss, /\.familyCalendarWeekDates span:first-child/);
-  assert.match(calendarCss, /\.familyCalendarWeekDay\s*\{[\s\S]*?overflow:\s*hidden;[\s\S]*?text-overflow:\s*ellipsis;/);
   assert.match(
-    calendarCss,
-    /\.familyCalendarDaySlot\s+\.familyCalendarItem\s*>\s*span:first-child\s*\{[\s\S]*?text-overflow:\s*ellipsis;[\s\S]*?white-space:\s*nowrap;/,
+    compactCss,
+    /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarTimeRow\s*\{[\s\S]*?grid-template-columns:\s*28px repeat\(7, minmax\(0, 1fr\)\);/,
   );
+  assert.match(compactCss, /\.familyCalendarTimeRailSpacer\s*\{[\s\S]*?display:\s*none;[\s\S]*?pointer-events:\s*none;/);
+  assert.match(compactCss, /\.familyCalendarWeek::before,\s*\n\.familyCalendarWeek::after\s*\{[\s\S]*?content:\s*none;/);
+  assert.match(compactCss, /\.familyCalendarExpandedWeek::before,\s*\n\.familyCalendarExpandedWeek::after\s*\{[\s\S]*?width:\s*var\(--family-calendar-expanded-day-width\);/);
+  assert.match(compactCss, /\.familyCalendarExpandedWeek::before\s*\{[\s\S]*?left:\s*calc\(var\(--family-calendar-expanded-rail-width\) \+ var\(--family-calendar-expanded-gap\)\);/);
+  assert.match(compactCss, /\.familyCalendarExpandedWeek::after\s*\{[\s\S]*?\* 6\)\);/);
+  assert.match(compactCss, /\.familyCalendarTimeLabel::after\s*\{[\s\S]*?linear-gradient/);
+  assert.match(compactCss, /\.familyCalendarWeekHeader span:first-of-type,[\s\S]*?color:\s*#d86f98;/);
+  assert.match(compactCss, /\.familyCalendarWeekHeader span:last-of-type,[\s\S]*?color:\s*#4f8bcf;/);
+  assert.match(compactCss, /\.familyCalendarWeekDay\s*\{[\s\S]*?text-align:\s*center;/);
+  assert.match(combinedCss, /\.familyCalendarDaySlot\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*hidden;/);
+  assert.match(combinedCss, /\.familyCalendarDaySlot\s+\.familyCalendarItem\s*>\s*span:first-child\s*\{[\s\S]*?text-overflow:\s*ellipsis;[\s\S]*?white-space:\s*nowrap;/);
 });
