@@ -149,6 +149,24 @@
   background: rgba(255, 216, 229, 0.38);
 }
 
+.familyCalendarSelectedWeekGrid {
+  grid-template-columns: 34px repeat(7, minmax(0, 1fr));
+}
+
+.familyCalendarTimeRailSpacer,
+.familyCalendarSelectedWeekDay {
+  min-width: 0;
+}
+
+.familyCalendarSelectedWeekDay {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.familyCalendarSelectedWeekGrid .familyCalendarSelectedWeekDay:first-of-type {
+  background: rgba(255, 216, 229, 0.38);
+}
+
 .familyCalendarWeekDates span:last-child,
 .familyCalendarWeekHeader span:last-child {
   background: rgba(219, 234, 254, 0.42);
@@ -690,6 +708,10 @@
 
   .familyCalendarWeek {
     padding: 6px;
+  }
+
+  .familyCalendarSelectedWeekGrid {
+    grid-template-columns: 28px repeat(7, minmax(0, 1fr));
   }
 
   .familyCalendarTimeRow {
