@@ -92,10 +92,11 @@
 }
 
 .familyCalendarWeekHeader,
+.familyCalendarTimeRow,
 .familyCalendarWeekDates,
 .familyCalendarWeekCounts {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: 34px repeat(7, minmax(0, 1fr));
   gap: 3px;
   width: 100%;
   min-width: 0;
@@ -149,22 +150,19 @@
   background: rgba(255, 216, 229, 0.38);
 }
 
-.familyCalendarSelectedWeekGrid {
-  grid-template-columns: 34px repeat(7, minmax(0, 1fr));
-}
 
 .familyCalendarTimeRailSpacer,
-.familyCalendarSelectedWeekDay {
+.familyCalendarWeekDay {
   min-width: 0;
 }
 
-.familyCalendarSelectedWeekDay {
-  overflow: hidden;
-  text-overflow: ellipsis;
+.familyCalendarTimeRailSpacer {
+  pointer-events: none;
 }
 
-.familyCalendarSelectedWeekGrid .familyCalendarSelectedWeekDay:first-of-type {
-  background: rgba(255, 216, 229, 0.38);
+.familyCalendarWeekDay {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .familyCalendarWeekDates span:last-child,
@@ -701,8 +699,10 @@
   }
 
   .familyCalendarWeekHeader,
+  .familyCalendarTimeRow,
   .familyCalendarWeekDates,
   .familyCalendarWeekCounts {
+    grid-template-columns: 28px repeat(7, minmax(0, 1fr));
     gap: 2px;
   }
 
@@ -710,14 +710,7 @@
     padding: 6px;
   }
 
-  .familyCalendarSelectedWeekGrid {
-    grid-template-columns: 28px repeat(7, minmax(0, 1fr));
-  }
 
-  .familyCalendarTimeRow {
-    grid-template-columns: 28px repeat(7, minmax(0, 1fr));
-    gap: 2px;
-  }
 
   .familyCalendarTimeLabel {
     padding-right: 2px;
