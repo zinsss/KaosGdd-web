@@ -1,4 +1,8 @@
 .familyPage {
+  --family-page-max: var(--app-column-max-width);
+  width: min(calc(100% - (var(--app-column-edge-padding) * 2)), var(--family-page-max));
+  max-width: var(--family-page-max);
+  box-sizing: border-box;
   overflow-x: hidden;
   font-size: 14px;
 }
@@ -8,10 +12,23 @@
   box-sizing: border-box;
 }
 
+.familyCard,
+.familyDashboard,
+.familyCalendar,
+.familyCalendarFormPage,
+.familyTimetable,
+.familyStream,
+.familyTaskForm,
+.familyDoneTasks {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .familyHeader {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   flex-wrap: nowrap;
   gap: 14px;
   min-height: 72px;
@@ -49,9 +66,10 @@
   min-width: 0;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-end;
   flex-wrap: nowrap;
   gap: clamp(10px, 4vw, 22px);
+  margin-left: auto;
   overflow: hidden;
 }
 
@@ -247,7 +265,8 @@
 
 @media (max-width: 640px) {
   .familyPage {
-    width: calc(100% - 16px);
+    width: min(calc(100% - 16px), var(--family-page-max));
+    max-width: var(--family-page-max);
   }
 
   .familyHeader {
@@ -265,9 +284,10 @@
   .familyHomeNav {
     width: auto;
     flex: 1 1 auto;
-    justify-content: flex-start;
+    justify-content: flex-end;
     flex-wrap: nowrap;
     gap: clamp(8px, 3vw, 14px);
+    margin-left: auto;
     overflow: hidden;
   }
 
