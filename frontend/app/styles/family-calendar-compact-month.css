@@ -42,20 +42,22 @@
   align-items: center;
   justify-content: center;
   min-height: 100%;
-  color: rgba(78, 37, 54, 0.52);
+  color: rgba(92, 50, 68, 0.42);
   background: rgba(255, 248, 251, 0.72);
-  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.14);
+  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.12);
 }
 
 .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
-  content: "›";
-  font-size: 15px;
-  font-weight: 950;
+  content: "";
+  font-family: "Seoul Namsan Condensed", "Symbols Nerd Font", "Symbols Nerd Font Mono", monospace;
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 700;
   line-height: 1;
 }
 
 .familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
-  content: "▾";
+  content: "";
 }
 
 .familyCalendarWeekHeader span:first-of-type,
@@ -131,10 +133,10 @@
   padding: 2px 4px 2px 0;
   overflow: hidden;
   background: rgba(255, 248, 251, 0.72);
-  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.14);
-  color: rgba(78, 37, 54, 0.54);
-  font-size: 13px;
-  font-weight: 950;
+  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.1);
+  color: rgba(92, 50, 68, 0.38);
+  font-size: 0.72rem;
+  font-weight: 600;
   line-height: 1;
   text-align: right;
   white-space: nowrap;
@@ -147,11 +149,11 @@
   min-height: 18px;
   margin-top: 3px;
   background:
-    linear-gradient(to bottom, transparent calc(16.666% - 0.5px), rgba(214, 128, 157, 0.12) calc(16.666% - 0.5px) calc(16.666% + 0.5px), transparent calc(16.666% + 0.5px)),
-    linear-gradient(to bottom, transparent calc(33.333% - 0.5px), rgba(214, 128, 157, 0.12) calc(33.333% - 0.5px) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px)),
-    linear-gradient(to bottom, transparent calc(50% - 0.5px), rgba(214, 128, 157, 0.12) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
-    linear-gradient(to bottom, transparent calc(66.666% - 0.5px), rgba(214, 128, 157, 0.12) calc(66.666% - 0.5px) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px)),
-    linear-gradient(to bottom, transparent calc(83.333% - 0.5px), rgba(214, 128, 157, 0.12) calc(83.333% - 0.5px) calc(83.333% + 0.5px), transparent calc(83.333% + 0.5px));
+    linear-gradient(to bottom, transparent calc(16.666% - 0.5px), rgba(214, 128, 157, 0.1) calc(16.666% - 0.5px) calc(16.666% + 0.5px), transparent calc(16.666% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(33.333% - 0.5px), rgba(214, 128, 157, 0.1) calc(33.333% - 0.5px) calc(33.333% + 0.5px), transparent calc(33.333% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(50% - 0.5px), rgba(214, 128, 157, 0.1) calc(50% - 0.5px) calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(66.666% - 0.5px), rgba(214, 128, 157, 0.1) calc(66.666% - 0.5px) calc(66.666% + 0.5px), transparent calc(66.666% + 0.5px)),
+    linear-gradient(to bottom, transparent calc(83.333% - 0.5px), rgba(214, 128, 157, 0.1) calc(83.333% - 0.5px) calc(83.333% + 0.5px), transparent calc(83.333% + 0.5px));
 }
 
 .familyCalendarDaySlot {
@@ -173,9 +175,14 @@
     --family-calendar-expanded-rail-width: 28px;
   }
 
+  .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
+    font-size: 13px;
+  }
+
   .familyCalendarTimeLabel {
     min-height: 32px;
     padding-right: 2px;
-    font-size: 12px;
+    color: rgba(92, 50, 68, 0.32);
+    font-size: 0.66rem;
   }
 }
