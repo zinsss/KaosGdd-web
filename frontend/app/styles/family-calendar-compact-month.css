@@ -1,15 +1,17 @@
 .familyCalendarWeekHeader,
 .familyCalendarWeekDates,
-.familyCalendarWeekCounts {
+.familyCalendarWeekCounts,
+.familyCalendarTimeRow {
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
+  grid-template-columns: 34px repeat(7, minmax(0, 1fr));
   gap: 3px;
   width: 100%;
   min-width: 0;
 }
 
 .familyCalendarTimeRailSpacer {
-  display: none;
+  display: block;
+  min-width: 0;
   pointer-events: none;
 }
 
@@ -27,6 +29,33 @@
 .familyCalendarWeekCounts span {
   min-width: 0;
   text-align: center;
+}
+
+.familyCalendarWeekHeader .familyCalendarTimeRailSpacer,
+.familyCalendarWeekCounts .familyCalendarTimeRailSpacer {
+  background: transparent;
+  box-shadow: none;
+}
+
+.familyCalendarWeekDates .familyCalendarTimeRailSpacer {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100%;
+  color: rgba(78, 37, 54, 0.52);
+  background: rgba(255, 248, 251, 0.72);
+  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.14);
+}
+
+.familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
+  content: "›";
+  font-size: 15px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
+  content: "▾";
 }
 
 .familyCalendarWeekHeader span:first-of-type,
@@ -88,9 +117,6 @@
 }
 
 .familyCalendarTimeRow {
-  display: grid;
-  grid-template-columns: 34px repeat(7, minmax(0, 1fr));
-  gap: 3px;
   min-width: 0;
   align-items: stretch;
 }
@@ -136,19 +162,15 @@
 @media (max-width: 640px) {
   .familyCalendarWeekHeader,
   .familyCalendarWeekDates,
-  .familyCalendarWeekCounts {
-    grid-template-columns: repeat(7, minmax(0, 1fr));
+  .familyCalendarWeekCounts,
+  .familyCalendarTimeRow {
+    grid-template-columns: 28px repeat(7, minmax(0, 1fr));
     gap: 2px;
   }
 
   .familyCalendarExpandedWeek {
     --family-calendar-expanded-gap: 2px;
     --family-calendar-expanded-rail-width: 28px;
-  }
-
-  .familyCalendarTimeRow {
-    grid-template-columns: 28px repeat(7, minmax(0, 1fr));
-    gap: 2px;
   }
 
   .familyCalendarTimeLabel {
