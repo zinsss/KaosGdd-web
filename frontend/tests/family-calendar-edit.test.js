@@ -78,7 +78,7 @@ test("family calendar mobile header uses compact two-row actions", async () => {
   }
 });
 
-test("family calendar keeps month rows compact and selected week timed", async () => {
+test("family calendar uses one shared gutter column for month rows and selected timetable", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const baseCalendarCss = await readSource("../app/styles/family-calendar.css");
   const compactCss = await readSource("../app/styles/family-calendar-compact-month.css");
@@ -87,7 +87,7 @@ test("family calendar keeps month rows compact and selected week timed", async (
 
   assert.ok(globalsCss.includes('@import "./styles/family-calendar-compact-month.css";'));
   assert.ok(calendarSource.includes('className="familyCalendarExpandedWeek"'));
-  assert.ok(calendarSource.includes("familyCalendarWeekDay"));
+  assert.ok(calendarSource.includes('<i className="familyCalendarTimeRailSpacer" aria-hidden="true" />'));
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow"'));
   assert.ok(calendarSource.includes('className="familyCalendarTimeLabel"'));
   assert.ok(calendarSource.includes('className="familyCalendarDaySlot"'));
@@ -99,18 +99,16 @@ test("family calendar keeps month rows compact and selected week timed", async (
 
   assert.match(
     compactCss,
-    /\.familyCalendarWeekHeader,\s*\n\.familyCalendarWeekDates,\s*\n\.familyCalendarWeekCounts\s*\{[\s\S]*?grid-template-columns:\s*repeat\(7, minmax\(0, 1fr\)\);/,
+    /\.familyCalendarWeekHeader,\s*\n\.familyCalendarWeekDates,\s*\n\.familyCalendarWeekCounts,\s*\n\.familyCalendarTimeRow\s*\{[\s\S]*?grid-template-columns:\s*34px repeat\(7, minmax\(0, 1fr\)\);/,
   );
   assert.match(
     compactCss,
-    /\.familyCalendarTimeRow\s*\{[\s\S]*?grid-template-columns:\s*34px repeat\(7, minmax\(0, 1fr\)\);/,
+    /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarWeekHeader,\s*\n\s*\.familyCalendarWeekDates,\s*\n\s*\.familyCalendarWeekCounts,\s*\n\s*\.familyCalendarTimeRow\s*\{[\s\S]*?grid-template-columns:\s*28px repeat\(7, minmax\(0, 1fr\)\);/,
   );
-  assert.match(
-    compactCss,
-    /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarTimeRow\s*\{[\s\S]*?grid-template-columns:\s*28px repeat\(7, minmax\(0, 1fr\)\);/,
-  );
-  assert.match(compactCss, /\.familyCalendarTimeRailSpacer\s*\{[\s\S]*?display:\s*none;[\s\S]*?pointer-events:\s*none;/);
-  assert.match(compactCss, /\.familyCalendarWeek::before,\s*\n\.familyCalendarWeek::after\s*\{[\s\S]*?content:\s*none;/);
+  assert.match(compactCss, /\.familyCalendarTimeRailSpacer\s*\{[\s\S]*?display:\s*block;[\s\S]*?pointer-events:\s*none;/);
+  assert.match(compactCss, /\.familyCalendarWeekDates \.familyCalendarTimeRailSpacer::before\s*\{[\s\S]*?content:\s*"›";/);
+  assert.match(compactCss, /\.familyCalendarWeekSelected \.familyCalendarWeekDates \.familyCalendarTimeRailSpacer::before\s*\{[\s\S]*?content:\s*"▾";/);
+  assert.match(compactCss, /\.familyCalendarWeekHeader \.familyCalendarTimeRailSpacer,\s*\n\.familyCalendarWeekCounts \.familyCalendarTimeRailSpacer\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?box-shadow:\s*none;/);
   assert.match(compactCss, /\.familyCalendarExpandedWeek::before,\s*\n\.familyCalendarExpandedWeek::after\s*\{[\s\S]*?width:\s*var\(--family-calendar-expanded-day-width\);/);
   assert.match(compactCss, /\.familyCalendarExpandedWeek::before\s*\{[\s\S]*?left:\s*calc\(var\(--family-calendar-expanded-rail-width\) \+ var\(--family-calendar-expanded-gap\)\);/);
   assert.match(compactCss, /\.familyCalendarExpandedWeek::after\s*\{[\s\S]*?\* 6\)\);/);
