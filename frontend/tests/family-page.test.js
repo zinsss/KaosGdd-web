@@ -8,20 +8,20 @@ async function readSource(path) {
 
 test("family shared header uses polished tab wording and routes", async () => {
   const headerSource = await readSource("../app/family/FamilyHeader.js");
-  const logoSource = await readSource("../public/family-logo.svg");
 
   assert.ok(headerSource.includes('import Image from "next/image"'), "Family logo should use Next Image");
   assert.ok(headerSource.includes("familyLogoLink"), "logo link should be rendered in the Family header");
   assert.ok(headerSource.includes('href="/family"'), "logo should navigate home to /family");
-  assert.ok(headerSource.includes('src="/family-logo.svg"'), "Family header should use the Family logo asset");
+  assert.ok(headerSource.includes('src="/family/rouny-me-icon.png"'), "Family header should use the uploaded Rouny&Me PNG logo asset");
+  assert.ok(headerSource.includes("familyHeaderLogo"), "Family header should use the dedicated logo class");
   assert.ok(headerSource.includes("width={68}"));
   assert.ok(headerSource.includes("height={68}"));
   assert.ok(headerSource.includes("priority"));
-  assert.ok(headerSource.includes("unoptimized"), "SVG logo should bypass Next image optimization");
+  assert.ok(headerSource.includes("unoptimized"));
+  assert.ok(!headerSource.includes("/family-logo.svg"), "generic house logo path should not remain");
+  assert.ok(!headerSource.includes("rouny-me-icon.svg"), "generated SVG approximation should not remain");
   assert.ok(!headerSource.includes("<img"), "raw img should not be used for the Family logo");
   assert.ok(!headerSource.includes("<h1>가족</h1>"), "old text banner title should not remain");
-  assert.ok(logoSource.includes("<svg"));
-  assert.ok(logoSource.includes("#f06f9c"));
 
   for (const label of ["달력", "할일", "로운이", "메모장"]) {
     assert.ok(headerSource.includes(label), `${label} should be in the Family header`);
@@ -93,12 +93,12 @@ test("family polish keeps the baseline compact and overflow-safe", async () => {
 
   assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*14px;/);
   assert.match(polishCss, /\.familyHeader\s*\{[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?min-height:\s*72px;[\s\S]*?overflow:\s*hidden;/);
-  assert.match(polishCss, /\.familyLogoLink\s*\{[\s\S]*?width:\s*68px;[\s\S]*?text-decoration:\s*none;/);
-  assert.match(polishCss, /\.familyLogo\s*\{[\s\S]*?width:\s*68px;[\s\S]*?object-fit:\s*contain;/);
+  assert.match(polishCss, /\.familyLogoLink\s*\{[\s\S]*?width:\s*52px;[\s\S]*?text-decoration:\s*none;/);
+  assert.match(polishCss, /\.familyHeaderLogo\s*\{[\s\S]*?width:\s*48px;[\s\S]*?height:\s*48px;[\s\S]*?object-fit:\s*contain;/);
   assert.match(polishCss, /\.familyHomeNav\s*\{[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?overflow:\s*hidden;/);
   assert.match(polishCss, /\.familyHomeNavLink\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?white-space:\s*nowrap;/);
   assert.match(polishCss, /\.familyHomeNavLinkActive::after\s*\{[\s\S]*?height:\s*2px;[\s\S]*?background:\s*rgba\(216, 111, 152, 0\.72\);/);
-  assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyLogo\s*\{[\s\S]*?width:\s*62px;/);
+  assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyHeaderLogo\s*\{[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*?\.familyHomeNavLink\s*\{[\s\S]*?font-size:\s*13px;/);
   assert.match(roniCss, /\.familyRoniTemplateRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;/);
   assert.match(roniCss, /\.familyRoniTemplateActions[\s\S]*?\{[\s\S]*?flex-wrap:\s*wrap;/);
