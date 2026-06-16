@@ -19,6 +19,7 @@
 @import "./styles/family-roni-templates.css";
 @import "./styles/family-polish.css";
 @import "./styles/family-fonts.css";
+@import "./styles/family-calendar-compact-month.css";
 
 .markdownBody {
   line-height: 1.5;
