@@ -77,3 +77,39 @@ test("family calendar mobile header uses compact two-row actions", async () => {
     assert.ok(!calendarSource.includes(oldString), `${oldString} should not return in calendar source`);
   }
 });
+
+test("family calendar selected week uses a dedicated time rail", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const calendarCss = await readSource("../app/styles/family-calendar.css");
+
+  assert.ok(calendarSource.includes('className="familyCalendarExpandedWeek"'));
+  assert.ok(calendarSource.includes('className="familyCalendarTimeRow"'));
+  assert.ok(calendarSource.includes('className="familyCalendarTimeLabel"'));
+  assert.ok(calendarSource.includes('className="familyCalendarDaySlot"'));
+  assert.ok(
+    calendarSource.indexOf('className="familyCalendarTimeLabel"') <
+      calendarSource.indexOf('className="familyCalendarDaySlot"'),
+    "time label should render before day slots, not inside a day cell",
+  );
+
+  assert.match(
+    calendarCss,
+    /\.familyCalendarTimeRow\s*\{[\s\S]*?grid-template-columns:\s*34px repeat\(7, minmax\(0, 1fr\)\);/,
+  );
+  assert.match(
+    calendarCss,
+    /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarTimeRow\s*\{[\s\S]*?grid-template-columns:\s*28px repeat\(7, minmax\(0, 1fr\)\);/,
+  );
+  assert.match(calendarCss, /\.familyCalendarExpandedWeek\s*\{[\s\S]*?overflow:\s*hidden;/);
+  assert.match(calendarCss, /\.familyCalendarTimeLabel\s*\{[\s\S]*?white-space:\s*nowrap;/);
+  assert.match(calendarCss, /\.familyCalendarDaySlot\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*hidden;/);
+  assert.match(calendarCss, /\.familyCalendarDaySlot\s*>\s*\*\s*\{[\s\S]*?min-width:\s*0;/);
+  assert.match(
+    calendarCss,
+    /\.familyCalendarDaySlot\s+\.familyCalendarItem\s*>\s*span:first-child\s*\{[\s\S]*?text-overflow:\s*ellipsis;[\s\S]*?white-space:\s*nowrap;/,
+  );
+  assert.match(
+    calendarCss,
+    /\.familyCalendarWeekHeader,\s*\n\.familyCalendarWeekDates,\s*\n\.familyCalendarWeekCounts\s*\{[\s\S]*?grid-template-columns:\s*repeat\(7, minmax\(0, 1fr\)\);/,
+  );
+});
