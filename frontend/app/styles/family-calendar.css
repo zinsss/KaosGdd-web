@@ -115,8 +115,42 @@
   border: 1px solid rgba(214, 128, 157, 0.16);
   border-radius: 8px;
   padding: 7px;
+  --family-calendar-week-pad: 7px;
+  --family-calendar-week-gap: 3px;
+  --family-calendar-rail-width: 34px;
+  --family-calendar-day-width: calc((100% - (var(--family-calendar-week-pad) * 2) - var(--family-calendar-rail-width) - (var(--family-calendar-week-gap) * 7)) / 7);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   background: #fffafd;
   min-width: 0;
+}
+
+.familyCalendarWeek > * {
+  position: relative;
+  z-index: 1;
+}
+
+.familyCalendarWeek::before,
+.familyCalendarWeek::after {
+  content: "";
+  position: absolute;
+  top: var(--family-calendar-week-pad);
+  bottom: var(--family-calendar-week-pad);
+  z-index: 0;
+  width: var(--family-calendar-day-width);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.familyCalendarWeek::before {
+  left: calc(var(--family-calendar-week-pad) + var(--family-calendar-rail-width) + var(--family-calendar-week-gap));
+  background: rgba(255, 216, 229, 0.28);
+}
+
+.familyCalendarWeek::after {
+  left: calc(var(--family-calendar-week-pad) + var(--family-calendar-rail-width) + var(--family-calendar-week-gap) + ((var(--family-calendar-day-width) + var(--family-calendar-week-gap)) * 6));
+  background: rgba(219, 234, 254, 0.34);
 }
 
 .familyCalendarWeekSelected {
@@ -145,11 +179,11 @@
   text-overflow: ellipsis;
 }
 
-.familyCalendarWeekDates span:first-child,
-.familyCalendarWeekHeader span:first-child {
+.familyCalendarWeekDates .familyCalendarWeekDay:first-of-type,
+.familyCalendarWeekCounts span:first-of-type,
+.familyCalendarWeekHeader span:first-of-type {
   background: rgba(255, 216, 229, 0.38);
 }
-
 
 .familyCalendarTimeRailSpacer,
 .familyCalendarWeekDay {
@@ -157,6 +191,8 @@
 }
 
 .familyCalendarTimeRailSpacer {
+  background: rgba(255, 248, 251, 0.72);
+  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.14);
   pointer-events: none;
 }
 
@@ -165,8 +201,9 @@
   text-overflow: ellipsis;
 }
 
-.familyCalendarWeekDates span:last-child,
-.familyCalendarWeekHeader span:last-child {
+.familyCalendarWeekDates .familyCalendarWeekDay:last-of-type,
+.familyCalendarWeekCounts span:last-of-type,
+.familyCalendarWeekHeader span:last-of-type {
   background: rgba(219, 234, 254, 0.42);
 }
 
@@ -198,6 +235,8 @@
 }
 
 .familyCalendarTimeLabel {
+  background: rgba(255, 248, 251, 0.72);
+  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.14);
   min-width: 0;
   box-sizing: border-box;
   padding-right: 4px;
@@ -707,6 +746,9 @@
   }
 
   .familyCalendarWeek {
+    --family-calendar-week-pad: 6px;
+    --family-calendar-week-gap: 2px;
+    --family-calendar-rail-width: 28px;
     padding: 6px;
   }
 

@@ -115,6 +115,13 @@ test("family calendar week rows share a global time rail", async () => {
   assert.match(calendarCss, /\.familyCalendarDaySlot\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*hidden;/);
   assert.match(calendarCss, /\.familyCalendarDaySlot\s*>\s*\*\s*\{[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarTimeRailSpacer\s*\{[\s\S]*?pointer-events:\s*none;/);
+  assert.match(calendarCss, /\.familyCalendarTimeRailSpacer\s*\{[\s\S]*?background:\s*rgba\(255, 248, 251, 0\.72\);[\s\S]*?box-shadow:\s*inset -1px 0 rgba\(214, 128, 157, 0\.14\);/);
+  assert.match(calendarCss, /\.familyCalendarTimeLabel\s*\{[\s\S]*?background:\s*rgba\(255, 248, 251, 0\.72\);[\s\S]*?box-shadow:\s*inset -1px 0 rgba\(214, 128, 157, 0\.14\);/);
+  assert.match(calendarCss, /\.familyCalendarWeek::before,\s*\n\.familyCalendarWeek::after\s*\{[\s\S]*?top:\s*var\(--family-calendar-week-pad\);[\s\S]*?bottom:\s*var\(--family-calendar-week-pad\);[\s\S]*?width:\s*var\(--family-calendar-day-width\);/);
+  assert.match(calendarCss, /\.familyCalendarWeek::before\s*\{[\s\S]*?left:\s*calc\(var\(--family-calendar-week-pad\) \+ var\(--family-calendar-rail-width\) \+ var\(--family-calendar-week-gap\)\);[\s\S]*?background:\s*rgba\(255, 216, 229, 0\.28\);/);
+  assert.match(calendarCss, /\.familyCalendarWeek::after\s*\{[\s\S]*?\* 6\)\);[\s\S]*?background:\s*rgba\(219, 234, 254, 0\.34\);/);
+  assert.match(calendarCss, /\.familyCalendarWeekDates \.familyCalendarWeekDay:first-of-type,\s*\n\.familyCalendarWeekCounts span:first-of-type,\s*\n\.familyCalendarWeekHeader span:first-of-type/);
+  assert.doesNotMatch(calendarCss, /\.familyCalendarWeekDates span:first-child/);
   assert.match(calendarCss, /\.familyCalendarWeekDay\s*\{[\s\S]*?overflow:\s*hidden;[\s\S]*?text-overflow:\s*ellipsis;/);
   assert.match(
     calendarCss,
