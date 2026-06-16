@@ -1,4 +1,5 @@
 .familyPage {
+  --family-logo-bg: #fff9fc;
   overflow-x: hidden;
   font-size: 14px;
 }
@@ -17,6 +18,7 @@
   min-height: 72px;
   padding: 6px 14px;
   overflow: hidden;
+  background: var(--family-logo-bg);
 }
 
 .familyLogoLink {
@@ -26,6 +28,7 @@
   justify-content: center;
   width: 52px;
   min-width: 52px;
+  background: var(--family-logo-bg);
   text-decoration: none;
 }
 
@@ -35,6 +38,7 @@
   height: 48px;
   object-fit: contain;
   flex: 0 0 auto;
+  background: var(--family-logo-bg);
 }
 
 .familyHeader h1 {
