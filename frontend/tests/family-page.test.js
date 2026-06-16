@@ -9,18 +9,16 @@ async function readSource(path) {
 test("family shared header uses polished tab wording and routes", async () => {
   const headerSource = await readSource("../app/family/FamilyHeader.js");
 
-  assert.ok(headerSource.includes('import Image from "next/image"'), "Family logo should use Next Image");
-  assert.ok(headerSource.includes("familyLogoLink"), "logo link should be rendered in the Family header");
-  assert.ok(headerSource.includes('href="/family"'), "logo should navigate home to /family");
-  assert.ok(headerSource.includes('src="/family/rouny-me-icon.png"'), "Family header should use the uploaded Rouny&Me PNG logo asset");
-  assert.ok(headerSource.includes("familyHeaderLogo"), "Family header should use the dedicated logo class");
-  assert.ok(headerSource.includes("width={68}"));
-  assert.ok(headerSource.includes("height={68}"));
-  assert.ok(headerSource.includes("priority"));
-  assert.ok(headerSource.includes("unoptimized"));
+  assert.ok(!headerSource.includes('import Image from "next/image"'), "Family header should not render a logo image");
+  assert.ok(headerSource.includes("familyLogoLink"), "text logo link should remain in the Family header");
+  assert.ok(headerSource.includes('href="/family"'), "text logo should navigate home to /family");
+  assert.ok(headerSource.includes("familyTextLogo"), "Family header should use the dedicated text logo class");
+  assert.ok(headerSource.includes("로운이와 나"), "Family header should render the text logo");
+  assert.ok(!headerSource.includes("familyHeaderLogo"), "image logo class should not remain in the Family header");
+  assert.ok(!headerSource.includes("rouny-me-icon"), "Rouny&Me image asset should not be referenced");
   assert.ok(!headerSource.includes("/family-logo.svg"), "generic house logo path should not remain");
   assert.ok(!headerSource.includes("rouny-me-icon.svg"), "generated SVG approximation should not remain");
-  assert.ok(!headerSource.includes("<img"), "raw img should not be used for the Family logo");
+  assert.ok(!headerSource.includes("<img"), "raw img should not be used in the Family header");
   assert.ok(!headerSource.includes("<h1>가족</h1>"), "old text banner title should not remain");
 
   for (const label of ["달력", "할일", "로운이", "메모장"]) {
@@ -50,12 +48,15 @@ test("family memo page uses finalized title and checklist glyph", async () => {
 
 test("family font no longer exposes Hyunok and remains Family-scoped", async () => {
   const familyCss = await readSource("../app/styles/family.css");
+  const familyFontsCss = await readSource("../app/styles/family-fonts.css");
 
   assert.ok(familyCss.includes(".familyPage"));
   assert.ok(familyCss.includes("font-family"));
   assert.ok(familyCss.includes("Apple SD Gothic Neo"));
   assert.ok(familyCss.includes("Noto Sans KR"));
   assert.ok(familyCss.includes("system-ui"));
+  assert.ok(familyFontsCss.includes('font-family: "Lotteria"'));
+  assert.ok(familyFontsCss.includes("LOTTERIADDAG.woff2"));
   for (const removedFont of ["Hyunok", "현옥", "GangwonEducationHyunokSam"]) {
     assert.ok(!familyCss.includes(removedFont), `${removedFont} should not remain in Family CSS`);
   }
@@ -93,12 +94,14 @@ test("family polish keeps the baseline compact and overflow-safe", async () => {
 
   assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*14px;/);
   assert.match(polishCss, /\.familyHeader\s*\{[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?min-height:\s*72px;[\s\S]*?overflow:\s*hidden;/);
-  assert.match(polishCss, /\.familyLogoLink\s*\{[\s\S]*?width:\s*52px;[\s\S]*?text-decoration:\s*none;/);
-  assert.match(polishCss, /\.familyHeaderLogo\s*\{[\s\S]*?width:\s*48px;[\s\S]*?height:\s*48px;[\s\S]*?object-fit:\s*contain;/);
+  assert.match(polishCss, /\.familyLogoLink\s*\{[\s\S]*?width:\s*auto;[\s\S]*?background:\s*transparent;[\s\S]*?text-decoration:\s*none;/);
+  assert.match(polishCss, /\.familyTextLogo\s*\{[\s\S]*?font-family:\s*"Lotteria"[\s\S]*?color:\s*var\(--family-highlight, #d86f98\);[\s\S]*?font-size:\s*22px;/);
+  assert.ok(!polishCss.includes("familyHeaderLogo"));
   assert.match(polishCss, /\.familyHomeNav\s*\{[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?overflow:\s*hidden;/);
   assert.match(polishCss, /\.familyHomeNavLink\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?white-space:\s*nowrap;/);
   assert.match(polishCss, /\.familyHomeNavLinkActive::after\s*\{[\s\S]*?height:\s*2px;[\s\S]*?background:\s*rgba\(216, 111, 152, 0\.72\);/);
-  assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyHeaderLogo\s*\{[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;/);
+  assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyTextLogo\s*\{[\s\S]*?font-size:\s*20px;/);
+  assert.match(polishCss, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*?\.familyTextLogo\s*\{[\s\S]*?font-size:\s*18px;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*?\.familyHomeNavLink\s*\{[\s\S]*?font-size:\s*13px;/);
   assert.match(roniCss, /\.familyRoniTemplateRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;/);
   assert.match(roniCss, /\.familyRoniTemplateActions[\s\S]*?\{[\s\S]*?flex-wrap:\s*wrap;/);
