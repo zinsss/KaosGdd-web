@@ -829,9 +829,10 @@ export default function FamilyCalendarClient() {
           const selected = week.key === selectedWeekKey;
           return (
             <section className={`familyCalendarWeek${selected ? " familyCalendarWeekSelected" : ""}`} key={week.key}>
-              <button className="familyCalendarWeekDates" type="button" onClick={() => setSelectedWeekKey(week.key)}>
+              <button className={`familyCalendarWeekDates${selected ? " familyCalendarSelectedWeekGrid" : ""}`} type="button" onClick={() => setSelectedWeekKey(week.key)}>
+                {selected ? <i className="familyCalendarTimeRailSpacer" aria-hidden="true" /> : null}
                 {week.days.map((day) => (
-                  <span className={day.inMonth ? "" : "familyCalendarDateOutside"} key={day.dateKey}>
+                  <span className={`familyCalendarSelectedWeekDay${day.inMonth ? "" : " familyCalendarDateOutside"}`} key={day.dateKey}>
                     {day.date.getDate()}
                   </span>
                 ))}
