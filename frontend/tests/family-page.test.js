@@ -91,10 +91,10 @@ test("family polish keeps the baseline compact and overflow-safe", async () => {
   const polishCss = await readSource("../app/styles/family-polish.css");
   const roniCss = await readSource("../app/styles/family-roni-templates.css");
 
-  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*14px;/);
-  assert.match(polishCss, /\.familyHeader\s*\{[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?min-height:\s*72px;[\s\S]*?overflow:\s*hidden;/);
-  assert.match(polishCss, /\.familyLogoLink\s*\{[\s\S]*?width:\s*52px;[\s\S]*?text-decoration:\s*none;/);
-  assert.match(polishCss, /\.familyHeaderLogo\s*\{[\s\S]*?width:\s*48px;[\s\S]*?height:\s*48px;[\s\S]*?object-fit:\s*contain;/);
+  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?--family-logo-bg:\s*#fff9fc;[\s\S]*?font-size:\s*14px;/);
+  assert.match(polishCss, /\.familyHeader\s*\{[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?min-height:\s*72px;[\s\S]*?overflow:\s*hidden;[\s\S]*?background:\s*var\(--family-logo-bg\);/);
+  assert.match(polishCss, /\.familyLogoLink\s*\{[\s\S]*?width:\s*52px;[\s\S]*?background:\s*var\(--family-logo-bg\);[\s\S]*?text-decoration:\s*none;/);
+  assert.match(polishCss, /\.familyHeaderLogo\s*\{[\s\S]*?width:\s*48px;[\s\S]*?height:\s*48px;[\s\S]*?object-fit:\s*contain;[\s\S]*?background:\s*var\(--family-logo-bg\);/);
   assert.match(polishCss, /\.familyHomeNav\s*\{[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?overflow:\s*hidden;/);
   assert.match(polishCss, /\.familyHomeNavLink\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?white-space:\s*nowrap;/);
   assert.match(polishCss, /\.familyHomeNavLinkActive::after\s*\{[\s\S]*?height:\s*2px;[\s\S]*?background:\s*rgba\(216, 111, 152, 0\.72\);/);
