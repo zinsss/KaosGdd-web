@@ -15,9 +15,9 @@ export default function FamilyHeader({ active = "home" }) {
     <header className="familyHeader">
       <Link className="familyLogoLink" href="/family" aria-label="가족 홈">
         <Image
-          className="familyLogo"
-          src="/family-logo.svg"
-          alt="가족"
+          className="familyHeaderLogo"
+          src="/family/rouny-me-icon.png"
+          alt="Rouny&Me"
           width={68}
           height={68}
           priority

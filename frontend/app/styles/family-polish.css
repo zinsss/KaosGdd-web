@@ -24,17 +24,17 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 68px;
-  min-width: 60px;
+  width: 52px;
+  min-width: 52px;
   text-decoration: none;
 }
 
-.familyLogo {
+.familyHeaderLogo {
   display: block;
-  width: 68px;
-  height: auto;
-  max-height: 68px;
+  width: 48px;
+  height: 48px;
   object-fit: contain;
+  flex: 0 0 auto;
 }
 
 .familyHeader h1 {
@@ -256,13 +256,13 @@
   }
 
   .familyLogoLink {
-    width: 62px;
-    min-width: 58px;
+    width: 48px;
+    min-width: 48px;
   }
 
-  .familyLogo {
-    width: 62px;
-    max-height: 62px;
+  .familyHeaderLogo {
+    width: 44px;
+    height: 44px;
   }
 
   .familyHomeNav {
@@ -342,13 +342,13 @@
   }
 
   .familyLogoLink {
-    width: 56px;
-    min-width: 52px;
+    width: 44px;
+    min-width: 44px;
   }
 
-  .familyLogo {
-    width: 56px;
-    max-height: 56px;
+  .familyHeaderLogo {
+    width: 40px;
+    height: 40px;
   }
 
   .familyHomeNav {
