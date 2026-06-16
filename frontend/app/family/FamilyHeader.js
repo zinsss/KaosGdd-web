@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 
 const FAMILY_NAV_ITEMS = [
@@ -14,15 +13,7 @@ export default function FamilyHeader({ active = "home" }) {
   return (
     <header className="familyHeader">
       <Link className="familyLogoLink" href="/family" aria-label="가족 홈">
-        <Image
-          className="familyHeaderLogo"
-          src="/family/rouny-me-icon.png"
-          alt="Rouny&Me"
-          width={68}
-          height={68}
-          priority
-          unoptimized
-        />
+        <span className="familyTextLogo">로운이와 나</span>
       </Link>
       <nav className="familyHomeNav" aria-label="가족 화면">
         {FAMILY_NAV_ITEMS.map((item) => (
