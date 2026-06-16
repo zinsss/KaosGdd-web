@@ -117,7 +117,10 @@ test("family calendar keeps month rows compact and selected week timed", async (
   assert.match(compactCss, /\.familyCalendarTimeLabel::after\s*\{[\s\S]*?linear-gradient/);
   assert.match(compactCss, /\.familyCalendarWeekHeader span:first-of-type,[\s\S]*?color:\s*#d86f98;/);
   assert.match(compactCss, /\.familyCalendarWeekHeader span:last-of-type,[\s\S]*?color:\s*#4f8bcf;/);
-  assert.match(compactCss, /\.familyCalendarWeekDay\s*\{[\s\S]*?text-align:\s*center;/);
+  assert.match(
+    compactCss,
+    /\.familyCalendarWeekHeader span,\s*\n\.familyCalendarWeekDay,\s*\n\.familyCalendarWeekCounts span\s*\{[\s\S]*?text-align:\s*center;/,
+  );
   assert.match(combinedCss, /\.familyCalendarDaySlot\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*hidden;/);
   assert.match(combinedCss, /\.familyCalendarDaySlot\s+\.familyCalendarItem\s*>\s*span:first-child\s*\{[\s\S]*?text-overflow:\s*ellipsis;[\s\S]*?white-space:\s*nowrap;/);
 });
