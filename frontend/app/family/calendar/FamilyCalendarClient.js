@@ -5,6 +5,15 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import {
+  DEFAULT_WEATHER_LOCATION,
+  fetchWeatherDaily,
+  fetchWeatherDayparts,
+  getStoredWeatherLocation,
+  listenWeatherLocationChange,
+  normalizeFamilyWeatherDayparts,
+} from "../../lib/weather-client";
+import FamilyCalendarWeatherRows from "./FamilyCalendarWeatherRows";
+import {
   FAMILY_CALENDAR_DAY_LABELS,
   addFamilyDays,
   createFamilyCalendarId,
@@ -275,6 +284,10 @@ function buildEditWeekRows(items) {
   ]));
 }
 
+function buildWeekDateKeys(weekStart) {
+  return FAMILY_CALENDAR_DAY_LABELS.map((_, dayIndex) => formatFamilyDateKey(addFamilyDays(weekStart, dayIndex)));
+}
+
 function CalendarItemLink({
   dragging = false,
   item,
@@ -325,8 +338,11 @@ function FamilyCalendarEditWeek({
   onMoveDatedItem,
   onMoveRoniTemplate,
   onRestoreRoniOverride,
+  selectedWeekDates,
   selectedWeekItems,
   selectedWeekStart,
+  weatherByDate,
+  weatherDaypartsByDate,
 }) {
   const router = useRouter();
   const editScrollRef = useRef(null);
@@ -341,6 +357,11 @@ function FamilyCalendarEditWeek({
   const [pendingRoniMove, setPendingRoniMove] = useState(null);
   const [roniChoiceItem, setRoniChoiceItem] = useState(null);
   const editRows = useMemo(() => buildEditWeekRows(selectedWeekItems.filter((item) => !item.allDay)), [selectedWeekItems]);
+  const hasWeatherRows = selectedWeekDates.some((date) => {
+    const summary = weatherByDate.get(date);
+    const dayparts = weatherDaypartsByDate[date] || [];
+    return Boolean(summary) || dayparts.some((item) => item.glyph || item.temp_min_c !== "" || item.temp_max_c !== "");
+  });
 
   function clearPendingLongPress() {
     if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
@@ -568,6 +589,13 @@ function FamilyCalendarEditWeek({
       onPointerUp={finishDatedDrag}
       ref={editScrollRef}
     >
+      {hasWeatherRows ? (
+        <FamilyCalendarWeatherRows
+          selectedWeekDates={selectedWeekDates}
+          weatherByDate={weatherByDate}
+          weatherDaypartsByDate={weatherDaypartsByDate}
+        />
+      ) : null}
       {hasAllDayItems ? (
         <div className="familyCalendarTimeRow familyCalendarAllDayRow" key="all-day">
           <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">종일</span>
@@ -683,11 +711,19 @@ export default function FamilyCalendarClient() {
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedWeekKey, setSelectedWeekKey] = useState(() => formatFamilyDateKey(getFamilyWeekStart(new Date())));
   const [calendarMode, setCalendarMode] = useState(FAMILY_CALENDAR_MODE_VIEW);
+  const [weatherLocation, setWeatherLocation] = useState(DEFAULT_WEATHER_LOCATION);
+  const [weatherItems, setWeatherItems] = useState([]);
+  const [selectedWeekWeatherDayparts, setSelectedWeekWeatherDayparts] = useState({});
 
   useEffect(() => {
     setDatedItems(loadFamilyCalendarItems());
     setRounState(loadFamilyRounState());
     setRoniOverrides(loadFamilyRoniOverrides());
+  }, []);
+
+  useEffect(() => {
+    setWeatherLocation(getStoredWeatherLocation());
+    return listenWeatherLocationChange(setWeatherLocation);
   }, []);
 
   const selectedWeekStart = useMemo(
@@ -696,12 +732,23 @@ export default function FamilyCalendarClient() {
   );
   const weeks = useMemo(() => getFamilyMonthWeeks(monthDate), [monthDate]);
   const editingCalendar = calendarMode === FAMILY_CALENDAR_MODE_EDIT;
+  const monthDateKeys = useMemo(() => weeks.flatMap((week) => week.days.map((day) => day.dateKey)), [weeks]);
+  const weatherStart = monthDateKeys[0] || "";
+  const weatherEnd = monthDateKeys[monthDateKeys.length - 1] || "";
+  const selectedWeekDates = useMemo(() => buildWeekDateKeys(selectedWeekStart), [selectedWeekStart]);
   const datedItemsByDate = useMemo(() => {
     return datedItems.reduce((counts, item) => {
       counts[item.date] = (counts[item.date] || 0) + 1;
       return counts;
     }, {});
   }, [datedItems]);
+  const weatherByDate = useMemo(() => {
+    const nextWeather = new Map();
+    weatherItems.forEach((item) => {
+      if (item?.date) nextWeather.set(item.date, item);
+    });
+    return nextWeather;
+  }, [weatherItems]);
   const deletedRoniOverridesByDate = useMemo(() => groupDeletedRoniOverridesByDate(roniOverrides), [roniOverrides]);
   const selectedWeekItems = useMemo(
     () => buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOverrides),
@@ -712,6 +759,59 @@ export default function FamilyCalendarClient() {
     () => groupItemsByHour(selectedWeekItems.filter((item) => !item.allDay)),
     [selectedWeekItems],
   );
+  const hasSelectedWeekWeatherRows = useMemo(
+    () => selectedWeekDates.some((date) => {
+      const summary = weatherByDate.get(date);
+      const dayparts = selectedWeekWeatherDayparts[date] || [];
+      return Boolean(summary) || dayparts.some((item) => item.glyph || item.temp_min_c !== "" || item.temp_max_c !== "");
+    }),
+    [selectedWeekDates, selectedWeekWeatherDayparts, weatherByDate],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!weatherLocation || !weatherStart || !weatherEnd) return () => {};
+
+    fetchWeatherDaily({ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd })
+      .then((data) => {
+        if (cancelled) return;
+        if (!data?.ok) {
+          setWeatherItems([]);
+          return;
+        }
+        setWeatherItems(Array.isArray(data.items) ? data.items : []);
+      })
+      .catch(() => {
+        if (!cancelled) setWeatherItems([]);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [weatherEnd, weatherLocation, weatherStart]);
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!weatherLocation || !selectedWeekDates.length) return () => {};
+
+    Promise.all(
+      selectedWeekDates.map(async (date) => {
+        try {
+          const payload = await fetchWeatherDayparts({ location: weatherLocation, date });
+          return [date, normalizeFamilyWeatherDayparts(payload)];
+        } catch {
+          return [date, normalizeFamilyWeatherDayparts(null)];
+        }
+      }),
+    ).then((entries) => {
+      if (cancelled) return;
+      setSelectedWeekWeatherDayparts(Object.fromEntries(entries));
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedWeekDates, weatherLocation]);
 
   function changeMonth(offset) {
     setMonthDate((current) => {
@@ -895,29 +995,36 @@ export default function FamilyCalendarClient() {
                 >
                   <span className="familyCalendarTimeRailSpacer" aria-hidden="true" />
                 </button>
-                {week.days.map((day, dayIndex) => (
-                  <button
-                    className={`familyCalendarWeekDay familyCalendarWeekDateButton${day.inMonth ? "" : " familyCalendarDateOutside"}`}
-                    data-day-index={selected && editingCalendar ? dayIndex : undefined}
-                    data-family-calendar-drop={selected && editingCalendar ? "date" : undefined}
-                    key={day.dateKey}
-                    type="button"
-                    onClick={() => selectWeek(week.key)}
-                  >
-                    {day.date.getDate()}
-                  </button>
-                ))}
+                {week.days.map((day, dayIndex) => {
+                  const weather = weatherByDate.get(day.dateKey);
+                  const count = datedItemsByDate[day.dateKey] || 0;
+                  return (
+                    <button
+                      className={`familyCalendarWeekDay familyCalendarWeekDateButton${day.inMonth ? "" : " familyCalendarDateOutside"}${selected ? "" : " familyCalendarWeekDateButtonCollapsed"}`}
+                      data-day-index={selected && editingCalendar ? dayIndex : undefined}
+                      data-family-calendar-drop={selected && editingCalendar ? "date" : undefined}
+                      key={day.dateKey}
+                      type="button"
+                      onClick={() => selectWeek(week.key)}
+                    >
+                      <span className="familyCalendarWeekDateNumber">{day.date.getDate()}</span>
+                      {!selected ? (
+                        <>
+                          <span className="familyCalendarWeekDateWeather">
+                            {weather ? <span className="familyCalendarWeatherGlyph" aria-hidden="true">{weather.glyph}</span> : null}
+                          </span>
+                          <span className="familyCalendarWeekDateMeta">
+                            {weather ? `${weather.min_c}/${weather.max_c}` : ""}
+                            {count ? `${weather ? " · " : ""}일정 ${count}` : ""}
+                          </span>
+                        </>
+                      ) : null}
+                    </button>
+                  );
+                })}
               </div>
 
-              {!selected ? (
-                <button className="familyCalendarWeekCounts" type="button" onClick={() => selectWeek(week.key)} aria-label="일정 개수">
-                  <span className="familyCalendarTimeRailSpacer familyCalendarTimeRailSpacerEmpty" aria-hidden="true" />
-                  {week.days.map((day) => {
-                    const count = datedItemsByDate[day.dateKey] || 0;
-                    return <span key={day.dateKey}>{count ? count : ""}</span>;
-                  })}
-                </button>
-              ) : editingCalendar ? (
+              {!selected ? null : editingCalendar ? (
                 <FamilyCalendarEditWeek
                   allDayItems={selectedWeekAllDayItems}
                   datedItems={datedItems}
@@ -927,11 +1034,21 @@ export default function FamilyCalendarClient() {
                   onMoveDatedItem={moveDatedItem}
                   onMoveRoniTemplate={moveRoniTemplate}
                   onRestoreRoniOverride={restoreRoniOverride}
+                  selectedWeekDates={selectedWeekDates}
                   selectedWeekItems={selectedWeekItems}
                   selectedWeekStart={selectedWeekStart}
+                  weatherByDate={weatherByDate}
+                  weatherDaypartsByDate={selectedWeekWeatherDayparts}
                 />
               ) : (
                 <div className="familyCalendarExpandedWeek" aria-label="선택한 주">
+                  {hasSelectedWeekWeatherRows ? (
+                    <FamilyCalendarWeatherRows
+                      selectedWeekDates={selectedWeekDates}
+                      weatherByDate={weatherByDate}
+                      weatherDaypartsByDate={selectedWeekWeatherDayparts}
+                    />
+                  ) : null}
                   {hasSelectedWeekContent ? (
                     <>
                       {hasSelectedWeekAllDayItems ? (
