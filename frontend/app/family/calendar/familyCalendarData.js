@@ -119,15 +119,17 @@ export function normalizeFamilyCalendarItem(item) {
   const title = String(item.title || "").trim();
   const parsedDate = parseFamilyDateKey(item.date);
   if (!title || !parsedDate) return null;
+  const allDay = item.allDay === true;
 
   return {
     id: String(item.id || createFamilyCalendarId()),
     title,
     date: formatFamilyDateKey(parsedDate),
-    startTime: String(item.startTime || ""),
-    endTime: String(item.endTime || ""),
+    startTime: allDay ? "" : String(item.startTime || "09:00"),
+    endTime: allDay ? "" : String(item.endTime || "09:40"),
     memo: String(item.memo || ""),
     color: normalizeFamilyCalendarColor(item.color),
+    allDay,
   };
 }
 
@@ -391,6 +393,7 @@ export function createDefaultFamilyCalendarItem() {
     id: createFamilyCalendarId(),
     title: "",
     date: formatFamilyDateKey(today),
+    allDay: false,
     startTime: "09:00",
     endTime: "09:40",
     memo: "",
