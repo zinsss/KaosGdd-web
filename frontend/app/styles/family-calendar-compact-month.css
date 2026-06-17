@@ -52,6 +52,10 @@
   box-shadow: none;
 }
 
+.familyCalendarTimeRailSpacerEmpty::before {
+  content: none;
+}
+
 .familyCalendarWeekDates .familyCalendarTimeRailSpacer {
   display: inline-flex;
   align-items: center;
@@ -80,23 +84,29 @@
 }
 
 .familyCalendarWeekHeaderDay:first-of-type,
-.familyCalendarWeekDates .familyCalendarWeekDay:first-of-type,
-.familyCalendarWeekCounts span:first-of-type {
+.familyCalendarWeekDates > .familyCalendarWeekDateButton:nth-child(2),
+.familyCalendarWeekCounts > span:nth-child(2) {
   background: transparent;
   color: #d86f98;
 }
 
 .familyCalendarWeekHeaderDay:last-of-type,
-.familyCalendarWeekDates .familyCalendarWeekDay:last-of-type,
-.familyCalendarWeekCounts span:last-of-type {
+.familyCalendarWeekDates > .familyCalendarWeekDateButton:nth-child(8),
+.familyCalendarWeekCounts > span:nth-child(8) {
   background: transparent;
   color: #4f8bcf;
 }
 
-.familyCalendarDateOutside:first-of-type,
-.familyCalendarDateOutside:last-of-type,
 .familyCalendarDateOutside {
   color: rgba(78, 37, 54, 0.3);
+}
+
+.familyCalendarWeekDates > .familyCalendarWeekDateButton.familyCalendarDateOutside:nth-child(2) {
+  color: #d86f98;
+}
+
+.familyCalendarWeekDates > .familyCalendarWeekDateButton.familyCalendarDateOutside:nth-child(8) {
+  color: #4f8bcf;
 }
 
 .familyCalendarExpandedWeek {
