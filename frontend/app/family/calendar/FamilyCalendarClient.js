@@ -784,7 +784,6 @@ export default function FamilyCalendarClient() {
       <div className="familyCalendarIntro">
         <div>
           <h2>달력</h2>
-          <p>일정과 로운이 시간표를 함께 봐요.</p>
         </div>
         <div className="familyCalendarActions">
           <Link className="familyCalendarActionLink familyCalendarActionLinkPrimary" href="/family/calendar/events/new">
@@ -793,26 +792,25 @@ export default function FamilyCalendarClient() {
           <Link className="familyCalendarActionLink" href="/family/roun">
             로운이 시간표 수정
           </Link>
-          {editingCalendar ? (
-            <>
-              <span className="familyCalendarEditStatus">수정 중</span>
-              <button type="button" onClick={exitEditMode}>
-                저장
-              </button>
-              <button type="button" onClick={exitEditMode}>
-                취소
-              </button>
-            </>
-          ) : (
-            <button type="button" onClick={() => setCalendarMode(FAMILY_CALENDAR_MODE_EDIT)}>
-              수정
-            </button>
-          )}
-          <button type="button" onClick={() => changeMonth(-1)} aria-label="이전 달">
+          <label className="familyCalendarEditToggle" htmlFor="family-calendar-edit-mode">
+            <span className="familyCalendarEditToggleLabel">편집 모드</span>
+            <input
+              checked={editingCalendar}
+              className="familyCalendarEditToggleInput"
+              id="family-calendar-edit-mode"
+              onChange={(event) => (event.target.checked ? setCalendarMode(FAMILY_CALENDAR_MODE_EDIT) : exitEditMode())}
+              role="switch"
+              type="checkbox"
+            />
+            <span aria-hidden="true" className="familyCalendarEditToggleTrack">
+              <span className="familyCalendarEditToggleThumb" />
+            </span>
+          </label>
+          <button className="familyCalendarMonthButtonPrev" type="button" onClick={() => changeMonth(-1)} aria-label="이전 달">
             ‹
           </button>
-          <span>{monthDate.getFullYear()}.{padFamilyDatePart(monthDate.getMonth() + 1)}</span>
-          <button type="button" onClick={() => changeMonth(1)} aria-label="다음 달">
+          <span className="familyCalendarMonthLabel">{monthDate.getFullYear()}.{padFamilyDatePart(monthDate.getMonth() + 1)}</span>
+          <button className="familyCalendarMonthButtonNext" type="button" onClick={() => changeMonth(1)} aria-label="다음 달">
             ›
           </button>
         </div>
