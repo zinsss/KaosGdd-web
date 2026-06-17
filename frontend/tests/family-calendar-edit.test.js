@@ -86,6 +86,8 @@ test("family calendar uses one shared 8-column gutter grid with quiet time rail"
   const combinedCss = `${baseCalendarCss}\n${compactCss}`;
 
   assert.ok(globalsCss.includes('@import "./styles/family-calendar-compact-month.css";'));
+  assert.ok(calendarSource.includes('className="familyCalendarWeekHeaderShell"'));
+  assert.ok(calendarSource.includes('className="familyCalendarWeekHeader"'));
   assert.ok(calendarSource.includes('className="familyCalendarExpandedWeek"'));
   assert.ok(calendarSource.includes('<i className="familyCalendarTimeRailSpacer" aria-hidden="true" />'));
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow"'));
@@ -97,9 +99,14 @@ test("family calendar uses one shared 8-column gutter grid with quiet time rail"
     "time label should render before day slots, not inside a day cell",
   );
 
+  assert.match(compactCss, /\.familyCalendarWeekHeaderShell\s*\{[\s\S]*?display:\s*grid;[\s\S]*?gap:\s*5px;[\s\S]*?border:\s*1px solid transparent;[\s\S]*?padding:\s*7px;[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(
     compactCss,
     /\.familyCalendarWeekHeader,\s*\n\.familyCalendarWeekDates,\s*\n\.familyCalendarWeekCounts,\s*\n\.familyCalendarTimeRow\s*\{[\s\S]*?--family-calendar-expanded-rail-width:\s*34px;[\s\S]*?grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*34px\) repeat\(7,\s*minmax\(0,\s*1fr\)\);[\s\S]*?width:\s*100%;[\s\S]*?box-sizing:\s*border-box;[\s\S]*?padding:\s*0;/,
+  );
+  assert.match(
+    compactCss,
+    /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarWeekHeaderShell\s*\{[\s\S]*?padding:\s*7px;/,
   );
   assert.match(
     compactCss,
