@@ -38,6 +38,7 @@ function eventToDraft(item) {
     id: item.id,
     title: item.title || "",
     date: item.date || "",
+    allDay: item.allDay === true,
     startTime: item.startTime || "09:00",
     endTime: item.endTime || "09:40",
     memo: item.memo || "",
@@ -51,8 +52,10 @@ function eventPrefillFromLocation() {
   const date = validDateParam(params.get("date"));
   const startTime = validTimeParam(params.get("start"));
   const endTime = validTimeParam(params.get("end")) || (startTime ? addMinutesToTime(startTime, FAMILY_CALENDAR_EVENT_DEFAULT_DURATION_MINUTES) : "");
+  const allDay = params.get("allDay") === "1";
   return {
     ...(date ? { date } : {}),
+    ...(allDay ? { allDay: true } : {}),
     ...(startTime ? { startTime } : {}),
     ...(endTime ? { endTime } : {}),
   };
@@ -88,6 +91,15 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
   function updateDraft(field, value) {
     setDraft((current) => ({ ...current, [field]: value }));
     if (field === "title" && value.trim()) setError("");
+  }
+
+  function toggleAllDay(nextAllDay) {
+    setDraft((current) => ({
+      ...current,
+      allDay: nextAllDay,
+      startTime: nextAllDay ? current.startTime : (current.startTime || "09:00"),
+      endTime: nextAllDay ? current.endTime : (current.endTime || addMinutesToTime(current.startTime || "09:00", FAMILY_CALENDAR_EVENT_DEFAULT_DURATION_MINUTES)),
+    }));
   }
 
   function goBack() {
@@ -136,23 +148,37 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
 
             <label>
               <span>일정 이름</span>
-              <input value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} />
+              <input placeholder="새 일정" value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} />
             </label>
             {error ? <p className="familyCalendarFormError">{error}</p> : null}
 
-            <div className="familyCalendarFormGrid">
+            <label className="familyCalendarFormToggle">
+              <span>종일 일정</span>
+              <input
+                checked={draft.allDay}
+                className="familyCalendarFormToggleControl"
+                type="checkbox"
+                onChange={(event) => toggleAllDay(event.target.checked)}
+              />
+            </label>
+
+            <div className={`familyCalendarFormGrid${draft.allDay ? " familyCalendarFormGridAllDay" : ""}`}>
               <label>
                 <span>날짜</span>
                 <input type="date" value={draft.date} onChange={(event) => updateDraft("date", event.target.value)} />
               </label>
-              <label>
-                <span>시작</span>
-                <input type="time" value={draft.startTime} onChange={(event) => updateDraft("startTime", event.target.value)} />
-              </label>
-              <label>
-                <span>끝</span>
-                <input type="time" value={draft.endTime} onChange={(event) => updateDraft("endTime", event.target.value)} />
-              </label>
+              {draft.allDay ? null : (
+                <>
+                  <label>
+                    <span>시작</span>
+                    <input type="time" value={draft.startTime} onChange={(event) => updateDraft("startTime", event.target.value)} />
+                  </label>
+                  <label>
+                    <span>끝</span>
+                    <input type="time" value={draft.endTime} onChange={(event) => updateDraft("endTime", event.target.value)} />
+                  </label>
+                </>
+              )}
             </div>
 
             <label>
