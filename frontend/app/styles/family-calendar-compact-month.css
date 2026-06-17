@@ -1,11 +1,7 @@
-.familyCalendarWeekHeaderShell {
-  display: grid;
-  gap: 5px;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 7px;
-  box-sizing: border-box;
-  min-width: 0;
+.familyCalendarWeekHeaderRow {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
 }
 
 .familyCalendarWeekHeader,
@@ -83,14 +79,14 @@
   border-left: 5px solid transparent;
 }
 
-.familyCalendarWeekHeader span:first-of-type,
+.familyCalendarWeekHeaderDay:first-of-type,
 .familyCalendarWeekDates .familyCalendarWeekDay:first-of-type,
 .familyCalendarWeekCounts span:first-of-type {
   background: transparent;
   color: #d86f98;
 }
 
-.familyCalendarWeekHeader span:last-of-type,
+.familyCalendarWeekHeaderDay:last-of-type,
 .familyCalendarWeekDates .familyCalendarWeekDay:last-of-type,
 .familyCalendarWeekCounts span:last-of-type {
   background: transparent;
@@ -185,9 +181,6 @@
 }
 
 @media (max-width: 640px) {
-  .familyCalendarWeekHeaderShell {
-    padding: 7px;
-  }
 
   .familyCalendarWeekHeader,
   .familyCalendarWeekDates,
