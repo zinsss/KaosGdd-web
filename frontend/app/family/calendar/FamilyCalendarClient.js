@@ -821,7 +821,7 @@ export default function FamilyCalendarClient() {
               ›
             </button>
           </div>
-          <Link className="familyCalendarActionLink familyCalendarActionLinkPrimary" href="/family/calendar/events/new">
+          <Link className="familyCalendarActionLink familyCalendarActionLinkPrimary" href="/family/calendar/events/new?allDay=1">
             + 일정
           </Link>
           <label className="familyCalendarEditToggle" htmlFor="family-calendar-edit-mode">
@@ -844,7 +844,7 @@ export default function FamilyCalendarClient() {
       <div className="familyCalendarGrid" aria-label="달력 월간 보기">
         <section className="familyCalendarWeek familyCalendarWeekHeaderRow" aria-hidden="true">
           <div className="familyCalendarWeekDates familyCalendarWeekHeader">
-            <span className="familyCalendarTimeRailSpacer" aria-hidden="true" />
+            <span className="familyCalendarTimeRailSpacer familyCalendarTimeRailSpacerEmpty" aria-hidden="true" />
             {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
               <span className="familyCalendarWeekDay familyCalendarWeekHeaderDay" key={label}>{label}</span>
             ))}
@@ -880,7 +880,7 @@ export default function FamilyCalendarClient() {
 
               {!selected ? (
                 <button className="familyCalendarWeekCounts" type="button" onClick={() => selectWeek(week.key)} aria-label="일정 개수">
-                  <span className="familyCalendarTimeRailSpacer" aria-hidden="true" />
+                  <span className="familyCalendarTimeRailSpacer familyCalendarTimeRailSpacerEmpty" aria-hidden="true" />
                   {week.days.map((day) => {
                     const count = datedItemsByDate[day.dateKey] || 0;
                     return <span key={day.dateKey}>{count ? count : ""}</span>;
