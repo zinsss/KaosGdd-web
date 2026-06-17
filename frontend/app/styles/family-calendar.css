@@ -26,8 +26,7 @@
   box-shadow: 0 8px 18px rgba(151, 69, 98, 0.1);
 }
 
-.familyCalendarIntro h2,
-.familyCalendarIntro p {
+.familyCalendarIntro h2 {
   margin: 0;
 }
 
@@ -35,13 +34,6 @@
   color: #4b2536;
   font-size: 25px;
   line-height: 1.15;
-}
-
-.familyCalendarIntro p {
-  margin-top: 3px;
-  color: rgba(78, 37, 54, 0.58);
-  font-size: 15px;
-  font-weight: 800;
 }
 
 .familyCalendarActions button,
@@ -72,17 +64,70 @@
   box-shadow: 0 6px 14px rgba(151, 69, 98, 0.14);
 }
 
-.familyCalendarActions span {
+.familyCalendarMonthLabel,
+.familyCalendarEditToggleLabel {
   color: #4b2536;
   font-weight: 950;
 }
 
-.familyCalendarEditStatus {
+.familyCalendarEditToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  min-width: 0;
+  color: #4b2536;
+  cursor: pointer;
+  user-select: none;
+}
+
+.familyCalendarEditToggleLabel {
+  white-space: nowrap;
+}
+
+.familyCalendarEditToggleInput {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.familyCalendarEditToggleTrack {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 40px;
+  height: 24px;
   border-radius: 999px;
-  padding: 7px 10px;
-  background: rgba(255, 216, 229, 0.72);
-  color: #8d3f5d;
-  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.18);
+  background: rgba(214, 128, 157, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.22);
+  transition: background-color 140ms ease, box-shadow 140ms ease;
+  flex: 0 0 auto;
+}
+
+.familyCalendarEditToggleThumb {
+  display: block;
+  width: 18px;
+  height: 18px;
+  margin-left: 3px;
+  border-radius: 999px;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(78, 37, 54, 0.18);
+  transition: transform 140ms ease;
+}
+
+.familyCalendarEditToggleInput:checked + .familyCalendarEditToggleTrack {
+  background: #d86f98;
+  box-shadow: inset 0 0 0 1px rgba(151, 69, 98, 0.12);
+}
+
+.familyCalendarEditToggleInput:checked + .familyCalendarEditToggleTrack .familyCalendarEditToggleThumb {
+  transform: translateX(16px);
+}
+
+.familyCalendarEditToggleInput:focus-visible + .familyCalendarEditToggleTrack {
+  box-shadow:
+    inset 0 0 0 1px rgba(214, 128, 157, 0.22),
+    0 0 0 3px rgba(255, 216, 229, 0.72);
 }
 
 .familyCalendarGrid {
@@ -752,8 +797,6 @@
     padding: 6px;
   }
 
-
-
   .familyCalendarTimeLabel {
     padding-right: 2px;
     font-size: 12px;
@@ -811,7 +854,6 @@
   }
 }
 
-
 @media (max-width: 640px) {
   .familyCalendarIntro {
     display: grid;
@@ -828,17 +870,12 @@
     font-size: 22px;
   }
 
-  .familyCalendarIntro p {
-    font-size: 13px;
-    line-height: 1.25;
-  }
-
   .familyCalendarActions {
     display: grid;
     grid-template-columns: auto auto auto;
     grid-template-areas:
       "prev month next"
-      "add roni edit";
+      "add toggle toggle";
     justify-content: end;
     justify-items: end;
     align-items: center;
@@ -850,35 +887,46 @@
     grid-area: add;
   }
 
-  .familyCalendarActions .familyCalendarActionLink:not(.familyCalendarActionLinkPrimary) {
-    grid-area: roni;
+  .familyCalendarEditToggle {
+    grid-area: toggle;
   }
 
-  .familyCalendarActions > button:nth-of-type(1) {
-    grid-area: edit;
-  }
-
-  .familyCalendarActions > button:nth-of-type(2) {
+  .familyCalendarMonthButtonPrev {
     grid-area: prev;
   }
 
-  .familyCalendarActions > span:not(.familyCalendarEditStatus) {
+  .familyCalendarMonthLabel {
     grid-area: month;
     white-space: nowrap;
   }
 
-  .familyCalendarActions > button:nth-of-type(3) {
+  .familyCalendarMonthButtonNext {
     grid-area: next;
   }
 
   .familyCalendarActions button,
-  .familyCalendarActionLink {
+  .familyCalendarActionLink,
+  .familyCalendarEditToggle {
     min-height: 32px;
     border-radius: 999px;
     padding: 0 10px;
     font-size: 13px;
     line-height: 1;
     white-space: nowrap;
+  }
+
+  .familyCalendarEditToggleTrack {
+    width: 36px;
+    height: 20px;
+  }
+
+  .familyCalendarEditToggleThumb {
+    width: 16px;
+    height: 16px;
+  }
+
+  .familyCalendarEditToggleInput:checked + .familyCalendarEditToggleTrack .familyCalendarEditToggleThumb {
+    transform: translateX(14px);
   }
 }
 
