@@ -8,6 +8,8 @@
   gap: 3px;
   width: 100%;
   min-width: 0;
+  box-sizing: border-box;
+  padding: 0;
 }
 
 .familyCalendarTimeRailSpacer {
@@ -28,7 +30,13 @@
 .familyCalendarWeekHeader span,
 .familyCalendarWeekDay,
 .familyCalendarWeekCounts span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
   min-width: 0;
+  box-sizing: border-box;
+  padding: 0;
   text-align: center;
 }
 
