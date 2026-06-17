@@ -33,6 +33,7 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
 test("family calendar renders weather rows before all-day events and before time slots", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
+  const weatherClient = await readSource("../app/lib/weather-client.js");
 
   assert.ok(calendarSource.includes("FamilyCalendarWeatherRows"));
   assert.ok(calendarSource.includes("weatherByDate"));
@@ -45,8 +46,14 @@ test("family calendar renders weather rows before all-day events and before time
   assert.ok(allDayIndex > editWeatherIndex, "all-day row should render after weather rows");
   assert.ok(firstTimedRowIndex > editWeatherIndex, "timed rows should render after weather rows");
 
-  for (const label of ["날씨", "오전", "오후", "저녁", "밤"]) {
+  assert.ok(weatherRowsSource.includes("FAMILY_CALENDAR_DAYPART_LABELS"));
+  assert.ok(weatherRowsSource.includes("defaultLabel"));
+
+  for (const label of ["날씨"]) {
     assert.ok(weatherRowsSource.includes(label), `${label} should appear in weather rows`);
+  }
+  for (const label of ["오전", "오후", "저녁", "밤"]) {
+    assert.ok(weatherClient.includes(label), `${label} should be defined in shared daypart labels`);
   }
 });
 
