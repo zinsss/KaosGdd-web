@@ -61,18 +61,17 @@ test("family calendar mobile header uses compact two-row actions", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const calendarCss = await readSource("../app/styles/family-calendar.css");
 
-  for (const label of ["+ 일정", "로운이 시간표 수정", "편집 모드"]) {
-    assert.ok(calendarSource.includes(label), `${label} should remain in calendar header actions`);
-  }
+  assert.ok(calendarSource.includes("편집 모드"));
   assert.ok(calendarSource.includes("changeMonth(-1)"));
   assert.ok(calendarSource.includes("changeMonth(1)"));
   assert.ok(calendarSource.includes('className="familyCalendarEditToggle"'));
   assert.ok(calendarSource.includes('role="switch"'));
   assert.ok(!calendarSource.includes("일정과 로운이 시간표를 함께 봐요."));
+  assert.ok(!calendarSource.includes("로운이 시간표 수정"));
   assert.ok(!calendarSource.includes("수정 중"));
 
   assert.match(calendarCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarIntro\s*\{[\s\S]*?display:\s*grid;/);
-  assert.match(calendarCss, /\.familyCalendarActions\s*\{[\s\S]*?grid-template-areas:\s*\n\s*"prev month next"\s*\n\s*"add roni toggle";/);
+  assert.match(calendarCss, /\.familyCalendarActions\s*\{[\s\S]*?grid-template-areas:\s*\n\s*"prev month next"\s*\n\s*"add toggle toggle";/);
   assert.match(calendarCss, /\.familyCalendarActions\s*\{[\s\S]*?gap:\s*6px;/);
   assert.match(calendarCss, /\.familyCalendarEditToggle\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*8px;/);
   assert.match(calendarCss, /\.familyCalendarEditToggleInput:checked \+ \.familyCalendarEditToggleTrack/);
