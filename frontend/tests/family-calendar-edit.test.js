@@ -99,7 +99,7 @@ test("family calendar uses one shared 8-column gutter grid with quiet time rail"
 
   assert.match(
     compactCss,
-    /\.familyCalendarWeekHeader,\s*\n\.familyCalendarWeekDates,\s*\n\.familyCalendarWeekCounts,\s*\n\.familyCalendarTimeRow\s*\{[\s\S]*?--family-calendar-expanded-rail-width:\s*34px;[\s\S]*?grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*34px\) repeat\(7,\s*minmax\(0,\s*1fr\)\);/,
+    /\.familyCalendarWeekHeader,\s*\n\.familyCalendarWeekDates,\s*\n\.familyCalendarWeekCounts,\s*\n\.familyCalendarTimeRow\s*\{[\s\S]*?--family-calendar-expanded-rail-width:\s*34px;[\s\S]*?grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*34px\) repeat\(7,\s*minmax\(0,\s*1fr\)\);[\s\S]*?width:\s*100%;[\s\S]*?box-sizing:\s*border-box;[\s\S]*?padding:\s*0;/,
   );
   assert.match(
     compactCss,
@@ -109,6 +109,16 @@ test("family calendar uses one shared 8-column gutter grid with quiet time rail"
   assert.match(compactCss, /\.familyCalendarWeekDates \.familyCalendarTimeRailSpacer::before\s*\{[\s\S]*?content:\s*"";[\s\S]*?border-top:\s*5px solid transparent;[\s\S]*?border-bottom:\s*5px solid transparent;[\s\S]*?border-left:\s*7px solid rgba\(92,\s*50,\s*68,\s*0\.42\);/);
   assert.match(compactCss, /\.familyCalendarWeekSelected \.familyCalendarWeekDates \.familyCalendarTimeRailSpacer::before\s*\{[\s\S]*?border-top:\s*7px solid rgba\(92,\s*50,\s*68,\s*0\.42\);[\s\S]*?border-right:\s*5px solid transparent;[\s\S]*?border-bottom:\s*0;[\s\S]*?border-left:\s*5px solid transparent;/);
   assert.doesNotMatch(compactCss, /Symbols Nerd Font||/);
+  assert.match(
+    compactCss,
+    /\.familyCalendarWeekHeader span,\s*\n\.familyCalendarWeekDay,\s*\n\.familyCalendarWeekCounts span\s*\{[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?width:\s*100%;[\s\S]*?box-sizing:\s*border-box;[\s\S]*?padding:\s*0;[\s\S]*?text-align:\s*center;/,
+  );
+  assert.doesNotMatch(compactCss, /\.familyCalendarWeekHeader span[\s\S]*?text-align:\s*(left|right);/);
+  assert.doesNotMatch(compactCss, /\.familyCalendarWeekDay[\s\S]*?text-align:\s*(left|right);/);
+  assert.doesNotMatch(compactCss, /\.familyCalendarWeekCounts span[\s\S]*?text-align:\s*(left|right);/);
+  assert.doesNotMatch(compactCss, /\.familyCalendarWeekHeader span[\s\S]*?padding-(left|right):/);
+  assert.doesNotMatch(compactCss, /\.familyCalendarWeekDay[\s\S]*?padding-(left|right):/);
+  assert.doesNotMatch(compactCss, /\.familyCalendarWeekCounts span[\s\S]*?padding-(left|right):/);
   assert.match(compactCss, /\.familyCalendarWeekHeader \.familyCalendarTimeRailSpacer,\s*\n\.familyCalendarWeekCounts \.familyCalendarTimeRailSpacer\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?box-shadow:\s*none;/);
   assert.match(compactCss, /\.familyCalendarExpandedWeek::before,\s*\n\.familyCalendarExpandedWeek::after\s*\{[\s\S]*?width:\s*var\(--family-calendar-expanded-day-width\);/);
   assert.match(compactCss, /\.familyCalendarExpandedWeek::before\s*\{[\s\S]*?left:\s*calc\(var\(--family-calendar-expanded-rail-width\) \+ var\(--family-calendar-expanded-gap\)\);/);
@@ -118,10 +128,7 @@ test("family calendar uses one shared 8-column gutter grid with quiet time rail"
   assert.match(compactCss, /\.familyCalendarTimeLabel::after\s*\{[\s\S]*?rgba\(214, 128, 157, 0\.1\)/);
   assert.match(compactCss, /\.familyCalendarWeekHeader span:first-of-type,[\s\S]*?color:\s*#d86f98;/);
   assert.match(compactCss, /\.familyCalendarWeekHeader span:last-of-type,[\s\S]*?color:\s*#4f8bcf;/);
-  assert.match(
-    compactCss,
-    /\.familyCalendarWeekHeader span,\s*\n\.familyCalendarWeekDay,\s*\n\.familyCalendarWeekCounts span\s*\{[\s\S]*?text-align:\s*center;/,
-  );
+  assert.match(compactCss, /\.familyCalendarWeekHeader \.familyCalendarTimeRailSpacer,\s*\n\.familyCalendarWeekCounts \.familyCalendarTimeRailSpacer\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?box-shadow:\s*none;/);
   assert.match(combinedCss, /\.familyCalendarDaySlot\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*hidden;/);
   assert.match(combinedCss, /\.familyCalendarDaySlot\s+\.familyCalendarItem\s*>\s*span:first-child\s*\{[\s\S]*?text-overflow:\s*ellipsis;[\s\S]*?white-space:\s*nowrap;/);
 });
