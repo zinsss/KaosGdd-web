@@ -666,7 +666,10 @@ export default function FamilyCalendarClient() {
     setRoniOverrides(loadFamilyRoniOverrides());
   }, []);
 
-  const selectedWeekStart = useMemo(() => parseFamilyDateKey(selectedWeekKey) || getFamilyWeekStart(new Date()), [selectedWeekKey]);
+  const selectedWeekStart = useMemo(
+    () => parseFamilyDateKey(selectedWeekKey) || getFamilyWeekStart(new Date(monthDate.getFullYear(), monthDate.getMonth(), 1, 12, 0, 0, 0)),
+    [selectedWeekKey, monthDate],
+  );
   const weeks = useMemo(() => getFamilyMonthWeeks(monthDate), [monthDate]);
   const editingCalendar = calendarMode === FAMILY_CALENDAR_MODE_EDIT;
   const datedItemsByDate = useMemo(() => {
@@ -692,6 +695,14 @@ export default function FamilyCalendarClient() {
 
   function exitEditMode() {
     setCalendarMode(FAMILY_CALENDAR_MODE_VIEW);
+  }
+
+  function selectWeek(weekKey) {
+    setSelectedWeekKey(weekKey);
+  }
+
+  function toggleWeekSelection(weekKey) {
+    setSelectedWeekKey((current) => (current === weekKey ? "" : weekKey));
   }
 
   function moveDatedItem(itemId, target) {
@@ -799,10 +810,17 @@ export default function FamilyCalendarClient() {
   return (
     <main className="familyCalendar" aria-label="달력">
       <div className="familyCalendarIntro">
-        <div>
-          <h2>달력</h2>
-        </div>
+        <h2>달력</h2>
         <div className="familyCalendarActions">
+          <div className="familyCalendarMonthControls">
+            <button className="familyCalendarMonthButtonPrev" type="button" onClick={() => changeMonth(-1)} aria-label="이전 달">
+              ‹
+            </button>
+            <span className="familyCalendarMonthLabel">{monthDate.getFullYear()}.{padFamilyDatePart(monthDate.getMonth() + 1)}</span>
+            <button className="familyCalendarMonthButtonNext" type="button" onClick={() => changeMonth(1)} aria-label="다음 달">
+              ›
+            </button>
+          </div>
           <Link className="familyCalendarActionLink familyCalendarActionLinkPrimary" href="/family/calendar/events/new">
             + 일정
           </Link>
@@ -820,20 +838,13 @@ export default function FamilyCalendarClient() {
               <span className="familyCalendarEditToggleThumb" />
             </span>
           </label>
-          <button className="familyCalendarMonthButtonPrev" type="button" onClick={() => changeMonth(-1)} aria-label="이전 달">
-            ‹
-          </button>
-          <span className="familyCalendarMonthLabel">{monthDate.getFullYear()}.{padFamilyDatePart(monthDate.getMonth() + 1)}</span>
-          <button className="familyCalendarMonthButtonNext" type="button" onClick={() => changeMonth(1)} aria-label="다음 달">
-            ›
-          </button>
         </div>
       </div>
 
       <div className="familyCalendarGrid" aria-label="달력 월간 보기">
         <div className="familyCalendarWeekHeaderShell">
           <div className="familyCalendarWeekHeader">
-            <i className="familyCalendarTimeRailSpacer" aria-hidden="true" />
+            <span className="familyCalendarTimeRailSpacer" aria-hidden="true" />
             {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
               <span key={label}>{label}</span>
             ))}
@@ -841,26 +852,35 @@ export default function FamilyCalendarClient() {
         </div>
 
         {weeks.map((week) => {
-          const selected = week.key === selectedWeekKey;
+          const selected = Boolean(selectedWeekKey) && week.key === selectedWeekKey;
           return (
             <section className={`familyCalendarWeek${selected ? " familyCalendarWeekSelected" : ""}`} key={week.key}>
-              <button className="familyCalendarWeekDates" type="button" onClick={() => setSelectedWeekKey(week.key)}>
-                <i className="familyCalendarTimeRailSpacer" aria-hidden="true" />
+              <div className="familyCalendarWeekDates">
+                <button
+                  className="familyCalendarWeekToggle"
+                  type="button"
+                  onClick={() => toggleWeekSelection(week.key)}
+                  aria-label={selected ? "이번 주 접기" : "이번 주 펼치기"}
+                >
+                  <span className="familyCalendarTimeRailSpacer" aria-hidden="true" />
+                </button>
                 {week.days.map((day, dayIndex) => (
-                  <span
-                    className={`familyCalendarWeekDay${day.inMonth ? "" : " familyCalendarDateOutside"}`}
+                  <button
+                    className={`familyCalendarWeekDay familyCalendarWeekDateButton${day.inMonth ? "" : " familyCalendarDateOutside"}`}
                     data-day-index={selected && editingCalendar ? dayIndex : undefined}
                     data-family-calendar-drop={selected && editingCalendar ? "date" : undefined}
                     key={day.dateKey}
+                    type="button"
+                    onClick={() => selectWeek(week.key)}
                   >
                     {day.date.getDate()}
-                  </span>
+                  </button>
                 ))}
-              </button>
+              </div>
 
               {!selected ? (
-                <button className="familyCalendarWeekCounts" type="button" onClick={() => setSelectedWeekKey(week.key)} aria-label="일정 개수">
-                  <i className="familyCalendarTimeRailSpacer" aria-hidden="true" />
+                <button className="familyCalendarWeekCounts" type="button" onClick={() => selectWeek(week.key)} aria-label="일정 개수">
+                  <span className="familyCalendarTimeRailSpacer" aria-hidden="true" />
                   {week.days.map((day) => {
                     const count = datedItemsByDate[day.dateKey] || 0;
                     return <span key={day.dateKey}>{count ? count : ""}</span>;
