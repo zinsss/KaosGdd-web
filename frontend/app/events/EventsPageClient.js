@@ -6,8 +6,17 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatEventCountGlyph } from "../../lib/events/event-count-glyphs";
 import { captureCreatedEventHasType } from "../../lib/post-create-navigation";
 import { UI_STRINGS } from "../../lib/strings";
+import {
+  DEFAULT_WEATHER_LOCATION,
+  DEFAULT_WEATHER_LOCATIONS,
+  fetchWeatherDaily,
+  fetchWeatherDayparts,
+  getStoredWeatherLocation,
+  listenWeatherLocationChange,
+  normalizeWeatherLocations,
+  setStoredWeatherLocation,
+} from "../lib/weather-client";
 
-const DEFAULT_WEATHER_LOCATION = "pohang";
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 function isInteractiveTarget(target) {
@@ -84,11 +93,7 @@ export default function EventsPageClient() {
   const [selectedDate, setSelectedDate] = useState(null);
   const [items, setItems] = useState([]);
   const [weatherLocation, setWeatherLocation] = useState(DEFAULT_WEATHER_LOCATION);
-  const [weatherLocations, setWeatherLocations] = useState([
-    { id: "yeongdeok", label: "영덕" },
-    { id: DEFAULT_WEATHER_LOCATION, label: "포항" },
-    { id: "daegu", label: "대구" },
-  ]);
+  const [weatherLocations, setWeatherLocations] = useState(DEFAULT_WEATHER_LOCATIONS);
   const [weatherItems, setWeatherItems] = useState([]);
   const [weatherError, setWeatherError] = useState("");
   const [weatherDayparts, setWeatherDayparts] = useState([]);
@@ -123,18 +128,17 @@ export default function EventsPageClient() {
   function loadWeather() {
     if (!weatherStart || !weatherEnd || !weatherLocation) return;
 
-    fetch(`/api/weather/daily?location=${encodeURIComponent(weatherLocation)}&start_date=${weatherStart}&end_date=${weatherEnd}`)
-      .then((res) => res.json())
+    fetchWeatherDaily({ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd })
       .then((data) => {
         if (!data?.ok) {
           setWeatherError("weather unavailable");
           setWeatherItems([]);
-          if (Array.isArray(data?.locations)) setWeatherLocations(data.locations);
+          setWeatherLocations(normalizeWeatherLocations(data?.locations));
           return;
         }
         setWeatherError("");
         setWeatherItems(Array.isArray(data.items) ? data.items : []);
-        if (Array.isArray(data.locations)) setWeatherLocations(data.locations);
+        setWeatherLocations(normalizeWeatherLocations(data?.locations));
       })
       .catch(() => {
         setWeatherError("weather unavailable");
@@ -149,8 +153,7 @@ export default function EventsPageClient() {
   function loadWeatherDayparts() {
     if (!selectedDate || !weatherLocation) return;
 
-    fetch(`/api/weather/dayparts?location=${encodeURIComponent(weatherLocation)}&date=${encodeURIComponent(selectedDate)}`)
-      .then((res) => res.json())
+    fetchWeatherDayparts({ location: weatherLocation, date: selectedDate })
       .then((data) => {
         const available = Boolean(data?.weather_dayparts_available);
         setWeatherDaypartsAvailable(available);
@@ -188,7 +191,16 @@ export default function EventsPageClient() {
   }, [searchParams]);
 
   useEffect(() => {
-    setWeatherLocation(searchParams?.get("weather") || DEFAULT_WEATHER_LOCATION);
+    const queryLocation = searchParams?.get("weather");
+    setWeatherLocation(queryLocation || getStoredWeatherLocation());
+  }, [searchParams]);
+
+  useEffect(() => {
+    return listenWeatherLocationChange((nextLocation) => {
+      if (!searchParams?.get("weather")) {
+        setWeatherLocation(nextLocation);
+      }
+    });
   }, [searchParams]);
 
   useEffect(() => {
@@ -263,12 +275,13 @@ export default function EventsPageClient() {
   }
 
   function changeWeatherLocation(nextLocation) {
-    setWeatherLocation(nextLocation);
+    const storedLocation = setStoredWeatherLocation(nextLocation);
+    setWeatherLocation(storedLocation);
     const params = new URLSearchParams(searchParams?.toString() || "");
-    if (nextLocation === DEFAULT_WEATHER_LOCATION) {
+    if (storedLocation === DEFAULT_WEATHER_LOCATION) {
       params.delete("weather");
     } else {
-      params.set("weather", nextLocation);
+      params.set("weather", storedLocation);
     }
     if (selectedDate && selectedDate !== todayYmd) params.set("date", selectedDate);
     const qs = params.toString();
