@@ -50,7 +50,7 @@ function itemRowKey(item) {
 }
 
 function formatEditHourLabel(hour) {
-  return `${String(hour).padStart(2, "0")}:00`;
+  return `${hour}`;
 }
 
 function minutesToFamilyTime(totalMinutes) {
@@ -113,6 +113,16 @@ function editItemStyle(item) {
   };
 }
 
+function editItemStyleForHour(item, hour) {
+  const startMinutes = parseTimeMinutes(item.startTime);
+  const duration = eventDurationMinutes(item);
+  const top = Math.max(0, (startMinutes ?? hour * 60) - hour * 60);
+  return {
+    top: `${top}px`,
+    height: `${Math.max(18, duration)}px`,
+  };
+}
+
 function slotTimeFromPointer(event) {
   const rect = event.currentTarget.getBoundingClientRect();
   return slotTimeFromPoint(event.clientY, rect);
@@ -123,6 +133,12 @@ function slotTimeFromPoint(clientY, rect) {
   const minutesFromStart = Math.floor(y / FAMILY_CALENDAR_EDIT_HOUR_HEIGHT * 60);
   const snappedMinutes = Math.floor(minutesFromStart / 10) * 10;
   return FAMILY_CALENDAR_EDIT_START_HOUR * 60 + snappedMinutes;
+}
+
+function slotTimeFromRowPoint(clientY, rect, rowStartMinutes) {
+  const y = Math.max(0, Math.min(rect.height - 1, clientY - rect.top));
+  const snappedMinutes = Math.floor(y / 10) * 10;
+  return rowStartMinutes + snappedMinutes;
 }
 
 function roniSourceKeys(item) {
@@ -240,6 +256,15 @@ function groupItemsByHour(items) {
   return [...rows.entries()].sort((a, b) => Number(a[0]) - Number(b[0]));
 }
 
+function buildEditWeekRows(items) {
+  return FAMILY_CALENDAR_EDIT_VISIBLE_HOURS.map((hour) => ([
+    String(hour),
+    FAMILY_CALENDAR_DAY_LABELS.map((_, dayIndex) => (
+      items.filter((item) => item.dayIndex === dayIndex && parseTimeMinutes(item.startTime) !== null && Math.floor(parseTimeMinutes(item.startTime) / 60) === hour)
+    )),
+  ]));
+}
+
 function CalendarItemLink({
   dragging = false,
   item,
@@ -249,6 +274,7 @@ function CalendarItemLink({
   onStartRoniChoice = null,
   onStartRoniDrag = null,
   roniChoiceItemId = "",
+  style = undefined,
 }) {
   const href = item.type === "roni" ? "/family/roun" : `/family/calendar/events/${item.id}/edit`;
   const editItem = className.includes("familyCalendarEditItem");
@@ -271,7 +297,7 @@ function CalendarItemLink({
       } : undefined}
       onPointerLeave={cancelRoniChoice}
       onPointerUp={cancelRoniChoice}
-      style={editItem ? editItemStyle(item) : undefined}
+      style={style ?? (editItem ? editItemStyle(item) : undefined)}
       title={`${item.title} ${item.startTime}`}
     >
       <span>{item.title}</span>
@@ -303,6 +329,7 @@ function FamilyCalendarEditWeek({
   const [dragState, setDragState] = useState(null);
   const [pendingRoniMove, setPendingRoniMove] = useState(null);
   const [roniChoiceItem, setRoniChoiceItem] = useState(null);
+  const editRows = useMemo(() => buildEditWeekRows(selectedWeekItems), [selectedWeekItems]);
 
   function clearPendingLongPress() {
     if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
@@ -348,7 +375,10 @@ function FamilyCalendarEditWeek({
 
   function startSlotLongPress(event, dayIndex) {
     if (event.button !== undefined && event.button !== 0) return;
-    const startMinutes = slotTimeFromPointer(event);
+    const rowStartMinutes = Number(event.currentTarget.dataset.slotStartMinutes);
+    const startMinutes = Number.isFinite(rowStartMinutes)
+      ? slotTimeFromRowPoint(event.clientY, event.currentTarget.getBoundingClientRect(), rowStartMinutes)
+      : slotTimeFromPointer(event);
     const slotKey = `${dayIndex}-${startMinutes}`;
     longPressStartRef.current = {
       dayIndex,
@@ -383,7 +413,10 @@ function FamilyCalendarEditWeek({
     if (dropElement.dataset.familyCalendarDrop === "date") {
       return { type: "date", dayIndex, date };
     }
-    const startMinutes = slotTimeFromPoint(clientY, dropElement.getBoundingClientRect());
+    const rowStartMinutes = Number(dropElement.dataset.slotStartMinutes);
+    const startMinutes = Number.isFinite(rowStartMinutes)
+      ? slotTimeFromRowPoint(clientY, dropElement.getBoundingClientRect(), rowStartMinutes)
+      : slotTimeFromPoint(clientY, dropElement.getBoundingClientRect());
     return { type: "time", dayIndex, date, startMinutes };
   }
 
@@ -511,98 +544,80 @@ function FamilyCalendarEditWeek({
 
   const targetDay = dragState?.target?.dayIndex;
   const targetSlotTop = dragState?.target?.type === "time"
-    ? dragState.target.startMinutes - FAMILY_CALENDAR_EDIT_START_HOUR * 60
+    ? dragState.target.startMinutes % 60
     : null;
 
   return (
-    <div className="familyCalendarEditWeek" aria-label="수정 주간 시간표" ref={editScrollRef}>
-      <p className="familyCalendarEditHelp">길게 눌러 일정 추가</p>
-      <div
-        className="familyCalendarEditGrid"
-        onPointerCancel={finishDatedDrag}
-        onPointerMove={moveDatedDrag}
-        onPointerUp={finishDatedDrag}
-        style={{ "--family-calendar-edit-body-height": `${FAMILY_CALENDAR_EDIT_BODY_HEIGHT}px` }}
-      >
-        <span className="familyCalendarEditCorner" aria-hidden="true" />
-        {FAMILY_CALENDAR_DAY_LABELS.map((label, dayIndex) => (
-          <span
-            className={`familyCalendarEditDayHeader${dragState?.target?.type === "date" && targetDay === dayIndex ? " familyCalendarDropTargetActive" : ""}`}
-            data-day-index={dayIndex}
-            data-family-calendar-drop="date"
-            key={label}
-          >
-            {label}
-          </span>
-        ))}
-        <div className="familyCalendarEditTimeRail" aria-label="시간">
-          {FAMILY_CALENDAR_EDIT_HOURS.map((hour) => (
-            <span className="familyCalendarEditHourLabel" key={hour} style={{ top: `${(hour - FAMILY_CALENDAR_EDIT_START_HOUR) * FAMILY_CALENDAR_EDIT_HOUR_HEIGHT}px` }}>
-              {formatEditHourLabel(hour)}
-            </span>
-          ))}
-        </div>
-        {FAMILY_CALENDAR_DAY_LABELS.map((label, dayIndex) => {
-          const date = formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex));
-          const deletedOverrides = deletedRoniOverridesByDate[date] || [];
-          return (
-            <div
-              className="familyCalendarEditDayColumn"
-              data-day-index={dayIndex}
-              data-family-calendar-drop="time"
-              key={label}
-              onPointerCancel={clearPendingLongPress}
-              onPointerDown={(event) => startSlotLongPress(event, dayIndex)}
-              onPointerLeave={clearPendingLongPress}
-              onPointerMove={moveSlotLongPress}
-              onPointerUp={clearPendingLongPress}
-            >
-              {FAMILY_CALENDAR_EDIT_VISIBLE_HOURS.map((hour) => (
-                <div className="familyCalendarEditHour" key={hour} style={{ top: `${(hour - FAMILY_CALENDAR_EDIT_START_HOUR) * FAMILY_CALENDAR_EDIT_HOUR_HEIGHT}px` }}>
+    <div
+      className="familyCalendarExpandedWeek familyCalendarExpandedWeekEditable"
+      aria-label="수정 주간 시간표"
+      onPointerCancel={finishDatedDrag}
+      onPointerMove={moveDatedDrag}
+      onPointerUp={finishDatedDrag}
+      ref={editScrollRef}
+    >
+      {editRows.map(([hour, dayItems]) => (
+        <div className="familyCalendarTimeRow familyCalendarTimeRowEditable" key={hour}>
+          <span className="familyCalendarTimeLabel familyCalendarTimeLabelEditable">{formatEditHourLabel(Number(hour))}</span>
+          {dayItems.map((items, dayIndex) => {
+            const date = formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex));
+            const deletedOverrides = deletedRoniOverridesByDate[date] || [];
+            const hourStartMinutes = Number(hour) * 60;
+            return (
+              <div
+                className="familyCalendarDaySlot familyCalendarDaySlotEditable"
+                data-day-index={dayIndex}
+                data-family-calendar-drop="time"
+                data-slot-start-minutes={hourStartMinutes}
+                key={`${hour}-${dayIndex}`}
+                onPointerCancel={clearPendingLongPress}
+                onPointerDown={(event) => startSlotLongPress(event, dayIndex)}
+                onPointerLeave={clearPendingLongPress}
+                onPointerMove={moveSlotLongPress}
+                onPointerUp={clearPendingLongPress}
+              >
+                <span className="familyCalendarDaySlotGuides" aria-hidden="true">
                   <span />
                   <span />
                   <span />
                   <span />
                   <span />
-                </div>
-              ))}
-              {deletedOverrides.length ? (
-                <div className="familyCalendarRoniRestoreStack">
-                  {deletedOverrides.map((override) => (
-                    <button
-                      className="familyCalendarRoniRestoreButton"
-                      key={override.id}
-                      type="button"
-                      onPointerDown={(event) => event.stopPropagation()}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onRestoreRoniOverride(override.id);
-                      }}
-                    >
-                      되돌리기
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-              {pendingSlotKey.startsWith(`${dayIndex}-`) ? (
-                <span
-                  className="familyCalendarLongPressTarget"
-                  aria-hidden="true"
-                  style={{ top: `${Number(pendingSlotKey.split("-")[1]) - FAMILY_CALENDAR_EDIT_START_HOUR * 60}px` }}
-                />
-              ) : null}
-              {dragState?.target?.type === "time" && targetDay === dayIndex ? (
-                <span
-                  className="familyCalendarDropSlotTarget"
-                  aria-hidden="true"
-                  style={{ top: `${targetSlotTop}px` }}
-                />
-              ) : null}
-              {selectedWeekItems
-                .filter((item) => item.dayIndex === dayIndex)
-                .map((item) => (
+                </span>
+                {hour === String(FAMILY_CALENDAR_EDIT_START_HOUR) && deletedOverrides.length ? (
+                  <div className="familyCalendarRoniRestoreStack">
+                    {deletedOverrides.map((override) => (
+                      <button
+                        className="familyCalendarRoniRestoreButton"
+                        key={override.id}
+                        type="button"
+                        onPointerDown={(event) => event.stopPropagation()}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          onRestoreRoniOverride(override.id);
+                        }}
+                      >
+                        되돌리기
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {pendingSlotKey.startsWith(`${dayIndex}-`) && Math.floor(Number(pendingSlotKey.split("-")[1]) / 60) === Number(hour) ? (
+                  <span
+                    className="familyCalendarLongPressTarget"
+                    aria-hidden="true"
+                    style={{ top: `${Number(pendingSlotKey.split("-")[1]) % 60}px` }}
+                  />
+                ) : null}
+                {dragState?.target?.type === "time" && targetDay === dayIndex && Math.floor(dragState.target.startMinutes / 60) === Number(hour) ? (
+                  <span
+                    className="familyCalendarDropSlotTarget"
+                    aria-hidden="true"
+                    style={{ top: `${targetSlotTop}px` }}
+                  />
+                ) : null}
+                {items.map((item) => (
                   <CalendarItemLink
-                    className="familyCalendarEditItem"
+                    className="familyCalendarEditItem familyCalendarEditItemInline"
                     dragging={dragState?.itemId === item.id}
                     item={item}
                     key={`${item.type}-${item.id}`}
@@ -611,17 +626,19 @@ function FamilyCalendarEditWeek({
                     onStartRoniChoice={startRoniChoice}
                     onStartRoniDrag={startRoniDrag}
                     roniChoiceItemId={roniChoiceItem?.id || ""}
+                    style={editItemStyleForHour(item, Number(hour))}
                   />
                 ))}
-            </div>
-          );
-        })}
-        {dragState ? (
-          <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
-            {dragState.title}
-          </span>
-        ) : null}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      ))}
+      {dragState ? (
+        <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
+          {dragState.title}
+        </span>
+      ) : null}
       {roniChoiceItem ? (
         <div className="familyCalendarRoniChoiceSheet" role="dialog" aria-label="일정 옵션">
           <p>일정 옵션</p>
@@ -829,8 +846,13 @@ export default function FamilyCalendarClient() {
             <section className={`familyCalendarWeek${selected ? " familyCalendarWeekSelected" : ""}`} key={week.key}>
               <button className="familyCalendarWeekDates" type="button" onClick={() => setSelectedWeekKey(week.key)}>
                 <i className="familyCalendarTimeRailSpacer" aria-hidden="true" />
-                {week.days.map((day) => (
-                  <span className={`familyCalendarWeekDay${day.inMonth ? "" : " familyCalendarDateOutside"}`} key={day.dateKey}>
+                {week.days.map((day, dayIndex) => (
+                  <span
+                    className={`familyCalendarWeekDay${day.inMonth ? "" : " familyCalendarDateOutside"}`}
+                    data-day-index={selected && editingCalendar ? dayIndex : undefined}
+                    data-family-calendar-drop={selected && editingCalendar ? "date" : undefined}
+                    key={day.dateKey}
+                  >
                     {day.date.getDate()}
                   </span>
                 ))}
