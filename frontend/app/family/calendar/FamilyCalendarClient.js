@@ -213,7 +213,7 @@ function applyRoniOverrides(generatedRoniItems, roniOverrides, weekDates) {
 function buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOverrides) {
   const weekDates = FAMILY_CALENDAR_DAY_LABELS.map((_, dayIndex) => formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex)));
   const weekDatedItems = datedItems
-    .filter((item) => weekDates.includes(item.date) && item.startTime)
+    .filter((item) => weekDates.includes(item.date) && (item.allDay || item.startTime))
     .map((item) => ({ ...item, type: "dated", dayIndex: weekDates.indexOf(item.date) }));
 
   const weekGeneratedRoniItems = weekDates.flatMap((date, dayIndex) => {
@@ -240,8 +240,18 @@ function buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOv
   const weekRoniItems = applyRoniOverrides(weekGeneratedRoniItems, roniOverrides, weekDates);
 
   return [...weekRoniItems, ...weekDatedItems]
-    .filter((item) => item.dayIndex >= 0 && item.dayIndex <= 6 && item.startTime)
-    .sort((a, b) => String(a.startTime).localeCompare(String(b.startTime)) || a.dayIndex - b.dayIndex);
+    .filter((item) => item.dayIndex >= 0 && item.dayIndex <= 6 && (item.allDay || item.startTime))
+    .sort((a, b) => {
+      if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
+      return String(a.startTime).localeCompare(String(b.startTime)) || a.dayIndex - b.dayIndex;
+    });
+}
+
+function groupAllDayItems(items) {
+  return items.reduce((grouped, item) => {
+    if (item.allDay && grouped[item.dayIndex]) grouped[item.dayIndex].push(item);
+    return grouped;
+  }, FAMILY_CALENDAR_DAY_LABELS.map(() => []));
 }
 
 function groupItemsByHour(items) {
@@ -298,7 +308,7 @@ function CalendarItemLink({
       onPointerLeave={cancelRoniChoice}
       onPointerUp={cancelRoniChoice}
       style={style ?? (editItem ? editItemStyle(item) : undefined)}
-      title={`${item.title} ${item.startTime}`}
+      title={item.allDay ? item.title : `${item.title} ${item.startTime}`}
     >
       <span>{item.title}</span>
       {item.overridden ? <span className="familyCalendarRoniOverrideBadge">예외</span> : null}
@@ -307,6 +317,7 @@ function CalendarItemLink({
 }
 
 function FamilyCalendarEditWeek({
+  allDayItems,
   datedItems,
   deletedRoniOverridesByDate,
   onCreateRoniOverride,
@@ -329,7 +340,7 @@ function FamilyCalendarEditWeek({
   const [dragState, setDragState] = useState(null);
   const [pendingRoniMove, setPendingRoniMove] = useState(null);
   const [roniChoiceItem, setRoniChoiceItem] = useState(null);
-  const editRows = useMemo(() => buildEditWeekRows(selectedWeekItems), [selectedWeekItems]);
+  const editRows = useMemo(() => buildEditWeekRows(selectedWeekItems.filter((item) => !item.allDay)), [selectedWeekItems]);
 
   function clearPendingLongPress() {
     if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
@@ -546,6 +557,7 @@ function FamilyCalendarEditWeek({
   const targetSlotTop = dragState?.target?.type === "time"
     ? dragState.target.startMinutes % 60
     : null;
+  const hasAllDayItems = allDayItems.some((items) => items.length);
 
   return (
     <div
@@ -556,6 +568,18 @@ function FamilyCalendarEditWeek({
       onPointerUp={finishDatedDrag}
       ref={editScrollRef}
     >
+      {hasAllDayItems ? (
+        <div className="familyCalendarTimeRow familyCalendarAllDayRow" key="all-day">
+          <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">종일</span>
+          {allDayItems.map((items, dayIndex) => (
+            <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
+              {items.map((item) => (
+                <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${item.type}-${item.id}`} />
+              ))}
+            </div>
+          ))}
+        </div>
+      ) : null}
       {editRows.map(([hour, dayItems]) => (
         <div className="familyCalendarTimeRow familyCalendarTimeRowEditable" key={hour}>
           <span className="familyCalendarTimeLabel familyCalendarTimeLabelEditable">{formatEditHourLabel(Number(hour))}</span>
@@ -683,7 +707,11 @@ export default function FamilyCalendarClient() {
     () => buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOverrides),
     [selectedWeekStart, datedItems, rounState, roniOverrides],
   );
-  const selectedWeekRows = useMemo(() => groupItemsByHour(selectedWeekItems), [selectedWeekItems]);
+  const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(selectedWeekItems), [selectedWeekItems]);
+  const selectedWeekRows = useMemo(
+    () => groupItemsByHour(selectedWeekItems.filter((item) => !item.allDay)),
+    [selectedWeekItems],
+  );
 
   function changeMonth(offset) {
     setMonthDate((current) => {
@@ -807,6 +835,9 @@ export default function FamilyCalendarClient() {
     });
   }
 
+  const hasSelectedWeekAllDayItems = selectedWeekAllDayItems.some((items) => items.length);
+  const hasSelectedWeekContent = hasSelectedWeekAllDayItems || selectedWeekRows.length;
+
   return (
     <main className="familyCalendar" aria-label="달력">
       <div className="familyCalendarIntro">
@@ -888,6 +919,7 @@ export default function FamilyCalendarClient() {
                 </button>
               ) : editingCalendar ? (
                 <FamilyCalendarEditWeek
+                  allDayItems={selectedWeekAllDayItems}
                   datedItems={datedItems}
                   deletedRoniOverridesByDate={deletedRoniOverridesByDate}
                   onCreateRoniOverride={createRoniOverride}
@@ -900,19 +932,33 @@ export default function FamilyCalendarClient() {
                 />
               ) : (
                 <div className="familyCalendarExpandedWeek" aria-label="선택한 주">
-                  {selectedWeekRows.length ? (
-                    selectedWeekRows.map(([hour, dayItems]) => (
-                      <div className="familyCalendarTimeRow" key={hour}>
-                        <span className="familyCalendarTimeLabel">{hour}</span>
-                        {dayItems.map((items, dayIndex) => (
-                          <div className="familyCalendarDaySlot" key={dayIndex}>
-                            {items.map((item) => (
-                              <CalendarItemLink item={item} key={`${item.type}-${item.id}`} />
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                    ))
+                  {hasSelectedWeekContent ? (
+                    <>
+                      {hasSelectedWeekAllDayItems ? (
+                        <div className="familyCalendarTimeRow familyCalendarAllDayRow">
+                          <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">종일</span>
+                          {selectedWeekAllDayItems.map((items, dayIndex) => (
+                            <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
+                              {items.map((item) => (
+                                <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${item.type}-${item.id}`} />
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                      {selectedWeekRows.map(([hour, dayItems]) => (
+                        <div className="familyCalendarTimeRow" key={hour}>
+                          <span className="familyCalendarTimeLabel">{hour}</span>
+                          {dayItems.map((items, dayIndex) => (
+                            <div className="familyCalendarDaySlot" key={dayIndex}>
+                              {items.map((item) => (
+                                <CalendarItemLink item={item} key={`${item.type}-${item.id}`} />
+                              ))}
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </>
                   ) : (
                     <p className="familyCalendarEmptyWeek">이번 주에는 아직 적힌 일정이 없어요.</p>
                   )}
