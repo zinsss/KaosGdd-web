@@ -875,7 +875,7 @@
     grid-template-columns: auto auto auto;
     grid-template-areas:
       "prev month next"
-      "add roni toggle";
+      "add toggle toggle";
     justify-content: end;
     justify-items: end;
     align-items: center;
@@ -885,10 +885,6 @@
 
   .familyCalendarActions .familyCalendarActionLinkPrimary {
     grid-area: add;
-  }
-
-  .familyCalendarActions .familyCalendarActionLink:not(.familyCalendarActionLinkPrimary) {
-    grid-area: roni;
   }
 
   .familyCalendarEditToggle {
