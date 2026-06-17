@@ -57,35 +57,8 @@ test("family calendar uses finalized standard Korean wording", async () => {
   }
 });
 
-test("family calendar mobile header uses compact two-row actions", async () => {
-  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
-  const calendarCss = await readSource("../app/styles/family-calendar.css");
-
-  assert.ok(calendarSource.includes("편집 모드"));
-  assert.ok(calendarSource.includes("changeMonth(-1)"));
-  assert.ok(calendarSource.includes("changeMonth(1)"));
-  assert.ok(calendarSource.includes('className="familyCalendarEditToggle"'));
-  assert.ok(calendarSource.includes('role="switch"'));
-  assert.ok(!calendarSource.includes("일정과 로운이 시간표를 함께 봐요."));
-  assert.ok(!calendarSource.includes("로운이 시간표 수정"));
-  assert.ok(!calendarSource.includes("수정 중"));
-
-  assert.match(calendarCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarIntro\s*\{[\s\S]*?display:\s*grid;/);
-  assert.match(calendarCss, /\.familyCalendarActions\s*\{[\s\S]*?grid-template-areas:\s*\n\s*"prev month next"\s*\n\s*"add toggle toggle";/);
-  assert.match(calendarCss, /\.familyCalendarActions\s*\{[\s\S]*?gap:\s*6px;/);
-  assert.match(calendarCss, /\.familyCalendarEditToggle\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*8px;/);
-  assert.match(calendarCss, /\.familyCalendarEditToggleInput:checked \+ \.familyCalendarEditToggleTrack/);
-  assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink,\s*\n\s*\.familyCalendarEditToggle\s*\{/);
-  assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink,\s*\n\s*\.familyCalendarEditToggle\s*\{[\s\S]*?min-height:\s*32px;/);
-  assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink,\s*\n\s*\.familyCalendarEditToggle\s*\{[\s\S]*?font-size:\s*13px;/);
-  assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink,\s*\n\s*\.familyCalendarEditToggle\s*\{[\s\S]*?white-space:\s*nowrap;/);
-  assert.match(calendarCss, /@media\s*\(max-width:\s*420px\)\s*\{[\s\S]*?\.familyCalendarIntro\s*\{[\s\S]*?grid-template-columns:\s*1fr;/);
-
-  for (const oldString of ["고치까", "치아라", "다했데이", "도로묵이다", "고마하자"]) {
-    assert.ok(!calendarSource.includes(oldString), `${oldString} should not return in calendar source`);
-  }
-});
-
+test("family calendar header keeps a single ordered row with the edit toggle", async () => { const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js"); const calendarCss = await readSource("../app/styles/family-calendar.css"); assert.ok(calendarSource.includes("편집 모드")); assert.ok(calendarSource.includes("changeMonth(-1)")); assert.ok(calendarSource.includes("changeMonth(1)")); assert.ok(calendarSource.includes('className="familyCalendarMonthControls"')); assert.ok(calendarSource.includes('className="familyCalendarEditToggle"')); assert.ok(calendarSource.includes('role="switch"')); assert.ok(!calendarSource.includes("일정과 로운이 시간표를 함께 봐요.")); assert.ok(!calendarSource.includes("로운이 시간표 수정")); assert.ok(!calendarSource.includes("수정 중")); assert.ok(calendarSource.indexOf("<h2>달력</h2>") < calendarSource.indexOf('className="familyCalendarMonthControls"')); assert.ok(calendarSource.indexOf('className="familyCalendarMonthControls"') < calendarSource.indexOf("+ 일정")); assert.ok(calendarSource.indexOf("+ 일정") < calendarSource.indexOf("편집 모드")); assert.ok(calendarCss.includes(".familyCalendarIntro {")); assert.ok(calendarCss.includes("justify-content: space-between;")); assert.ok(calendarCss.includes("flex-wrap: nowrap;")); assert.ok(calendarCss.includes(".familyCalendarActions {")); assert.ok(calendarCss.includes("margin-left: auto;")); assert.ok(calendarCss.includes("justify-content: flex-end;")); assert.ok(calendarCss.includes(".familyCalendarMonthControls {")); assert.ok(calendarCss.includes("display: inline-flex;")); assert.ok(calendarCss.includes("@media (max-width: 640px)")); assert.ok(calendarCss.includes("@media (max-width: 420px)")); assert.ok(!calendarCss.includes("grid-template-areas")); });
+test("family calendar week gutter chevron can collapse and re-expand the selected week", async () => { const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js"); assert.ok(calendarSource.includes("function toggleWeekSelection(weekKey)")); assert.ok(calendarSource.includes('setSelectedWeekKey((current) => (current === weekKey ? "" : weekKey));')); assert.ok(calendarSource.includes("const selected = Boolean(selectedWeekKey) && week.key === selectedWeekKey;")); assert.ok(calendarSource.includes('className="familyCalendarWeekToggle"')); assert.ok(calendarSource.includes("onClick={() => toggleWeekSelection(week.key)}")); assert.ok(calendarSource.includes('aria-label={selected ? "이번 주 접기" : "이번 주 펼치기"}')); assert.ok(calendarSource.includes("onClick={() => selectWeek(week.key)}")); });
 test("family calendar edit mode stays in the selected-week layout and only expands time rows", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const calendarCss = await readSource("../app/styles/family-calendar.css");
@@ -117,7 +90,7 @@ test("family calendar uses one shared 8-column gutter grid with quiet time rail"
   assert.ok(calendarSource.includes('className="familyCalendarWeekHeaderShell"'));
   assert.ok(calendarSource.includes('className="familyCalendarWeekHeader"'));
   assert.ok(calendarSource.includes('className="familyCalendarExpandedWeek"'));
-  assert.ok(calendarSource.includes('<i className="familyCalendarTimeRailSpacer" aria-hidden="true" />'));
+  assert.ok(calendarSource.includes('<span className="familyCalendarTimeRailSpacer" aria-hidden="true" />'));
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow"'));
   assert.ok(calendarSource.includes('className="familyCalendarTimeLabel"'));
   assert.ok(calendarSource.includes('className="familyCalendarDaySlot"'));
