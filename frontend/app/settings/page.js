@@ -1,6 +1,7 @@
 import { UI_STRINGS } from "../../lib/strings";
 import { getApiBase } from "../../lib/api-base";
 import PushControls from "../../components/pwa/PushControls";
+import WeatherLocationSettings from "../../components/settings/WeatherLocationSettings";
 
 async function getHealth() {
   const base = getApiBase();
@@ -31,6 +32,14 @@ export default async function SettingsPage() {
         <div className="row">
           <span>{UI_STRINGS.APP}</span>
           <span>{health.app}</span>
+        </div>
+      </section>
+
+      <section className="panel">
+        <div className="sectionTitle">날씨</div>
+        <div className="row">
+          <span>날씨 지역</span>
+          <WeatherLocationSettings />
         </div>
       </section>
 
