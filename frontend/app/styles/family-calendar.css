@@ -265,6 +265,10 @@
   align-items: stretch;
 }
 
+.familyCalendarAllDayRow {
+  align-items: start;
+}
+
 .familyCalendarTimeLabel {
   background: rgba(255, 248, 251, 0.72);
   box-shadow: inset -1px 0 rgba(214, 128, 157, 0.14);
@@ -280,6 +284,16 @@
   white-space: nowrap;
 }
 
+.familyCalendarAllDayLabel {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 22px;
+  color: rgba(78, 37, 54, 0.42);
+  font-size: 11px;
+  font-weight: 900;
+}
+
 .familyCalendarTimeLabelEditable {
   min-height: 60px;
 }
@@ -290,6 +304,12 @@
   min-width: 0;
   min-height: 20px;
   overflow: hidden;
+}
+
+.familyCalendarAllDaySlot {
+  align-content: start;
+  min-height: 22px;
+  padding-top: 1px;
 }
 
 .familyCalendarDaySlotEditable {
@@ -615,6 +635,9 @@
   white-space: nowrap;
 }
 
+.familyCalendarAllDayItem {
+  min-height: 20px;
+}
 
 .familyCalendarDaySlot .familyCalendarItem > span:first-child {
   display: block;
@@ -719,6 +742,26 @@
   outline: none;
 }
 
+.familyCalendarFormToggle {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.familyCalendarFormToggleControl {
+  appearance: auto;
+  width: 20px !important;
+  max-width: 20px !important;
+  min-width: 20px !important;
+  height: 20px;
+  min-height: 20px !important;
+  margin: 0;
+  padding: 0 !important;
+  border-radius: 4px !important;
+  accent-color: #d86f98;
+  justify-self: end;
+  box-shadow: none !important;
+}
+
 .familyCalendarForm textarea {
   resize: vertical;
 }
@@ -735,6 +778,10 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   min-width: 0;
+}
+
+.familyCalendarFormGridAllDay {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .familyCalendarFormActions,
@@ -835,6 +882,10 @@
   .familyCalendarTimeLabel {
     padding-right: 2px;
     font-size: 12px;
+  }
+
+  .familyCalendarAllDayLabel {
+    font-size: 10px;
   }
 
   .familyCalendarExpandedWeekEditable {
