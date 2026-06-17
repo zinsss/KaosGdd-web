@@ -57,6 +57,15 @@ test("family calendar renders weather rows before all-day events and before time
   }
 });
 
+test("family calendar weather rows guard missing daypart entries before reading glyphs", async () => {
+  const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
+
+  assert.ok(weatherRowsSource.includes("function hasDaypartWeather(item)"));
+  assert.ok(weatherRowsSource.includes("if (!item) return false;"));
+  assert.ok(weatherRowsSource.includes("{hasDaypartWeather(weather) ? ("));
+  assert.ok(!weatherRowsSource.includes("weather?.glyph || weather?.temp_min_c !== \"\" || weather?.temp_max_c !== \"\" ? ("));
+});
+
 test("collapsed Family week shows compact weather summaries and counts only dated events", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
