@@ -789,9 +789,6 @@ export default function FamilyCalendarClient() {
           <Link className="familyCalendarActionLink familyCalendarActionLinkPrimary" href="/family/calendar/events/new">
             + 일정
           </Link>
-          <Link className="familyCalendarActionLink" href="/family/roun">
-            로운이 시간표 수정
-          </Link>
           <label className="familyCalendarEditToggle" htmlFor="family-calendar-edit-mode">
             <span className="familyCalendarEditToggleLabel">편집 모드</span>
             <input
