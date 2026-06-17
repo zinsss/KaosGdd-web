@@ -20,6 +20,7 @@
 @import "./styles/family-polish.css";
 @import "./styles/family-fonts.css";
 @import "./styles/family-calendar-compact-month.css";
+@import "./styles/family-calendar-weather.css";
 
 .markdownBody {
   line-height: 1.5;
