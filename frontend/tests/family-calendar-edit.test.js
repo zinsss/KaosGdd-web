@@ -179,6 +179,7 @@ test("family calendar uses one shared 8-column gutter grid with quiet time rail"
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow"'));
   assert.ok(calendarSource.includes('className="familyCalendarTimeLabel"'));
   assert.ok(calendarSource.includes('className="familyCalendarDaySlot"'));
+  assert.ok(!calendarSource.includes('className="familyCalendarWeekCounts"'));
   assert.ok(
     calendarSource.indexOf('className="familyCalendarTimeLabel"') <
       calendarSource.indexOf('className="familyCalendarDaySlot"'),

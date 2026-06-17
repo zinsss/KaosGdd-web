@@ -60,8 +60,10 @@ test("events page renders selected-day panel instead of full-month event list", 
 
 test("selected-day weather dayparts render available and unavailable states", async () => {
   const source = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
+  const weatherClient = await readFile(new URL("../app/lib/weather-client.js", import.meta.url), "utf8");
 
-  assert.match(source, /\/api\/weather\/dayparts\?location=/);
+  assert.match(source, /fetchWeatherDayparts\(\{ location: weatherLocation, date: selectedDate \}\)/);
+  assert.match(weatherClient, /\/api\/weather\/dayparts\?location=/);
   assert.match(source, /weatherDaypartsAvailable && weatherDayparts\.length > 0/);
   assert.match(source, /eventDaypartRow/);
   assert.match(source, /weatherDaypartsReason/);
@@ -70,8 +72,10 @@ test("selected-day weather dayparts render available and unavailable states", as
 
 test("daily month-cell weather remains in calendar cell rendering", async () => {
   const source = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
+  const weatherClient = await readFile(new URL("../app/lib/weather-client.js", import.meta.url), "utf8");
 
-  assert.match(source, /\/api\/weather\/daily\?location=/);
+  assert.match(source, /fetchWeatherDaily\(\{ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd \}\)/);
+  assert.match(weatherClient, /\/api\/weather\/daily\?location=/);
   assert.match(source, /calendarDayWeatherGlyph/);
   assert.match(source, /calendarDayWeatherTemp/);
 });

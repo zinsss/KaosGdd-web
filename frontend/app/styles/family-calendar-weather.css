@@ -1,0 +1,117 @@
+.familyCalendarWeekDateButtonCollapsed {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  gap: 1px;
+  min-height: 52px;
+  padding: 4px 0 3px;
+}
+
+.familyCalendarWeekDateNumber {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.familyCalendarWeekDateWeather {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 14px;
+  color: rgba(78, 37, 54, 0.62);
+  font-size: 12px;
+  line-height: 1;
+}
+
+.familyCalendarWeekDateMeta {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  color: rgba(78, 37, 54, 0.54);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.familyCalendarWeatherRow {
+  align-items: start;
+}
+
+.familyCalendarWeatherSummaryRow {
+  margin-top: 2px;
+}
+
+.familyCalendarWeatherLabel {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: 24px;
+  padding-top: 2px;
+  color: rgba(78, 37, 54, 0.42);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.familyCalendarWeatherSlot {
+  min-height: 24px;
+  padding-top: 1px;
+}
+
+.familyCalendarWeatherSummary,
+.familyCalendarWeatherDaypart {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: rgba(78, 37, 54, 0.64);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.15;
+  white-space: nowrap;
+}
+
+.familyCalendarWeatherSummary {
+  color: rgba(78, 37, 54, 0.7);
+  font-weight: 900;
+}
+
+.familyCalendarWeatherGlyph {
+  flex: 0 0 auto;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.familyCalendarWeatherTemp {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 640px) {
+  .familyCalendarWeekDateButtonCollapsed {
+    min-height: 48px;
+  }
+
+  .familyCalendarWeekDateWeather {
+    min-height: 12px;
+    font-size: 11px;
+  }
+
+  .familyCalendarWeekDateMeta,
+  .familyCalendarWeatherLabel,
+  .familyCalendarWeatherSummary,
+  .familyCalendarWeatherDaypart {
+    font-size: 10px;
+  }
+
+  .familyCalendarWeatherGlyph {
+    font-size: 11px;
+  }
+}
