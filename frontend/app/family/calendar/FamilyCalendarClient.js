@@ -842,14 +842,14 @@ export default function FamilyCalendarClient() {
       </div>
 
       <div className="familyCalendarGrid" aria-label="달력 월간 보기">
-        <div className="familyCalendarWeekHeaderShell">
-          <div className="familyCalendarWeekHeader">
+        <section className="familyCalendarWeek familyCalendarWeekHeaderRow" aria-hidden="true">
+          <div className="familyCalendarWeekDates familyCalendarWeekHeader">
             <span className="familyCalendarTimeRailSpacer" aria-hidden="true" />
             {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
-              <span key={label}>{label}</span>
+              <span className="familyCalendarWeekDay familyCalendarWeekHeaderDay" key={label}>{label}</span>
             ))}
           </div>
-        </div>
+        </section>
 
         {weeks.map((week) => {
           const selected = Boolean(selectedWeekKey) && week.key === selectedWeekKey;
