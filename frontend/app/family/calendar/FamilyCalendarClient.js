@@ -225,7 +225,7 @@ function buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOv
 
   return [...weekRoniItems, ...weekDatedItems]
     .filter((item) => item.dayIndex >= 0 && item.dayIndex <= 6 && item.startTime)
-    .sort((a, b) => String(a.startTime).localeCompare(String(b.startTime)) || a.dayIndex - b.dayIndex);
+    .sort((a, b) => String(a.startTime).localeCompare(String(a.startTime)) || a.dayIndex - b.dayIndex);
 }
 
 function groupItemsByHour(items) {
@@ -819,11 +819,13 @@ export default function FamilyCalendarClient() {
       </div>
 
       <div className="familyCalendarGrid" aria-label="달력 월간 보기">
-        <div className="familyCalendarWeekHeader">
-          <i className="familyCalendarTimeRailSpacer" aria-hidden="true" />
-          {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
-            <span key={label}>{label}</span>
-          ))}
+        <div className="familyCalendarWeekHeaderShell">
+          <div className="familyCalendarWeekHeader">
+            <i className="familyCalendarTimeRailSpacer" aria-hidden="true" />
+            {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
+              <span key={label}>{label}</span>
+            ))}
+          </div>
         </div>
 
         {weeks.map((week) => {
