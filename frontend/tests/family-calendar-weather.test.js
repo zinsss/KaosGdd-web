@@ -17,7 +17,7 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.ok(weatherClient.includes("kaosgdd.weather.location.v1"));
   assert.ok(weatherClient.includes("fetchWeatherDaily"));
   assert.ok(weatherClient.includes("fetchWeatherDayparts"));
-  assert.ok(weatherClient.includes("FAMILY_CALENDAR_DAYPART_LABELS = [\"오전\", \"오후\", \"저녁\", \"밤\"]"));
+  assert.ok(weatherClient.includes('FAMILY_CALENDAR_DAYPART_LABELS = ["오전", "오후", "저녁", "밤"]'));
 
   assert.ok(eventsSource.includes('from "../lib/weather-client"'));
   assert.ok(familyCalendarSource.includes('from "../../lib/weather-client"'));
@@ -38,12 +38,12 @@ test("family calendar renders weather rows before all-day events and before time
   assert.ok(calendarSource.includes("weatherByDate"));
   assert.ok(calendarSource.includes("weatherDaypartsByDate"));
 
-  const expandedWeatherIndex = calendarSource.indexOf("<FamilyCalendarWeatherRows");
-  const allDayIndex = calendarSource.indexOf('className="familyCalendarTimeRow familyCalendarAllDayRow"');
-  const timeRowIndex = calendarSource.indexOf('className="familyCalendarTimeRow"');
-  assert.ok(expandedWeatherIndex >= 0, "weather rows should render in the expanded selected week");
-  assert.ok(allDayIndex > expandedWeatherIndex, "all-day row should render after weather rows");
-  assert.ok(timeRowIndex > expandedWeatherIndex, "timed rows should render after weather rows");
+  const editWeatherIndex = calendarSource.indexOf("<FamilyCalendarWeatherRows");
+  const allDayIndex = calendarSource.indexOf('className="familyCalendarTimeRow familyCalendarAllDayRow"', editWeatherIndex);
+  const firstTimedRowIndex = calendarSource.indexOf('selectedWeekRows.map(([hour, dayItems]) => (', editWeatherIndex);
+  assert.ok(editWeatherIndex >= 0, "weather rows should render in the expanded selected week");
+  assert.ok(allDayIndex > editWeatherIndex, "all-day row should render after weather rows");
+  assert.ok(firstTimedRowIndex > editWeatherIndex, "timed rows should render after weather rows");
 
   for (const label of ["날씨", "오전", "오후", "저녁", "밤"]) {
     assert.ok(weatherRowsSource.includes(label), `${label} should appear in weather rows`);
@@ -58,7 +58,7 @@ test("collapsed Family week shows compact weather summaries and counts only date
   assert.ok(globalsCss.includes('@import "./styles/family-calendar-weather.css";'));
   assert.ok(calendarSource.includes("const weather = weatherByDate.get(day.dateKey);"));
   assert.ok(calendarSource.includes("const count = datedItemsByDate[day.dateKey] || 0;"));
-  assert.ok(calendarSource.includes('className="familyCalendarWeekDateButtonCollapsed"'));
+  assert.ok(calendarSource.includes("familyCalendarWeekDateButtonCollapsed"));
   assert.ok(calendarSource.includes('className="familyCalendarWeekDateWeather"'));
   assert.ok(calendarSource.includes('className="familyCalendarWeekDateMeta"'));
   assert.ok(calendarSource.includes('weather ? `${weather.min_c}/${weather.max_c}` : ""'));
