@@ -86,6 +86,26 @@ test("family calendar mobile header uses compact two-row actions", async () => {
   }
 });
 
+test("family calendar edit mode stays in the selected-week layout and only expands time rows", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const calendarCss = await readSource("../app/styles/family-calendar.css");
+
+  assert.ok(calendarSource.includes('className="familyCalendarExpandedWeek familyCalendarExpandedWeekEditable"'));
+  assert.ok(calendarSource.includes("buildEditWeekRows"));
+  assert.ok(calendarSource.includes("data-slot-start-minutes={hourStartMinutes}"));
+  assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarTimeRowEditable"'));
+  assert.ok(calendarSource.includes('className="familyCalendarTimeLabel familyCalendarTimeLabelEditable"'));
+  assert.ok(calendarSource.includes('className="familyCalendarDaySlot familyCalendarDaySlotEditable"'));
+  assert.ok(calendarSource.includes('className="familyCalendarDaySlotGuides"'));
+  assert.ok(!calendarSource.includes("길게 눌러 일정 추가"));
+
+  assert.match(calendarCss, /\.familyCalendarExpandedWeekEditable\s*\{[\s\S]*?max-height:\s*min\(64vh,\s*760px\);[\s\S]*?overflow-y:\s*auto;/);
+  assert.match(calendarCss, /\.familyCalendarTimeRowEditable\s*\{[\s\S]*?align-items:\s*stretch;/);
+  assert.match(calendarCss, /\.familyCalendarTimeLabelEditable\s*\{[\s\S]*?min-height:\s*60px;/);
+  assert.match(calendarCss, /\.familyCalendarDaySlotEditable\s*\{[\s\S]*?position:\s*relative;[\s\S]*?min-height:\s*60px;[\s\S]*?overflow:\s*visible;/);
+  assert.match(calendarCss, /\.familyCalendarDaySlotGuides span:nth-child\(5\)\s*\{[\s\S]*?top:\s*50px;/);
+});
+
 test("family calendar uses one shared 8-column gutter grid with quiet time rail", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const baseCalendarCss = await readSource("../app/styles/family-calendar.css");
