@@ -75,7 +75,10 @@ test("family calendar mobile header uses compact two-row actions", async () => {
   assert.match(calendarCss, /\.familyCalendarActions\s*\{[\s\S]*?gap:\s*6px;/);
   assert.match(calendarCss, /\.familyCalendarEditToggle\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*8px;/);
   assert.match(calendarCss, /\.familyCalendarEditToggleInput:checked \+ \.familyCalendarEditToggleTrack/);
-  assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink,\s*\n\s*\.familyCalendarEditToggle\s*\{[\s\S]*?font-size:\s*13px;[\s\S]*?min-height:\s*32px;[\s\S]*?white-space:\s*nowrap;/);
+  assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink,\s*\n\s*\.familyCalendarEditToggle\s*\{/);
+  assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink,\s*\n\s*\.familyCalendarEditToggle\s*\{[\s\S]*?min-height:\s*32px;/);
+  assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink,\s*\n\s*\.familyCalendarEditToggle\s*\{[\s\S]*?font-size:\s*13px;/);
+  assert.match(calendarCss, /\.familyCalendarActions button,\s*\n\s*\.familyCalendarActionLink,\s*\n\s*\.familyCalendarEditToggle\s*\{[\s\S]*?white-space:\s*nowrap;/);
   assert.match(calendarCss, /@media\s*\(max-width:\s*420px\)\s*\{[\s\S]*?\.familyCalendarIntro\s*\{[\s\S]*?grid-template-columns:\s*1fr;/);
 
   for (const oldString of ["고치까", "치아라", "다했데이", "도로묵이다", "고마하자"]) {
