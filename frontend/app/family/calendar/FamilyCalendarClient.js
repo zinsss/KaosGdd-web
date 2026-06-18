@@ -14,6 +14,7 @@ import {
   normalizeFamilyWeatherDayparts,
 } from "../../lib/weather-client";
 import FamilyCalendarWeatherRows from "./FamilyCalendarWeatherRows";
+import FamilyCalendarWeatherDebugPanel from "./FamilyCalendarWeatherDebugPanel";
 import {
   FAMILY_CALENDAR_DAY_LABELS,
   addFamilyDays,
@@ -346,6 +347,7 @@ function FamilyCalendarEditWeek({
   weatherByDate,
   weatherDaypartsByDate,
   weatherExpanded,
+  weatherDebugData,
 }) {
   const router = useRouter();
   const editScrollRef = useRef(null);
@@ -691,6 +693,7 @@ function FamilyCalendarEditWeek({
           })}
         </div>
       ))}
+      <FamilyCalendarWeatherDebugPanel debugData={weatherDebugData} />
       {dragState ? (
         <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
           {dragState.title}
@@ -755,6 +758,22 @@ export default function FamilyCalendarClient() {
     });
     return nextWeather;
   }, [weatherItems]);
+  const selectedWeekDailyWeatherItems = useMemo(
+    () => selectedWeekDates.map((date) => weatherByDate.get(date) || null),
+    [selectedWeekDates, weatherByDate],
+  );
+  const selectedWeekDaypartWeatherItems = useMemo(
+    () => selectedWeekDates.map((date) => ({ date, items: selectedWeekWeatherDayparts[date] || [] })),
+    [selectedWeekDates, selectedWeekWeatherDayparts],
+  );
+  const selectedWeekWeatherByDate = useMemo(
+    () => Object.fromEntries(selectedWeekDates.map((date) => [date, weatherByDate.get(date) || null])),
+    [selectedWeekDates, weatherByDate],
+  );
+  const selectedWeekWeatherDaypartsByDate = useMemo(
+    () => Object.fromEntries(selectedWeekDates.map((date) => [date, selectedWeekWeatherDayparts[date] || []])),
+    [selectedWeekDates, selectedWeekWeatherDayparts],
+  );
   const deletedRoniOverridesByDate = useMemo(() => groupDeletedRoniOverridesByDate(roniOverrides), [roniOverrides]);
   const selectedWeekItems = useMemo(
     () => buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOverrides),
@@ -777,6 +796,13 @@ export default function FamilyCalendarClient() {
   useEffect(() => {
     setWeatherExpanded(false);
   }, [selectedWeekKey, calendarMode, monthDate]);
+
+  useEffect(() => {
+    if (!editingCalendar) return;
+    console.log("Family daily weather", weatherItems);
+    console.log("Family selected week weatherByDate", selectedWeekWeatherByDate);
+    console.log("Family selected week dayparts", selectedWeekWeatherDayparts);
+  }, [editingCalendar, selectedWeekWeatherByDate, selectedWeekWeatherDayparts, weatherItems]);
 
   useEffect(() => {
     let cancelled = false;
@@ -1044,6 +1070,12 @@ export default function FamilyCalendarClient() {
                   weatherByDate={weatherByDate}
                   weatherDaypartsByDate={selectedWeekWeatherDayparts}
                   weatherExpanded={weatherExpanded}
+                  weatherDebugData={{
+                    selectedWeekDailyWeatherItems,
+                    selectedWeekDaypartWeatherItems,
+                    weatherByDate: selectedWeekWeatherByDate,
+                    weatherDaypartsByDate: selectedWeekWeatherDaypartsByDate,
+                  }}
                 />
               ) : (
                 <div className="familyCalendarExpandedWeek" aria-label="선택한 주">
