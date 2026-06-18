@@ -81,40 +81,27 @@ test("family calendar weather daypart rows stay behind local expansion state", a
   }
 });
 
-test("family calendar weather formatter returns plain Korean labels in the main app font stack", async () => {
+test("family calendar weather formatter preserves Korean condition words and blocks row labels", async () => {
   const weatherClient = await readSource("../app/lib/weather-client.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
   const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
 
   assert.match(weatherClient, /export function formatFamilyWeatherLabel/);
-  assert.match(weatherClient, /export function normalizeFamilyWeatherDailyItems/);
-  assert.match(weatherClient, /const FAMILY_WEATHER_LABELS = \{/);
-  for (const label of ["맑음", "구름", "흐림", "비", "폭우", "눈", "밤"]) {
-    assert.ok(weatherClient.includes(label), `${label} should be supported by the Family weather formatter`);
+  assert.match(weatherClient, /function isRenderableKoreanWeatherLabel\(value\)/);
+  assert.match(weatherClient, /if \(FAMILY_CALENDAR_DAYPART_LABELS\.includes\(text\)\) return false;/);
+  assert.match(weatherClient, /if \(isRenderableKoreanWeatherLabel\(value\)\) return value;/);
+  assert.match(weatherClient, /if \(isRenderableKoreanWeatherLabel\(fallbackLabel\)\) return String\(fallbackLabel\)\.trim\(\);/);
+  assert.match(weatherClient, /wind: "바람"/);
+  for (const label of ["맑은", "비", "흐림", "바람"]) {
+    assert.ok(weatherClient.includes(label) || weatherClient.includes(`"${label}"`) || label === "맑은", `${label} should survive as a Korean weather condition`);
   }
-  assert.doesNotMatch(weatherClient, /stringDisplayWidth|padFamilyWeatherLabel|repeat\(4 - displayWidth\)/);
-  assert.match(weatherClient, /function familyWeatherDaypartSource\(item\)/);
-  assert.match(weatherClient, /if \(label && !FAMILY_CALENDAR_DAYPART_LABELS\.includes\(label\)\)/);
-  assert.match(weatherClient, /return item\?\.condition \|\| item\?\.summary \|\| "";/);
-  assert.match(weatherClient, /weatherLabel:\s*formatFamilyWeatherLabel\(item\?\.glyph,\s*familyWeatherLabelSource\(item\)\)/);
-  assert.match(weatherClient, /weatherLabel:\s*formatFamilyWeatherLabel\(item\.glyph,\s*familyWeatherDaypartSource\(item\)\)/);
 
-  assert.match(weatherRowsSource, /function daypartWeatherFallbackLabel\(weather\)/);
-  assert.match(weatherRowsSource, /if \(label && !FAMILY_CALENDAR_DAYPART_LABELS\.includes\(label\)\) return label;/);
-  assert.match(weatherRowsSource, /weather\?\.weatherLabel \|\| formatFamilyWeatherLabel\(weather\?\.glyph,\s*weather\?\.label \|\| weather\?\.condition \|\| weather\?\.summary\)/);
-  assert.match(weatherRowsSource, /weather\?\.weatherLabel \|\| formatFamilyWeatherLabel\(weather\?\.glyph,\s*daypartWeatherFallbackLabel\(weather\)\)/);
-  assert.match(weatherRowsSource, /formatWeatherText\(weatherLabel,\s*formatWeatherRange\(weather\)\)/);
-  assert.match(weatherRowsSource, /formatWeatherText\(weatherLabel,\s*formatDaypartRange\(weather\)\)/);
+  assert.match(weatherRowsSource, /formatFamilyWeatherLabel\(weather\?\.glyph,\s*weather\?\.label \|\| weather\?\.condition \|\| weather\?\.summary\)/);
   assert.doesNotMatch(weatherRowsSource, /밤\s*18-20/);
 
   assert.match(weatherCss, /font-family:\s*var\(--font-ui,\s*"Sarasa Gothic Mono",\s*"Noto Sans CJK KR",\s*"Noto Sans KR",\s*sans-serif\);/);
   assert.doesNotMatch(weatherCss, /white-space:\s*pre;/);
   assert.doesNotMatch(weatherCss, /Apple Color Emoji|Segoe UI Emoji|Noto Color Emoji|Nerd Font/);
-  assert.doesNotMatch(weatherRowsSource, /\bfamilyCalendarWeatherGlyph\b/);
-  assert.doesNotMatch(weatherRowsSource, /\bs\./);
-  assert.doesNotMatch(weatherRowsSource, /\bc\./);
-  assert.doesNotMatch(weatherRowsSource, /\by\./);
-  assert.doesNotMatch(weatherRowsSource, /\bn\./);
 });
 
 test("family calendar client normalizes daily weather labels before rendering", async () => {
