@@ -147,7 +147,7 @@ ${compactCss}`;
   assert.ok(compactCss.includes('content: "•";'));
   assert.ok(compactCss.includes('color: rgba(92, 50, 68, 0.42);'));
   assert.ok(compactCss.includes('.familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {'));
-  assert.ok(compactCss.includes('content: "•";'));
+  assert.ok(compactCss.includes('content: "♥";'));
   assert.ok(compactCss.includes('color: rgba(216, 111, 152, 0.78);'));
   assert.doesNotMatch(compactCss, /Symbols Nerd Font|\uf460|\uf47c/);
   assert.match(
