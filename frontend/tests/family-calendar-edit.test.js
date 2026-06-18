@@ -2,6 +2,14 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
+import {
+  FAMILY_CAREGIVER_HOUR_VALUES,
+  FAMILY_CAREGIVER_HOURS_STORAGE_KEY,
+  formatFamilyCaregiverHours,
+  normalizeFamilyCaregiverHour,
+  normalizeFamilyCaregiverHoursMap,
+} from "../app/family/calendar/familyCalendarData.js";
+
 async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
 }
@@ -182,4 +190,49 @@ ${compactCss}`;
   assert.ok(combinedCss.includes("overflow: hidden;"));
   assert.ok(combinedCss.includes("text-overflow: ellipsis;"));
   assert.ok(combinedCss.includes("white-space: nowrap;"));
+});
+
+test("family calendar caregiver hours row stores date-specific half-hour values", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
+  const calendarCss = await readSource("../app/styles/family-calendar.css");
+
+  assert.equal(FAMILY_CAREGIVER_HOURS_STORAGE_KEY, "familyCaregiverHours.v1");
+  assert.equal(FAMILY_CAREGIVER_HOUR_VALUES[0], 0);
+  assert.equal(FAMILY_CAREGIVER_HOUR_VALUES[1], 0.5);
+  assert.equal(FAMILY_CAREGIVER_HOUR_VALUES[2], 1);
+  assert.equal(FAMILY_CAREGIVER_HOUR_VALUES[3], 1.5);
+  assert.equal(FAMILY_CAREGIVER_HOUR_VALUES.at(-1), 12);
+  assert.equal(FAMILY_CAREGIVER_HOUR_VALUES.length, 25);
+
+  assert.equal(formatFamilyCaregiverHours(2), "2");
+  assert.equal(formatFamilyCaregiverHours(2.5), "2.5");
+  assert.equal(formatFamilyCaregiverHours(0), "");
+  assert.equal(normalizeFamilyCaregiverHour(0), null);
+  assert.equal(normalizeFamilyCaregiverHour(0.25), null);
+  assert.equal(normalizeFamilyCaregiverHour(12.5), null);
+  assert.deepEqual(normalizeFamilyCaregiverHoursMap({
+    "2026-06-08": 2,
+    "2026-06-09": 3.5,
+    "2026-06-10": 0,
+    bad: 4,
+  }), {
+    "2026-06-08": 2,
+    "2026-06-09": 3.5,
+  });
+
+  assert.ok(dataSource.includes('export const FAMILY_CAREGIVER_HOURS_STORAGE_KEY = "familyCaregiverHours.v1";'));
+  assert.ok(dataSource.includes("export const FAMILY_CAREGIVER_HOUR_VALUES = Array.from({ length: 25 }, (_, index) => index * 0.5);"));
+  assert.ok(calendarSource.includes("delete nextHours[date];"));
+  assert.ok(calendarSource.includes("function FamilyCaregiverHoursRow("));
+  assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarCaregiverRow"'));
+  assert.ok(calendarSource.includes(">돌봄</span>"));
+  assert.ok(calendarSource.includes("FAMILY_CAREGIVER_HOUR_VALUES.map((value)"));
+  assert.ok(calendarSource.includes("setCaregiverHoursByDate(loadFamilyCaregiverHours());"));
+  assert.ok(calendarSource.includes("saveFamilyCaregiverHours(nextHours);"));
+  assert.ok(calendarSource.indexOf("<FamilyCalendarWeatherRows") < calendarSource.indexOf("<FamilyCaregiverHoursRow"));
+  assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("familyCalendarAllDayRow"));
+  assert.ok(calendarCss.includes(".familyCalendarCaregiverRow {"));
+  assert.ok(calendarCss.includes(".familyCalendarCaregiverPicker {"));
+  assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
 });

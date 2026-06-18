@@ -37,7 +37,7 @@ test("family calendar expanded week keeps weather compact by default and renders
   const compactCss = await readSource("../app/styles/family-calendar-compact-month.css");
 
   assert.match(calendarSource, /const\s*\[weatherExpanded,\s*setWeatherExpanded\]\s*=\s*useState\(false\);/);
-  assert.match(calendarSource, /setWeatherExpanded\(false\);\s*\n\s*\},\s*\[selectedWeekKey,\s*calendarMode,\s*monthDate\]\);/);
+  assert.match(calendarSource, /setWeatherExpanded\(false\);[\s\S]*?\},\s*\[selectedWeekKey,\s*calendarMode,\s*monthDate\]\);/);
   assert.match(calendarSource, /expanded=\{weatherExpanded\}/);
   assert.match(calendarSource, /onToggle=\{\(\)\s*=>\s*setWeatherExpanded\(\(current\)\s*=>\s*!current\)\}/);
   assert.match(calendarSource, /onToggle=\{onToggleWeather\}/);
