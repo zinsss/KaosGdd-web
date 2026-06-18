@@ -60,6 +60,7 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(weatherCss, /\.familyCalendarWeatherToggleGlyph/);
   assert.match(weatherCss, /\.familyCalendarWeatherSummary/);
   assert.match(weatherCss, /\.familyCalendarWeatherDaypart/);
+  assert.match(weatherCss, /\.familyCalendarWeatherLabelText/);
   assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*34px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
   assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*28px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
 });
@@ -80,7 +81,7 @@ test("family calendar weather daypart rows stay behind local expansion state", a
   }
 });
 
-test("family calendar weather glyphs reuse the main app font stack and avoid lowercase abbreviations", async () => {
+test("family calendar weather formatter returns padded Korean labels in the main app font stack", async () => {
   const weatherClient = await readSource("../app/lib/weather-client.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
   const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
@@ -88,28 +89,25 @@ test("family calendar weather glyphs reuse the main app font stack and avoid low
 
   const mainFontStack = '"Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",\n    "SFMono-Regular", "Menlo", "Consolas", monospace';
 
-  assert.match(weatherClient, /export function formatFamilyWeatherGlyph/);
-  assert.match(weatherClient, /const FAMILY_WEATHER_GLYPHS = \{/);
-  assert.match(weatherClient, /clear:\s*"☀"/);
-  assert.match(weatherClient, /partly:\s*"⛅"/);
-  assert.match(weatherClient, /cloudy:\s*"☁"/);
-  assert.match(weatherClient, /rain:\s*"☂"/);
-  assert.match(weatherClient, /storm:\s*"☇"/);
-  assert.match(weatherClient, /snow:\s*"❄"/);
-  assert.match(weatherClient, /night:\s*"☾"/);
-
-  for (const token of ["clear", "sunny", "cloudy", "rain", "snow", "night"]) {
-    assert.ok(weatherClient.includes(token), `${token} should map through the shared weather glyph helper`);
+  assert.match(weatherClient, /export function formatFamilyWeatherLabel/);
+  assert.match(weatherClient, /const FAMILY_WEATHER_LABELS = \{/);
+  for (const label of ["맑음", "구름", "흐림", "비", "폭우", "눈", "밤"]) {
+    assert.ok(weatherClient.includes(label), `${label} should be supported by the Family weather formatter`);
   }
+  assert.match(weatherClient, /return `\$\{" "\.repeat\(4 - displayWidth\)\}\$\{label\}`;/);
+  assert.match(weatherRowsSource, /formatFamilyWeatherLabel\(weather\?\.glyph,\s*weather\?\.label\)/);
+  assert.match(weatherRowsSource, /formatWeatherText\(weatherLabel,\s*formatWeatherRange\(weather\)\)/);
+  assert.match(weatherRowsSource, /formatWeatherText\(weather\?\.weatherLabel,\s*formatDaypartRange\(weather\)\)/);
 
-  assert.ok(baseCss.includes(mainFontStack), "main KaosGdd base font stack should stay available for Family weather glyphs");
-  assert.ok(weatherCss.includes(mainFontStack), "Family weather glyph CSS should reuse the main KaosGdd font stack");
-  assert.match(weatherRowsSource, /formatFamilyWeatherGlyph\(weather\?\.glyph,\s*weather\?\.label\)/);
+  assert.ok(baseCss.includes(mainFontStack), "main KaosGdd base font stack should stay available for Family weather labels");
+  assert.ok(weatherCss.includes(mainFontStack), "Family weather label CSS should reuse the main KaosGdd font stack");
+  assert.match(weatherCss, /white-space:\s*pre;/);
+  assert.doesNotMatch(weatherCss, /Apple Color Emoji|Segoe UI Emoji|Noto Color Emoji|Nerd Font/);
+  assert.doesNotMatch(weatherRowsSource, /\bfamilyCalendarWeatherGlyph\b/);
   assert.doesNotMatch(weatherRowsSource, /\bs\./);
   assert.doesNotMatch(weatherRowsSource, /\bc\./);
   assert.doesNotMatch(weatherRowsSource, /\by\./);
   assert.doesNotMatch(weatherRowsSource, /\bn\./);
-  assert.doesNotMatch(weatherCss, /Apple Color Emoji|Segoe UI Emoji|Noto Color Emoji|Nerd Font/);
 });
 
 test("collapsed Family week no longer shows weather summaries and still counts only dated events", async () => {
@@ -131,13 +129,13 @@ test("collapsed Family week no longer shows weather summaries and still counts o
   assert.doesNotMatch(weatherCss, /\.familyCalendarWeekDateWeather/);
 });
 
-test("family calendar weather rows guard missing daypart entries before reading glyphs", async () => {
+test("family calendar weather rows guard missing daypart entries before reading labels", async () => {
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
 
   assert.match(weatherRowsSource, /function hasDaypartWeather\(item\)/);
   assert.match(weatherRowsSource, /if \(!item\) return false;/);
+  assert.match(weatherRowsSource, /Boolean\(item\.weatherLabel\)/);
   assert.match(weatherRowsSource, /\{hasDaypartWeather\(weather\) \? \(/);
-  assert.doesNotMatch(weatherRowsSource, /weather\?\.glyph\s*\|\|\s*weather\?\.temp_min_c\s*!==\s*""\s*\|\|\s*weather\?\.temp_max_c\s*!==\s*""\s*\?\s*\(/);
 });
 
 test("existing Family all-day event source coverage remains intact", async () => {
