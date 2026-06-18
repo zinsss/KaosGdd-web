@@ -80,6 +80,16 @@ function isRenderableKoreanWeatherLabel(value) {
 function familyWeatherKindFromToken(token) {
   if (!token) return "";
 
+  const numericCode = Number(token);
+  if (Number.isInteger(numericCode)) {
+    if (numericCode === 0) return "clear";
+    if ([1, 2].includes(numericCode)) return "partly";
+    if ([3, 45, 48].includes(numericCode)) return "cloudy";
+    if ((numericCode >= 51 && numericCode <= 67) || (numericCode >= 80 && numericCode <= 82)) return "rain";
+    if ((numericCode >= 71 && numericCode <= 77) || (numericCode >= 85 && numericCode <= 86)) return "snow";
+    if (numericCode >= 95 && numericCode <= 99) return "storm";
+  }
+
   if (["clear", "sun", "sunny", "s"].includes(token)) return "clear";
   if (["partly", "partly-cloudy", "partlycloudy", "mostly-sunny", "mostlysunny", "partlycloudyday"].includes(token)) return "partly";
   if (["cloud", "clouds", "cloudy", "c", "overcast"].includes(token)) return "cloudy";
