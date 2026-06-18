@@ -87,14 +87,19 @@ test("family calendar weather formatter returns plain Korean labels in the main 
   const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
 
   assert.match(weatherClient, /export function formatFamilyWeatherLabel/);
+  assert.match(weatherClient, /export function normalizeFamilyWeatherDailyItems/);
   assert.match(weatherClient, /const FAMILY_WEATHER_LABELS = \{/);
   for (const label of ["맑음", "구름", "흐림", "비", "폭우", "눈", "밤"]) {
     assert.ok(weatherClient.includes(label), `${label} should be supported by the Family weather formatter`);
   }
   assert.doesNotMatch(weatherClient, /stringDisplayWidth|padFamilyWeatherLabel|repeat\(4 - displayWidth\)/);
-  assert.match(weatherRowsSource, /formatFamilyWeatherLabel\(weather\?\.glyph,\s*weather\?\.label\)/);
+  assert.match(weatherClient, /item\?\.label \|\| item\?\.condition \|\| item\?\.summary/);
+  assert.match(weatherClient, /weatherLabel:\s*formatFamilyWeatherLabel\(item\?\.glyph,\s*familyWeatherLabelSource\(item\)\)/);
+  assert.match(weatherClient, /weatherLabel:\s*formatFamilyWeatherLabel\(item\.glyph,\s*familyWeatherLabelSource\(item,\s*label\)\)/);
+
+  assert.match(weatherRowsSource, /weather\?\.weatherLabel \|\| formatFamilyWeatherLabel\(weather\?\.glyph,\s*weather\?\.label \|\| weather\?\.condition \|\| weather\?\.summary\)/);
   assert.match(weatherRowsSource, /formatWeatherText\(weatherLabel,\s*formatWeatherRange\(weather\)\)/);
-  assert.match(weatherRowsSource, /formatWeatherText\(weather\?\.weatherLabel,\s*formatDaypartRange\(weather\)\)/);
+  assert.match(weatherRowsSource, /formatWeatherText\(weatherLabel,\s*formatDaypartRange\(weather\)\)/);
 
   assert.match(weatherCss, /font-family:\s*var\(--font-ui,\s*"Sarasa Gothic Mono",\s*"Noto Sans CJK KR",\s*"Noto Sans KR",\s*sans-serif\);/);
   assert.doesNotMatch(weatherCss, /white-space:\s*pre;/);
@@ -104,6 +109,14 @@ test("family calendar weather formatter returns plain Korean labels in the main 
   assert.doesNotMatch(weatherRowsSource, /\bc\./);
   assert.doesNotMatch(weatherRowsSource, /\by\./);
   assert.doesNotMatch(weatherRowsSource, /\bn\./);
+});
+
+test("family calendar client normalizes daily weather labels before rendering", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+
+  assert.match(calendarSource, /normalizeFamilyWeatherDailyItems/);
+  assert.match(calendarSource, /setWeatherItems\(normalizeFamilyWeatherDailyItems\(Array\.isArray\(data\.items\) \? data\.items : \[\]\)\)/);
+  assert.match(calendarSource, /dayparts\.some\(\(item\) => item\.weatherLabel \|\| item\.temp_min_c !== "" \|\| item\.temp_max_c !== ""\)/);
 });
 
 test("collapsed Family week no longer shows weather summaries and still counts only dated events", async () => {
