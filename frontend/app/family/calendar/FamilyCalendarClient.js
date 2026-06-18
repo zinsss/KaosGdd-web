@@ -10,6 +10,7 @@ import {
   fetchWeatherDayparts,
   getStoredWeatherLocation,
   listenWeatherLocationChange,
+  normalizeFamilyWeatherDailyItems,
   normalizeFamilyWeatherDayparts,
 } from "../../lib/weather-client";
 import FamilyCalendarWeatherRows from "./FamilyCalendarWeatherRows";
@@ -362,7 +363,7 @@ function FamilyCalendarEditWeek({
   const hasWeatherRows = selectedWeekDates.some((date) => {
     const summary = weatherByDate.get(date);
     const dayparts = weatherDaypartsByDate[date] || [];
-    return Boolean(summary) || dayparts.some((item) => item.glyph || item.temp_min_c !== "" || item.temp_max_c !== "");
+    return Boolean(summary) || dayparts.some((item) => item.weatherLabel || item.temp_min_c !== "" || item.temp_max_c !== "");
   });
 
   function clearPendingLongPress() {
@@ -768,7 +769,7 @@ export default function FamilyCalendarClient() {
     () => selectedWeekDates.some((date) => {
       const summary = weatherByDate.get(date);
       const dayparts = selectedWeekWeatherDayparts[date] || [];
-      return Boolean(summary) || dayparts.some((item) => item.glyph || item.temp_min_c !== "" || item.temp_max_c !== "");
+      return Boolean(summary) || dayparts.some((item) => item.weatherLabel || item.temp_min_c !== "" || item.temp_max_c !== "");
     }),
     [selectedWeekDates, selectedWeekWeatherDayparts, weatherByDate],
   );
@@ -788,7 +789,7 @@ export default function FamilyCalendarClient() {
           setWeatherItems([]);
           return;
         }
-        setWeatherItems(Array.isArray(data.items) ? data.items : []);
+        setWeatherItems(normalizeFamilyWeatherDailyItems(Array.isArray(data.items) ? data.items : []));
       })
       .catch(() => {
         if (!cancelled) setWeatherItems([]);
