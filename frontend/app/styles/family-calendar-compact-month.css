@@ -64,7 +64,12 @@
 }
 
 .familyCalendarTimeRailSpacerEmpty::before {
-  content: none;
+  content: "♥";
+  display: block;
+  color: rgba(216, 111, 152, 0.72);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .familyCalendarWeekToggle {
@@ -90,22 +95,18 @@
 }
 
 .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
-  content: "";
+  content: "•";
   display: block;
-  width: 0;
-  height: 0;
-  border-top: 5px solid transparent;
-  border-bottom: 5px solid transparent;
-  border-left: 7px solid rgba(92, 50, 68, 0.42);
+  color: rgba(92, 50, 68, 0.42);
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
-  content: "♥";
-  width: auto;
-  height: auto;
-  border: 0;
+  content: "•";
   color: rgba(216, 111, 152, 0.78);
-  font-size: 11px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1;
 }
@@ -142,6 +143,15 @@
 .familyCalendarExpandedWeek::before,
 .familyCalendarExpandedWeek::after {
   content: none;
+}
+
+.familyCalendarExpandedWeek.familyCalendarExpandedWeekEditable {
+  max-height: min(64vh, 760px);
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding-right: 2px;
 }
 
 .familyCalendarTimeRow {
@@ -207,8 +217,13 @@
     min-height: 12px;
   }
 
-  .familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
+  .familyCalendarTimeRailSpacerEmpty::before {
     font-size: 10px;
+  }
+
+  .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before,
+  .familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
+    font-size: 14px;
   }
 
   .familyCalendarTimeLabel {
