@@ -46,7 +46,7 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
         )}
         {selectedWeekDates.map((date) => {
           const weather = weatherByDate.get(date);
-          const glyph = formatFamilyWeatherGlyph(weather?.glyph);
+          const glyph = formatFamilyWeatherGlyph(weather?.glyph, weather?.label);
           return (
             <WeatherCell key={`summary-${date}`}>
               {weather ? (
