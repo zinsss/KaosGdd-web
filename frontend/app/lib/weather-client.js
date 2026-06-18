@@ -16,6 +16,40 @@ function browserStorage() {
   }
 }
 
+function normalizeWeatherGlyphToken(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[._]/g, "")
+    .replace(/\s+/g, "-");
+}
+
+export function formatFamilyWeatherGlyph(rawGlyph, fallbackLabel = "") {
+  const glyph = String(rawGlyph || "").trim();
+  if (/[☀🌤⛅☁🌥🌦🌧⛈❄🌙🌨]/u.test(glyph)) return glyph;
+
+  const token = normalizeWeatherGlyphToken(glyph || fallbackLabel);
+  if (!token) return "";
+
+  if (["clear", "sun", "sunny", "s"].includes(token)) return "☀";
+  if (["partly", "partly-cloudy", "partlycloudy", "mostly-sunny", "mostlysunny"].includes(token)) return "🌤";
+  if (["cloud", "clouds", "cloudy", "c", "overcast"].includes(token)) return "☁";
+  if (["rain", "rainy", "r", "shower", "showers", "drizzle"].includes(token)) return "🌧";
+  if (["storm", "thunder", "thunderstorm", "lightning"].includes(token)) return "⛈";
+  if (["snow", "snowy", "sleet", "blizzard"].includes(token)) return "❄";
+  if (["night", "moon", "clear-night", "clearnight", "n"].includes(token)) return "🌙";
+
+  if (/night|moon/.test(token)) return "🌙";
+  if (/snow|sleet/.test(token)) return "❄";
+  if (/storm|thunder/.test(token)) return "⛈";
+  if (/rain|drizzle|shower/.test(token)) return "🌧";
+  if (/partly|sun.*cloud|cloud.*sun/.test(token)) return "🌤";
+  if (/cloud|overcast/.test(token)) return "☁";
+  if (/clear|sun/.test(token)) return "☀";
+
+  return "";
+}
+
 export function normalizeWeatherLocation(location) {
   const wanted = String(location || "").trim().toLowerCase();
   return DEFAULT_WEATHER_LOCATIONS.some((option) => option.id === wanted)
@@ -94,7 +128,7 @@ export function normalizeFamilyWeatherDayparts(payload) {
     if (!item) return { label, glyph: "", temp_min_c: "", temp_max_c: "" };
     return {
       label: String(item.label || label),
-      glyph: String(item.glyph || ""),
+      glyph: formatFamilyWeatherGlyph(item.glyph, item.label || label),
       temp_min_c: item.temp_min_c ?? "",
       temp_max_c: item.temp_max_c ?? "",
     };
