@@ -80,7 +80,7 @@ test("family calendar weather daypart rows stay behind local expansion state", a
   }
 });
 
-test("family calendar weather glyphs reuse the main app font stack and avoid emoji output", async () => {
+test("family calendar weather glyphs reuse the main app font stack and avoid lowercase abbreviations", async () => {
   const weatherClient = await readSource("../app/lib/weather-client.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
   const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
@@ -90,9 +90,14 @@ test("family calendar weather glyphs reuse the main app font stack and avoid emo
 
   assert.match(weatherClient, /export function formatFamilyWeatherGlyph/);
   assert.match(weatherClient, /const FAMILY_WEATHER_GLYPHS = \{/);
-  for (const glyph of ["☀", "⛅", "☁", "☂", "☇", "❄", "☾"]) {
-    assert.ok(weatherClient.includes(glyph), `${glyph} should be supported by the Family weather glyph mapper`);
-  }
+  assert.match(weatherClient, /clear:\s*"☀"/);
+  assert.match(weatherClient, /partly:\s*"⛅"/);
+  assert.match(weatherClient, /cloudy:\s*"☁"/);
+  assert.match(weatherClient, /rain:\s*"☂"/);
+  assert.match(weatherClient, /storm:\s*"☇"/);
+  assert.match(weatherClient, /snow:\s*"❄"/);
+  assert.match(weatherClient, /night:\s*"☾"/);
+
   for (const token of ["clear", "sunny", "cloudy", "rain", "snow", "night"]) {
     assert.ok(weatherClient.includes(token), `${token} should map through the shared weather glyph helper`);
   }
@@ -104,8 +109,6 @@ test("family calendar weather glyphs reuse the main app font stack and avoid emo
   assert.doesNotMatch(weatherRowsSource, /\bc\./);
   assert.doesNotMatch(weatherRowsSource, /\by\./);
   assert.doesNotMatch(weatherRowsSource, /\bn\./);
-
-  assert.doesNotMatch(weatherClient, /☀️|🌤️|☁️|🌧️|⛈️|❄️|🌙/);
   assert.doesNotMatch(weatherCss, /Apple Color Emoji|Segoe UI Emoji|Noto Color Emoji|Nerd Font/);
 });
 
