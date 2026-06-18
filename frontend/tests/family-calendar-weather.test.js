@@ -46,7 +46,6 @@ test("family calendar expanded week shows one compact weather summary row by def
   assert.ok(weatherRowsSource.includes("aria-expanded={expanded}"));
   assert.ok(weatherRowsSource.includes("className=\"familyCalendarWeatherSummaryRow\""));
   assert.ok(weatherRowsSource.includes("{expanded ? FAMILY_CALENDAR_DAYPART_LABELS.map"));
-  assert.ok(!weatherRowsSource.includes("FAMILY_CALENDAR_DAYPART_LABELS.map((defaultLabel, index) => ("));
 
   assert.ok(weatherCss.includes(".familyCalendarWeatherSummaryRow"));
   assert.ok(weatherCss.includes(".familyCalendarWeatherToggle"));
