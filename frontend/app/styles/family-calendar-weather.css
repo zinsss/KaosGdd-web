@@ -76,9 +76,11 @@
   padding-top: 1px;
 }
 
-.familyCalendarWeatherSummaryText,
-.familyCalendarWeatherDaypartText {
-  display: inline-block;
+.familyCalendarWeatherSummary,
+.familyCalendarWeatherDaypart {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -86,13 +88,25 @@
   font-size: 11px;
   font-weight: 850;
   line-height: 1.15;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.familyCalendarWeatherSummaryText {
+.familyCalendarWeatherSummary {
   color: rgba(78, 37, 54, 0.7);
   font-weight: 900;
+}
+
+.familyCalendarWeatherGlyph {
+  flex: 0 0 auto;
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.familyCalendarWeatherTemp {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 @media (max-width: 640px) {
@@ -103,12 +117,13 @@
   .familyCalendarWeekDateMeta,
   .familyCalendarWeatherToggle,
   .familyCalendarWeatherLabel,
-  .familyCalendarWeatherSummaryText,
-  .familyCalendarWeatherDaypartText {
+  .familyCalendarWeatherSummary,
+  .familyCalendarWeatherDaypart {
     font-size: 10px;
   }
 
-  .familyCalendarWeatherToggleGlyph {
+  .familyCalendarWeatherToggleGlyph,
+  .familyCalendarWeatherGlyph {
     font-size: 11px;
   }
 }
