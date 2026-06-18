@@ -100,20 +100,24 @@
 }
 
 .familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
-  border-top: 7px solid rgba(216, 111, 152, 0.72);
-  border-right: 5px solid transparent;
-  border-bottom: 0;
-  border-left: 5px solid transparent;
+  content: "♥";
+  width: auto;
+  height: auto;
+  border: 0;
+  color: rgba(216, 111, 152, 0.78);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
 }
 
-.familyCalendarWeekHeaderDay:first-of-type,
+.familyCalendarWeekHeader > .familyCalendarWeekHeaderDay:nth-child(2),
 .familyCalendarWeekDates > .familyCalendarWeekDateButton:nth-child(2),
 .familyCalendarWeekCounts > span:nth-child(2) {
   background: transparent;
   color: #d86f98;
 }
 
-.familyCalendarWeekHeaderDay:last-of-type,
+.familyCalendarWeekHeader > .familyCalendarWeekHeaderDay:nth-child(8),
 .familyCalendarWeekDates > .familyCalendarWeekDateButton:nth-child(8),
 .familyCalendarWeekCounts > span:nth-child(8) {
   background: transparent;
@@ -201,6 +205,10 @@
     width: 12px;
     min-width: 12px;
     min-height: 12px;
+  }
+
+  .familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
+    font-size: 10px;
   }
 
   .familyCalendarTimeLabel {
