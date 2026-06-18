@@ -98,20 +98,26 @@ test("family calendar daily weather regenerates display label from glyph conditi
   assert.match(weatherClient, /function resolveFamilyWeatherKind\(rawValue, fallbackLabel = "", weatherCode = ""\)/);
   assert.match(weatherClient, /const sources = \[value, fallbackLabel, weatherCode\];/);
   assert.match(weatherClient, /weatherLabel: item\?\.weatherLabel \|\| formatFamilyWeatherLabel\(item\?\.glyph, familyWeatherLabelSource\(item\), item\?\.weather_code\)/);
-  assert.match(weatherRowsSource, /weather\?\.weatherLabel \|\| formatFamilyWeatherLabel\(weather\?\.glyph, weather\?\.condition \|\| weather\?\.summary \|\| weather\?\.label, weather\?\.weather_code\)/);
+  assert.match(weatherRowsSource, /function dailyWeatherDisplay\(weather\)/);
+  assert.match(weatherRowsSource, /formatFamilyWeatherLabel\(\s*weather\?\.glyph,\s*weather\?\.condition \|\| weather\?\.summary \|\| weather\?\.label,\s*weather\?\.weather_code,?\s*\)/);
   assert.match(calendarSource, /setWeatherItems\(normalizeFamilyWeatherDailyItems\(Array\.isArray\(data\.items\) \? data\.items : \[\]\)\)/);
 });
 
-test("family calendar daypart weather rows render temperatures only", async () => {
-  const weatherClient = await readSource("../app/lib/weather-client.js");
+test("family calendar daypart weather rows reuse daily weather glyph with daypart temperature range", async () => {
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
 
-  assert.match(weatherClient, /weatherLabel: ""/);
-  assert.match(weatherRowsSource, /function hasDaypartWeather\(item\)/);
-  assert.match(weatherRowsSource, /return item\.temp_min_c !== "" \|\| item\.temp_max_c !== "";/);
-  assert.match(weatherRowsSource, /\{formatDaypartRange\(weather\)\}/);
+  assert.match(weatherRowsSource, /const dailyWeather = weatherByDate\.get\(date\);/);
+  assert.match(weatherRowsSource, /const weatherLabel = dailyWeatherDisplay\(dailyWeather\);/);
+  assert.match(weatherRowsSource, /formatWeatherText\(weatherLabel, formatDaypartRange\(weather\)\)/);
   assert.doesNotMatch(weatherRowsSource, /daypartWeatherFallbackLabel/);
-  assert.doesNotMatch(weatherRowsSource, /formatWeatherText\(weatherLabel, formatDaypartRange\(weather\)\)/);
+  assert.doesNotMatch(weatherRowsSource, /Morning|Afternoon|Evening|Night/);
+});
+
+test("family weather CSS centers weather label text within each cell", async () => {
+  const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
+
+  assert.match(weatherCss, /\.familyCalendarWeatherSlot\s*\{[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?text-align:\s*center;/);
+  assert.match(weatherCss, /\.familyCalendarWeatherSummary,[\s\S]*?\.familyCalendarWeatherDaypart\s*\{[\s\S]*?justify-content:\s*center;[\s\S]*?gap:\s*4px;[\s\S]*?text-align:\s*center;/);
 });
 
 test("collapsed Family week no longer shows weather summaries and still counts only dated events", async () => {
