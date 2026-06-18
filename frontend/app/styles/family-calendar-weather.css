@@ -36,6 +36,12 @@
   margin-top: 2px;
 }
 
+.familyCalendarWeatherSummaryRow + .familyCalendarWeatherRow {
+  margin-top: 3px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(214, 128, 157, 0.12);
+}
+
 .familyCalendarWeatherToggle,
 .familyCalendarWeatherLabel {
   display: inline-flex;

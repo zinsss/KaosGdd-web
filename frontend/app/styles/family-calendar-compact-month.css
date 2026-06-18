@@ -28,6 +28,13 @@
   isolation: auto;
 }
 
+.familyCalendarWeekSelected {
+  border: 1px solid rgba(214, 128, 157, 0.24);
+  border-radius: 8px;
+  background: #fffafd;
+  padding: 8px 6px 6px;
+}
+
 .familyCalendarWeek::before,
 .familyCalendarWeek::after {
   content: none;
@@ -122,10 +129,10 @@
   gap: 5px;
   min-width: 0;
   overflow: visible;
-  border: 1px solid rgba(214, 128, 157, 0.24);
-  border-radius: 8px;
-  padding: 8px 6px 6px;
-  background: #fffafd;
+  border: 0;
+  border-radius: 0;
+  padding: 6px 0 0;
+  background: transparent;
 }
 
 .familyCalendarExpandedWeek::before,
@@ -184,6 +191,10 @@
     --family-calendar-expanded-rail-width: 28px;
     grid-template-columns: var(--family-calendar-expanded-rail-width, 28px) repeat(7, minmax(0, 1fr));
     gap: 2px;
+  }
+
+  .familyCalendarWeekSelected {
+    padding: 8px 5px 5px;
   }
 
   .familyCalendarWeekToggle .familyCalendarTimeRailSpacer {
