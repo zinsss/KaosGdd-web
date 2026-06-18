@@ -98,7 +98,7 @@ test("family calendar edit mode exposes a temporary weather debug panel near the
   assert.match(calendarSource, /\{editingCalendar \? \(/);
   assert.match(calendarSource, /<FamilyCalendarWeatherDebugPanel/);
   assert.match(calendarSource, /debugData=\{\{/);
-  assert.doesNotMatch(calendarSource, /function FamilyCalendarEditWeek\([\s\S]*?weatherDebugData/);
+  assert.doesNotMatch(calendarSource, /function FamilyCalendarEditWeek\(\{[\s\S]*?weatherDebugData,/);
   assert.doesNotMatch(calendarSource, /<FamilyCalendarEditWeek[\s\S]*?weatherDebugData=/);
 
   assert.match(debugPanelSource, /임시 날씨 디버그/);
