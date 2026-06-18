@@ -27,6 +27,14 @@ function hasDaypartWeather(item) {
   return item.temp_min_c !== "" || item.temp_max_c !== "";
 }
 
+function dailyWeatherDisplay(weather) {
+  return weather?.weatherLabel || formatFamilyWeatherLabel(
+    weather?.glyph,
+    weather?.condition || weather?.summary || weather?.label,
+    weather?.weather_code,
+  );
+}
+
 function WeatherCell({ children, className = "" }) {
   return <div className={`familyCalendarDaySlot familyCalendarWeatherSlot${className ? ` ${className}` : ""}`}>{children}</div>;
 }
@@ -52,7 +60,7 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
         )}
         {selectedWeekDates.map((date) => {
           const weather = weatherByDate.get(date);
-          const weatherLabel = weather?.weatherLabel || formatFamilyWeatherLabel(weather?.glyph, weather?.condition || weather?.summary || weather?.label, weather?.weather_code);
+          const weatherLabel = dailyWeatherDisplay(weather);
           return (
             <WeatherCell key={`summary-${date}`}>
               {weather ? (
@@ -69,11 +77,13 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
           <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">{defaultLabel}</span>
           {selectedWeekDates.map((date) => {
             const weather = weatherDaypartsByDate[date]?.[index];
+            const dailyWeather = weatherByDate.get(date);
+            const weatherLabel = dailyWeatherDisplay(dailyWeather);
             return (
               <WeatherCell key={`${defaultLabel}-${date}`}>
                 {hasDaypartWeather(weather) ? (
                   <span className="familyCalendarWeatherDaypart familyCalendarWeatherLabelText">
-                    {formatDaypartRange(weather)}
+                    {formatWeatherText(weatherLabel, formatDaypartRange(weather))}
                   </span>
                 ) : null}
               </WeatherCell>
