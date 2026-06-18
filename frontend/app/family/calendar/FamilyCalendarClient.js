@@ -338,11 +338,13 @@ function FamilyCalendarEditWeek({
   onMoveDatedItem,
   onMoveRoniTemplate,
   onRestoreRoniOverride,
+  onToggleWeather,
   selectedWeekDates,
   selectedWeekItems,
   selectedWeekStart,
   weatherByDate,
   weatherDaypartsByDate,
+  weatherExpanded,
 }) {
   const router = useRouter();
   const editScrollRef = useRef(null);
@@ -591,6 +593,8 @@ function FamilyCalendarEditWeek({
     >
       {hasWeatherRows ? (
         <FamilyCalendarWeatherRows
+          expanded={weatherExpanded}
+          onToggle={onToggleWeather}
           selectedWeekDates={selectedWeekDates}
           weatherByDate={weatherByDate}
           weatherDaypartsByDate={weatherDaypartsByDate}
@@ -714,6 +718,7 @@ export default function FamilyCalendarClient() {
   const [weatherLocation, setWeatherLocation] = useState(DEFAULT_WEATHER_LOCATION);
   const [weatherItems, setWeatherItems] = useState([]);
   const [selectedWeekWeatherDayparts, setSelectedWeekWeatherDayparts] = useState({});
+  const [weatherExpanded, setWeatherExpanded] = useState(false);
 
   useEffect(() => {
     setDatedItems(loadFamilyCalendarItems());
@@ -767,6 +772,10 @@ export default function FamilyCalendarClient() {
     }),
     [selectedWeekDates, selectedWeekWeatherDayparts, weatherByDate],
   );
+
+  useEffect(() => {
+    setWeatherExpanded(false);
+  }, [selectedWeekKey, calendarMode, monthDate]);
 
   useEffect(() => {
     let cancelled = false;
@@ -996,7 +1005,6 @@ export default function FamilyCalendarClient() {
                   <span className="familyCalendarTimeRailSpacer" aria-hidden="true" />
                 </button>
                 {week.days.map((day, dayIndex) => {
-                  const weather = weatherByDate.get(day.dateKey);
                   const count = datedItemsByDate[day.dateKey] || 0;
                   return (
                     <button
@@ -1009,15 +1017,9 @@ export default function FamilyCalendarClient() {
                     >
                       <span className="familyCalendarWeekDateNumber">{day.date.getDate()}</span>
                       {!selected ? (
-                        <>
-                          <span className="familyCalendarWeekDateWeather">
-                            {weather ? <span className="familyCalendarWeatherGlyph" aria-hidden="true">{weather.glyph}</span> : null}
-                          </span>
-                          <span className="familyCalendarWeekDateMeta">
-                            {weather ? `${weather.min_c}/${weather.max_c}` : ""}
-                            {count ? `${weather ? " · " : ""}일정 ${count}` : ""}
-                          </span>
-                        </>
+                        <span className="familyCalendarWeekDateMeta">
+                          {count ? `일정 ${count}` : ""}
+                        </span>
                       ) : null}
                     </button>
                   );
@@ -1034,16 +1036,20 @@ export default function FamilyCalendarClient() {
                   onMoveDatedItem={moveDatedItem}
                   onMoveRoniTemplate={moveRoniTemplate}
                   onRestoreRoniOverride={restoreRoniOverride}
+                  onToggleWeather={() => setWeatherExpanded((current) => !current)}
                   selectedWeekDates={selectedWeekDates}
                   selectedWeekItems={selectedWeekItems}
                   selectedWeekStart={selectedWeekStart}
                   weatherByDate={weatherByDate}
                   weatherDaypartsByDate={selectedWeekWeatherDayparts}
+                  weatherExpanded={weatherExpanded}
                 />
               ) : (
                 <div className="familyCalendarExpandedWeek" aria-label="선택한 주">
                   {hasSelectedWeekWeatherRows ? (
                     <FamilyCalendarWeatherRows
+                      expanded={weatherExpanded}
+                      onToggle={() => setWeatherExpanded((current) => !current)}
                       selectedWeekDates={selectedWeekDates}
                       weatherByDate={weatherByDate}
                       weatherDaypartsByDate={selectedWeekWeatherDayparts}

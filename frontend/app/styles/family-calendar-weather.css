@@ -3,7 +3,7 @@
   align-content: start;
   justify-items: center;
   gap: 1px;
-  min-height: 52px;
+  min-height: 38px;
   padding: 4px 0 3px;
 }
 
@@ -13,16 +13,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.familyCalendarWeekDateWeather {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 14px;
-  color: rgba(78, 37, 54, 0.62);
-  font-size: 12px;
-  line-height: 1;
 }
 
 .familyCalendarWeekDateMeta {
@@ -46,15 +36,39 @@
   margin-top: 2px;
 }
 
+.familyCalendarWeatherToggle,
 .familyCalendarWeatherLabel {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: flex-end;
   min-height: 24px;
-  padding-top: 2px;
+  min-width: 0;
+  padding: 2px 0 0;
   color: rgba(78, 37, 54, 0.42);
+  font: inherit;
   font-size: 11px;
   font-weight: 900;
+  line-height: 1;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.familyCalendarWeatherToggle {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.familyCalendarWeatherToggleLabel,
+.familyCalendarWeatherToggleGlyph {
+  flex: 0 0 auto;
+}
+
+.familyCalendarWeatherToggleGlyph {
+  color: rgba(216, 111, 152, 0.74);
+  font-size: 12px;
 }
 
 .familyCalendarWeatherSlot {
@@ -96,21 +110,18 @@
 
 @media (max-width: 640px) {
   .familyCalendarWeekDateButtonCollapsed {
-    min-height: 48px;
-  }
-
-  .familyCalendarWeekDateWeather {
-    min-height: 12px;
-    font-size: 11px;
+    min-height: 34px;
   }
 
   .familyCalendarWeekDateMeta,
+  .familyCalendarWeatherToggle,
   .familyCalendarWeatherLabel,
   .familyCalendarWeatherSummary,
   .familyCalendarWeatherDaypart {
     font-size: 10px;
   }
 
+  .familyCalendarWeatherToggleGlyph,
   .familyCalendarWeatherGlyph {
     font-size: 11px;
   }
