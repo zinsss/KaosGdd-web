@@ -7,6 +7,32 @@ export const DEFAULT_WEATHER_LOCATIONS = [
 export const WEATHER_LOCATION_STORAGE_KEY = "kaosgdd.weather.location.v1";
 export const FAMILY_CALENDAR_DAYPART_LABELS = ["오전", "오후", "저녁", "밤"];
 
+const FAMILY_WEATHER_GLYPHS = {
+  clear: "☀️",
+  partly: "🌤️",
+  cloudy: "☁️",
+  rain: "🌧️",
+  storm: "⛈️",
+  snow: "❄️",
+  night: "🌙",
+};
+
+const FAMILY_WEATHER_GLYPH_VARIANTS = new Map([
+  ["☀", FAMILY_WEATHER_GLYPHS.clear],
+  ["☀️", FAMILY_WEATHER_GLYPHS.clear],
+  ["🌤", FAMILY_WEATHER_GLYPHS.partly],
+  ["🌤️", FAMILY_WEATHER_GLYPHS.partly],
+  ["☁", FAMILY_WEATHER_GLYPHS.cloudy],
+  ["☁️", FAMILY_WEATHER_GLYPHS.cloudy],
+  ["🌧", FAMILY_WEATHER_GLYPHS.rain],
+  ["🌧️", FAMILY_WEATHER_GLYPHS.rain],
+  ["⛈", FAMILY_WEATHER_GLYPHS.storm],
+  ["⛈️", FAMILY_WEATHER_GLYPHS.storm],
+  ["❄", FAMILY_WEATHER_GLYPHS.snow],
+  ["❄️", FAMILY_WEATHER_GLYPHS.snow],
+  ["🌙", FAMILY_WEATHER_GLYPHS.night],
+]);
+
 function browserStorage() {
   if (typeof window === "undefined") return null;
   try {
@@ -21,31 +47,34 @@ function normalizeWeatherGlyphToken(value) {
     .trim()
     .toLowerCase()
     .replace(/[._]/g, "")
+    .replace(/[\ufe0e\ufe0f]/g, "")
     .replace(/\s+/g, "-");
 }
 
 export function formatFamilyWeatherGlyph(rawGlyph, fallbackLabel = "") {
   const glyph = String(rawGlyph || "").trim();
-  if (/[☀🌤⛅☁🌥🌦🌧⛈❄🌙🌨]/u.test(glyph)) return glyph;
+  if (FAMILY_WEATHER_GLYPH_VARIANTS.has(glyph)) {
+    return FAMILY_WEATHER_GLYPH_VARIANTS.get(glyph);
+  }
 
   const token = normalizeWeatherGlyphToken(glyph || fallbackLabel);
   if (!token) return "";
 
-  if (["clear", "sun", "sunny", "s"].includes(token)) return "☀";
-  if (["partly", "partly-cloudy", "partlycloudy", "mostly-sunny", "mostlysunny"].includes(token)) return "🌤";
-  if (["cloud", "clouds", "cloudy", "c", "overcast"].includes(token)) return "☁";
-  if (["rain", "rainy", "r", "shower", "showers", "drizzle"].includes(token)) return "🌧";
-  if (["storm", "thunder", "thunderstorm", "lightning"].includes(token)) return "⛈";
-  if (["snow", "snowy", "sleet", "blizzard"].includes(token)) return "❄";
-  if (["night", "moon", "clear-night", "clearnight", "n"].includes(token)) return "🌙";
+  if (["clear", "sun", "sunny", "s"].includes(token)) return FAMILY_WEATHER_GLYPHS.clear;
+  if (["partly", "partly-cloudy", "partlycloudy", "mostly-sunny", "mostlysunny"].includes(token)) return FAMILY_WEATHER_GLYPHS.partly;
+  if (["cloud", "clouds", "cloudy", "c", "overcast"].includes(token)) return FAMILY_WEATHER_GLYPHS.cloudy;
+  if (["rain", "rainy", "r", "shower", "showers", "drizzle"].includes(token)) return FAMILY_WEATHER_GLYPHS.rain;
+  if (["storm", "thunder", "thunderstorm", "lightning"].includes(token)) return FAMILY_WEATHER_GLYPHS.storm;
+  if (["snow", "snowy", "sleet", "blizzard"].includes(token)) return FAMILY_WEATHER_GLYPHS.snow;
+  if (["night", "moon", "clear-night", "clearnight", "n"].includes(token)) return FAMILY_WEATHER_GLYPHS.night;
 
-  if (/night|moon/.test(token)) return "🌙";
-  if (/snow|sleet/.test(token)) return "❄";
-  if (/storm|thunder/.test(token)) return "⛈";
-  if (/rain|drizzle|shower/.test(token)) return "🌧";
-  if (/partly|sun.*cloud|cloud.*sun/.test(token)) return "🌤";
-  if (/cloud|overcast/.test(token)) return "☁";
-  if (/clear|sun/.test(token)) return "☀";
+  if (/night|moon/.test(token)) return FAMILY_WEATHER_GLYPHS.night;
+  if (/snow|sleet/.test(token)) return FAMILY_WEATHER_GLYPHS.snow;
+  if (/storm|thunder/.test(token)) return FAMILY_WEATHER_GLYPHS.storm;
+  if (/rain|drizzle|shower/.test(token)) return FAMILY_WEATHER_GLYPHS.rain;
+  if (/partly|sun.*cloud|cloud.*sun/.test(token)) return FAMILY_WEATHER_GLYPHS.partly;
+  if (/cloud|overcast/.test(token)) return FAMILY_WEATHER_GLYPHS.cloudy;
+  if (/clear|sun/.test(token)) return FAMILY_WEATHER_GLYPHS.clear;
 
   return "";
 }
