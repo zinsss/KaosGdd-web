@@ -81,10 +81,11 @@ test("family calendar weather daypart rows stay behind local expansion state", a
   }
 });
 
-test("family calendar edit mode exposes a temporary weather debug panel and logs real payloads", async () => {
+test("family calendar edit mode exposes a temporary weather debug panel near the header and logs real payloads", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const debugPanelSource = await readSource("../app/family/calendar/FamilyCalendarWeatherDebugPanel.js");
   const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
+  const compactCss = await readSource("../app/styles/family-calendar-compact-month.css");
 
   assert.match(calendarSource, /import FamilyCalendarWeatherDebugPanel from "\.\/FamilyCalendarWeatherDebugPanel"/);
   assert.match(calendarSource, /console\.log\("Family daily weather", weatherItems\);/);
@@ -94,7 +95,10 @@ test("family calendar edit mode exposes a temporary weather debug panel and logs
   assert.match(calendarSource, /selectedWeekDaypartWeatherItems/);
   assert.match(calendarSource, /selectedWeekWeatherByDate/);
   assert.match(calendarSource, /selectedWeekWeatherDaypartsByDate/);
-  assert.match(calendarSource, /weatherDebugData=\{\{/);
+  assert.match(calendarSource, /\{editingCalendar \? \(/);
+  assert.match(calendarSource, /<FamilyCalendarWeatherDebugPanel/);
+  assert.match(calendarSource, /debugData=\{\{/);
+  assert.doesNotMatch(calendarSource, /FamilyCalendarEditWeek[\s\S]*weatherDebugData/);
 
   assert.match(debugPanelSource, /임시 날씨 디버그/);
   assert.match(debugPanelSource, /선택한 주 일별 날씨/);
@@ -106,6 +110,8 @@ test("family calendar edit mode exposes a temporary weather debug panel and logs
   assert.match(weatherCss, /\.familyCalendarWeatherDebug/);
   assert.match(weatherCss, /\.familyCalendarWeatherDebugTitle/);
   assert.match(weatherCss, /\.familyCalendarWeatherDebugPre/);
+  assert.match(compactCss, /\.familyCalendarExpandedWeek\s*\{[\s\S]*?overflow:\s*visible;/);
+  assert.doesNotMatch(compactCss, /\.familyCalendarExpandedWeek\s*\{[\s\S]*?overflow:\s*hidden;/);
 });
 
 test("family calendar weather formatter preserves Korean condition words and blocks row labels", async () => {
