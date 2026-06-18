@@ -55,6 +55,10 @@ function normalizeWeatherToken(value) {
     .replace(/\s+/g, "-");
 }
 
+function familyWeatherLabelSource(item, fallbackLabel = "") {
+  return item?.label || item?.condition || item?.summary || fallbackLabel;
+}
+
 export function formatFamilyWeatherLabel(rawValue, fallbackLabel = "") {
   const value = String(rawValue || "").trim();
   if (FAMILY_WEATHER_LABEL_VARIANTS.has(value)) {
@@ -81,6 +85,14 @@ export function formatFamilyWeatherLabel(rawValue, fallbackLabel = "") {
   if (/clear|sun/.test(token)) return FAMILY_WEATHER_LABELS.clear;
 
   return "";
+}
+
+export function normalizeFamilyWeatherDailyItems(items) {
+  if (!Array.isArray(items)) return [];
+  return items.map((item) => ({
+    ...item,
+    weatherLabel: formatFamilyWeatherLabel(item?.glyph, familyWeatherLabelSource(item)),
+  }));
 }
 
 export function normalizeWeatherLocation(location) {
@@ -161,7 +173,7 @@ export function normalizeFamilyWeatherDayparts(payload) {
     if (!item) return { label, weatherLabel: "", temp_min_c: "", temp_max_c: "" };
     return {
       label: String(item.label || label),
-      weatherLabel: formatFamilyWeatherLabel(item.glyph, item.label || label),
+      weatherLabel: formatFamilyWeatherLabel(item.glyph, familyWeatherLabelSource(item, label)),
       temp_min_c: item.temp_min_c ?? "",
       temp_max_c: item.temp_max_c ?? "",
     };
