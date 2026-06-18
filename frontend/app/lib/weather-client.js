@@ -60,6 +60,10 @@ function familyWeatherLabelSource(item, fallbackLabel = "") {
 }
 
 function familyWeatherDaypartSource(item) {
+  const label = String(item?.label || "").trim();
+  if (label && !FAMILY_CALENDAR_DAYPART_LABELS.includes(label)) {
+    return label;
+  }
   return item?.condition || item?.summary || "";
 }
 

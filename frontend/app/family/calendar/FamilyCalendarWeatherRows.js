@@ -27,6 +27,12 @@ function hasDaypartWeather(item) {
   return Boolean(item.weatherLabel) || item.temp_min_c !== "" || item.temp_max_c !== "";
 }
 
+function daypartWeatherFallbackLabel(weather) {
+  const label = String(weather?.label || "").trim();
+  if (label && !FAMILY_CALENDAR_DAYPART_LABELS.includes(label)) return label;
+  return weather?.condition || weather?.summary || "";
+}
+
 function WeatherCell({ children, className = "" }) {
   return <div className={`familyCalendarDaySlot familyCalendarWeatherSlot${className ? ` ${className}` : ""}`}>{children}</div>;
 }
@@ -69,7 +75,7 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
           <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">{defaultLabel}</span>
           {selectedWeekDates.map((date) => {
             const weather = weatherDaypartsByDate[date]?.[index];
-            const weatherLabel = weather?.weatherLabel || formatFamilyWeatherLabel(weather?.glyph, weather?.condition || weather?.summary);
+            const weatherLabel = weather?.weatherLabel || formatFamilyWeatherLabel(weather?.glyph, daypartWeatherFallbackLabel(weather));
             return (
               <WeatherCell key={`${defaultLabel}-${date}`}>
                 {hasDaypartWeather(weather) ? (
