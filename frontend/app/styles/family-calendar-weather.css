@@ -76,11 +76,9 @@
   padding-top: 1px;
 }
 
-.familyCalendarWeatherSummary,
-.familyCalendarWeatherDaypart {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
+.familyCalendarWeatherSummaryText,
+.familyCalendarWeatherDaypartText {
+  display: inline-block;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -88,25 +86,13 @@
   font-size: 11px;
   font-weight: 850;
   line-height: 1.15;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.familyCalendarWeatherSummary {
+.familyCalendarWeatherSummaryText {
   color: rgba(78, 37, 54, 0.7);
   font-weight: 900;
-}
-
-.familyCalendarWeatherGlyph {
-  flex: 0 0 auto;
-  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
-  font-size: 12px;
-  line-height: 1;
-}
-
-.familyCalendarWeatherTemp {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 @media (max-width: 640px) {
@@ -117,13 +103,12 @@
   .familyCalendarWeekDateMeta,
   .familyCalendarWeatherToggle,
   .familyCalendarWeatherLabel,
-  .familyCalendarWeatherSummary,
-  .familyCalendarWeatherDaypart {
+  .familyCalendarWeatherSummaryText,
+  .familyCalendarWeatherDaypartText {
     font-size: 10px;
   }
 
-  .familyCalendarWeatherToggleGlyph,
-  .familyCalendarWeatherGlyph {
+  .familyCalendarWeatherToggleGlyph {
     font-size: 11px;
   }
 }
