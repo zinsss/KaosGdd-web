@@ -81,27 +81,23 @@ test("family calendar weather daypart rows stay behind local expansion state", a
   }
 });
 
-test("family calendar weather formatter returns padded Korean labels in the main app font stack", async () => {
+test("family calendar weather formatter returns plain Korean labels in the main app font stack", async () => {
   const weatherClient = await readSource("../app/lib/weather-client.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
   const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
-  const baseCss = await readSource("../app/styles/base.css");
-
-  const mainFontStack = '"Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",\n    "SFMono-Regular", "Menlo", "Consolas", monospace';
 
   assert.match(weatherClient, /export function formatFamilyWeatherLabel/);
   assert.match(weatherClient, /const FAMILY_WEATHER_LABELS = \{/);
   for (const label of ["맑음", "구름", "흐림", "비", "폭우", "눈", "밤"]) {
     assert.ok(weatherClient.includes(label), `${label} should be supported by the Family weather formatter`);
   }
-  assert.match(weatherClient, /return `\$\{" "\.repeat\(4 - displayWidth\)\}\$\{label\}`;/);
+  assert.doesNotMatch(weatherClient, /stringDisplayWidth|padFamilyWeatherLabel|repeat\(4 - displayWidth\)/);
   assert.match(weatherRowsSource, /formatFamilyWeatherLabel\(weather\?\.glyph,\s*weather\?\.label\)/);
   assert.match(weatherRowsSource, /formatWeatherText\(weatherLabel,\s*formatWeatherRange\(weather\)\)/);
   assert.match(weatherRowsSource, /formatWeatherText\(weather\?\.weatherLabel,\s*formatDaypartRange\(weather\)\)/);
 
-  assert.ok(baseCss.includes(mainFontStack), "main KaosGdd base font stack should stay available for Family weather labels");
-  assert.ok(weatherCss.includes(mainFontStack), "Family weather label CSS should reuse the main KaosGdd font stack");
-  assert.match(weatherCss, /white-space:\s*pre;/);
+  assert.match(weatherCss, /font-family:\s*var\(--font-ui,\s*"Sarasa Gothic Mono",\s*"Noto Sans CJK KR",\s*"Noto Sans KR",\s*sans-serif\);/);
+  assert.doesNotMatch(weatherCss, /white-space:\s*pre;/);
   assert.doesNotMatch(weatherCss, /Apple Color Emoji|Segoe UI Emoji|Noto Color Emoji|Nerd Font/);
   assert.doesNotMatch(weatherRowsSource, /\bfamilyCalendarWeatherGlyph\b/);
   assert.doesNotMatch(weatherRowsSource, /\bs\./);
