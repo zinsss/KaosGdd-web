@@ -107,6 +107,51 @@
   text-overflow: ellipsis;
 }
 
+.familyCalendarWeatherDebug {
+  margin-top: 14px;
+  border: 1px dashed rgba(216, 111, 152, 0.38);
+  border-radius: 18px;
+  background: rgba(255, 248, 251, 0.92);
+  padding: 12px;
+}
+
+.familyCalendarWeatherDebugTitle {
+  margin: 0 0 8px;
+  color: rgba(78, 37, 54, 0.72);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.familyCalendarWeatherDebugSections {
+  display: grid;
+  gap: 10px;
+}
+
+.familyCalendarWeatherDebugSection {
+  min-width: 0;
+}
+
+.familyCalendarWeatherDebugHeading {
+  margin: 0 0 4px;
+  color: rgba(78, 37, 54, 0.58);
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.familyCalendarWeatherDebugPre {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.85);
+  color: rgba(78, 37, 54, 0.78);
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 10px;
+  line-height: 1.45;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
 @media (max-width: 640px) {
   .familyCalendarWeekDateButtonCollapsed {
     min-height: 34px;
@@ -122,5 +167,13 @@
 
   .familyCalendarWeatherToggleGlyph {
     font-size: 11px;
+  }
+
+  .familyCalendarWeatherDebug {
+    padding: 10px;
+  }
+
+  .familyCalendarWeatherDebugPre {
+    font-size: 9px;
   }
 }
