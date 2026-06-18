@@ -15,6 +15,7 @@ const FAMILY_WEATHER_LABELS = {
   storm: "폭우",
   snow: "눈",
   night: "밤",
+  wind: "바람",
 };
 
 const FAMILY_WEATHER_LABEL_VARIANTS = new Map([
@@ -67,6 +68,13 @@ function familyWeatherDaypartSource(item) {
   return item?.condition || item?.summary || "";
 }
 
+function isRenderableKoreanWeatherLabel(value) {
+  const text = String(value || "").trim();
+  if (!text) return false;
+  if (FAMILY_CALENDAR_DAYPART_LABELS.includes(text)) return false;
+  return /[가-힣]/.test(text);
+}
+
 export function formatFamilyWeatherLabel(rawValue, fallbackLabel = "") {
   const value = String(rawValue || "").trim();
   if (FAMILY_WEATHER_LABEL_VARIANTS.has(value)) {
@@ -74,7 +82,7 @@ export function formatFamilyWeatherLabel(rawValue, fallbackLabel = "") {
   }
 
   const token = normalizeWeatherToken(value || fallbackLabel);
-  if (!token) return "";
+  if (!token) return isRenderableKoreanWeatherLabel(fallbackLabel) ? String(fallbackLabel).trim() : "";
 
   if (["clear", "sun", "sunny", "s"].includes(token)) return FAMILY_WEATHER_LABELS.clear;
   if (["partly", "partly-cloudy", "partlycloudy", "mostly-sunny", "mostlysunny"].includes(token)) return FAMILY_WEATHER_LABELS.partly;
@@ -83,15 +91,19 @@ export function formatFamilyWeatherLabel(rawValue, fallbackLabel = "") {
   if (["storm", "thunder", "thunderstorm", "lightning"].includes(token)) return FAMILY_WEATHER_LABELS.storm;
   if (["snow", "snowy", "sleet", "blizzard"].includes(token)) return FAMILY_WEATHER_LABELS.snow;
   if (["night", "moon", "clear-night", "clearnight", "n"].includes(token)) return FAMILY_WEATHER_LABELS.night;
+  if (["wind", "windy", "gust", "gusty", "breeze", "breezy"].includes(token)) return FAMILY_WEATHER_LABELS.wind;
 
   if (/night|moon/.test(token)) return FAMILY_WEATHER_LABELS.night;
   if (/snow|sleet/.test(token)) return FAMILY_WEATHER_LABELS.snow;
   if (/storm|thunder/.test(token)) return FAMILY_WEATHER_LABELS.storm;
   if (/rain|drizzle|shower/.test(token)) return FAMILY_WEATHER_LABELS.rain;
+  if (/wind|gust|breeze/.test(token)) return FAMILY_WEATHER_LABELS.wind;
   if (/partly|sun.*cloud|cloud.*sun/.test(token)) return FAMILY_WEATHER_LABELS.partly;
   if (/cloud|overcast/.test(token)) return FAMILY_WEATHER_LABELS.cloudy;
   if (/clear|sun/.test(token)) return FAMILY_WEATHER_LABELS.clear;
 
+  if (isRenderableKoreanWeatherLabel(value)) return value;
+  if (isRenderableKoreanWeatherLabel(fallbackLabel)) return String(fallbackLabel).trim();
   return "";
 }
 
