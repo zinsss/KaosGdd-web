@@ -17,19 +17,24 @@ import FamilyCalendarWeatherRows from "./FamilyCalendarWeatherRows";
 import FamilyCalendarWeatherDebugPanel from "./FamilyCalendarWeatherDebugPanel";
 import {
   FAMILY_CALENDAR_DAY_LABELS,
+  FAMILY_CAREGIVER_HOUR_VALUES,
   addFamilyDays,
   createFamilyCalendarId,
   familyCalendarColorClassName,
+  formatFamilyCaregiverHours,
   formatFamilyDateKey,
   getDefaultSelectedWeekKeyForMonth,
   getFamilyMonthWeeks,
   getFamilyWeekStart,
+  loadFamilyCaregiverHours,
   loadFamilyCalendarItems,
   loadFamilyRoniOverrides,
   loadFamilyRounState,
+  normalizeFamilyCaregiverHour,
   parseFamilyDateKey,
   padFamilyDatePart,
   resolveFamilyRounPlanForDate,
+  saveFamilyCaregiverHours,
   saveFamilyCalendarItems,
   saveFamilyRoniOverrides,
   saveFamilyRounState,
@@ -331,15 +336,68 @@ function CalendarItemLink({
   );
 }
 
+function FamilyCaregiverHoursRow({
+  activeDate,
+  caregiverHoursByDate,
+  onChangeHours,
+  onToggleDate,
+  selectedWeekDates,
+}) {
+  return (
+    <>
+      <div className="familyCalendarTimeRow familyCalendarCaregiverRow">
+        <span className="familyCalendarTimeLabel familyCalendarCaregiverLabel">돌봄</span>
+        {selectedWeekDates.map((date) => {
+          const displayValue = formatFamilyCaregiverHours(caregiverHoursByDate[date]);
+          return (
+            <button
+              aria-label={`${date} 돌봄 시간`}
+              className={`familyCalendarDaySlot familyCalendarCaregiverSlot${activeDate === date ? " familyCalendarCaregiverSlotActive" : ""}`}
+              key={date}
+              type="button"
+              onClick={() => onToggleDate(activeDate === date ? "" : date)}
+            >
+              {displayValue}
+            </button>
+          );
+        })}
+      </div>
+      {activeDate ? (
+        <div className="familyCalendarTimeRow familyCalendarCaregiverPickerRow">
+          <span className="familyCalendarTimeLabel familyCalendarCaregiverPickerLabel">선택</span>
+          <div className="familyCalendarCaregiverPicker" role="listbox" aria-label={`${activeDate} 돌봄 시간 선택`}>
+            {FAMILY_CAREGIVER_HOUR_VALUES.map((value) => (
+              <button
+                aria-selected={(caregiverHoursByDate[activeDate] || 0) === value}
+                className="familyCalendarCaregiverOption"
+                key={value}
+                role="option"
+                type="button"
+                onClick={() => onChangeHours(activeDate, value)}
+              >
+                {value === 0 ? "0" : formatFamilyCaregiverHours(value)}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
 function FamilyCalendarEditWeek({
   allDayItems,
+  activeCaregiverDate,
+  caregiverHoursByDate,
   datedItems,
   deletedRoniOverridesByDate,
+  onChangeCaregiverHours,
   onCreateRoniOverride,
   onDeleteRoniThisWeek,
   onMoveDatedItem,
   onMoveRoniTemplate,
   onRestoreRoniOverride,
+  onToggleCaregiverDate,
   onToggleWeather,
   selectedWeekDates,
   selectedWeekItems,
@@ -602,6 +660,13 @@ function FamilyCalendarEditWeek({
           weatherDaypartsByDate={weatherDaypartsByDate}
         />
       ) : null}
+      <FamilyCaregiverHoursRow
+        activeDate={activeCaregiverDate}
+        caregiverHoursByDate={caregiverHoursByDate}
+        onChangeHours={onChangeCaregiverHours}
+        onToggleDate={onToggleCaregiverDate}
+        selectedWeekDates={selectedWeekDates}
+      />
       {hasAllDayItems ? (
         <div className="familyCalendarTimeRow familyCalendarAllDayRow" key="all-day">
           <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">종일</span>
@@ -721,11 +786,14 @@ export default function FamilyCalendarClient() {
   const [weatherItems, setWeatherItems] = useState([]);
   const [selectedWeekWeatherDayparts, setSelectedWeekWeatherDayparts] = useState({});
   const [weatherExpanded, setWeatherExpanded] = useState(false);
+  const [caregiverHoursByDate, setCaregiverHoursByDate] = useState({});
+  const [activeCaregiverDate, setActiveCaregiverDate] = useState("");
 
   useEffect(() => {
     setDatedItems(loadFamilyCalendarItems());
     setRounState(loadFamilyRounState());
     setRoniOverrides(loadFamilyRoniOverrides());
+    setCaregiverHoursByDate(loadFamilyCaregiverHours());
   }, []);
 
   useEffect(() => {
@@ -793,6 +861,7 @@ export default function FamilyCalendarClient() {
 
   useEffect(() => {
     setWeatherExpanded(false);
+    setActiveCaregiverDate("");
   }, [selectedWeekKey, calendarMode, monthDate]);
 
   useEffect(() => {
@@ -930,6 +999,21 @@ export default function FamilyCalendarClient() {
     });
   }
 
+  function changeCaregiverHours(date, value) {
+    setCaregiverHoursByDate((current) => {
+      const nextHours = { ...current };
+      const normalized = normalizeFamilyCaregiverHour(value);
+      if (normalized === null || normalized === 0) {
+        delete nextHours[date];
+      } else {
+        nextHours[date] = normalized;
+      }
+      saveFamilyCaregiverHours(nextHours);
+      return nextHours;
+    });
+    setActiveCaregiverDate("");
+  }
+
   function moveRoniTemplate(roniItem, target) {
     const moved = movedItemValues(roniItem, target);
     const sourceId = roniItem.sourceId;
@@ -1064,13 +1148,17 @@ export default function FamilyCalendarClient() {
               {!selected ? null : editingCalendar ? (
                 <FamilyCalendarEditWeek
                   allDayItems={selectedWeekAllDayItems}
+                  activeCaregiverDate={activeCaregiverDate}
+                  caregiverHoursByDate={caregiverHoursByDate}
                   datedItems={datedItems}
                   deletedRoniOverridesByDate={deletedRoniOverridesByDate}
+                  onChangeCaregiverHours={changeCaregiverHours}
                   onCreateRoniOverride={createRoniOverride}
                   onDeleteRoniThisWeek={deleteRoniThisWeek}
                   onMoveDatedItem={moveDatedItem}
                   onMoveRoniTemplate={moveRoniTemplate}
                   onRestoreRoniOverride={restoreRoniOverride}
+                  onToggleCaregiverDate={setActiveCaregiverDate}
                   onToggleWeather={() => setWeatherExpanded((current) => !current)}
                   selectedWeekDates={selectedWeekDates}
                   selectedWeekItems={selectedWeekItems}
@@ -1090,6 +1178,13 @@ export default function FamilyCalendarClient() {
                       weatherDaypartsByDate={selectedWeekWeatherDayparts}
                     />
                   ) : null}
+                  <FamilyCaregiverHoursRow
+                    activeDate={activeCaregiverDate}
+                    caregiverHoursByDate={caregiverHoursByDate}
+                    onChangeHours={changeCaregiverHours}
+                    onToggleDate={setActiveCaregiverDate}
+                    selectedWeekDates={selectedWeekDates}
+                  />
                   {hasSelectedWeekContent ? (
                     <>
                       {hasSelectedWeekAllDayItems ? (

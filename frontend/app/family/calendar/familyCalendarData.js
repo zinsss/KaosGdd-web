@@ -6,8 +6,10 @@ export const FAMILY_RONI_TEMPLATE_STORAGE_KEY = "kaosgdd.family.roniTimetableTem
 export const FAMILY_ROUN_PLAN_STORAGE_KEY = "kaosgdd.family.rounWeeklyPlans.v1";
 export const FAMILY_ROUN_ASSIGNMENT_STORAGE_KEY = "kaosgdd.family.rounAssignments.v1";
 export const FAMILY_RONI_OVERRIDE_STORAGE_KEY = "kaosgdd.family.roniOverrides.v1";
+export const FAMILY_CAREGIVER_HOURS_STORAGE_KEY = "familyCaregiverHours.v1";
 export const FAMILY_RONI_DEFAULT_TEMPLATE_NAME = "기본 시간표";
 export const FAMILY_CALENDAR_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+export const FAMILY_CAREGIVER_HOUR_VALUES = Array.from({ length: 25 }, (_, index) => index * 0.5);
 export const FAMILY_CALENDAR_WEEKDAY_OPTIONS = [
   { dayOfWeek: 0, label: "일요일" },
   { dayOfWeek: 1, label: "월요일" },
@@ -131,6 +133,29 @@ export function normalizeFamilyCalendarItem(item) {
     color: normalizeFamilyCalendarColor(item.color),
     allDay,
   };
+}
+
+export function normalizeFamilyCaregiverHour(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric < 0.5 || numeric > 12) return null;
+  if (Math.round(numeric * 2) !== numeric * 2) return null;
+  return numeric;
+}
+
+export function formatFamilyCaregiverHours(value) {
+  const normalized = normalizeFamilyCaregiverHour(value);
+  if (normalized === null) return "";
+  return Number.isInteger(normalized) ? String(normalized) : normalized.toFixed(1);
+}
+
+export function normalizeFamilyCaregiverHoursMap(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.entries(value).reduce((next, [dateKey, hours]) => {
+    if (!parseFamilyDateKey(dateKey)) return next;
+    const normalized = normalizeFamilyCaregiverHour(hours);
+    if (normalized !== null) next[formatFamilyDateKey(parseFamilyDateKey(dateKey))] = normalized;
+    return next;
+  }, {});
 }
 
 export function normalizeFamilyRoniOverride(override) {
@@ -354,6 +379,14 @@ export function loadFamilyCalendarItems() {
 
 export function saveFamilyCalendarItems(items) {
   writeFamilyStorageArray(FAMILY_CALENDAR_STORAGE_KEY, items.map(normalizeFamilyCalendarItem).filter(Boolean));
+}
+
+export function loadFamilyCaregiverHours() {
+  return normalizeFamilyCaregiverHoursMap(readFamilyStorageObject(FAMILY_CAREGIVER_HOURS_STORAGE_KEY));
+}
+
+export function saveFamilyCaregiverHours(hoursByDate) {
+  writeFamilyStorageObject(FAMILY_CAREGIVER_HOURS_STORAGE_KEY, normalizeFamilyCaregiverHoursMap(hoursByDate));
 }
 
 export function loadFamilyRoniItemsForDate(dateKey) {
