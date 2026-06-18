@@ -55,42 +55,30 @@ function normalizeWeatherToken(value) {
     .replace(/\s+/g, "-");
 }
 
-function stringDisplayWidth(value) {
-  return Array.from(String(value || "")).reduce((width, char) => {
-    return width + (char.charCodeAt(0) > 0x7f ? 2 : 1);
-  }, 0);
-}
-
-function padFamilyWeatherLabel(label) {
-  const displayWidth = stringDisplayWidth(label);
-  if (displayWidth >= 4) return label;
-  return `${" ".repeat(4 - displayWidth)}${label}`;
-}
-
 export function formatFamilyWeatherLabel(rawValue, fallbackLabel = "") {
   const value = String(rawValue || "").trim();
   if (FAMILY_WEATHER_LABEL_VARIANTS.has(value)) {
-    return padFamilyWeatherLabel(FAMILY_WEATHER_LABEL_VARIANTS.get(value));
+    return FAMILY_WEATHER_LABEL_VARIANTS.get(value);
   }
 
   const token = normalizeWeatherToken(value || fallbackLabel);
   if (!token) return "";
 
-  if (["clear", "sun", "sunny", "s"].includes(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.clear);
-  if (["partly", "partly-cloudy", "partlycloudy", "mostly-sunny", "mostlysunny"].includes(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.partly);
-  if (["cloud", "clouds", "cloudy", "c", "overcast"].includes(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.cloudy);
-  if (["rain", "rainy", "r", "shower", "showers", "drizzle"].includes(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.rain);
-  if (["storm", "thunder", "thunderstorm", "lightning"].includes(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.storm);
-  if (["snow", "snowy", "sleet", "blizzard"].includes(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.snow);
-  if (["night", "moon", "clear-night", "clearnight", "n"].includes(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.night);
+  if (["clear", "sun", "sunny", "s"].includes(token)) return FAMILY_WEATHER_LABELS.clear;
+  if (["partly", "partly-cloudy", "partlycloudy", "mostly-sunny", "mostlysunny"].includes(token)) return FAMILY_WEATHER_LABELS.partly;
+  if (["cloud", "clouds", "cloudy", "c", "overcast"].includes(token)) return FAMILY_WEATHER_LABELS.cloudy;
+  if (["rain", "rainy", "r", "shower", "showers", "drizzle"].includes(token)) return FAMILY_WEATHER_LABELS.rain;
+  if (["storm", "thunder", "thunderstorm", "lightning"].includes(token)) return FAMILY_WEATHER_LABELS.storm;
+  if (["snow", "snowy", "sleet", "blizzard"].includes(token)) return FAMILY_WEATHER_LABELS.snow;
+  if (["night", "moon", "clear-night", "clearnight", "n"].includes(token)) return FAMILY_WEATHER_LABELS.night;
 
-  if (/night|moon/.test(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.night);
-  if (/snow|sleet/.test(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.snow);
-  if (/storm|thunder/.test(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.storm);
-  if (/rain|drizzle|shower/.test(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.rain);
-  if (/partly|sun.*cloud|cloud.*sun/.test(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.partly);
-  if (/cloud|overcast/.test(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.cloudy);
-  if (/clear|sun/.test(token)) return padFamilyWeatherLabel(FAMILY_WEATHER_LABELS.clear);
+  if (/night|moon/.test(token)) return FAMILY_WEATHER_LABELS.night;
+  if (/snow|sleet/.test(token)) return FAMILY_WEATHER_LABELS.snow;
+  if (/storm|thunder/.test(token)) return FAMILY_WEATHER_LABELS.storm;
+  if (/rain|drizzle|shower/.test(token)) return FAMILY_WEATHER_LABELS.rain;
+  if (/partly|sun.*cloud|cloud.*sun/.test(token)) return FAMILY_WEATHER_LABELS.partly;
+  if (/cloud|overcast/.test(token)) return FAMILY_WEATHER_LABELS.cloudy;
+  if (/clear|sun/.test(token)) return FAMILY_WEATHER_LABELS.clear;
 
   return "";
 }
