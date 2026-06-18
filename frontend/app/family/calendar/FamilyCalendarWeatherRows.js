@@ -24,13 +24,7 @@ function formatWeatherText(label, range) {
 
 function hasDaypartWeather(item) {
   if (!item) return false;
-  return Boolean(item.weatherLabel) || item.temp_min_c !== "" || item.temp_max_c !== "";
-}
-
-function daypartWeatherFallbackLabel(weather) {
-  const label = String(weather?.label || "").trim();
-  if (label && !FAMILY_CALENDAR_DAYPART_LABELS.includes(label)) return label;
-  return weather?.condition || weather?.summary || "";
+  return item.temp_min_c !== "" || item.temp_max_c !== "";
 }
 
 function WeatherCell({ children, className = "" }) {
@@ -58,7 +52,7 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
         )}
         {selectedWeekDates.map((date) => {
           const weather = weatherByDate.get(date);
-          const weatherLabel = weather?.weatherLabel || formatFamilyWeatherLabel(weather?.glyph, weather?.label || weather?.condition || weather?.summary);
+          const weatherLabel = weather?.weatherLabel || formatFamilyWeatherLabel(weather?.glyph, weather?.condition || weather?.summary || weather?.label, weather?.weather_code);
           return (
             <WeatherCell key={`summary-${date}`}>
               {weather ? (
@@ -75,12 +69,11 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
           <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">{defaultLabel}</span>
           {selectedWeekDates.map((date) => {
             const weather = weatherDaypartsByDate[date]?.[index];
-            const weatherLabel = weather?.weatherLabel || formatFamilyWeatherLabel(weather?.glyph, daypartWeatherFallbackLabel(weather));
             return (
               <WeatherCell key={`${defaultLabel}-${date}`}>
                 {hasDaypartWeather(weather) ? (
                   <span className="familyCalendarWeatherDaypart familyCalendarWeatherLabelText">
-                    {formatWeatherText(weatherLabel, formatDaypartRange(weather))}
+                    {formatDaypartRange(weather)}
                   </span>
                 ) : null}
               </WeatherCell>
