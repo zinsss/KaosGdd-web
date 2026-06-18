@@ -65,6 +65,16 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*28px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
 });
 
+test("family calendar selected week highlight wraps the date row and weather dayparts get a subtle divider", async () => {
+  const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
+  const compactCss = await readSource("../app/styles/family-calendar-compact-month.css");
+
+  assert.match(compactCss, /\.familyCalendarWeekSelected\s*\{[\s\S]*?border:\s*1px solid rgba\(214,\s*128,\s*157,\s*0\.24\);[\s\S]*?border-radius:\s*8px;[\s\S]*?background:\s*#fffafd;[\s\S]*?padding:\s*8px 6px 6px;/);
+  assert.match(compactCss, /\.familyCalendarExpandedWeek\s*\{[\s\S]*?overflow:\s*visible;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;[\s\S]*?padding:\s*6px 0 0;[\s\S]*?background:\s*transparent;/);
+  assert.match(compactCss, /@media \(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCalendarWeekSelected\s*\{[\s\S]*?padding:\s*8px 5px 5px;/);
+  assert.match(weatherCss, /\.familyCalendarWeatherSummaryRow \+ \.familyCalendarWeatherRow\s*\{[\s\S]*?padding-top:\s*4px;[\s\S]*?border-top:\s*1px solid rgba\(214,\s*128,\s*157,\s*0\.12\);/);
+});
+
 test("family calendar weather daypart rows stay behind local expansion state", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
