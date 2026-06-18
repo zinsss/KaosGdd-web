@@ -98,6 +98,7 @@
 
 .familyCalendarWeatherGlyph {
   flex: 0 0 auto;
+  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
   font-size: 12px;
   line-height: 1;
 }

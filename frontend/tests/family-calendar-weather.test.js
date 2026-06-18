@@ -80,12 +80,14 @@ test("family calendar weather daypart rows stay behind local expansion state", a
   }
 });
 
-test("family calendar weather glyph mapping avoids lowercase abbreviation output", async () => {
+test("family calendar weather glyph mapping returns safe Unicode symbols", async () => {
   const weatherClient = await readSource("../app/lib/weather-client.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
+  const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
 
   assert.match(weatherClient, /export function formatFamilyWeatherGlyph/);
-  for (const glyph of ["☀", "🌤", "☁", "🌧", "⛈", "❄", "🌙"]) {
+  assert.match(weatherClient, /const FAMILY_WEATHER_GLYPHS = \{/);
+  for (const glyph of ["☀️", "🌤️", "☁️", "🌧️", "⛈️", "❄️", "🌙"]) {
     assert.ok(weatherClient.includes(glyph), `${glyph} should be supported by the Family weather glyph mapper`);
   }
   for (const token of ["clear", "sunny", "cloudy", "rain", "snow", "night"]) {
@@ -96,6 +98,9 @@ test("family calendar weather glyph mapping avoids lowercase abbreviation output
   assert.doesNotMatch(weatherRowsSource, /\bc\./);
   assert.doesNotMatch(weatherRowsSource, /\by\./);
   assert.doesNotMatch(weatherRowsSource, /\bn\./);
+
+  assert.match(weatherCss, /\.familyCalendarWeatherGlyph\s*\{[\s\S]*?font-family:\s*"Apple Color Emoji",\s*"Segoe UI Emoji",\s*"Noto Color Emoji",\s*sans-serif;/);
+  assert.doesNotMatch(weatherCss, /Nerd Font/);
 });
 
 test("collapsed Family week no longer shows weather summaries and still counts only dated events", async () => {
