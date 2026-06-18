@@ -104,9 +104,9 @@
 }
 
 .familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
-  content: "•";
+  content: "♥";
   color: rgba(216, 111, 152, 0.78);
-  font-size: 16px;
+  font-size: 11px;
   font-weight: 700;
   line-height: 1;
 }
@@ -224,6 +224,10 @@
   .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before,
   .familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
     font-size: 14px;
+  }
+
+  .familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {
+    font-size: 10px;
   }
 
   .familyCalendarTimeLabel {
