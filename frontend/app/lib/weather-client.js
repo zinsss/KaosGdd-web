@@ -18,6 +18,16 @@ const FAMILY_WEATHER_LABELS = {
   wind: "바람",
 };
 
+const FAMILY_WEATHER_GLYPHS = {
+  clear: "☀",
+  partly: "⛅",
+  cloudy: "☁",
+  rain: "🌧",
+  storm: "⛈",
+  snow: "❄",
+  night: "🌙",
+};
+
 const FAMILY_WEATHER_LABEL_VARIANTS = new Map([
   ["☀", FAMILY_WEATHER_LABELS.clear],
   ["☀️", FAMILY_WEATHER_LABELS.clear],
@@ -57,15 +67,7 @@ function normalizeWeatherToken(value) {
 }
 
 function familyWeatherLabelSource(item, fallbackLabel = "") {
-  return item?.label || item?.condition || item?.summary || fallbackLabel;
-}
-
-function familyWeatherDaypartSource(item) {
-  const label = String(item?.label || "").trim();
-  if (label && !FAMILY_CALENDAR_DAYPART_LABELS.includes(label)) {
-    return label;
-  }
-  return item?.condition || item?.summary || "";
+  return item?.condition || item?.label || item?.summary || fallbackLabel;
 }
 
 function isRenderableKoreanWeatherLabel(value) {
@@ -75,43 +77,71 @@ function isRenderableKoreanWeatherLabel(value) {
   return /[가-힣]/.test(text);
 }
 
-export function formatFamilyWeatherLabel(rawValue, fallbackLabel = "") {
-  const value = String(rawValue || "").trim();
-  if (FAMILY_WEATHER_LABEL_VARIANTS.has(value)) {
-    return FAMILY_WEATHER_LABEL_VARIANTS.get(value);
+function familyWeatherKindFromToken(token) {
+  if (!token) return "";
+
+  const numericCode = Number(token);
+  if (Number.isInteger(numericCode)) {
+    if (numericCode === 0) return "clear";
+    if ([1, 2].includes(numericCode)) return "partly";
+    if ([3, 45, 48].includes(numericCode)) return "cloudy";
+    if ((numericCode >= 51 && numericCode <= 67) || (numericCode >= 80 && numericCode <= 82)) return "rain";
+    if ((numericCode >= 71 && numericCode <= 77) || (numericCode >= 85 && numericCode <= 86)) return "snow";
+    if (numericCode >= 95 && numericCode <= 99) return "storm";
   }
 
-  const token = normalizeWeatherToken(value || fallbackLabel);
-  if (!token) return isRenderableKoreanWeatherLabel(fallbackLabel) ? String(fallbackLabel).trim() : "";
+  if (["clear", "sun", "sunny", "s"].includes(token)) return "clear";
+  if (["partly", "partly-cloudy", "partlycloudy", "mostly-sunny", "mostlysunny", "partlycloudyday"].includes(token)) return "partly";
+  if (["cloud", "clouds", "cloudy", "c", "overcast"].includes(token)) return "cloudy";
+  if (["rain", "rainy", "r", "shower", "showers", "drizzle"].includes(token)) return "rain";
+  if (["storm", "thunder", "thunderstorm", "lightning"].includes(token)) return "storm";
+  if (["snow", "snowy", "sleet", "blizzard"].includes(token)) return "snow";
+  if (["night", "moon", "clear-night", "clearnight", "n"].includes(token)) return "night";
+  if (["wind", "windy", "gust", "gusty", "breeze", "breezy"].includes(token)) return "wind";
 
-  if (["clear", "sun", "sunny", "s"].includes(token)) return FAMILY_WEATHER_LABELS.clear;
-  if (["partly", "partly-cloudy", "partlycloudy", "mostly-sunny", "mostlysunny"].includes(token)) return FAMILY_WEATHER_LABELS.partly;
-  if (["cloud", "clouds", "cloudy", "c", "overcast"].includes(token)) return FAMILY_WEATHER_LABELS.cloudy;
-  if (["rain", "rainy", "r", "shower", "showers", "drizzle"].includes(token)) return FAMILY_WEATHER_LABELS.rain;
-  if (["storm", "thunder", "thunderstorm", "lightning"].includes(token)) return FAMILY_WEATHER_LABELS.storm;
-  if (["snow", "snowy", "sleet", "blizzard"].includes(token)) return FAMILY_WEATHER_LABELS.snow;
-  if (["night", "moon", "clear-night", "clearnight", "n"].includes(token)) return FAMILY_WEATHER_LABELS.night;
-  if (["wind", "windy", "gust", "gusty", "breeze", "breezy"].includes(token)) return FAMILY_WEATHER_LABELS.wind;
+  if (/night|moon/.test(token)) return "night";
+  if (/snow|sleet/.test(token)) return "snow";
+  if (/storm|thunder/.test(token)) return "storm";
+  if (/rain|drizzle|shower/.test(token)) return "rain";
+  if (/wind|gust|breeze/.test(token)) return "wind";
+  if (/partly|sun.*cloud|cloud.*sun/.test(token)) return "partly";
+  if (/cloud|overcast/.test(token)) return "cloudy";
+  if (/clear|sun/.test(token)) return "clear";
 
-  if (/night|moon/.test(token)) return FAMILY_WEATHER_LABELS.night;
-  if (/snow|sleet/.test(token)) return FAMILY_WEATHER_LABELS.snow;
-  if (/storm|thunder/.test(token)) return FAMILY_WEATHER_LABELS.storm;
-  if (/rain|drizzle|shower/.test(token)) return FAMILY_WEATHER_LABELS.rain;
-  if (/wind|gust|breeze/.test(token)) return FAMILY_WEATHER_LABELS.wind;
-  if (/partly|sun.*cloud|cloud.*sun/.test(token)) return FAMILY_WEATHER_LABELS.partly;
-  if (/cloud|overcast/.test(token)) return FAMILY_WEATHER_LABELS.cloudy;
-  if (/clear|sun/.test(token)) return FAMILY_WEATHER_LABELS.clear;
+  return "";
+}
+
+function resolveFamilyWeatherKind(rawValue, fallbackLabel = "", weatherCode = "") {
+  const value = String(rawValue || "").trim();
+  if (FAMILY_WEATHER_LABEL_VARIANTS.has(value)) {
+    const variantLabel = FAMILY_WEATHER_LABEL_VARIANTS.get(value);
+    return Object.entries(FAMILY_WEATHER_LABELS).find(([, label]) => label === variantLabel)?.[0] || "";
+  }
+
+  const sources = [value, fallbackLabel, weatherCode];
+  for (const source of sources) {
+    const kind = familyWeatherKindFromToken(normalizeWeatherToken(source));
+    if (kind) return kind;
+  }
 
   if (isRenderableKoreanWeatherLabel(value)) return value;
   if (isRenderableKoreanWeatherLabel(fallbackLabel)) return String(fallbackLabel).trim();
   return "";
 }
 
+export function formatFamilyWeatherLabel(rawValue, fallbackLabel = "", weatherCode = "") {
+  const kind = resolveFamilyWeatherKind(rawValue, fallbackLabel, weatherCode);
+  if (!kind) return "";
+  if (FAMILY_WEATHER_GLYPHS[kind]) return FAMILY_WEATHER_GLYPHS[kind];
+  if (FAMILY_WEATHER_LABELS[kind]) return FAMILY_WEATHER_LABELS[kind];
+  return kind;
+}
+
 export function normalizeFamilyWeatherDailyItems(items) {
   if (!Array.isArray(items)) return [];
   return items.map((item) => ({
     ...item,
-    weatherLabel: formatFamilyWeatherLabel(item?.glyph, familyWeatherLabelSource(item)),
+    weatherLabel: item?.weatherLabel || formatFamilyWeatherLabel(item?.glyph, familyWeatherLabelSource(item), item?.weather_code),
   }));
 }
 
@@ -193,7 +223,7 @@ export function normalizeFamilyWeatherDayparts(payload) {
     if (!item) return { label, weatherLabel: "", temp_min_c: "", temp_max_c: "" };
     return {
       label: String(item.label || label),
-      weatherLabel: formatFamilyWeatherLabel(item.glyph, familyWeatherDaypartSource(item)),
+      weatherLabel: "",
       temp_min_c: item.temp_min_c ?? "",
       temp_max_c: item.temp_max_c ?? "",
     };

@@ -81,68 +81,37 @@ test("family calendar weather daypart rows stay behind local expansion state", a
   }
 });
 
-test("family calendar edit mode exposes a temporary weather debug panel near the header and logs real payloads", async () => {
-  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+test("family weather debug panel is removed from visible output", async () => {
   const debugPanelSource = await readSource("../app/family/calendar/FamilyCalendarWeatherDebugPanel.js");
-  const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
-  const compactCss = await readSource("../app/styles/family-calendar-compact-month.css");
 
-  assert.match(calendarSource, /import FamilyCalendarWeatherDebugPanel from "\.\/FamilyCalendarWeatherDebugPanel"/);
-  assert.ok(calendarSource.includes('console.log("Family daily weather", weatherItems);'));
-  assert.ok(calendarSource.includes('console.log("Family selected week weatherByDate", selectedWeekWeatherByDate);'));
-  assert.ok(calendarSource.includes('console.log("Family selected week dayparts", selectedWeekWeatherDayparts);'));
-  assert.ok(calendarSource.includes("selectedWeekDailyWeatherItems"));
-  assert.ok(calendarSource.includes("selectedWeekDaypartWeatherItems"));
-  assert.ok(calendarSource.includes("selectedWeekWeatherByDate"));
-  assert.ok(calendarSource.includes("selectedWeekWeatherDaypartsByDate"));
-  assert.match(calendarSource, /\{editingCalendar\s*\?\s*\(\s*<FamilyCalendarWeatherDebugPanel/);
-  assert.ok(calendarSource.includes("debugData={{"));
-  assert.doesNotMatch(calendarSource, /function FamilyCalendarEditWeek\(\{[^)]*weatherDebugData/);
-  assert.doesNotMatch(calendarSource, /<FamilyCalendarEditWeek[^>]*weatherDebugData=/);
-
-  assert.match(debugPanelSource, /임시 날씨 디버그/);
-  assert.match(debugPanelSource, /선택한 주 일별 날씨/);
-  assert.match(debugPanelSource, /선택한 주 시간대별 날씨/);
-  assert.match(debugPanelSource, /weatherByDate/);
-  assert.match(debugPanelSource, /weatherDaypartsByDate/);
-  assert.match(debugPanelSource, /JSON\.stringify\(value, null, 2\)/);
-
-  assert.match(weatherCss, /\.familyCalendarWeatherDebug/);
-  assert.match(weatherCss, /\.familyCalendarWeatherDebugTitle/);
-  assert.match(weatherCss, /\.familyCalendarWeatherDebugPre/);
-  assert.match(compactCss, /\.familyCalendarExpandedWeek\s*\{[^}]*overflow:\s*visible;/);
-  assert.doesNotMatch(compactCss, /\.familyCalendarExpandedWeek\s*\{[^}]*overflow:\s*hidden;/);
+  assert.ok(debugPanelSource.includes("return null;"));
+  assert.doesNotMatch(debugPanelSource, /임시 날씨 디버그/);
+  assert.doesNotMatch(debugPanelSource, /JSON\.stringify\(value, null, 2\)/);
 });
 
-test("family calendar weather formatter preserves Korean condition words and blocks row labels", async () => {
+test("family calendar daily weather regenerates display label from glyph condition and weather_code", async () => {
+  const weatherClient = await readSource("../app/lib/weather-client.js");
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
+
+  assert.match(weatherClient, /const FAMILY_WEATHER_GLYPHS/);
+  assert.match(weatherClient, /function resolveFamilyWeatherKind\(rawValue, fallbackLabel = "", weatherCode = ""\)/);
+  assert.match(weatherClient, /const sources = \[value, fallbackLabel, weatherCode\];/);
+  assert.match(weatherClient, /weatherLabel: item\?\.weatherLabel \|\| formatFamilyWeatherLabel\(item\?\.glyph, familyWeatherLabelSource\(item\), item\?\.weather_code\)/);
+  assert.match(weatherRowsSource, /weather\?\.weatherLabel \|\| formatFamilyWeatherLabel\(weather\?\.glyph, weather\?\.condition \|\| weather\?\.summary \|\| weather\?\.label, weather\?\.weather_code\)/);
+  assert.match(calendarSource, /setWeatherItems\(normalizeFamilyWeatherDailyItems\(Array\.isArray\(data\.items\) \? data\.items : \[\]\)\)/);
+});
+
+test("family calendar daypart weather rows render temperatures only", async () => {
   const weatherClient = await readSource("../app/lib/weather-client.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
-  const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
 
-  assert.match(weatherClient, /export function formatFamilyWeatherLabel/);
-  assert.match(weatherClient, /function isRenderableKoreanWeatherLabel\(value\)/);
-  assert.match(weatherClient, /if \(FAMILY_CALENDAR_DAYPART_LABELS\.includes\(text\)\) return false;/);
-  assert.match(weatherClient, /if \(isRenderableKoreanWeatherLabel\(value\)\) return value;/);
-  assert.match(weatherClient, /if \(isRenderableKoreanWeatherLabel\(fallbackLabel\)\) return String\(fallbackLabel\)\.trim\(\);/);
-  assert.match(weatherClient, /wind: "바람"/);
-  for (const label of ["맑은", "비", "흐림", "바람"]) {
-    assert.ok(weatherClient.includes(label) || weatherClient.includes(`"${label}"`) || label === "맑은", `${label} should survive as a Korean weather condition`);
-  }
-
-  assert.match(weatherRowsSource, /formatFamilyWeatherLabel\(weather\?\.glyph,\s*weather\?\.label \|\| weather\?\.condition \|\| weather\?\.summary\)/);
-  assert.doesNotMatch(weatherRowsSource, /밤\s*18-20/);
-
-  assert.match(weatherCss, /font-family:\s*var\(--font-ui,\s*"Sarasa Gothic Mono",\s*"Noto Sans CJK KR",\s*"Noto Sans KR",\s*sans-serif\);/);
-  assert.doesNotMatch(weatherCss, /white-space:\s*pre;/);
-  assert.doesNotMatch(weatherCss, /Apple Color Emoji|Segoe UI Emoji|Noto Color Emoji|Nerd Font/);
-});
-
-test("family calendar client normalizes daily weather labels before rendering", async () => {
-  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
-
-  assert.match(calendarSource, /normalizeFamilyWeatherDailyItems/);
-  assert.match(calendarSource, /setWeatherItems\(normalizeFamilyWeatherDailyItems\(Array\.isArray\(data\.items\) \? data\.items : \[\]\)\)/);
-  assert.match(calendarSource, /dayparts\.some\(\(item\) => item\.weatherLabel \|\| item\.temp_min_c !== "" \|\| item\.temp_max_c !== ""\)/);
+  assert.match(weatherClient, /weatherLabel: ""/);
+  assert.match(weatherRowsSource, /function hasDaypartWeather\(item\)/);
+  assert.match(weatherRowsSource, /return item\.temp_min_c !== "" \|\| item\.temp_max_c !== "";/);
+  assert.match(weatherRowsSource, /\{formatDaypartRange\(weather\)\}/);
+  assert.doesNotMatch(weatherRowsSource, /daypartWeatherFallbackLabel/);
+  assert.doesNotMatch(weatherRowsSource, /formatWeatherText\(weatherLabel, formatDaypartRange\(weather\)\)/);
 });
 
 test("collapsed Family week no longer shows weather summaries and still counts only dated events", async () => {
@@ -162,15 +131,6 @@ test("collapsed Family week no longer shows weather summaries and still counts o
   assert.match(weatherCss, /\.familyCalendarWeekDateButtonCollapsed/);
   assert.match(weatherCss, /\.familyCalendarWeekDateMeta/);
   assert.doesNotMatch(weatherCss, /\.familyCalendarWeekDateWeather/);
-});
-
-test("family calendar weather rows guard missing daypart entries before reading labels", async () => {
-  const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
-
-  assert.match(weatherRowsSource, /function hasDaypartWeather\(item\)/);
-  assert.match(weatherRowsSource, /if \(!item\) return false;/);
-  assert.match(weatherRowsSource, /Boolean\(item\.weatherLabel\)/);
-  assert.match(weatherRowsSource, /\{hasDaypartWeather\(weather\) \? \(/);
 });
 
 test("existing Family all-day event source coverage remains intact", async () => {
