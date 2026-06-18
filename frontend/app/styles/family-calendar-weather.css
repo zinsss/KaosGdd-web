@@ -80,7 +80,7 @@
 .familyCalendarWeatherDaypart {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 0;
   min-width: 0;
   max-width: 100%;
   overflow: hidden;
@@ -88,7 +88,7 @@
   font-size: 11px;
   font-weight: 850;
   line-height: 1.15;
-  white-space: nowrap;
+  white-space: pre;
 }
 
 .familyCalendarWeatherSummary {
@@ -96,12 +96,10 @@
   font-weight: 900;
 }
 
-.familyCalendarWeatherGlyph {
-  flex: 0 0 auto;
+.familyCalendarWeatherLabelText {
   font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
     "SFMono-Regular", "Menlo", "Consolas", monospace;
-  font-size: 12px;
-  line-height: 1;
+  font-variant-ligatures: none;
 }
 
 .familyCalendarWeatherTemp {
@@ -123,8 +121,7 @@
     font-size: 10px;
   }
 
-  .familyCalendarWeatherToggleGlyph,
-  .familyCalendarWeatherGlyph {
+  .familyCalendarWeatherToggleGlyph {
     font-size: 11px;
   }
 }
