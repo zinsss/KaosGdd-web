@@ -58,8 +58,8 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(weatherCss, /\.familyCalendarWeatherToggle/);
   assert.match(weatherCss, /\.familyCalendarWeatherToggleLabel/);
   assert.match(weatherCss, /\.familyCalendarWeatherToggleGlyph/);
-  assert.match(weatherCss, /\.familyCalendarWeatherSummary/);
-  assert.match(weatherCss, /\.familyCalendarWeatherDaypart/);
+  assert.match(weatherCss, /\.familyCalendarWeatherSummaryText/);
+  assert.match(weatherCss, /\.familyCalendarWeatherDaypartText/);
   assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*34px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
   assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*28px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
 });
@@ -80,27 +80,28 @@ test("family calendar weather daypart rows stay behind local expansion state", a
   }
 });
 
-test("family calendar weather glyph mapping returns safe Unicode symbols", async () => {
+test("family calendar weather formatter returns compact Korean labels", async () => {
   const weatherClient = await readSource("../app/lib/weather-client.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
   const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
 
-  assert.match(weatherClient, /export function formatFamilyWeatherGlyph/);
-  assert.match(weatherClient, /const FAMILY_WEATHER_GLYPHS = \{/);
-  for (const glyph of ["☀️", "🌤️", "☁️", "🌧️", "⛈️", "❄️", "🌙"]) {
-    assert.ok(weatherClient.includes(glyph), `${glyph} should be supported by the Family weather glyph mapper`);
+  assert.match(weatherClient, /export function formatFamilyWeatherLabel/);
+  assert.match(weatherClient, /const FAMILY_WEATHER_LABELS = \{/);
+  for (const label of ["맑음", "구름", "흐림", "비", "폭우", "눈", "밤"]) {
+    assert.ok(weatherClient.includes(label), `${label} should be supported by the Family weather formatter`);
   }
   for (const token of ["clear", "sunny", "cloudy", "rain", "snow", "night"]) {
-    assert.ok(weatherClient.includes(token), `${token} should map through the shared weather glyph helper`);
+    assert.ok(weatherClient.includes(token), `${token} should map through the shared weather label helper`);
   }
-  assert.match(weatherRowsSource, /formatFamilyWeatherGlyph\(weather\?\.glyph\)/);
-  assert.doesNotMatch(weatherRowsSource, /\bs\./);
-  assert.doesNotMatch(weatherRowsSource, /\bc\./);
-  assert.doesNotMatch(weatherRowsSource, /\by\./);
-  assert.doesNotMatch(weatherRowsSource, /\bn\./);
+  assert.match(weatherRowsSource, /formatFamilyWeatherLabel\(weather\?\.glyph,\s*weather\?\.label\)/);
+  assert.match(weatherRowsSource, /formatWeatherText\(weatherLabel,\s*formatWeatherRange\(weather\)\)/);
+  assert.match(weatherRowsSource, /formatWeatherText\(weather\?\.weatherLabel,\s*formatDaypartRange\(weather\)\)/);
+  assert.match(weatherRowsSource, /familyCalendarWeatherSummaryText/);
+  assert.match(weatherRowsSource, /familyCalendarWeatherDaypartText/);
 
-  assert.match(weatherCss, /\.familyCalendarWeatherGlyph\s*\{[\s\S]*?font-family:\s*"Apple Color Emoji",\s*"Segoe UI Emoji",\s*"Noto Color Emoji",\s*sans-serif;/);
-  assert.doesNotMatch(weatherCss, /Nerd Font/);
+  assert.doesNotMatch(weatherClient, /☀️|🌤️|☁️|🌧️|⛈️|❄️|🌙/);
+  assert.doesNotMatch(weatherCss, /Apple Color Emoji|Segoe UI Emoji|Noto Color Emoji|Nerd Font/);
+  assert.doesNotMatch(weatherRowsSource, /familyCalendarWeatherGlyph/);
 });
 
 test("collapsed Family week no longer shows weather summaries and still counts only dated events", async () => {
@@ -122,13 +123,13 @@ test("collapsed Family week no longer shows weather summaries and still counts o
   assert.doesNotMatch(weatherCss, /\.familyCalendarWeekDateWeather/);
 });
 
-test("family calendar weather rows guard missing daypart entries before reading glyphs", async () => {
+test("family calendar weather rows guard missing daypart entries before reading labels", async () => {
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
 
   assert.match(weatherRowsSource, /function hasDaypartWeather\(item\)/);
   assert.match(weatherRowsSource, /if \(!item\) return false;/);
+  assert.match(weatherRowsSource, /Boolean\(item\.weatherLabel\)/);
   assert.match(weatherRowsSource, /\{hasDaypartWeather\(weather\) \? \(/);
-  assert.doesNotMatch(weatherRowsSource, /weather\?\.glyph\s*\|\|\s*weather\?\.temp_min_c\s*!==\s*""\s*\|\|\s*weather\?\.temp_max_c\s*!==\s*""\s*\?\s*\(/);
 });
 
 test("existing Family all-day event source coverage remains intact", async () => {
