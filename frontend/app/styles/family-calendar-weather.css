@@ -98,7 +98,8 @@
 
 .familyCalendarWeatherGlyph {
   flex: 0 0 auto;
-  font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
+    "SFMono-Regular", "Menlo", "Consolas", monospace;
   font-size: 12px;
   line-height: 1;
 }

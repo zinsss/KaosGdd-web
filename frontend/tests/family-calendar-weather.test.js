@@ -80,27 +80,36 @@ test("family calendar weather daypart rows stay behind local expansion state", a
   }
 });
 
-test("family calendar weather glyph mapping returns safe Unicode symbols", async () => {
+test("family calendar weather glyphs reuse the main app font stack and avoid lowercase abbreviations", async () => {
   const weatherClient = await readSource("../app/lib/weather-client.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
   const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
+  const baseCss = await readSource("../app/styles/base.css");
+
+  const mainFontStack = '"Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",\n    "SFMono-Regular", "Menlo", "Consolas", monospace';
 
   assert.match(weatherClient, /export function formatFamilyWeatherGlyph/);
   assert.match(weatherClient, /const FAMILY_WEATHER_GLYPHS = \{/);
-  for (const glyph of ["☀️", "🌤️", "☁️", "🌧️", "⛈️", "❄️", "🌙"]) {
-    assert.ok(weatherClient.includes(glyph), `${glyph} should be supported by the Family weather glyph mapper`);
-  }
+  assert.match(weatherClient, /clear:\s*"☀"/);
+  assert.match(weatherClient, /partly:\s*"⛅"/);
+  assert.match(weatherClient, /cloudy:\s*"☁"/);
+  assert.match(weatherClient, /rain:\s*"☂"/);
+  assert.match(weatherClient, /storm:\s*"☇"/);
+  assert.match(weatherClient, /snow:\s*"❄"/);
+  assert.match(weatherClient, /night:\s*"☾"/);
+
   for (const token of ["clear", "sunny", "cloudy", "rain", "snow", "night"]) {
     assert.ok(weatherClient.includes(token), `${token} should map through the shared weather glyph helper`);
   }
-  assert.match(weatherRowsSource, /formatFamilyWeatherGlyph\(weather\?\.glyph\)/);
+
+  assert.ok(baseCss.includes(mainFontStack), "main KaosGdd base font stack should stay available for Family weather glyphs");
+  assert.ok(weatherCss.includes(mainFontStack), "Family weather glyph CSS should reuse the main KaosGdd font stack");
+  assert.match(weatherRowsSource, /formatFamilyWeatherGlyph\(weather\?\.glyph,\s*weather\?\.label\)/);
   assert.doesNotMatch(weatherRowsSource, /\bs\./);
   assert.doesNotMatch(weatherRowsSource, /\bc\./);
   assert.doesNotMatch(weatherRowsSource, /\by\./);
   assert.doesNotMatch(weatherRowsSource, /\bn\./);
-
-  assert.match(weatherCss, /\.familyCalendarWeatherGlyph\s*\{[\s\S]*?font-family:\s*"Apple Color Emoji",\s*"Segoe UI Emoji",\s*"Noto Color Emoji",\s*sans-serif;/);
-  assert.doesNotMatch(weatherCss, /Nerd Font/);
+  assert.doesNotMatch(weatherCss, /Apple Color Emoji|Segoe UI Emoji|Noto Color Emoji|Nerd Font/);
 });
 
 test("collapsed Family week no longer shows weather summaries and still counts only dated events", async () => {
