@@ -341,12 +341,13 @@ function FamilyCaregiverHoursRow({
   caregiverHoursByDate,
   onChangeHours,
   onToggleDate,
+  reviewHref,
   selectedWeekDates,
 }) {
   return (
     <>
       <div className="familyCalendarTimeRow familyCalendarCaregiverRow">
-        <span className="familyCalendarTimeLabel familyCalendarCaregiverLabel">돌봄</span>
+        <Link className="familyCalendarTimeLabel familyCalendarCaregiverLabel" href={reviewHref}>돌봄</Link>
         {selectedWeekDates.map((date) => {
           const displayValue = formatFamilyCaregiverHours(caregiverHoursByDate[date]);
           return (
@@ -399,6 +400,7 @@ function FamilyCalendarEditWeek({
   onRestoreRoniOverride,
   onToggleCaregiverDate,
   onToggleWeather,
+  caregiverReviewHref,
   selectedWeekDates,
   selectedWeekItems,
   selectedWeekStart,
@@ -665,6 +667,7 @@ function FamilyCalendarEditWeek({
         caregiverHoursByDate={caregiverHoursByDate}
         onChangeHours={onChangeCaregiverHours}
         onToggleDate={onToggleCaregiverDate}
+        reviewHref={caregiverReviewHref}
         selectedWeekDates={selectedWeekDates}
       />
       {hasAllDayItems ? (
@@ -832,6 +835,7 @@ export default function FamilyCalendarClient() {
     () => selectedWeekDates.map((date) => ({ date, items: selectedWeekWeatherDayparts[date] || [] })),
     [selectedWeekDates, selectedWeekWeatherDayparts],
   );
+  const caregiverReviewHref = `/family/calendar/caregiver?month=${monthDate.getFullYear()}-${padFamilyDatePart(monthDate.getMonth() + 1)}`;
   const selectedWeekWeatherByDate = useMemo(
     () => Object.fromEntries(selectedWeekDates.map((date) => [date, weatherByDate.get(date) || null])),
     [selectedWeekDates, weatherByDate],
@@ -1160,6 +1164,7 @@ export default function FamilyCalendarClient() {
                   onRestoreRoniOverride={restoreRoniOverride}
                   onToggleCaregiverDate={setActiveCaregiverDate}
                   onToggleWeather={() => setWeatherExpanded((current) => !current)}
+                  caregiverReviewHref={caregiverReviewHref}
                   selectedWeekDates={selectedWeekDates}
                   selectedWeekItems={selectedWeekItems}
                   selectedWeekStart={selectedWeekStart}
@@ -1183,6 +1188,7 @@ export default function FamilyCalendarClient() {
                     caregiverHoursByDate={caregiverHoursByDate}
                     onChangeHours={changeCaregiverHours}
                     onToggleDate={setActiveCaregiverDate}
+                    reviewHref={caregiverReviewHref}
                     selectedWeekDates={selectedWeekDates}
                   />
                   {hasSelectedWeekContent ? (
