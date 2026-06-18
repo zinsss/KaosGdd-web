@@ -347,7 +347,6 @@ function FamilyCalendarEditWeek({
   weatherByDate,
   weatherDaypartsByDate,
   weatherExpanded,
-  weatherDebugData,
 }) {
   const router = useRouter();
   const editScrollRef = useRef(null);
@@ -693,7 +692,6 @@ function FamilyCalendarEditWeek({
           })}
         </div>
       ))}
-      <FamilyCalendarWeatherDebugPanel debugData={weatherDebugData} />
       {dragState ? (
         <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
           {dragState.title}
@@ -1007,6 +1005,16 @@ export default function FamilyCalendarClient() {
           </label>
         </div>
       </div>
+      {editingCalendar ? (
+        <FamilyCalendarWeatherDebugPanel
+          debugData={{
+            selectedWeekDailyWeatherItems,
+            selectedWeekDaypartWeatherItems,
+            weatherByDate: selectedWeekWeatherByDate,
+            weatherDaypartsByDate: selectedWeekWeatherDaypartsByDate,
+          }}
+        />
+      ) : null}
 
       <div className="familyCalendarGrid" aria-label="달력 월간 보기">
         <section className="familyCalendarWeek familyCalendarWeekHeaderRow" aria-hidden="true">
@@ -1070,12 +1078,6 @@ export default function FamilyCalendarClient() {
                   weatherByDate={weatherByDate}
                   weatherDaypartsByDate={selectedWeekWeatherDayparts}
                   weatherExpanded={weatherExpanded}
-                  weatherDebugData={{
-                    selectedWeekDailyWeatherItems,
-                    selectedWeekDaypartWeatherItems,
-                    weatherByDate: selectedWeekWeatherByDate,
-                    weatherDaypartsByDate: selectedWeekWeatherDaypartsByDate,
-                  }}
                 />
               ) : (
                 <div className="familyCalendarExpandedWeek" aria-label="선택한 주">
