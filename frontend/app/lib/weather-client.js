@@ -59,6 +59,10 @@ function familyWeatherLabelSource(item, fallbackLabel = "") {
   return item?.label || item?.condition || item?.summary || fallbackLabel;
 }
 
+function familyWeatherDaypartSource(item) {
+  return item?.condition || item?.summary || "";
+}
+
 export function formatFamilyWeatherLabel(rawValue, fallbackLabel = "") {
   const value = String(rawValue || "").trim();
   if (FAMILY_WEATHER_LABEL_VARIANTS.has(value)) {
@@ -173,7 +177,7 @@ export function normalizeFamilyWeatherDayparts(payload) {
     if (!item) return { label, weatherLabel: "", temp_min_c: "", temp_max_c: "" };
     return {
       label: String(item.label || label),
-      weatherLabel: formatFamilyWeatherLabel(item.glyph, familyWeatherLabelSource(item, label)),
+      weatherLabel: formatFamilyWeatherLabel(item.glyph, familyWeatherDaypartSource(item)),
       temp_min_c: item.temp_min_c ?? "",
       temp_max_c: item.temp_max_c ?? "",
     };

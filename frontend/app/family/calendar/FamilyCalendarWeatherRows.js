@@ -69,7 +69,7 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
           <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">{defaultLabel}</span>
           {selectedWeekDates.map((date) => {
             const weather = weatherDaypartsByDate[date]?.[index];
-            const weatherLabel = weather?.weatherLabel || formatFamilyWeatherLabel(weather?.glyph, weather?.label || weather?.condition || weather?.summary);
+            const weatherLabel = weather?.weatherLabel || formatFamilyWeatherLabel(weather?.glyph, weather?.condition || weather?.summary);
             return (
               <WeatherCell key={`${defaultLabel}-${date}`}>
                 {hasDaypartWeather(weather) ? (
