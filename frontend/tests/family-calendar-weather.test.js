@@ -81,6 +81,33 @@ test("family calendar weather daypart rows stay behind local expansion state", a
   }
 });
 
+test("family calendar edit mode exposes a temporary weather debug panel and logs real payloads", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const debugPanelSource = await readSource("../app/family/calendar/FamilyCalendarWeatherDebugPanel.js");
+  const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
+
+  assert.match(calendarSource, /import FamilyCalendarWeatherDebugPanel from "\.\/FamilyCalendarWeatherDebugPanel"/);
+  assert.match(calendarSource, /console\.log\("Family daily weather", weatherItems\);/);
+  assert.match(calendarSource, /console\.log\("Family selected week weatherByDate", selectedWeekWeatherByDate\);/);
+  assert.match(calendarSource, /console\.log\("Family selected week dayparts", selectedWeekWeatherDayparts\);/);
+  assert.match(calendarSource, /selectedWeekDailyWeatherItems/);
+  assert.match(calendarSource, /selectedWeekDaypartWeatherItems/);
+  assert.match(calendarSource, /selectedWeekWeatherByDate/);
+  assert.match(calendarSource, /selectedWeekWeatherDaypartsByDate/);
+  assert.match(calendarSource, /weatherDebugData=\{\{/);
+
+  assert.match(debugPanelSource, /임시 날씨 디버그/);
+  assert.match(debugPanelSource, /선택한 주 일별 날씨/);
+  assert.match(debugPanelSource, /선택한 주 시간대별 날씨/);
+  assert.match(debugPanelSource, /weatherByDate/);
+  assert.match(debugPanelSource, /weatherDaypartsByDate/);
+  assert.match(debugPanelSource, /JSON\.stringify\(value, null, 2\)/);
+
+  assert.match(weatherCss, /\.familyCalendarWeatherDebug/);
+  assert.match(weatherCss, /\.familyCalendarWeatherDebugTitle/);
+  assert.match(weatherCss, /\.familyCalendarWeatherDebugPre/);
+});
+
 test("family calendar weather formatter preserves Korean condition words and blocks row labels", async () => {
   const weatherClient = await readSource("../app/lib/weather-client.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
