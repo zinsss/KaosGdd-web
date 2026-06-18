@@ -30,31 +30,88 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.ok(weatherSettings.includes("DEFAULT_WEATHER_LOCATIONS.map"));
 });
 
-test("family calendar renders weather rows before all-day events and before time slots", async () => {
+test("family calendar expanded week shows one compact weather summary row by default", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
+  const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
+  const compactCss = await readSource("../app/styles/family-calendar-compact-month.css");
+
+  assert.ok(calendarSource.includes("const [weatherExpanded, setWeatherExpanded] = useState(false);"));
+  assert.ok(calendarSource.includes("setWeatherExpanded(false);"));
+  assert.ok(calendarSource.includes("expanded={weatherExpanded}"));
+  assert.ok(calendarSource.includes("onToggle={() => setWeatherExpanded((current) => !current)}"));
+  assert.ok(calendarSource.includes("onToggle={onToggleWeather}"));
+
+  assert.ok(weatherRowsSource.includes("const toggleGlyph = expanded ? \"▾\" : \"▸\";"));
+  assert.ok(weatherRowsSource.includes("aria-expanded={expanded}"));
+  assert.ok(weatherRowsSource.includes("className=\"familyCalendarWeatherSummaryRow\""));
+  assert.ok(weatherRowsSource.includes("{expanded ? FAMILY_CALENDAR_DAYPART_LABELS.map"));
+  assert.ok(!weatherRowsSource.includes("FAMILY_CALENDAR_DAYPART_LABELS.map((defaultLabel, index) => ("));
+
+  assert.ok(weatherCss.includes(".familyCalendarWeatherSummaryRow"));
+  assert.ok(weatherCss.includes(".familyCalendarWeatherToggle"));
+  assert.ok(weatherCss.includes(".familyCalendarWeatherToggleLabel"));
+  assert.ok(weatherCss.includes(".familyCalendarWeatherToggleGlyph"));
+  assert.ok(weatherCss.includes(".familyCalendarWeatherLabel"));
+  assert.ok(weatherCss.includes(".familyCalendarWeatherSummary"));
+  assert.ok(weatherCss.includes(".familyCalendarWeatherDaypart"));
+  assert.ok(compactCss.includes(".familyCalendarTimeRow {"));
+  assert.ok(compactCss.includes("grid-template-columns: var(--family-calendar-expanded-rail-width, 34px) repeat(7, minmax(0, 1fr));"));
+  assert.ok(compactCss.includes("grid-template-columns: var(--family-calendar-expanded-rail-width, 28px) repeat(7, minmax(0, 1fr));"));
+});
+
+test("family calendar weather daypart rows are hidden behind local weather expansion", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
   const weatherClient = await readSource("../app/lib/weather-client.js");
 
-  assert.ok(calendarSource.includes("FamilyCalendarWeatherRows"));
-  assert.ok(calendarSource.includes("weatherByDate"));
-  assert.ok(calendarSource.includes("weatherDaypartsByDate"));
+  assert.ok(calendarSource.includes("selectedWeekWeatherDayparts"));
+  assert.ok(calendarSource.includes("weatherExpanded"));
+  assert.ok(weatherRowsSource.includes("expanded = false"));
+  assert.ok(weatherRowsSource.includes("onToggle = null"));
+  assert.ok(weatherRowsSource.includes("{expanded ? FAMILY_CALENDAR_DAYPART_LABELS.map((defaultLabel, index) => ("));
 
-  const editWeatherIndex = calendarSource.indexOf("<FamilyCalendarWeatherRows");
-  const allDayIndex = calendarSource.indexOf('className="familyCalendarTimeRow familyCalendarAllDayRow"', editWeatherIndex);
-  const firstTimedRowIndex = calendarSource.indexOf('selectedWeekRows.map(([hour, dayItems]) => (', editWeatherIndex);
-  assert.ok(editWeatherIndex >= 0, "weather rows should render in the expanded selected week");
-  assert.ok(allDayIndex > editWeatherIndex, "all-day row should render after weather rows");
-  assert.ok(firstTimedRowIndex > editWeatherIndex, "timed rows should render after weather rows");
-
-  assert.ok(weatherRowsSource.includes("FAMILY_CALENDAR_DAYPART_LABELS"));
-  assert.ok(weatherRowsSource.includes("defaultLabel"));
-
-  for (const label of ["날씨"]) {
-    assert.ok(weatherRowsSource.includes(label), `${label} should appear in weather rows`);
+  for (const label of ["날씨", "오전", "오후", "저녁", "밤"]) {
+    assert.ok(weatherClient.includes(label) || weatherRowsSource.includes(label), `${label} should appear in Family weather UI`);
   }
-  for (const label of ["오전", "오후", "저녁", "밤"]) {
-    assert.ok(weatherClient.includes(label), `${label} should be defined in shared daypart labels`);
+});
+
+test("family calendar weather glyph mapping avoids lowercase abbreviation output", async () => {
+  const weatherClient = await readSource("../app/lib/weather-client.js");
+  const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
+
+  assert.ok(weatherClient.includes("export function formatFamilyWeatherGlyph"));
+  for (const glyph of ["☀", "🌤", "☁", "🌧", "⛈", "❄", "🌙"]) {
+    assert.ok(weatherClient.includes(glyph), `${glyph} should be supported by the Family weather glyph mapper`);
   }
+  for (const token of ["clear", "sunny", "cloudy", "rain", "snow", "night"]) {
+    assert.ok(weatherClient.includes(token), `${token} should map through the shared weather glyph helper`);
+  }
+  assert.ok(weatherRowsSource.includes("formatFamilyWeatherGlyph(weather?.glyph)"));
+  assert.ok(!weatherRowsSource.includes("s."));
+  assert.ok(!weatherRowsSource.includes("c."));
+  assert.ok(!weatherRowsSource.includes("y."));
+  assert.ok(!weatherRowsSource.includes("n."));
+});
+
+test("collapsed Family week no longer shows weather summaries and still counts only dated events", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
+  const globalsCss = await readSource("../app/globals.css");
+
+  assert.ok(globalsCss.includes('@import "./styles/family-calendar-weather.css";'));
+  assert.ok(calendarSource.includes("const count = datedItemsByDate[day.dateKey] || 0;"));
+  assert.ok(calendarSource.includes("familyCalendarWeekDateButtonCollapsed"));
+  assert.ok(calendarSource.includes('className="familyCalendarWeekDateMeta"'));
+  assert.ok(calendarSource.includes('{count ? `일정 ${count}` : ""}'));
+  assert.ok(!calendarSource.includes("const weather = weatherByDate.get(day.dateKey);"));
+  assert.ok(!calendarSource.includes('className="familyCalendarWeekDateWeather"'));
+  assert.ok(!calendarSource.includes('weather ? `${weather.min_c}/${weather.max_c}` : ""'));
+  assert.ok(!calendarSource.includes('`${weather ? " · " : ""}일정 ${count}`'));
+
+  assert.ok(weatherCss.includes(".familyCalendarWeekDateButtonCollapsed"));
+  assert.ok(weatherCss.includes(".familyCalendarWeekDateMeta"));
+  assert.ok(!weatherCss.includes(".familyCalendarWeekDateWeather"));
 });
 
 test("family calendar weather rows guard missing daypart entries before reading glyphs", async () => {
@@ -63,34 +120,7 @@ test("family calendar weather rows guard missing daypart entries before reading 
   assert.ok(weatherRowsSource.includes("function hasDaypartWeather(item)"));
   assert.ok(weatherRowsSource.includes("if (!item) return false;"));
   assert.ok(weatherRowsSource.includes("{hasDaypartWeather(weather) ? ("));
-  assert.ok(!weatherRowsSource.includes("weather?.glyph || weather?.temp_min_c !== \"\" || weather?.temp_max_c !== \"\" ? ("));
-});
-
-test("collapsed Family week shows compact weather summaries and counts only dated events", async () => {
-  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
-  const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
-  const globalsCss = await readSource("../app/globals.css");
-
-  assert.ok(globalsCss.includes('@import "./styles/family-calendar-weather.css";'));
-  assert.ok(calendarSource.includes("const weather = weatherByDate.get(day.dateKey);"));
-  assert.ok(calendarSource.includes("const count = datedItemsByDate[day.dateKey] || 0;"));
-  assert.ok(calendarSource.includes("familyCalendarWeekDateButtonCollapsed"));
-  assert.ok(calendarSource.includes('className="familyCalendarWeekDateWeather"'));
-  assert.ok(calendarSource.includes('className="familyCalendarWeekDateMeta"'));
-  assert.ok(calendarSource.includes('weather ? `${weather.min_c}/${weather.max_c}` : ""'));
-  assert.ok(calendarSource.includes('`${weather ? " · " : ""}일정 ${count}`'));
-
-  assert.ok(weatherCss.includes(".familyCalendarWeekDateButtonCollapsed"));
-  assert.ok(weatherCss.includes(".familyCalendarWeekDateWeather"));
-  assert.ok(weatherCss.includes(".familyCalendarWeekDateMeta"));
-  assert.ok(weatherCss.includes(".familyCalendarWeatherRow"));
-  assert.ok(weatherCss.includes(".familyCalendarWeatherSummaryRow"));
-  assert.ok(weatherCss.includes(".familyCalendarWeatherLabel"));
-  assert.ok(weatherCss.includes(".familyCalendarWeatherSlot"));
-  assert.ok(weatherCss.includes(".familyCalendarWeatherSummary"));
-  assert.ok(weatherCss.includes(".familyCalendarWeatherDaypart"));
-  assert.ok(weatherCss.includes(".familyCalendarWeatherGlyph"));
-  assert.ok(weatherCss.includes(".familyCalendarWeatherTemp"));
+  assert.ok(!weatherRowsSource.includes('weather?.glyph || weather?.temp_min_c !== "" || weather?.temp_max_c !== "" ? ('));
 });
 
 test("existing Family all-day event source coverage remains intact", async () => {
