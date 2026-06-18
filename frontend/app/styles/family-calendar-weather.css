@@ -88,7 +88,7 @@
   font-size: 11px;
   font-weight: 850;
   line-height: 1.15;
-  white-space: pre;
+  white-space: nowrap;
 }
 
 .familyCalendarWeatherSummary {
@@ -97,8 +97,7 @@
 }
 
 .familyCalendarWeatherLabelText {
-  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
-    "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-family: var(--font-ui, "Sarasa Gothic Mono", "Noto Sans CJK KR", "Noto Sans KR", sans-serif);
   font-variant-ligatures: none;
 }
 
