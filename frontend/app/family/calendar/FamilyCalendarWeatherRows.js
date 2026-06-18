@@ -1,4 +1,4 @@
-import { FAMILY_CALENDAR_DAYPART_LABELS } from "../../lib/weather-client";
+import { FAMILY_CALENDAR_DAYPART_LABELS, formatFamilyWeatherGlyph } from "../../lib/weather-client";
 
 function formatWeatherRange(item) {
   if (!item) return "";
@@ -25,18 +25,33 @@ function WeatherCell({ children, className = "" }) {
   return <div className={`familyCalendarDaySlot familyCalendarWeatherSlot${className ? ` ${className}` : ""}`}>{children}</div>;
 }
 
-export default function FamilyCalendarWeatherRows({ selectedWeekDates, weatherByDate, weatherDaypartsByDate }) {
+export default function FamilyCalendarWeatherRows({ expanded = false, onToggle = null, selectedWeekDates, weatherByDate, weatherDaypartsByDate }) {
+  const toggleGlyph = expanded ? "▾" : "▸";
+
   return (
     <>
       <div className="familyCalendarTimeRow familyCalendarWeatherRow familyCalendarWeatherSummaryRow">
-        <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">날씨</span>
+        {onToggle ? (
+          <button
+            aria-expanded={expanded}
+            className="familyCalendarWeatherToggle"
+            onClick={onToggle}
+            type="button"
+          >
+            <span className="familyCalendarWeatherToggleLabel">날씨</span>
+            <span aria-hidden="true" className="familyCalendarWeatherToggleGlyph">{toggleGlyph}</span>
+          </button>
+        ) : (
+          <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">날씨</span>
+        )}
         {selectedWeekDates.map((date) => {
           const weather = weatherByDate.get(date);
+          const glyph = formatFamilyWeatherGlyph(weather?.glyph);
           return (
             <WeatherCell key={`summary-${date}`}>
               {weather ? (
                 <span className="familyCalendarWeatherSummary">
-                  <span className="familyCalendarWeatherGlyph" aria-hidden="true">{weather.glyph}</span>
+                  <span className="familyCalendarWeatherGlyph" aria-hidden="true">{glyph}</span>
                   <span className="familyCalendarWeatherTemp">{formatWeatherRange(weather)}</span>
                 </span>
               ) : null}
@@ -44,7 +59,7 @@ export default function FamilyCalendarWeatherRows({ selectedWeekDates, weatherBy
           );
         })}
       </div>
-      {FAMILY_CALENDAR_DAYPART_LABELS.map((defaultLabel, index) => (
+      {expanded ? FAMILY_CALENDAR_DAYPART_LABELS.map((defaultLabel, index) => (
         <div className="familyCalendarTimeRow familyCalendarWeatherRow" key={defaultLabel}>
           <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">{defaultLabel}</span>
           {selectedWeekDates.map((date) => {
@@ -61,7 +76,7 @@ export default function FamilyCalendarWeatherRows({ selectedWeekDates, weatherBy
             );
           })}
         </div>
-      ))}
+      )) : null}
     </>
   );
 }
