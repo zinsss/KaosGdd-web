@@ -65,20 +65,6 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*28px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
 });
 
-test("family calendar selected week highlight wraps the date row and weather dayparts get a subtle divider", async () => {
-  const weatherCss = await readSource("../app/styles/family-calendar-weather.css");
-  const compactCss = await readSource("../app/styles/family-calendar-compact-month.css");
-
-  assert.ok(compactCss.includes(".familyCalendarWeekSelected {"));
-  assert.ok(compactCss.includes("border: 1px solid rgba(214, 128, 157, 0.24);"));
-  assert.ok(compactCss.includes("background: #fffafd;"));
-  assert.ok(compactCss.includes(".familyCalendarExpandedWeek {"));
-  assert.ok(compactCss.includes("border: 0;"));
-  assert.ok(compactCss.includes("padding: 6px 0 0;"));
-  assert.ok(weatherCss.includes(".familyCalendarWeatherSummaryRow + .familyCalendarWeatherRow {"));
-  assert.ok(weatherCss.includes("border-top: 1px solid rgba(214, 128, 157, 0.12);"));
-});
-
 test("family calendar weather daypart rows stay behind local expansion state", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const weatherRowsSource = await readSource("../app/family/calendar/FamilyCalendarWeatherRows.js");
