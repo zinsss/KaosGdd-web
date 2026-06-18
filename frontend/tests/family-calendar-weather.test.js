@@ -93,13 +93,16 @@ test("family calendar weather formatter returns plain Korean labels in the main 
     assert.ok(weatherClient.includes(label), `${label} should be supported by the Family weather formatter`);
   }
   assert.doesNotMatch(weatherClient, /stringDisplayWidth|padFamilyWeatherLabel|repeat\(4 - displayWidth\)/);
-  assert.match(weatherClient, /item\?\.label \|\| item\?\.condition \|\| item\?\.summary/);
+  assert.match(weatherClient, /function familyWeatherDaypartSource\(item\)/);
+  assert.match(weatherClient, /return item\?\.condition \|\| item\?\.summary \|\| "";/);
   assert.match(weatherClient, /weatherLabel:\s*formatFamilyWeatherLabel\(item\?\.glyph,\s*familyWeatherLabelSource\(item\)\)/);
-  assert.match(weatherClient, /weatherLabel:\s*formatFamilyWeatherLabel\(item\.glyph,\s*familyWeatherLabelSource\(item,\s*label\)\)/);
+  assert.match(weatherClient, /weatherLabel:\s*formatFamilyWeatherLabel\(item\.glyph,\s*familyWeatherDaypartSource\(item\)\)/);
 
   assert.match(weatherRowsSource, /weather\?\.weatherLabel \|\| formatFamilyWeatherLabel\(weather\?\.glyph,\s*weather\?\.label \|\| weather\?\.condition \|\| weather\?\.summary\)/);
+  assert.match(weatherRowsSource, /weather\?\.weatherLabel \|\| formatFamilyWeatherLabel\(weather\?\.glyph,\s*weather\?\.condition \|\| weather\?\.summary\)/);
   assert.match(weatherRowsSource, /formatWeatherText\(weatherLabel,\s*formatWeatherRange\(weather\)\)/);
   assert.match(weatherRowsSource, /formatWeatherText\(weatherLabel,\s*formatDaypartRange\(weather\)\)/);
+  assert.doesNotMatch(weatherRowsSource, /밤\s*18-20/);
 
   assert.match(weatherCss, /font-family:\s*var\(--font-ui,\s*"Sarasa Gothic Mono",\s*"Noto Sans CJK KR",\s*"Noto Sans KR",\s*sans-serif\);/);
   assert.doesNotMatch(weatherCss, /white-space:\s*pre;/);
