@@ -1,4 +1,4 @@
-import { FAMILY_CALENDAR_DAYPART_LABELS, formatFamilyWeatherLabel } from "../../lib/weather-client";
+import { FAMILY_CALENDAR_DAYPART_LABELS, formatFamilyWeatherGlyph } from "../../lib/weather-client";
 
 function formatWeatherRange(item) {
   if (!item) return "";
@@ -16,13 +16,9 @@ function formatDaypartRange(item) {
   return `${item.temp_min_c}/${item.temp_max_c}`;
 }
 
-function formatWeatherText(label, range) {
-  return [label, range].filter(Boolean).join(" ");
-}
-
 function hasDaypartWeather(item) {
   if (!item) return false;
-  return Boolean(item.weatherLabel) || item.temp_min_c !== "" || item.temp_max_c !== "";
+  return Boolean(item.glyph) || item.temp_min_c !== "" || item.temp_max_c !== "";
 }
 
 function WeatherCell({ children, className = "" }) {
@@ -50,12 +46,14 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
         )}
         {selectedWeekDates.map((date) => {
           const weather = weatherByDate.get(date);
-          const weatherLabel = formatFamilyWeatherLabel(weather?.glyph, weather?.label);
-          const weatherText = formatWeatherText(weatherLabel, formatWeatherRange(weather));
+          const glyph = formatFamilyWeatherGlyph(weather?.glyph, weather?.label);
           return (
             <WeatherCell key={`summary-${date}`}>
-              {weatherText ? (
-                <span className="familyCalendarWeatherSummaryText">{weatherText}</span>
+              {weather ? (
+                <span className="familyCalendarWeatherSummary">
+                  <span className="familyCalendarWeatherGlyph" aria-hidden="true">{glyph}</span>
+                  <span className="familyCalendarWeatherTemp">{formatWeatherRange(weather)}</span>
+                </span>
               ) : null}
             </WeatherCell>
           );
@@ -66,11 +64,13 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
           <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">{defaultLabel}</span>
           {selectedWeekDates.map((date) => {
             const weather = weatherDaypartsByDate[date]?.[index];
-            const weatherText = formatWeatherText(weather?.weatherLabel, formatDaypartRange(weather));
             return (
               <WeatherCell key={`${defaultLabel}-${date}`}>
                 {hasDaypartWeather(weather) ? (
-                  <span className="familyCalendarWeatherDaypartText">{weatherText}</span>
+                  <span className="familyCalendarWeatherDaypart">
+                    <span className="familyCalendarWeatherGlyph" aria-hidden="true">{weather.glyph}</span>
+                    <span className="familyCalendarWeatherTemp">{formatDaypartRange(weather)}</span>
+                  </span>
                 ) : null}
               </WeatherCell>
             );
