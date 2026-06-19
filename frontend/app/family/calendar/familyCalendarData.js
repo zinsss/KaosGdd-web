@@ -7,6 +7,7 @@ export const FAMILY_ROUN_PLAN_STORAGE_KEY = "kaosgdd.family.rounWeeklyPlans.v1";
 export const FAMILY_ROUN_ASSIGNMENT_STORAGE_KEY = "kaosgdd.family.rounAssignments.v1";
 export const FAMILY_RONI_OVERRIDE_STORAGE_KEY = "kaosgdd.family.roniOverrides.v1";
 export const FAMILY_CAREGIVER_HOURS_STORAGE_KEY = "familyCaregiverHours.v1";
+export const FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY = "familyCaregiverHourlyWage.v1";
 export const FAMILY_RONI_DEFAULT_TEMPLATE_NAME = "기본 시간표";
 export const FAMILY_CALENDAR_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 export const FAMILY_CAREGIVER_HOUR_VALUES = Array.from({ length: 25 }, (_, index) => index * 0.5);
@@ -156,6 +157,12 @@ export function normalizeFamilyCaregiverHoursMap(value) {
     if (normalized !== null) next[formatFamilyDateKey(parseFamilyDateKey(dateKey))] = normalized;
     return next;
   }, {});
+}
+
+export function normalizeFamilyCaregiverHourlyWage(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric < 0) return 0;
+  return Math.floor(numeric);
 }
 
 export function normalizeFamilyRoniOverride(override) {
@@ -387,6 +394,22 @@ export function loadFamilyCaregiverHours() {
 
 export function saveFamilyCaregiverHours(hoursByDate) {
   writeFamilyStorageObject(FAMILY_CAREGIVER_HOURS_STORAGE_KEY, normalizeFamilyCaregiverHoursMap(hoursByDate));
+}
+
+export function loadFamilyCaregiverHourlyWage() {
+  try {
+    return normalizeFamilyCaregiverHourlyWage(window.localStorage.getItem(FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY));
+  } catch {
+    return 0;
+  }
+}
+
+export function saveFamilyCaregiverHourlyWage(value) {
+  try {
+    window.localStorage.setItem(FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY, String(normalizeFamilyCaregiverHourlyWage(value)));
+  } catch {
+    return;
+  }
 }
 
 export function loadFamilyRoniItemsForDate(dateKey) {

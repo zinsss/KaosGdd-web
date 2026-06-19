@@ -4,9 +4,11 @@ import { test } from "node:test";
 
 import {
   FAMILY_CAREGIVER_HOUR_VALUES,
+  FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY,
   FAMILY_CAREGIVER_HOURS_STORAGE_KEY,
   formatFamilyCaregiverHours,
   normalizeFamilyCaregiverHour,
+  normalizeFamilyCaregiverHourlyWage,
   normalizeFamilyCaregiverHoursMap,
 } from "../app/family/calendar/familyCalendarData.js";
 
@@ -226,13 +228,64 @@ test("family calendar caregiver hours row stores date-specific half-hour values"
   assert.ok(calendarSource.includes("delete nextHours[date];"));
   assert.ok(calendarSource.includes("function FamilyCaregiverHoursRow("));
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarCaregiverRow"'));
-  assert.ok(calendarSource.includes(">돌봄</span>"));
+  assert.ok(calendarSource.includes('className="familyCalendarTimeLabel familyCalendarCaregiverLabel"'));
+  assert.ok(calendarSource.includes("href={reviewHref}>돌봄</Link>"));
   assert.ok(calendarSource.includes("FAMILY_CAREGIVER_HOUR_VALUES.map((value)"));
   assert.ok(calendarSource.includes("setCaregiverHoursByDate(loadFamilyCaregiverHours());"));
   assert.ok(calendarSource.includes("saveFamilyCaregiverHours(nextHours);"));
+  assert.ok(calendarSource.includes("family/calendar/caregiver?month="));
   assert.ok(calendarSource.indexOf("<FamilyCalendarWeatherRows") < calendarSource.indexOf("<FamilyCaregiverHoursRow"));
   assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("familyCalendarAllDayRow"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverRow {"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverPicker {"));
   assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
+});
+
+test("family caregiver monthly review renders fixed-width calendar and wage summary", async () => {
+  const reviewSource = await readSource("../app/family/calendar/caregiver/FamilyCaregiverMonthlyReviewClient.js");
+  const reviewPageSource = await readSource("../app/family/calendar/caregiver/page.js");
+  const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
+  const calendarCss = await readSource("../app/styles/family-calendar.css");
+
+  assert.equal(FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY, "familyCaregiverHourlyWage.v1");
+  assert.equal(normalizeFamilyCaregiverHourlyWage("15000"), 15000);
+  assert.equal(normalizeFamilyCaregiverHourlyWage("15000.9"), 15000);
+  assert.equal(normalizeFamilyCaregiverHourlyWage("-1"), 0);
+
+  assert.ok(dataSource.includes('export const FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY = "familyCaregiverHourlyWage.v1";'));
+  assert.ok(dataSource.includes("export function loadFamilyCaregiverHourlyWage()"));
+  assert.ok(dataSource.includes("export function saveFamilyCaregiverHourlyWage(value)"));
+
+  assert.ok(reviewPageSource.includes("FamilyCaregiverMonthlyReviewClient"));
+  assert.ok(reviewPageSource.includes('title: "돌봄 - KaosGdd"'));
+  assert.ok(reviewSource.includes("function buildReviewText("));
+  assert.ok(reviewSource.includes("function buildReviewWeeks("));
+  assert.ok(reviewSource.includes("function summarizeMonth("));
+  assert.ok(reviewSource.includes("function fixedDisplayWidth("));
+  assert.ok(reviewSource.includes("formatReviewMonth(monthDate)"));
+  assert.ok(reviewSource.includes('return `${monthDate.getFullYear()}년 ${monthDate.getMonth() + 1}월 돌봄`;'));
+  assert.ok(reviewSource.includes("FAMILY_CALENDAR_DAY_LABELS.map((label) => padCell(label)).join(\"\")"));
+  assert.ok(reviewSource.includes("week.map((day) => padCell(day?.day || \"\")).join(\"\")"));
+  assert.ok(reviewSource.includes('formatFamilyCaregiverHours(day.hours) || "0"'));
+  assert.ok(reviewSource.includes("summary.days += 1;"));
+  assert.ok(reviewSource.includes("summary.hours += day.hours;"));
+  assert.ok(reviewSource.includes("const totalWage = summary.hours * hourlyWage;"));
+  assert.ok(reviewSource.includes("saveFamilyCaregiverHourlyWage(nextWage);"));
+  assert.ok(reviewSource.includes('aria-label="시간당 보수"'));
+  assert.ok(reviewSource.includes('type="text"'));
+  assert.ok(reviewSource.includes('className="familyCaregiverWageField"'));
+  assert.ok(reviewSource.includes('href={`/family/calendar?month=${monthParam}`}'));
+  assert.ok(reviewSource.includes("달력으로"));
+  assert.ok(reviewSource.includes("이번 달 총 일수/시간"));
+  assert.ok(reviewSource.includes("시간당 보수"));
+  assert.ok(reviewSource.includes("이번 달 보수"));
+  assert.ok(reviewSource.includes('.toLocaleString("ko-KR")'));
+
+  assert.ok(calendarCss.includes(".caregiverMonthlyReviewText {"));
+  assert.match(calendarCss, /\.caregiverMonthlyReviewText\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;/);
+  assert.match(calendarCss, /\.caregiverMonthlyReviewText\s*\{[\s\S]*?white-space:\s*pre;/);
+  assert.match(calendarCss, /\.caregiverMonthlyReviewText\s*\{[\s\S]*?font-variant-numeric:\s*tabular-nums;/);
+  assert.ok(calendarCss.includes(".familyCaregiverReviewSummary {"));
+  assert.ok(calendarCss.includes(".familyCaregiverWageField {"));
+  assert.ok(calendarCss.includes(".familyCaregiverReviewBack {"));
 });
