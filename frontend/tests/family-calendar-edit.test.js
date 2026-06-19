@@ -263,12 +263,14 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
   assert.ok(reviewSource.includes("function buildReviewWeeks("));
   assert.ok(reviewSource.includes("function summarizeMonth("));
   assert.ok(reviewSource.includes("function fixedDisplayWidth("));
-  assert.ok(reviewSource.includes("function padCell(value, width = 6)"));
+  assert.ok(reviewSource.includes("const REVIEW_CALENDAR_CELL_WIDTH = 6;"));
+  assert.ok(reviewSource.includes("function padCell(value, width = REVIEW_CALENDAR_CELL_WIDTH)"));
+  assert.ok(reviewSource.includes('return `${text}${" ".repeat(Math.max(0, width - fixedDisplayWidth(text)))}`;'));
   assert.ok(reviewSource.includes("formatReviewMonth(monthDate)"));
   assert.ok(reviewSource.includes('return `${monthDate.getFullYear()}년 ${monthDate.getMonth() + 1}월 돌봄`;'));
   assert.ok(reviewSource.includes('const calendarIndent = "     ";'));
   assert.ok(reviewSource.includes("const weekdayHeader = FAMILY_CALENDAR_DAY_LABELS.map((label) => padCell(label)).join(\"\");"));
-  assert.ok(reviewSource.includes('const separator = "-".repeat(weekdayHeader.length);'));
+  assert.ok(reviewSource.includes('const separator = "-".repeat(FAMILY_CALENDAR_DAY_LABELS.length * REVIEW_CALENDAR_CELL_WIDTH);'));
   assert.ok(reviewSource.includes("`${calendarIndent}${weekdayHeader}`"));
   assert.ok(reviewSource.includes("`${calendarIndent}${separator}`"));
   assert.ok(reviewSource.includes('if (index > 0) lines.push("");'));
