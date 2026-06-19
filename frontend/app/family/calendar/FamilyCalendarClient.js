@@ -62,6 +62,12 @@ function formatEditHourLabel(hour) {
   return "•";
 }
 
+function formatDragTargetLabel(target) {
+  if (!target || target.type !== "time") return "";
+  const weekday = FAMILY_CALENDAR_DAY_LABELS[target.dayIndex] || "";
+  return `${weekday} ${minutesToFamilyTime(target.startMinutes)}`.trim();
+}
+
 function minutesToFamilyTime(totalMinutes) {
   const minutesInDay = 24 * 60;
   const normalized = ((totalMinutes % minutesInDay) + minutesInDay) % minutesInDay;
@@ -855,6 +861,14 @@ function FamilyCalendarEditWeek({
       {dragState ? (
         <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
           {dragState.title}
+        </span>
+      ) : null}
+      {dragState?.target?.type === "time" ? (
+        <span
+          className="familyCalendarDragReadout"
+          style={{ left: `${dragState.x}px`, top: `${dragState.y - 44}px` }}
+        >
+          {formatDragTargetLabel(dragState.target)}
         </span>
       ) : null}
       {roniChoiceItem ? (

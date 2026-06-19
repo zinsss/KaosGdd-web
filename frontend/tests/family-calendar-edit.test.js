@@ -297,10 +297,20 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("dragState?.target?.type === \"time\""));
   assert.ok(calendarSource.includes('className="familyCalendarDropSlotTarget"'));
   assert.ok(calendarSource.includes('className="familyCalendarDragGhost"'));
+  assert.ok(calendarSource.includes("function formatDragTargetLabel(target)"));
+  assert.ok(calendarSource.includes('if (!target || target.type !== "time") return "";'));
+  assert.ok(calendarSource.includes("FAMILY_CALENDAR_DAY_LABELS[target.dayIndex]"));
+  assert.ok(calendarSource.includes("minutesToFamilyTime(target.startMinutes)"));
+  assert.ok(calendarSource.includes('className="familyCalendarDragReadout"'));
+  assert.ok(calendarSource.includes('style={{ left: `${dragState.x}px`, top: `${dragState.y - 44}px` }}'));
+  assert.ok(calendarSource.includes("{formatDragTargetLabel(dragState.target)}"));
   assert.ok(calendarCss.includes(".familyCalendarEditItem {"));
   assert.ok(calendarCss.includes("touch-action: none;"));
   assert.ok(calendarCss.includes(".familyCalendarDropSlotTarget {"));
   assert.ok(calendarCss.includes(".familyCalendarDragGhost {"));
+  assert.ok(calendarCss.includes(".familyCalendarDragReadout {"));
+  assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?z-index:\s*9999;[\s\S]*?pointer-events:\s*none;/);
+  assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?transform:\s*translate\(-50%, -100%\);[\s\S]*?white-space:\s*nowrap;/);
 });
 
 test("family calendar timed items render by duration across hour boundaries", async () => {
