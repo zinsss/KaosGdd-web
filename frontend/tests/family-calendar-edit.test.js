@@ -258,6 +258,9 @@ test("family calendar edit mode drag moves dated items and creates Roun override
     "const startTime = minutesToFamilyTime(boundedStartMinutes);",
     "const endTime = minutesToFamilyTime(boundedStartMinutes + duration);",
     "function findDropTarget(clientX, clientY)",
+    "function itemBaseDragTarget(item)",
+    "function adjacentWeekTarget(item, currentTarget, direction)",
+    "function dragTargetForItem(item, target)",
     "slotTimeFromRowPoint(clientY, dropElement.getBoundingClientRect(), rowStartMinutes)",
     "function startCalendarItemDrag(event, item)",
     "function moveDatedDrag(event)",
@@ -271,6 +274,19 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes('data-family-calendar-drop={editable ? "time" : undefined}'));
   assert.ok(calendarSource.includes("data-slot-start-minutes={editable ? hourStartMinutes : undefined}"));
   assert.ok(calendarSource.includes('data-family-calendar-drop={selected && editingCalendar ? "date" : undefined}'));
+  assert.ok(calendarSource.includes('data-family-calendar-drop="allDay"'));
+  assert.ok(calendarSource.includes('className="familyCalendarAllDayItem familyCalendarAllDayItemEditable"'));
+  assert.ok(calendarSource.includes("if (target.type === \"allDay\")"));
+  assert.ok(calendarSource.includes('return `${weekday} 종일`.trim();'));
+  assert.ok(calendarSource.includes('const weekDropElement = elements.find((element) => element instanceof HTMLElement && element.dataset.familyCalendarWeekDrop);'));
+  assert.ok(calendarSource.includes('return { type: "week", direction };'));
+  assert.ok(calendarSource.includes("const nextDate = addFamilyDays(baseDate, direction * 7);"));
+  assert.ok(calendarSource.includes("weekKey: formatFamilyDateKey(weekStart),"));
+  assert.ok(calendarSource.includes("weekOffset: direction,"));
+  assert.ok(calendarSource.includes("if (target.type === \"week\") return adjacentWeekTarget(item, dragState?.target, target.direction);"));
+  assert.ok(calendarSource.includes("if (target.type === \"allDay\" && !item.allDay) return null;"));
+  assert.ok(calendarSource.includes("if (item.allDay) {"));
+  assert.ok(calendarSource.includes("if (target.type === \"time\") return null;"));
   assert.ok(calendarSource.includes("if (moved < FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT && !dragState) return;"));
   assert.ok(calendarSource.includes("event.preventDefault();"));
   assert.ok(calendarSource.includes("event.currentTarget.setPointerCapture?.(event.pointerId);"));
@@ -282,6 +298,9 @@ test("family calendar edit mode drag moves dated items and creates Roun override
 
   assert.ok(calendarSource.includes("function moveDatedItem(itemId, target)"));
   assert.ok(calendarSource.includes("const moved = movedItemValues(item, target);"));
+  assert.ok(calendarSource.includes("if (moved.allDay) {"));
+  assert.ok(calendarSource.includes("delete nextItem.startTime;"));
+  assert.ok(calendarSource.includes("delete nextItem.endTime;"));
   assert.ok(calendarSource.includes("saveFamilyCalendarItems(nextItems);"));
   assert.ok(calendarSource.includes("function upsertRoniOverride(roniItem, values)"));
   assert.ok(calendarSource.includes('overrideType: values.deleted === true ? "deleted" : "moved",'));
@@ -295,10 +314,19 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("onPointerMove={moveDatedDrag}"));
   assert.ok(calendarSource.includes("onPointerUp={finishDatedDrag}"));
   assert.ok(calendarSource.includes("dragState?.target?.type === \"time\""));
+  assert.ok(calendarSource.includes('data-family-calendar-week-drop="previous"'));
+  assert.ok(calendarSource.includes('data-family-calendar-week-drop="next"'));
+  assert.ok(calendarSource.includes("familyCalendarWeekDragTargetPrev"));
+  assert.ok(calendarSource.includes("familyCalendarWeekDragTargetNext"));
+  assert.ok(calendarSource.includes("dragState?.target?.type === \"time\" || dragState?.target?.type === \"allDay\""));
+  assert.ok(calendarSource.includes("if (currentDragState.target.weekKey) onSelectDragWeek?.(currentDragState.target);"));
+  assert.ok(calendarSource.includes("function selectDragWeek(target)"));
+  assert.ok(calendarSource.includes("setMonthDate(new Date(targetDate.getFullYear(), targetDate.getMonth(), 1, 12, 0, 0, 0));"));
   assert.ok(calendarSource.includes('className="familyCalendarDropSlotTarget"'));
   assert.ok(calendarSource.includes('className="familyCalendarDragGhost"'));
   assert.ok(calendarSource.includes("function formatDragTargetLabel(target)"));
-  assert.ok(calendarSource.includes('if (!target || target.type !== "time") return "";'));
+  assert.ok(calendarSource.includes("if (!target) return \"\";"));
+  assert.ok(calendarSource.includes('if (target.type !== "time") return "";'));
   assert.ok(calendarSource.includes("FAMILY_CALENDAR_DAY_LABELS[target.dayIndex]"));
   assert.ok(calendarSource.includes("minutesToFamilyTime(target.startMinutes)"));
   assert.ok(calendarSource.includes('className="familyCalendarDragReadout"'));
@@ -309,9 +337,16 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarCss.includes(".familyCalendarDropSlotTarget {"));
   assert.ok(calendarCss.includes(".familyCalendarDragGhost {"));
   assert.ok(calendarCss.includes(".familyCalendarDragReadout {"));
+  assert.ok(calendarCss.includes(".familyCalendarAllDayItemEditable {"));
+  assert.ok(calendarCss.includes(".familyCalendarAllDaySlotDropTarget {"));
+  assert.ok(calendarCss.includes(".familyCalendarWeekDragTarget {"));
+  assert.ok(calendarCss.includes(".familyCalendarWeekDragTargetPrev {"));
+  assert.ok(calendarCss.includes(".familyCalendarWeekDragTargetNext {"));
+  assert.ok(calendarCss.includes(".familyCalendarWeekDragTargetActive {"));
   assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?z-index:\s*9999;[\s\S]*?pointer-events:\s*none;/);
   assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?padding:\s*5px 10px;[\s\S]*?font-size:\s*14px;/);
   assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?transform:\s*translate\(-50%, -100%\);[\s\S]*?white-space:\s*nowrap;/);
+  assert.match(calendarCss, /\.familyCalendarWeekDragTarget\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?pointer-events:\s*auto;/);
 });
 
 test("family calendar timed items render by duration across hour boundaries", async () => {

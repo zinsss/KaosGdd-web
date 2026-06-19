@@ -63,7 +63,12 @@ function formatEditHourLabel(hour) {
 }
 
 function formatDragTargetLabel(target) {
-  if (!target || target.type !== "time") return "";
+  if (!target) return "";
+  if (target.type === "allDay") {
+    const weekday = FAMILY_CALENDAR_DAY_LABELS[target.dayIndex] || "";
+    return `${weekday} 종일`.trim();
+  }
+  if (target.type !== "time") return "";
   const weekday = FAMILY_CALENDAR_DAY_LABELS[target.dayIndex] || "";
   return `${weekday} ${minutesToFamilyTime(target.startMinutes)}`.trim();
 }
@@ -93,6 +98,14 @@ function eventDurationMinutes(item) {
 }
 
 function movedItemValues(item, target) {
+  if (target.type === "allDay" || (target.type === "date" && item.allDay)) {
+    return {
+      allDay: true,
+      date: target.date,
+      dayIndex: target.dayIndex,
+    };
+  }
+
   if (target.type === "date") {
     return {
       date: target.date,
@@ -353,8 +366,10 @@ function CalendarItemLink({
 }) {
   const href = item.type === "roni" ? "/family/roun" : `/family/calendar/events/${item.id}/edit`;
   const editItem = className.includes("familyCalendarEditItem");
-  const editableDatedItem = editItem && item.type === "dated";
-  const editableRoniItem = editItem && item.type === "roni";
+  const allDayEditItem = className.includes("familyCalendarAllDayItemEditable");
+  const dragEnabledItem = editItem || allDayEditItem;
+  const editableDatedItem = dragEnabledItem && item.type === "dated";
+  const editableRoniItem = dragEnabledItem && item.type === "roni";
   const suppressRoniNavigation = editableRoniItem && roniChoiceItemId === item.id;
   const cancelRoniChoice = editableRoniItem && onCancelRoniChoice ? onCancelRoniChoice : undefined;
   return (
@@ -364,7 +379,7 @@ function CalendarItemLink({
       key={`${item.type}-${item.id}`}
       onClick={dragging || suppressRoniNavigation ? (event) => event.preventDefault() : undefined}
       onPointerCancel={cancelRoniChoice}
-      onPointerDown={editItem ? (event) => {
+      onPointerDown={dragEnabledItem ? (event) => {
         event.stopPropagation();
         if (editableDatedItem && onStartDatedDrag) onStartDatedDrag(event, item);
         if (editableRoniItem && onStartRoniDrag) onStartRoniDrag(event, item);
@@ -567,6 +582,7 @@ function FamilyCalendarEditWeek({
   onDeleteRoniThisWeek,
   onMoveDatedItem,
   onRestoreRoniOverride,
+  onSelectDragWeek,
   onToggleCaregiverDate,
   onToggleWeather,
   selectedWeekDates,
@@ -670,11 +686,19 @@ function FamilyCalendarEditWeek({
 
   function findDropTarget(clientX, clientY) {
     const elements = document.elementsFromPoint(clientX, clientY);
+    const weekDropElement = elements.find((element) => element instanceof HTMLElement && element.dataset.familyCalendarWeekDrop);
+    if (weekDropElement) {
+      const direction = weekDropElement.dataset.familyCalendarWeekDrop === "next" ? 1 : -1;
+      return { type: "week", direction };
+    }
     const dropElement = elements.find((element) => element instanceof HTMLElement && element.dataset.familyCalendarDrop);
     if (!dropElement) return null;
     const dayIndex = Number(dropElement.dataset.dayIndex);
     if (!Number.isInteger(dayIndex) || dayIndex < 0 || dayIndex > 6) return null;
     const date = formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex));
+    if (dropElement.dataset.familyCalendarDrop === "allDay") {
+      return { type: "allDay", dayIndex, date };
+    }
     if (dropElement.dataset.familyCalendarDrop === "date") {
       return { type: "date", dayIndex, date };
     }
@@ -683,6 +707,46 @@ function FamilyCalendarEditWeek({
       ? slotTimeFromRowPoint(clientY, dropElement.getBoundingClientRect(), rowStartMinutes)
       : slotTimeFromPoint(clientY, dropElement.getBoundingClientRect());
     return { type: "time", dayIndex, date, startMinutes };
+  }
+
+  function itemBaseDragTarget(item) {
+    const parsedDate = parseFamilyDateKey(item.date);
+    const dayIndex = Number.isInteger(item.dayIndex)
+      ? item.dayIndex
+      : parsedDate
+        ? parsedDate.getDay()
+        : 0;
+    const date = item.date || formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex));
+    if (item.allDay) return { type: "allDay", dayIndex, date };
+    const startMinutes = parseTimeMinutes(item.startTime) ?? FAMILY_CALENDAR_EDIT_START_HOUR * 60;
+    return { type: "time", dayIndex, date, startMinutes };
+  }
+
+  function adjacentWeekTarget(item, currentTarget, direction) {
+    const baseTarget = currentTarget && currentTarget.type !== "week" ? currentTarget : itemBaseDragTarget(item);
+    if (item.allDay && baseTarget.type === "time") return null;
+    const baseDate = parseFamilyDateKey(baseTarget.date) || addFamilyDays(selectedWeekStart, baseTarget.dayIndex || 0);
+    const nextDate = addFamilyDays(baseDate, direction * 7);
+    const date = formatFamilyDateKey(nextDate);
+    const weekStart = getFamilyWeekStart(nextDate);
+    return {
+      ...baseTarget,
+      type: item.allDay ? "allDay" : baseTarget.type,
+      date,
+      weekKey: formatFamilyDateKey(weekStart),
+      weekOffset: direction,
+    };
+  }
+
+  function dragTargetForItem(item, target) {
+    if (!target) return null;
+    if (target.type === "week") return adjacentWeekTarget(item, dragState?.target, target.direction);
+    if (target.type === "allDay" && !item.allDay) return null;
+    if (item.allDay) {
+      if (target.type === "time") return null;
+      return { type: "allDay", dayIndex: target.dayIndex, date: target.date };
+    }
+    return target;
   }
 
   function updateAutoScroll(clientY) {
@@ -750,7 +814,7 @@ function FamilyCalendarEditWeek({
     if (moved < FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT && !dragState) return;
     clearRoniChoiceTimer();
     event.preventDefault();
-    const target = findDropTarget(event.clientX, event.clientY);
+    const target = dragTargetForItem(pending.item, findDropTarget(event.clientX, event.clientY));
     updateAutoScroll(event.clientY);
     setDragState({
       itemId: pending.item.id,
@@ -778,9 +842,11 @@ function FamilyCalendarEditWeek({
     event.preventDefault();
     if (pending.itemType === "roni") {
       onCreateRoniOverride(pending.item, currentDragState.target);
+      if (currentDragState.target.weekKey) onSelectDragWeek?.(currentDragState.target);
       return;
     }
     onMoveDatedItem(pending.item.id, currentDragState.target);
+    if (currentDragState.target.weekKey) onSelectDragWeek?.(currentDragState.target);
   }
 
   function chooseThisWeekOnly() {
@@ -830,9 +896,20 @@ function FamilyCalendarEditWeek({
         <div className="familyCalendarTimeRow familyCalendarAllDayRow" key="all-day">
           <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
           {allDayItems.map((items, dayIndex) => (
-            <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
+            <div
+              className={`familyCalendarDaySlot familyCalendarAllDaySlot${dragState?.target?.type === "allDay" && dragState.target.dayIndex === dayIndex ? " familyCalendarAllDaySlotDropTarget" : ""}`}
+              data-day-index={dayIndex}
+              data-family-calendar-drop="allDay"
+              key={`all-day-${dayIndex}`}
+            >
               {items.map((item) => (
-                <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${item.type}-${item.id}`} />
+                <CalendarItemLink
+                  className="familyCalendarAllDayItem familyCalendarAllDayItemEditable"
+                  dragging={dragState?.itemId === item.id}
+                  item={item}
+                  key={`${item.type}-${item.id}`}
+                  onStartDatedDrag={startDatedDrag}
+                />
               ))}
             </div>
           ))}
@@ -863,7 +940,23 @@ function FamilyCalendarEditWeek({
           {dragState.title}
         </span>
       ) : null}
-      {dragState?.target?.type === "time" ? (
+      {dragState ? (
+        <>
+          <span
+            className={`familyCalendarWeekDragTarget familyCalendarWeekDragTargetPrev${dragState.target?.weekOffset === -1 ? " familyCalendarWeekDragTargetActive" : ""}`}
+            data-family-calendar-week-drop="previous"
+          >
+            지난주
+          </span>
+          <span
+            className={`familyCalendarWeekDragTarget familyCalendarWeekDragTargetNext${dragState.target?.weekOffset === 1 ? " familyCalendarWeekDragTargetActive" : ""}`}
+            data-family-calendar-week-drop="next"
+          >
+            다음주
+          </span>
+        </>
+      ) : null}
+      {dragState?.target?.type === "time" || dragState?.target?.type === "allDay" ? (
         <span
           className="familyCalendarDragReadout"
           style={{ left: `${dragState.x}px`, top: `${dragState.y - 64}px` }}
@@ -1051,6 +1144,16 @@ export default function FamilyCalendarClient() {
       const nextItems = current.map((item) => {
         if (item.id !== itemId) return item;
         const moved = movedItemValues(item, target);
+        if (moved.allDay) {
+          const nextItem = {
+            ...item,
+            allDay: true,
+            date: moved.date,
+          };
+          delete nextItem.startTime;
+          delete nextItem.endTime;
+          return nextItem;
+        }
         return {
           ...item,
           date: moved.date,
@@ -1092,6 +1195,13 @@ export default function FamilyCalendarClient() {
       endTime: roniItem.endTime,
     };
     upsertRoniOverride(roniItem, { ...moved, deleted: false });
+  }
+
+  function selectDragWeek(target) {
+    const targetDate = parseFamilyDateKey(target?.date);
+    if (!targetDate) return;
+    setMonthDate(new Date(targetDate.getFullYear(), targetDate.getMonth(), 1, 12, 0, 0, 0));
+    setSelectedWeekKey(formatFamilyDateKey(getFamilyWeekStart(targetDate)));
   }
 
   function deleteRoniThisWeek(roniItem) {
@@ -1232,6 +1342,7 @@ export default function FamilyCalendarClient() {
                   onDeleteRoniThisWeek={deleteRoniThisWeek}
                   onMoveDatedItem={moveDatedItem}
                   onRestoreRoniOverride={restoreRoniOverride}
+                  onSelectDragWeek={selectDragWeek}
                   onToggleCaregiverDate={setActiveCaregiverDate}
                   onToggleWeather={() => setWeatherExpanded((current) => !current)}
                   selectedWeekDates={selectedWeekDates}
