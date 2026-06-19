@@ -240,6 +240,8 @@ test("family calendar caregiver hours row stores date-specific half-hour values"
   assert.ok(calendarCss.includes(".familyCalendarCaregiverRow {"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverReviewGutter {"));
   assert.match(calendarCss, /\.familyCalendarCaregiverReviewGutter\s*\{[\s\S]*?background:\s*rgba\(255, 216, 229, 0\.44\);[\s\S]*?color:\s*rgba\(180, 120, 190, 0\.72\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(214, 128, 157, 0\.12\);/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverSlot\s*\{[\s\S]*?background:\s*rgba\(201, 242, 255, 0\.45\);[\s\S]*?color:\s*rgba\(70, 130, 160, 0\.85\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(120, 190, 220, 0\.35\);/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverSlotActive\s*\{[\s\S]*?background:\s*rgba\(201, 242, 255, 0\.68\);[\s\S]*?color:\s*rgba\(53, 112, 145, 0\.95\);[\s\S]*?box-shadow:\s*inset 0 0 0 2px rgba\(120, 190, 220, 0\.42\);/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverPicker {"));
   assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
 });
@@ -391,8 +393,9 @@ test("family calendar timed items render by duration across hour boundaries", as
   assert.ok(calendarCss.includes("min-height: var(--family-calendar-timed-area-height);"));
   assert.ok(calendarCss.includes(".familyCalendarTimedItem {"));
   assert.ok(calendarCss.includes("pointer-events: auto;"));
-  assert.match(calendarCss, /\.familyCalendarTimedItem\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?border-radius:\s*8px;[\s\S]*?text-align:\s*center;/);
-  assert.match(calendarCss, /\.familyCalendarEditItem\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?border-radius:\s*8px;[\s\S]*?text-align:\s*center;/);
+  assert.match(calendarCss, /\.familyCalendarTimedItem\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?border-radius:\s*4px;[\s\S]*?text-align:\s*center;/);
+  assert.match(calendarCss, /\.familyCalendarEditItem\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?border-radius:\s*4px;[\s\S]*?text-align:\s*center;/);
+  assert.match(calendarCss, /\.familyCalendarTimedItem,\s*\n\.familyCalendarEditItem\s*\{[\s\S]*?border-radius:\s*4px;/);
   assert.ok(calendarCss.includes(".familyCalendarTimedItem span:first-child,"));
   assert.ok(calendarCss.includes("text-overflow: ellipsis;"));
   assert.ok(compactCss.includes(".familyCalendarTimedItemsLayer"));
