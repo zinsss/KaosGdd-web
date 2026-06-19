@@ -40,23 +40,21 @@ function WeatherCell({ children, className = "" }) {
 }
 
 export default function FamilyCalendarWeatherRows({ expanded = false, onToggle = null, selectedWeekDates, weatherByDate, weatherDaypartsByDate }) {
-  const toggleGlyph = expanded ? "▾" : "▸";
-
   return (
     <>
       <div className="familyCalendarTimeRow familyCalendarWeatherRow familyCalendarWeatherSummaryRow">
         {onToggle ? (
           <button
             aria-expanded={expanded}
+            aria-label="날씨 자세히 보기"
             className="familyCalendarWeatherToggle"
             onClick={onToggle}
             type="button"
           >
-            <span className="familyCalendarWeatherToggleLabel">날씨</span>
-            <span aria-hidden="true" className="familyCalendarWeatherToggleGlyph">{toggleGlyph}</span>
+            <span className="familyCalendarWeatherToggleLabel">•</span>
           </button>
         ) : (
-          <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">날씨</span>
+          <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">•</span>
         )}
         {selectedWeekDates.map((date) => {
           const weather = weatherByDate.get(date);
@@ -74,7 +72,7 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
       </div>
       {expanded ? FAMILY_CALENDAR_DAYPART_LABELS.map((defaultLabel, index) => (
         <div className="familyCalendarTimeRow familyCalendarWeatherRow" key={defaultLabel}>
-          <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">{defaultLabel}</span>
+          <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">•</span>
           {selectedWeekDates.map((date) => {
             const weather = weatherDaypartsByDate[date]?.[index];
             const dailyWeather = weatherByDate.get(date);

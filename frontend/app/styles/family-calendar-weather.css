@@ -46,16 +46,16 @@
 .familyCalendarWeatherLabel {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
   min-height: 24px;
   min-width: 0;
   padding: 2px 0 0;
-  color: rgba(78, 37, 54, 0.42);
+  color: rgba(150, 130, 190, 0.55);
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 900;
   line-height: 1;
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -67,14 +67,8 @@
   cursor: pointer;
 }
 
-.familyCalendarWeatherToggleLabel,
-.familyCalendarWeatherToggleGlyph {
+.familyCalendarWeatherToggleLabel {
   flex: 0 0 auto;
-}
-
-.familyCalendarWeatherToggleGlyph {
-  color: rgba(216, 111, 152, 0.74);
-  font-size: 12px;
 }
 
 .familyCalendarWeatherSlot {
@@ -175,10 +169,6 @@
   .familyCalendarWeatherSummary,
   .familyCalendarWeatherDaypart {
     font-size: 10px;
-  }
-
-  .familyCalendarWeatherToggleGlyph {
-    font-size: 11px;
   }
 
   .familyCalendarWeatherDebug {

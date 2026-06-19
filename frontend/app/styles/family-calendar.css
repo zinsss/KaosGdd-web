@@ -258,7 +258,7 @@
 
 .familyCalendarTimeRow {
   display: grid;
-  grid-template-columns: 34px repeat(7, minmax(0, 1fr));
+  grid-template-columns: 20px repeat(7, minmax(0, 1fr));
   gap: 3px;
   min-width: 0;
   align-items: start;
@@ -334,7 +334,7 @@
   inset: 0;
   z-index: 2;
   display: grid;
-  grid-template-columns: 34px repeat(7, minmax(0, 1fr));
+  grid-template-columns: 20px repeat(7, minmax(0, 1fr));
   gap: 3px;
   min-width: 0;
   pointer-events: none;
@@ -365,6 +365,7 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
+  border-radius: 8px;
   min-height: 18px;
   padding: 2px 4px;
   font-size: 12px;
@@ -396,8 +397,8 @@
   align-items: center;
   justify-content: flex-end;
   min-height: 24px;
-  color: rgba(78, 37, 54, 0.42);
-  font-size: 12px;
+  color: rgba(150, 130, 190, 0.55);
+  font-size: 13px;
   font-weight: 900;
   text-decoration: none;
 }
@@ -415,8 +416,8 @@
   min-height: 24px;
   border-radius: 8px;
   background: rgba(255, 216, 229, 0.44);
-  color: #d86f98;
-  font-size: 11px;
+  color: rgba(180, 120, 190, 0.72);
+  font-size: 13px;
   font-weight: 950;
   line-height: 1;
   text-align: center;
@@ -833,6 +834,7 @@
   align-items: center;
   justify-content: center;
   gap: 3px;
+  border-radius: 8px;
   min-height: 18px;
   padding: 2px 4px;
   font-size: 12px;
