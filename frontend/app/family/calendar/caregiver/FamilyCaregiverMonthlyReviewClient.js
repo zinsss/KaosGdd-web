@@ -40,9 +40,11 @@ function fixedDisplayWidth(value) {
   }, 0);
 }
 
-function padCell(value, width = 6) {
+const REVIEW_CALENDAR_CELL_WIDTH = 6;
+
+function padCell(value, width = REVIEW_CALENDAR_CELL_WIDTH) {
   const text = String(value ?? "");
-  return `${" ".repeat(Math.max(0, width - fixedDisplayWidth(text)))}${text}`;
+  return `${text}${" ".repeat(Math.max(0, width - fixedDisplayWidth(text)))}`;
 }
 
 function formatTotalHours(value) {
@@ -77,7 +79,7 @@ function buildReviewText(monthDate, caregiverHoursByDate) {
   const weeks = buildReviewWeeks(monthDate, caregiverHoursByDate);
   const calendarIndent = "     ";
   const weekdayHeader = FAMILY_CALENDAR_DAY_LABELS.map((label) => padCell(label)).join("");
-  const separator = "-".repeat(weekdayHeader.length);
+  const separator = "-".repeat(FAMILY_CALENDAR_DAY_LABELS.length * REVIEW_CALENDAR_CELL_WIDTH);
   const lines = [
     formatReviewMonth(monthDate),
     "",
