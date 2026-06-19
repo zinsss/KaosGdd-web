@@ -59,7 +59,7 @@ const FAMILY_CALENDAR_EDIT_BODY_HEIGHT =
   (FAMILY_CALENDAR_EDIT_END_HOUR - FAMILY_CALENDAR_EDIT_START_HOUR) * FAMILY_CALENDAR_EDIT_HOUR_HEIGHT;
 
 function formatEditHourLabel(hour) {
-  return "•";
+  return `${hour}`;
 }
 
 function formatDragTargetLabel(target) {

@@ -163,9 +163,11 @@
   overflow: hidden;
   background: rgba(255, 248, 251, 0.72);
   box-shadow: inset -1px 0 rgba(214, 128, 157, 0.1);
-  color: rgba(150, 130, 190, 0.55);
-  font-size: 0.72rem;
-  font-weight: 600;
+  color: rgba(120, 95, 160, 0.72);
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
   line-height: 1;
   text-align: center;
   white-space: nowrap;
@@ -204,8 +206,8 @@
   .familyCalendarWeekCounts,
   .familyCalendarTimeRow,
   .familyCalendarTimedItemsLayer {
-    --family-calendar-expanded-rail-width: 14px;
-    grid-template-columns: var(--family-calendar-expanded-rail-width, 14px) repeat(7, minmax(0, 1fr));
+    --family-calendar-expanded-rail-width: 20px;
+    grid-template-columns: var(--family-calendar-expanded-rail-width, 20px) repeat(7, minmax(0, 1fr));
     gap: 2px;
   }
 
@@ -226,7 +228,7 @@
 
   .familyCalendarTimeLabel {
     min-height: 32px;
-    color: rgba(150, 130, 190, 0.55);
-    font-size: 0.66rem;
+    color: rgba(120, 95, 160, 0.72);
+    font-size: 10px;
   }
 }

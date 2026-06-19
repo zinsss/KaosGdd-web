@@ -1,5 +1,7 @@
 import { FAMILY_CALENDAR_DAYPART_LABELS, formatFamilyWeatherLabel } from "../../lib/weather-client";
 
+const FAMILY_CALENDAR_DAYPART_RAIL_LABELS = ["M", "A", "E", "N"];
+
 function formatWeatherRange(item) {
   if (!item) return "";
   if (item.min_c === "" || item.max_c === "" || item.min_c === undefined || item.max_c === undefined) {
@@ -72,7 +74,7 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
       </div>
       {expanded ? FAMILY_CALENDAR_DAYPART_LABELS.map((defaultLabel, index) => (
         <div className="familyCalendarTimeRow familyCalendarWeatherRow" key={defaultLabel}>
-          <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">•</span>
+          <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">{FAMILY_CALENDAR_DAYPART_RAIL_LABELS[index]}</span>
           {selectedWeekDates.map((date) => {
             const weather = weatherDaypartsByDate[date]?.[index];
             const dailyWeather = weatherByDate.get(date);
