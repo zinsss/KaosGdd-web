@@ -309,6 +309,75 @@
   overflow: hidden;
 }
 
+.familyCalendarTimedArea {
+  position: relative;
+  min-width: 0;
+  min-height: var(--family-calendar-timed-area-height);
+}
+
+.familyCalendarTimedRows {
+  display: grid;
+  min-width: 0;
+}
+
+.familyCalendarTimedArea .familyCalendarTimeRow {
+  min-height: 60px;
+}
+
+.familyCalendarTimedArea .familyCalendarTimeLabel,
+.familyCalendarTimedArea .familyCalendarDaySlot {
+  min-height: 60px;
+}
+
+.familyCalendarTimedItemsLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 34px repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  min-width: 0;
+  pointer-events: none;
+}
+
+.familyCalendarTimedLayerRail {
+  min-width: 0;
+  pointer-events: none;
+}
+
+.familyCalendarTimedDayLayer {
+  position: relative;
+  min-width: 0;
+  min-height: var(--family-calendar-timed-area-height);
+  pointer-events: none;
+}
+
+.familyCalendarTimedDaySlot {
+  background: rgba(255, 248, 251, 0.34);
+}
+
+.familyCalendarTimedItem {
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 18px;
+  padding: 2px 4px;
+  font-size: 12px;
+  pointer-events: auto;
+}
+
+.familyCalendarTimedItem span:first-child,
+.familyCalendarEditItem span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .familyCalendarAllDaySlot {
   align-content: start;
   min-height: 22px;
@@ -765,6 +834,7 @@
   padding: 2px 4px;
   font-size: 12px;
   touch-action: none;
+  pointer-events: auto;
 }
 
 .familyCalendarEditItemInline {

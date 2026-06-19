@@ -49,7 +49,7 @@ test("family calendar expanded week keeps weather compact by default and renders
 
   const weatherIndex = calendarSource.indexOf("<FamilyCalendarWeatherRows");
   const allDayIndex = calendarSource.indexOf('className="familyCalendarTimeRow familyCalendarAllDayRow"', weatherIndex);
-  const timedIndex = calendarSource.indexOf('selectedWeekRows.map(([hour, dayItems]) => (', weatherIndex);
+  const timedIndex = calendarSource.indexOf("<FamilyCalendarTimedArea", allDayIndex);
   assert.ok(weatherIndex >= 0, "expanded selected week should render weather rows");
   assert.ok(allDayIndex > weatherIndex, "all-day row should render after weather rows");
   assert.ok(timedIndex > allDayIndex, "timed rows should render after all-day rows");
