@@ -77,12 +77,12 @@ function buildReviewText(monthDate, caregiverHoursByDate) {
   const weeks = buildReviewWeeks(monthDate, caregiverHoursByDate);
   const lines = [
     formatReviewMonth(monthDate),
-    `       ${FAMILY_CALENDAR_DAY_LABELS.map((label) => padCell(label)).join("")}`,
+    FAMILY_CALENDAR_DAY_LABELS.map((label) => padCell(label)).join(""),
   ];
 
   weeks.forEach((week) => {
-    lines.push(`       ${week.map((day) => padCell(day?.day || "")).join("")}`);
-    lines.push(`       ${week.map((day) => padCell(day ? formatFamilyCaregiverHours(day.hours) || "0" : "")).join("")}`);
+    lines.push(week.map((day) => padCell(day?.day || "")).join(""));
+    lines.push(week.map((day) => padCell(day ? formatFamilyCaregiverHours(day.hours) || "0" : "")).join(""));
   });
 
   return lines.join("\n");

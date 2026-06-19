@@ -336,6 +336,27 @@
   content: none;
 }
 
+.familyCalendarCaregiverReviewGutter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 24px;
+  border-radius: 8px;
+  color: #d86f98;
+  font-size: 11px;
+  font-weight: 950;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.familyCalendarCaregiverReviewGutter:focus-visible {
+  outline: 2px solid rgba(216, 111, 152, 0.42);
+  outline-offset: 2px;
+}
+
 .familyCalendarCaregiverSlot {
   appearance: none;
   border: 0;

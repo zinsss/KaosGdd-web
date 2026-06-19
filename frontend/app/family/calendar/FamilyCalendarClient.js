@@ -341,13 +341,12 @@ function FamilyCaregiverHoursRow({
   caregiverHoursByDate,
   onChangeHours,
   onToggleDate,
-  reviewHref,
   selectedWeekDates,
 }) {
   return (
     <>
       <div className="familyCalendarTimeRow familyCalendarCaregiverRow">
-        <Link className="familyCalendarTimeLabel familyCalendarCaregiverLabel" href={reviewHref}>돌봄</Link>
+        <span className="familyCalendarTimeLabel familyCalendarCaregiverLabel">돌봄</span>
         {selectedWeekDates.map((date) => {
           const displayValue = formatFamilyCaregiverHours(caregiverHoursByDate[date]);
           return (
@@ -400,7 +399,6 @@ function FamilyCalendarEditWeek({
   onRestoreRoniOverride,
   onToggleCaregiverDate,
   onToggleWeather,
-  caregiverReviewHref,
   selectedWeekDates,
   selectedWeekItems,
   selectedWeekStart,
@@ -667,7 +665,6 @@ function FamilyCalendarEditWeek({
         caregiverHoursByDate={caregiverHoursByDate}
         onChangeHours={onChangeCaregiverHours}
         onToggleDate={onToggleCaregiverDate}
-        reviewHref={caregiverReviewHref}
         selectedWeekDates={selectedWeekDates}
       />
       {hasAllDayItems ? (
@@ -1105,9 +1102,11 @@ export default function FamilyCalendarClient() {
       ) : null}
 
       <div className="familyCalendarGrid" aria-label="달력 월간 보기">
-        <section className="familyCalendarWeek familyCalendarWeekHeaderRow" aria-hidden="true">
+        <section className="familyCalendarWeek familyCalendarWeekHeaderRow" aria-label="달력 요일">
           <div className="familyCalendarWeekDates familyCalendarWeekHeader">
-            <span className="familyCalendarTimeRailSpacer familyCalendarTimeRailSpacerEmpty" aria-hidden="true" />
+            <Link className="familyCalendarCaregiverReviewGutter" href={caregiverReviewHref}>
+              돌봄
+            </Link>
             {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
               <span className="familyCalendarWeekDay familyCalendarWeekHeaderDay" key={label}>{label}</span>
             ))}
@@ -1164,7 +1163,6 @@ export default function FamilyCalendarClient() {
                   onRestoreRoniOverride={restoreRoniOverride}
                   onToggleCaregiverDate={setActiveCaregiverDate}
                   onToggleWeather={() => setWeatherExpanded((current) => !current)}
-                  caregiverReviewHref={caregiverReviewHref}
                   selectedWeekDates={selectedWeekDates}
                   selectedWeekItems={selectedWeekItems}
                   selectedWeekStart={selectedWeekStart}
@@ -1188,7 +1186,6 @@ export default function FamilyCalendarClient() {
                     caregiverHoursByDate={caregiverHoursByDate}
                     onChangeHours={changeCaregiverHours}
                     onToggleDate={setActiveCaregiverDate}
-                    reviewHref={caregiverReviewHref}
                     selectedWeekDates={selectedWeekDates}
                   />
                   {hasSelectedWeekContent ? (
