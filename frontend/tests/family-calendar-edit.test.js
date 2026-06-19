@@ -265,7 +265,9 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
   assert.ok(reviewSource.includes("function fixedDisplayWidth("));
   assert.ok(reviewSource.includes("formatReviewMonth(monthDate)"));
   assert.ok(reviewSource.includes('return `${monthDate.getFullYear()}년 ${monthDate.getMonth() + 1}월 돌봄`;'));
-  assert.ok(reviewSource.includes("FAMILY_CALENDAR_DAY_LABELS.map((label) => padCell(label)).join(\"\")"));
+  assert.ok(reviewSource.includes("const weekdayHeader = FAMILY_CALENDAR_DAY_LABELS.map((label) => padCell(label)).join(\"\");"));
+  assert.ok(reviewSource.includes('"-".repeat(weekdayHeader.length)'));
+  assert.ok(reviewSource.includes('if (index > 0) lines.push("");'));
   assert.ok(reviewSource.includes("lines.push(week.map((day) => padCell(day?.day || \"\")).join(\"\"));"));
   assert.ok(!reviewSource.includes("`       ${FAMILY_CALENDAR_DAY_LABELS"));
   assert.ok(!reviewSource.includes("`       ${week.map"));
