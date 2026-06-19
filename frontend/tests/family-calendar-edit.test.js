@@ -237,6 +237,7 @@ test("family calendar caregiver hours row stores date-specific half-hour values"
   assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("familyCalendarAllDayRow"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverRow {"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverReviewGutter {"));
+  assert.match(calendarCss, /\.familyCalendarCaregiverReviewGutter\s*\{[\s\S]*?background:\s*rgba\(255, 216, 229, 0\.44\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(214, 128, 157, 0\.12\);/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverPicker {"));
   assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
 });
