@@ -179,6 +179,7 @@ export function normalizeFamilyRoniOverride(override) {
     endTime: String(override.endTime || ""),
     title: String(override.title || "").trim(),
     deleted: override.deleted === true,
+    overrideType: override.overrideType === "deleted" || override.deleted === true ? "deleted" : "moved",
   };
 }
 
