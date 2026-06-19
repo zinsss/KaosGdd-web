@@ -257,23 +257,75 @@
   opacity: 1;
 }
 
-.familyCalendarItemDated.familyTimetableEntryPink { --family-calendar-event-outline: #ffc6dc; }
-.familyCalendarItemDated.familyTimetableEntryRose { --family-calendar-event-outline: #ffb3c7; }
-.familyCalendarItemDated.familyTimetableEntryPeach { --family-calendar-event-outline: #ffd2ba; }
-.familyCalendarItemDated.familyTimetableEntryYellow { --family-calendar-event-outline: #ffe08a; }
-.familyCalendarItemDated.familyTimetableEntryMint { --family-calendar-event-outline: #c9f2d2; }
-.familyCalendarItemDated.familyTimetableEntryGreen { --family-calendar-event-outline: #bcebc2; }
-.familyCalendarItemDated.familyTimetableEntrySky { --family-calendar-event-outline: #c9f2ff; }
-.familyCalendarItemDated.familyTimetableEntryBlue { --family-calendar-event-outline: #c7dcff; }
-.familyCalendarItemDated.familyTimetableEntryLavender { --family-calendar-event-outline: #e0c8ff; }
-.familyCalendarItemDated.familyTimetableEntryPurple { --family-calendar-event-outline: #e8bff0; }
-.familyCalendarItemDated.familyTimetableEntryCream { --family-calendar-event-outline: #fff1b8; }
-.familyCalendarItemDated.familyTimetableEntryGray { --family-calendar-event-outline: #ded8d2; }
+.familyCalendarItemDated.familyTimetableEntryPink {
+  --family-calendar-event-outline: #ffc6dc;
+  --family-calendar-event-fill-soft: rgba(255, 198, 220, 0.28);
+}
+
+.familyCalendarItemDated.familyTimetableEntryRose {
+  --family-calendar-event-outline: #ffb3c7;
+  --family-calendar-event-fill-soft: rgba(255, 179, 199, 0.28);
+}
+
+.familyCalendarItemDated.familyTimetableEntryPeach {
+  --family-calendar-event-outline: #ffd2ba;
+  --family-calendar-event-fill-soft: rgba(255, 210, 186, 0.3);
+}
+
+.familyCalendarItemDated.familyTimetableEntryYellow {
+  --family-calendar-event-outline: #ffe08a;
+  --family-calendar-event-fill-soft: rgba(255, 224, 138, 0.32);
+}
+
+.familyCalendarItemDated.familyTimetableEntryMint {
+  --family-calendar-event-outline: #c9f2d2;
+  --family-calendar-event-fill-soft: rgba(201, 242, 210, 0.32);
+}
+
+.familyCalendarItemDated.familyTimetableEntryGreen {
+  --family-calendar-event-outline: #bcebc2;
+  --family-calendar-event-fill-soft: rgba(188, 235, 194, 0.32);
+}
+
+.familyCalendarItemDated.familyTimetableEntrySky {
+  --family-calendar-event-outline: #c9f2ff;
+  --family-calendar-event-fill-soft: rgba(201, 242, 255, 0.34);
+}
+
+.familyCalendarItemDated.familyTimetableEntryBlue {
+  --family-calendar-event-outline: #c7dcff;
+  --family-calendar-event-fill-soft: rgba(199, 220, 255, 0.32);
+}
+
+.familyCalendarItemDated.familyTimetableEntryLavender {
+  --family-calendar-event-outline: #e0c8ff;
+  --family-calendar-event-fill-soft: rgba(224, 200, 255, 0.3);
+}
+
+.familyCalendarItemDated.familyTimetableEntryPurple {
+  --family-calendar-event-outline: #e8bff0;
+  --family-calendar-event-fill-soft: rgba(232, 191, 240, 0.3);
+}
+
+.familyCalendarItemDated.familyTimetableEntryCream {
+  --family-calendar-event-outline: #fff1b8;
+  --family-calendar-event-fill-soft: rgba(255, 241, 184, 0.36);
+}
+
+.familyCalendarItemDated.familyTimetableEntryGray {
+  --family-calendar-event-outline: #ded8d2;
+  --family-calendar-event-fill-soft: rgba(222, 216, 210, 0.34);
+}
 
 .familyCalendarItemDated {
   background: #fffafd;
   box-shadow: inset 0 0 0 2px var(--family-calendar-event-outline, #ffc6dc);
   opacity: 1;
+}
+
+.familyCalendarAllDayItem.familyCalendarItemDated {
+  background: var(--family-calendar-event-fill-soft, rgba(255, 198, 220, 0.28));
+  box-shadow: inset 0 0 0 1px var(--family-calendar-event-outline, #ffc6dc);
 }
 
 @media (max-width: 640px) {

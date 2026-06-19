@@ -6,6 +6,8 @@ import {
   FAMILY_CAREGIVER_HOUR_VALUES,
   FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY,
   FAMILY_CAREGIVER_HOURS_STORAGE_KEY,
+  FAMILY_CALENDAR_COLOR_KEYS,
+  FAMILY_CALENDAR_COLOR_LABELS,
   formatFamilyCaregiverHours,
   normalizeFamilyCaregiverHour,
   normalizeFamilyCaregiverHourlyWage,
@@ -78,7 +80,9 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const eventFormSource = await readSource("../app/family/calendar/events/FamilyCalendarEventFormClient.js");
   const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
+  const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
   const calendarCss = await readSource("../app/styles/family-calendar.css");
+  const polishCss = await readSource("../app/styles/family-polish.css");
 
   assert.ok(calendarSource.includes('href="/family/calendar/events/new?allDay=1"'));
   assert.ok(eventFormSource.includes('const allDay = params.get("allDay") === "1";'));
@@ -94,6 +98,29 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes('allDay: item.allDay === true,'));
   assert.ok(eventFormSource.includes('startTime: item.startTime || "09:00",'));
   assert.ok(eventFormSource.includes('endTime: item.endTime || "09:40",'));
+  assert.ok(eventFormSource.includes("FAMILY_CALENDAR_COLOR_KEYS.map"));
+  assert.ok(eventFormSource.includes("FAMILY_CALENDAR_COLOR_LABELS[color]"));
+  assert.ok(eventFormSource.includes("familyTimetableColorChip"));
+  assert.ok(!eventFormSource.includes("colorIsUnavailable"));
+  assert.ok(!eventFormSource.includes("familyTimetableColorChipDisabled"));
+  assert.ok(roniSource.includes("FAMILY_CALENDAR_COLOR_KEYS.map"));
+  assert.deepEqual(FAMILY_CALENDAR_COLOR_KEYS, [
+    "pink",
+    "rose",
+    "cream",
+    "yellow",
+    "peach",
+    "mint",
+    "green",
+    "sky",
+    "blue",
+    "purple",
+    "lavender",
+    "gray",
+  ]);
+  for (const label of ["분홍", "연분홍", "크림", "노랑", "살구", "민트", "초록", "하늘", "파랑", "보라", "라벤더", "회색"]) {
+    assert.ok(Object.values(FAMILY_CALENDAR_COLOR_LABELS).includes(label), `${label} should remain available to event and Roun color pickers`);
+  }
   assert.ok(dataSource.includes('const allDay = item.allDay === true;'));
   assert.ok(dataSource.includes('const allDay = item.allDay === true;'));
 
@@ -113,6 +140,10 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(calendarCss.includes(".familyCalendarFormToggle {"));
   assert.ok(calendarCss.includes(".familyCalendarFormToggleControl {"));
   assert.ok(calendarCss.includes(".familyCalendarFormGridAllDay {"));
+  assert.match(polishCss, /\.familyCalendarItemRoni\.familyTimetableEntryPink\s*\{\s*background:\s*#ffc6dc;\s*\}/);
+  assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPink\s*\{[\s\S]*?--family-calendar-event-outline:\s*#ffc6dc;[\s\S]*?--family-calendar-event-fill-soft:\s*rgba\(255, 198, 220, 0\.28\);/);
+  assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?box-shadow:\s*inset 0 0 0 2px var\(--family-calendar-event-outline, #ffc6dc\);/);
+  assert.match(polishCss, /\.familyCalendarAllDayItem\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*var\(--family-calendar-event-fill-soft, rgba\(255, 198, 220, 0\.28\)\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px var\(--family-calendar-event-outline, #ffc6dc\);/);
 });
 
 test("family calendar uses one shared 8-column gutter grid with clean weekend text styling", async () => {
