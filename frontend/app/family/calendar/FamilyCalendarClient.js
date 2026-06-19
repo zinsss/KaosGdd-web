@@ -866,7 +866,7 @@ function FamilyCalendarEditWeek({
       {dragState?.target?.type === "time" ? (
         <span
           className="familyCalendarDragReadout"
-          style={{ left: `${dragState.x}px`, top: `${dragState.y - 44}px` }}
+          style={{ left: `${dragState.x}px`, top: `${dragState.y - 64}px` }}
         >
           {formatDragTargetLabel(dragState.target)}
         </span>

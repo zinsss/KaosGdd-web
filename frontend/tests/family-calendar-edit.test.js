@@ -302,7 +302,7 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("FAMILY_CALENDAR_DAY_LABELS[target.dayIndex]"));
   assert.ok(calendarSource.includes("minutesToFamilyTime(target.startMinutes)"));
   assert.ok(calendarSource.includes('className="familyCalendarDragReadout"'));
-  assert.ok(calendarSource.includes('style={{ left: `${dragState.x}px`, top: `${dragState.y - 44}px` }}'));
+  assert.ok(calendarSource.includes('style={{ left: `${dragState.x}px`, top: `${dragState.y - 64}px` }}'));
   assert.ok(calendarSource.includes("{formatDragTargetLabel(dragState.target)}"));
   assert.ok(calendarCss.includes(".familyCalendarEditItem {"));
   assert.ok(calendarCss.includes("touch-action: none;"));
@@ -310,6 +310,7 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarCss.includes(".familyCalendarDragGhost {"));
   assert.ok(calendarCss.includes(".familyCalendarDragReadout {"));
   assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?z-index:\s*9999;[\s\S]*?pointer-events:\s*none;/);
+  assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?padding:\s*5px 10px;[\s\S]*?font-size:\s*14px;/);
   assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?transform:\s*translate\(-50%, -100%\);[\s\S]*?white-space:\s*nowrap;/);
 });
 
