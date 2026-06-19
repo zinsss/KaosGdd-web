@@ -37,7 +37,6 @@ import {
   saveFamilyCaregiverHours,
   saveFamilyCalendarItems,
   saveFamilyRoniOverrides,
-  timeHourLabel,
 } from "./familyCalendarData";
 
 const FAMILY_CALENDAR_MODE_VIEW = "view";
@@ -58,10 +57,6 @@ const FAMILY_CALENDAR_EDIT_HOURS = Array.from(
 const FAMILY_CALENDAR_EDIT_VISIBLE_HOURS = FAMILY_CALENDAR_EDIT_HOURS.slice(0, -1);
 const FAMILY_CALENDAR_EDIT_BODY_HEIGHT =
   (FAMILY_CALENDAR_EDIT_END_HOUR - FAMILY_CALENDAR_EDIT_START_HOUR) * FAMILY_CALENDAR_EDIT_HOUR_HEIGHT;
-
-function itemRowKey(item) {
-  return timeHourLabel(item.startTime || "") || "시간";
-}
 
 function formatEditHourLabel(hour) {
   return `${hour}`;
@@ -115,29 +110,37 @@ function movedItemValues(item, target) {
   };
 }
 
-function editItemStyle(item) {
+function timedItemRange(item) {
   const rangeStart = FAMILY_CALENDAR_EDIT_START_HOUR * 60;
   const rangeEnd = FAMILY_CALENDAR_EDIT_END_HOUR * 60;
   const parsedStart = parseTimeMinutes(item.startTime);
+  if (parsedStart === null) return null;
   const parsedEnd = parseTimeMinutes(item.endTime);
   const start = Math.max(rangeStart, Math.min(rangeEnd - 10, parsedStart ?? rangeStart));
   const fallbackEnd = start + 40;
   const end = Math.max(start + 10, Math.min(rangeEnd, parsedEnd ?? fallbackEnd));
 
+  return { start, end };
+}
+
+function itemAxisStyle(item, visibleStartMinutes, visibleEndMinutes) {
+  const range = timedItemRange(item);
+  if (!range) return { top: "0px", height: "18px" };
+  const start = Math.max(visibleStartMinutes, Math.min(visibleEndMinutes - 10, range.start));
+  const end = Math.max(start + 10, Math.min(visibleEndMinutes, range.end));
+
   return {
-    top: `${start - rangeStart}px`,
+    top: `${start - visibleStartMinutes}px`,
     height: `${Math.max(18, end - start)}px`,
   };
 }
 
-function editItemStyleForHour(item, hour) {
-  const startMinutes = parseTimeMinutes(item.startTime);
-  const duration = eventDurationMinutes(item);
-  const top = Math.max(0, (startMinutes ?? hour * 60) - hour * 60);
-  return {
-    top: `${top}px`,
-    height: `${Math.max(18, duration)}px`,
-  };
+function editItemStyle(item) {
+  return itemAxisStyle(
+    item,
+    FAMILY_CALENDAR_EDIT_START_HOUR * 60,
+    FAMILY_CALENDAR_EDIT_END_HOUR * 60,
+  );
 }
 
 function slotTimeFromPointer(event) {
@@ -271,25 +274,60 @@ function groupAllDayItems(items) {
   }, FAMILY_CALENDAR_DAY_LABELS.map(() => []));
 }
 
-function groupItemsByHour(items) {
-  const rows = new Map();
-  for (const item of items) {
-    const rowKey = itemRowKey(item);
-    if (!rowKey) continue;
-    if (!rows.has(rowKey)) rows.set(rowKey, FAMILY_CALENDAR_DAY_LABELS.map(() => []));
-    rows.get(rowKey)[item.dayIndex].push(item);
-  }
-
-  return [...rows.entries()].sort((a, b) => Number(a[0]) - Number(b[0]));
+function timedItemCoveredHours(item) {
+  const range = timedItemRange(item);
+  if (!range) return [];
+  const startHour = Math.max(FAMILY_CALENDAR_EDIT_START_HOUR, Math.floor(range.start / 60));
+  const endHour = Math.min(FAMILY_CALENDAR_EDIT_END_HOUR - 1, Math.ceil(range.end / 60) - 1);
+  if (endHour < startHour) return [];
+  return Array.from({ length: endHour - startHour + 1 }, (_, index) => startHour + index);
 }
 
-function buildEditWeekRows(items) {
-  return FAMILY_CALENDAR_EDIT_VISIBLE_HOURS.map((hour) => ([
-    String(hour),
-    FAMILY_CALENDAR_DAY_LABELS.map((_, dayIndex) => (
-      items.filter((item) => item.dayIndex === dayIndex && parseTimeMinutes(item.startTime) !== null && Math.floor(parseTimeMinutes(item.startTime) / 60) === hour)
+function itemIntersectsTimedSegment(item, segmentStartMinutes, segmentEndMinutes) {
+  const range = timedItemRange(item);
+  return Boolean(range && range.end > segmentStartMinutes && range.start < segmentEndMinutes);
+}
+
+function buildTimedWeekSegments(items) {
+  const hours = new Set();
+  for (const item of items) {
+    timedItemCoveredHours(item).forEach((hour) => hours.add(hour));
+  }
+
+  const sortedHours = [...hours].sort((a, b) => a - b);
+  const segments = [];
+  for (const hour of sortedHours) {
+    const current = segments.at(-1);
+    if (!current || current.hours.at(-1) + 1 !== hour) {
+      segments.push({ hours: [hour] });
+    } else {
+      current.hours.push(hour);
+    }
+  }
+
+  return segments.map((segment) => {
+    const startMinutes = segment.hours[0] * 60;
+    const endMinutes = (segment.hours.at(-1) + 1) * 60;
+    return {
+      ...segment,
+      startMinutes,
+      endMinutes,
+      items: items.filter((item) => itemIntersectsTimedSegment(item, startMinutes, endMinutes)),
+    };
+  });
+}
+
+function buildEditTimedWeekSegments(items) {
+  return [{
+    hours: FAMILY_CALENDAR_EDIT_VISIBLE_HOURS,
+    startMinutes: FAMILY_CALENDAR_EDIT_START_HOUR * 60,
+    endMinutes: FAMILY_CALENDAR_EDIT_END_HOUR * 60,
+    items: items.filter((item) => itemIntersectsTimedSegment(
+      item,
+      FAMILY_CALENDAR_EDIT_START_HOUR * 60,
+      FAMILY_CALENDAR_EDIT_END_HOUR * 60,
     )),
-  ]));
+  }];
 }
 
 function buildWeekDateKeys(weekStart) {
@@ -386,6 +424,132 @@ function FamilyCaregiverHoursRow({
   );
 }
 
+function FamilyCalendarTimedArea({
+  deletedRoniOverridesByDate = {},
+  dragState = null,
+  editable = false,
+  onCancelRoniChoice = null,
+  onRestoreRoniOverride = null,
+  onStartDatedDrag = null,
+  onStartRoniChoice = null,
+  onStartRoniDrag = null,
+  pendingSlotKey = "",
+  roniChoiceItemId = "",
+  segment,
+  selectedWeekStart,
+  startSlotLongPress = null,
+  clearPendingLongPress = null,
+  moveSlotLongPress = null,
+}) {
+  const segmentHeight = segment.hours.length * FAMILY_CALENDAR_EDIT_HOUR_HEIGHT;
+  const itemsByDay = FAMILY_CALENDAR_DAY_LABELS.map((_, dayIndex) => (
+    segment.items.filter((item) => item.dayIndex === dayIndex)
+  ));
+  const targetDay = dragState?.target?.dayIndex;
+  const targetSlotTop = dragState?.target?.type === "time"
+    ? dragState.target.startMinutes % 60
+    : null;
+
+  return (
+    <div
+      className={`familyCalendarTimedArea${editable ? " familyCalendarTimedAreaEditable" : ""}`}
+      style={{ "--family-calendar-timed-area-height": `${segmentHeight}px` }}
+    >
+      <div className="familyCalendarTimedRows">
+        {segment.hours.map((hour) => (
+          <div className={`familyCalendarTimeRow${editable ? " familyCalendarTimeRowEditable" : ""}`} key={hour}>
+            <span className={`familyCalendarTimeLabel${editable ? " familyCalendarTimeLabelEditable" : ""}`}>
+              {formatEditHourLabel(hour)}
+            </span>
+            {FAMILY_CALENDAR_DAY_LABELS.map((_, dayIndex) => {
+              const date = formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex));
+              const deletedOverrides = deletedRoniOverridesByDate[date] || [];
+              const hourStartMinutes = hour * 60;
+              return (
+                <div
+                  className={`familyCalendarDaySlot${editable ? " familyCalendarDaySlotEditable" : " familyCalendarTimedDaySlot"}`}
+                  data-day-index={editable ? dayIndex : undefined}
+                  data-family-calendar-drop={editable ? "time" : undefined}
+                  data-slot-start-minutes={editable ? hourStartMinutes : undefined}
+                  key={`${hour}-${dayIndex}`}
+                  onPointerCancel={editable ? clearPendingLongPress : undefined}
+                  onPointerDown={editable && startSlotLongPress ? (event) => startSlotLongPress(event, dayIndex) : undefined}
+                  onPointerLeave={editable ? clearPendingLongPress : undefined}
+                  onPointerMove={editable ? moveSlotLongPress : undefined}
+                  onPointerUp={editable ? clearPendingLongPress : undefined}
+                >
+                  {editable ? (
+                    <span className="familyCalendarDaySlotGuides" aria-hidden="true">
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  ) : null}
+                  {editable && hour === FAMILY_CALENDAR_EDIT_START_HOUR && deletedOverrides.length ? (
+                    <div className="familyCalendarRoniRestoreStack">
+                      {deletedOverrides.map((override) => (
+                        <button
+                          className="familyCalendarRoniRestoreButton"
+                          key={override.id}
+                          type="button"
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            onRestoreRoniOverride?.(override.id);
+                          }}
+                        >
+                          되돌리기
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  {editable && pendingSlotKey.startsWith(`${dayIndex}-`) && Math.floor(Number(pendingSlotKey.split("-")[1]) / 60) === hour ? (
+                    <span
+                      className="familyCalendarLongPressTarget"
+                      aria-hidden="true"
+                      style={{ top: `${Number(pendingSlotKey.split("-")[1]) % 60}px` }}
+                    />
+                  ) : null}
+                  {editable && dragState?.target?.type === "time" && targetDay === dayIndex && Math.floor(dragState.target.startMinutes / 60) === hour ? (
+                    <span
+                      className="familyCalendarDropSlotTarget"
+                      aria-hidden="true"
+                      style={{ top: `${targetSlotTop}px` }}
+                    />
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      <div className="familyCalendarTimedItemsLayer">
+        <span className="familyCalendarTimedLayerRail" aria-hidden="true" />
+        {itemsByDay.map((items, dayIndex) => (
+          <div className="familyCalendarTimedDayLayer" key={dayIndex}>
+            {items.map((item) => (
+              <CalendarItemLink
+                className={editable ? "familyCalendarEditItem familyCalendarEditItemInline" : "familyCalendarTimedItem"}
+                dragging={dragState?.itemId === item.id}
+                item={item}
+                key={`${item.type}-${item.id}`}
+                onCancelRoniChoice={onCancelRoniChoice}
+                onStartDatedDrag={onStartDatedDrag}
+                onStartRoniChoice={onStartRoniChoice}
+                onStartRoniDrag={onStartRoniDrag}
+                roniChoiceItemId={roniChoiceItemId}
+                style={itemAxisStyle(item, segment.startMinutes, segment.endMinutes)}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function FamilyCalendarEditWeek({
   allDayItems,
   activeCaregiverDate,
@@ -417,7 +581,10 @@ function FamilyCalendarEditWeek({
   const [pendingSlotKey, setPendingSlotKey] = useState("");
   const [dragState, setDragState] = useState(null);
   const [roniChoiceItem, setRoniChoiceItem] = useState(null);
-  const editRows = useMemo(() => buildEditWeekRows(selectedWeekItems.filter((item) => !item.allDay)), [selectedWeekItems]);
+  const editSegments = useMemo(
+    () => buildEditTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay)),
+    [selectedWeekItems],
+  );
   const hasWeatherRows = selectedWeekDates.some((date) => {
     const summary = weatherByDate.get(date);
     const dayparts = weatherDaypartsByDate[date] || [];
@@ -626,10 +793,6 @@ function FamilyCalendarEditWeek({
     router.push("/family/roun");
   }
 
-  const targetDay = dragState?.target?.dayIndex;
-  const targetSlotTop = dragState?.target?.type === "time"
-    ? dragState.target.startMinutes % 60
-    : null;
   const hasAllDayItems = allDayItems.some((items) => items.length);
 
   return (
@@ -669,83 +832,25 @@ function FamilyCalendarEditWeek({
           ))}
         </div>
       ) : null}
-      {editRows.map(([hour, dayItems]) => (
-        <div className="familyCalendarTimeRow familyCalendarTimeRowEditable" key={hour}>
-          <span className="familyCalendarTimeLabel familyCalendarTimeLabelEditable">{formatEditHourLabel(Number(hour))}</span>
-          {dayItems.map((items, dayIndex) => {
-            const date = formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex));
-            const deletedOverrides = deletedRoniOverridesByDate[date] || [];
-            const hourStartMinutes = Number(hour) * 60;
-            return (
-              <div
-                className="familyCalendarDaySlot familyCalendarDaySlotEditable"
-                data-day-index={dayIndex}
-                data-family-calendar-drop="time"
-                data-slot-start-minutes={hourStartMinutes}
-                key={`${hour}-${dayIndex}`}
-                onPointerCancel={clearPendingLongPress}
-                onPointerDown={(event) => startSlotLongPress(event, dayIndex)}
-                onPointerLeave={clearPendingLongPress}
-                onPointerMove={moveSlotLongPress}
-                onPointerUp={clearPendingLongPress}
-              >
-                <span className="familyCalendarDaySlotGuides" aria-hidden="true">
-                  <span />
-                  <span />
-                  <span />
-                  <span />
-                  <span />
-                </span>
-                {hour === String(FAMILY_CALENDAR_EDIT_START_HOUR) && deletedOverrides.length ? (
-                  <div className="familyCalendarRoniRestoreStack">
-                    {deletedOverrides.map((override) => (
-                      <button
-                        className="familyCalendarRoniRestoreButton"
-                        key={override.id}
-                        type="button"
-                        onPointerDown={(event) => event.stopPropagation()}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          onRestoreRoniOverride(override.id);
-                        }}
-                      >
-                        되돌리기
-                      </button>
-                    ))}
-                  </div>
-                ) : null}
-                {pendingSlotKey.startsWith(`${dayIndex}-`) && Math.floor(Number(pendingSlotKey.split("-")[1]) / 60) === Number(hour) ? (
-                  <span
-                    className="familyCalendarLongPressTarget"
-                    aria-hidden="true"
-                    style={{ top: `${Number(pendingSlotKey.split("-")[1]) % 60}px` }}
-                  />
-                ) : null}
-                {dragState?.target?.type === "time" && targetDay === dayIndex && Math.floor(dragState.target.startMinutes / 60) === Number(hour) ? (
-                  <span
-                    className="familyCalendarDropSlotTarget"
-                    aria-hidden="true"
-                    style={{ top: `${targetSlotTop}px` }}
-                  />
-                ) : null}
-                {items.map((item) => (
-                  <CalendarItemLink
-                    className="familyCalendarEditItem familyCalendarEditItemInline"
-                    dragging={dragState?.itemId === item.id}
-                    item={item}
-                    key={`${item.type}-${item.id}`}
-                    onCancelRoniChoice={clearRoniChoiceTimer}
-                    onStartDatedDrag={startDatedDrag}
-                    onStartRoniChoice={startRoniChoice}
-                    onStartRoniDrag={startRoniDrag}
-                    roniChoiceItemId={roniChoiceItem?.id || ""}
-                    style={editItemStyleForHour(item, Number(hour))}
-                  />
-                ))}
-              </div>
-            );
-          })}
-        </div>
+      {editSegments.map((segment) => (
+        <FamilyCalendarTimedArea
+          clearPendingLongPress={clearPendingLongPress}
+          deletedRoniOverridesByDate={deletedRoniOverridesByDate}
+          dragState={dragState}
+          editable
+          key={`${segment.startMinutes}-${segment.endMinutes}`}
+          moveSlotLongPress={moveSlotLongPress}
+          onCancelRoniChoice={clearRoniChoiceTimer}
+          onRestoreRoniOverride={onRestoreRoniOverride}
+          onStartDatedDrag={startDatedDrag}
+          onStartRoniChoice={startRoniChoice}
+          onStartRoniDrag={startRoniDrag}
+          pendingSlotKey={pendingSlotKey}
+          roniChoiceItemId={roniChoiceItem?.id || ""}
+          segment={segment}
+          selectedWeekStart={selectedWeekStart}
+          startSlotLongPress={startSlotLongPress}
+        />
       ))}
       {dragState ? (
         <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
@@ -837,8 +942,8 @@ export default function FamilyCalendarClient() {
     [selectedWeekStart, datedItems, rounState, roniOverrides],
   );
   const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(selectedWeekItems), [selectedWeekItems]);
-  const selectedWeekRows = useMemo(
-    () => groupItemsByHour(selectedWeekItems.filter((item) => !item.allDay)),
+  const selectedWeekTimedSegments = useMemo(
+    () => buildTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay)),
     [selectedWeekItems],
   );
   const hasSelectedWeekWeatherRows = useMemo(
@@ -1008,7 +1113,7 @@ export default function FamilyCalendarClient() {
   }
 
   const hasSelectedWeekAllDayItems = selectedWeekAllDayItems.some((items) => items.length);
-  const hasSelectedWeekContent = hasSelectedWeekAllDayItems || selectedWeekRows.length;
+  const hasSelectedWeekContent = hasSelectedWeekAllDayItems || selectedWeekTimedSegments.length;
 
   return (
     <main className="familyCalendar" aria-label="달력">
@@ -1154,17 +1259,12 @@ export default function FamilyCalendarClient() {
                           ))}
                         </div>
                       ) : null}
-                      {selectedWeekRows.map(([hour, dayItems]) => (
-                        <div className="familyCalendarTimeRow" key={hour}>
-                          <span className="familyCalendarTimeLabel">{hour}</span>
-                          {dayItems.map((items, dayIndex) => (
-                            <div className="familyCalendarDaySlot" key={dayIndex}>
-                              {items.map((item) => (
-                                <CalendarItemLink item={item} key={`${item.type}-${item.id}`} />
-                              ))}
-                            </div>
-                          ))}
-                        </div>
+                      {selectedWeekTimedSegments.map((segment) => (
+                        <FamilyCalendarTimedArea
+                          key={`${segment.startMinutes}-${segment.endMinutes}`}
+                          segment={segment}
+                          selectedWeekStart={selectedWeekStart}
+                        />
                       ))}
                     </>
                   ) : (

@@ -7,7 +7,8 @@
 .familyCalendarWeekHeader,
 .familyCalendarWeekDates,
 .familyCalendarWeekCounts,
-.familyCalendarTimeRow {
+.familyCalendarTimeRow,
+.familyCalendarTimedItemsLayer {
   --family-calendar-expanded-rail-width: 34px;
   display: grid;
   grid-template-columns: var(--family-calendar-expanded-rail-width, 34px) repeat(7, minmax(0, 1fr));
@@ -201,7 +202,8 @@
   .familyCalendarWeekHeader,
   .familyCalendarWeekDates,
   .familyCalendarWeekCounts,
-  .familyCalendarTimeRow {
+  .familyCalendarTimeRow,
+  .familyCalendarTimedItemsLayer {
     --family-calendar-expanded-rail-width: 28px;
     grid-template-columns: var(--family-calendar-expanded-rail-width, 28px) repeat(7, minmax(0, 1fr));
     gap: 2px;
