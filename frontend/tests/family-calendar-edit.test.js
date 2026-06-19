@@ -263,6 +263,7 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
   assert.ok(reviewSource.includes("function buildReviewWeeks("));
   assert.ok(reviewSource.includes("function summarizeMonth("));
   assert.ok(reviewSource.includes("function fixedDisplayWidth("));
+  assert.ok(reviewSource.includes("function padCell(value, width = 6)"));
   assert.ok(reviewSource.includes("formatReviewMonth(monthDate)"));
   assert.ok(reviewSource.includes('return `${monthDate.getFullYear()}년 ${monthDate.getMonth() + 1}월 돌봄`;'));
   assert.ok(reviewSource.includes("const weekdayHeader = FAMILY_CALENDAR_DAY_LABELS.map((label) => padCell(label)).join(\"\");"));
@@ -288,6 +289,7 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
 
   assert.ok(calendarCss.includes(".caregiverMonthlyReviewText {"));
   assert.match(calendarCss, /\.caregiverMonthlyReviewText\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;/);
+  assert.match(calendarCss, /\.caregiverMonthlyReviewText\s*\{[\s\S]*?text-align:\s*left;/);
   assert.match(calendarCss, /\.caregiverMonthlyReviewText\s*\{[\s\S]*?white-space:\s*pre;/);
   assert.match(calendarCss, /\.caregiverMonthlyReviewText\s*\{[\s\S]*?font-variant-numeric:\s*tabular-nums;/);
   assert.ok(calendarCss.includes(".familyCaregiverReviewSummary {"));
