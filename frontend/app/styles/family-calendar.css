@@ -914,6 +914,23 @@
   white-space: nowrap;
 }
 
+.familyCalendarDragReadout {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  transform: translate(-50%, -100%);
+  border: 1px solid rgba(180, 120, 190, 0.28);
+  border-radius: 999px;
+  padding: 4px 8px;
+  background: rgba(255, 250, 253, 0.96);
+  color: rgba(120, 85, 150, 0.88);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.15;
+  box-shadow: 0 8px 20px rgba(120, 80, 130, 0.18);
+  white-space: nowrap;
+}
+
 .familyCalendarItem {
   display: block;
   min-width: 0;
