@@ -242,6 +242,66 @@ test("family calendar caregiver hours row stores date-specific half-hour values"
   assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
 });
 
+test("family calendar edit mode drag moves dated items and creates Roun overrides", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
+  const calendarCss = await readSource("../app/styles/family-calendar.css");
+
+  for (const value of [
+    "FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT = 8",
+    "FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX = 48",
+    "FAMILY_CALENDAR_AUTO_SCROLL_STEP_PX = 14",
+    "function movedItemValues(item, target)",
+    "const duration = Math.min(eventDurationMinutes(item), rangeEnd - rangeStart);",
+    "const boundedStartMinutes = Math.max(rangeStart, Math.min(rangeEnd - duration, target.startMinutes));",
+    "const startTime = minutesToFamilyTime(boundedStartMinutes);",
+    "const endTime = minutesToFamilyTime(boundedStartMinutes + duration);",
+    "function findDropTarget(clientX, clientY)",
+    "slotTimeFromRowPoint(clientY, dropElement.getBoundingClientRect(), rowStartMinutes)",
+    "function startCalendarItemDrag(event, item)",
+    "function moveDatedDrag(event)",
+    "function finishDatedDrag(event)",
+    "function updateAutoScroll(clientY)",
+    "function stopAutoScroll()",
+  ]) {
+    assert.ok(calendarSource.includes(value), `${value} should exist for edit-mode drag/drop`);
+  }
+
+  assert.ok(calendarSource.includes('data-family-calendar-drop="time"'));
+  assert.ok(calendarSource.includes('data-slot-start-minutes={hourStartMinutes}'));
+  assert.ok(calendarSource.includes('data-family-calendar-drop={selected && editingCalendar ? "date" : undefined}'));
+  assert.ok(calendarSource.includes("if (moved < FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT && !dragState) return;"));
+  assert.ok(calendarSource.includes("event.preventDefault();"));
+  assert.ok(calendarSource.includes("event.currentTarget.setPointerCapture?.(event.pointerId);"));
+  assert.ok(calendarSource.includes("pending?.dragElement?.releasePointerCapture?.(event.pointerId);"));
+  assert.ok(calendarSource.includes("onMoveDatedItem(pending.item.id, currentDragState.target);"));
+  assert.ok(calendarSource.includes("onCreateRoniOverride(pending.item, currentDragState.target);"));
+  assert.ok(!calendarSource.includes("setPendingRoniMove"));
+  assert.ok(!calendarSource.includes("moveRoniTemplate"));
+
+  assert.ok(calendarSource.includes("function moveDatedItem(itemId, target)"));
+  assert.ok(calendarSource.includes("const moved = movedItemValues(item, target);"));
+  assert.ok(calendarSource.includes("saveFamilyCalendarItems(nextItems);"));
+  assert.ok(calendarSource.includes("function upsertRoniOverride(roniItem, values)"));
+  assert.ok(calendarSource.includes('overrideType: values.deleted === true ? "deleted" : "moved",'));
+  assert.ok(calendarSource.includes("override.id !== roniItem.overrideId"));
+  assert.ok(calendarSource.includes("saveFamilyRoniOverrides(nextOverrides);"));
+  assert.ok(dataSource.includes('overrideType: override.overrideType === "deleted" || override.deleted === true ? "deleted" : "moved",'));
+
+  assert.ok(calendarSource.includes('className="familyCalendarEditItem familyCalendarEditItemInline"'));
+  assert.ok(calendarSource.includes("onStartDatedDrag={startDatedDrag}"));
+  assert.ok(calendarSource.includes("onStartRoniDrag={startRoniDrag}"));
+  assert.ok(calendarSource.includes("onPointerMove={moveDatedDrag}"));
+  assert.ok(calendarSource.includes("onPointerUp={finishDatedDrag}"));
+  assert.ok(calendarSource.includes("dragState?.target?.type === \"time\""));
+  assert.ok(calendarSource.includes('className="familyCalendarDropSlotTarget"'));
+  assert.ok(calendarSource.includes('className="familyCalendarDragGhost"'));
+  assert.ok(calendarCss.includes(".familyCalendarEditItem {"));
+  assert.ok(calendarCss.includes("touch-action: none;"));
+  assert.ok(calendarCss.includes(".familyCalendarDropSlotTarget {"));
+  assert.ok(calendarCss.includes(".familyCalendarDragGhost {"));
+});
+
 test("family caregiver monthly review renders fixed-width calendar and wage summary", async () => {
   const reviewSource = await readSource("../app/family/calendar/caregiver/FamilyCaregiverMonthlyReviewClient.js");
   const reviewPageSource = await readSource("../app/family/calendar/caregiver/page.js");
