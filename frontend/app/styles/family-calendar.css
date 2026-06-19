@@ -931,6 +931,37 @@
   white-space: nowrap;
 }
 
+.familyCalendarWeekDragTarget {
+  position: fixed;
+  top: 72px;
+  z-index: 9998;
+  pointer-events: auto;
+  border: 1px solid rgba(180, 120, 190, 0.28);
+  border-radius: 999px;
+  padding: 6px 10px;
+  background: rgba(255, 250, 253, 0.96);
+  color: rgba(120, 85, 150, 0.88);
+  font-size: 12px;
+  font-weight: 850;
+  line-height: 1.15;
+  box-shadow: 0 8px 20px rgba(120, 80, 130, 0.18);
+  white-space: nowrap;
+}
+
+.familyCalendarWeekDragTargetPrev {
+  left: 8px;
+}
+
+.familyCalendarWeekDragTargetNext {
+  right: 8px;
+}
+
+.familyCalendarWeekDragTargetActive {
+  border-color: rgba(216, 111, 152, 0.5);
+  background: rgba(255, 216, 229, 0.96);
+  color: #8d3f5d;
+}
+
 .familyCalendarItem {
   display: block;
   min-width: 0;
@@ -950,6 +981,16 @@
 
 .familyCalendarAllDayItem {
   min-height: 20px;
+}
+
+.familyCalendarAllDayItemEditable {
+  touch-action: none;
+}
+
+.familyCalendarAllDaySlotDropTarget {
+  border-radius: 8px;
+  background: rgba(216, 111, 152, 0.16);
+  box-shadow: inset 0 0 0 2px rgba(216, 111, 152, 0.28);
 }
 
 .familyCalendarDaySlot .familyCalendarItem > span:first-child {
