@@ -59,7 +59,7 @@ const FAMILY_CALENDAR_EDIT_BODY_HEIGHT =
   (FAMILY_CALENDAR_EDIT_END_HOUR - FAMILY_CALENDAR_EDIT_START_HOUR) * FAMILY_CALENDAR_EDIT_HOUR_HEIGHT;
 
 function formatEditHourLabel(hour) {
-  return `${hour}`;
+  return "•";
 }
 
 function minutesToFamilyTime(totalMinutes) {
@@ -385,7 +385,7 @@ function FamilyCaregiverHoursRow({
   return (
     <>
       <div className="familyCalendarTimeRow familyCalendarCaregiverRow">
-        <span className="familyCalendarTimeLabel familyCalendarCaregiverLabel">돌봄</span>
+        <span className="familyCalendarTimeLabel familyCalendarCaregiverLabel">•</span>
         {selectedWeekDates.map((date) => {
           const displayValue = formatFamilyCaregiverHours(caregiverHoursByDate[date]);
           return (
@@ -403,7 +403,7 @@ function FamilyCaregiverHoursRow({
       </div>
       {activeDate ? (
         <div className="familyCalendarTimeRow familyCalendarCaregiverPickerRow">
-          <span className="familyCalendarTimeLabel familyCalendarCaregiverPickerLabel">선택</span>
+          <span className="familyCalendarTimeLabel familyCalendarCaregiverPickerLabel">•</span>
           <div className="familyCalendarCaregiverPicker" role="listbox" aria-label={`${activeDate} 돌봄 시간 선택`}>
             {FAMILY_CAREGIVER_HOUR_VALUES.map((value) => (
               <button
@@ -822,7 +822,7 @@ function FamilyCalendarEditWeek({
       />
       {hasAllDayItems ? (
         <div className="familyCalendarTimeRow familyCalendarAllDayRow" key="all-day">
-          <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">종일</span>
+          <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
           {allDayItems.map((items, dayIndex) => (
             <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
               {items.map((item) => (
@@ -1163,7 +1163,7 @@ export default function FamilyCalendarClient() {
         <section className="familyCalendarWeek familyCalendarWeekHeaderRow" aria-label="달력 요일">
           <div className="familyCalendarWeekDates familyCalendarWeekHeader">
             <Link className="familyCalendarCaregiverReviewGutter" href={caregiverReviewHref}>
-              돌봄
+              ♥
             </Link>
             {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
               <span className="familyCalendarWeekDay familyCalendarWeekHeaderDay" key={label}>{label}</span>
@@ -1249,7 +1249,7 @@ export default function FamilyCalendarClient() {
                     <>
                       {hasSelectedWeekAllDayItems ? (
                         <div className="familyCalendarTimeRow familyCalendarAllDayRow">
-                          <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">종일</span>
+                          <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
                           {selectedWeekAllDayItems.map((items, dayIndex) => (
                             <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
                               {items.map((item) => (

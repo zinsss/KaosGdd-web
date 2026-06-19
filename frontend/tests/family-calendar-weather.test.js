@@ -42,8 +42,9 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(calendarSource, /onToggle=\{\(\)\s*=>\s*setWeatherExpanded\(\(current\)\s*=>\s*!current\)\}/);
   assert.match(calendarSource, /onToggle=\{onToggleWeather\}/);
 
-  assert.match(weatherRowsSource, /const\s+toggleGlyph\s*=\s*expanded\s*\?\s*"▾"\s*:\s*"▸";/);
   assert.match(weatherRowsSource, /aria-expanded=\{expanded\}/);
+  assert.match(weatherRowsSource, /aria-label="날씨 자세히 보기"/);
+  assert.match(weatherRowsSource, /className="familyCalendarWeatherToggleLabel">•<\/span>/);
   assert.match(weatherRowsSource, /familyCalendarWeatherSummaryRow/);
   assert.match(weatherRowsSource, /\{expanded\s*\?\s*FAMILY_CALENDAR_DAYPART_LABELS\.map/);
 
@@ -57,12 +58,12 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(weatherCss, /\.familyCalendarWeatherSummaryRow/);
   assert.match(weatherCss, /\.familyCalendarWeatherToggle/);
   assert.match(weatherCss, /\.familyCalendarWeatherToggleLabel/);
-  assert.match(weatherCss, /\.familyCalendarWeatherToggleGlyph/);
+  assert.doesNotMatch(weatherCss, /familyCalendarWeatherToggleGlyph/);
   assert.match(weatherCss, /\.familyCalendarWeatherSummary/);
   assert.match(weatherCss, /\.familyCalendarWeatherDaypart/);
   assert.match(weatherCss, /\.familyCalendarWeatherLabelText/);
-  assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*34px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
-  assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*28px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
+  assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*20px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
+  assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*14px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
 });
 
 test("family calendar weather daypart rows stay behind local expansion state", async () => {
