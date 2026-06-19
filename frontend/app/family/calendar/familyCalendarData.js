@@ -22,20 +22,35 @@ export const FAMILY_CALENDAR_WEEKDAY_OPTIONS = [
 ];
 
 export const DEFAULT_FAMILY_CALENDAR_COLOR = "pink";
-export const FAMILY_CALENDAR_COLORS = new Set([
+export const FAMILY_CALENDAR_COLOR_KEYS = [
   "pink",
   "rose",
-  "peach",
+  "cream",
   "yellow",
+  "peach",
   "mint",
   "green",
   "sky",
   "blue",
-  "lavender",
   "purple",
-  "cream",
+  "lavender",
   "gray",
-]);
+];
+export const FAMILY_CALENDAR_COLORS = new Set(FAMILY_CALENDAR_COLOR_KEYS);
+export const FAMILY_CALENDAR_COLOR_LABELS = {
+  pink: "분홍",
+  rose: "연분홍",
+  cream: "크림",
+  yellow: "노랑",
+  peach: "살구",
+  mint: "민트",
+  green: "초록",
+  sky: "하늘",
+  blue: "파랑",
+  purple: "보라",
+  lavender: "라벤더",
+  gray: "회색",
+};
 
 export function createFamilyCalendarId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {

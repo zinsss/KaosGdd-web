@@ -6,7 +6,10 @@ import { useRouter } from "next/navigation";
 
 import FamilyHeader from "../../FamilyHeader";
 import {
+  FAMILY_CALENDAR_COLOR_KEYS,
+  FAMILY_CALENDAR_COLOR_LABELS,
   createDefaultFamilyCalendarItem,
+  familyCalendarColorClassName,
   loadFamilyCalendarItems,
   normalizeFamilyCalendarItem,
   saveFamilyCalendarItems,
@@ -179,6 +182,23 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
                   </label>
                 </>
               )}
+            </div>
+
+            <div className="familyTimetableColorField">
+              <span>색상</span>
+              <div className="familyTimetableColorChips" role="radiogroup" aria-label="색상">
+                {FAMILY_CALENDAR_COLOR_KEYS.map((color) => (
+                  <button
+                    aria-label={FAMILY_CALENDAR_COLOR_LABELS[color]}
+                    aria-pressed={draft.color === color}
+                    className={`familyTimetableColorChip familyTimetableColorChip${familyCalendarColorClassName(color)}${draft.color === color ? " familyTimetableColorChipActive" : ""}`}
+                    key={color}
+                    onClick={() => updateDraft("color", color)}
+                    title={FAMILY_CALENDAR_COLOR_LABELS[color]}
+                    type="button"
+                  />
+                ))}
+              </div>
             </div>
 
             <label>
