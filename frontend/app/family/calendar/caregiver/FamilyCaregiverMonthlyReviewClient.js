@@ -40,7 +40,7 @@ function fixedDisplayWidth(value) {
   }, 0);
 }
 
-function padCell(value, width = 7) {
+function padCell(value, width = 6) {
   const text = String(value ?? "");
   return `${" ".repeat(Math.max(0, width - fixedDisplayWidth(text)))}${text}`;
 }
