@@ -832,6 +832,7 @@ export default function FamilyCalendarClient() {
     () => selectedWeekDates.map((date) => ({ date, items: selectedWeekWeatherDayparts[date] || [] })),
     [selectedWeekDates, selectedWeekWeatherDayparts],
   );
+  const caregiverReviewHref = `/family/calendar/caregiver?month=${monthDate.getFullYear()}-${padFamilyDatePart(monthDate.getMonth() + 1)}`;
   const selectedWeekWeatherByDate = useMemo(
     () => Object.fromEntries(selectedWeekDates.map((date) => [date, weatherByDate.get(date) || null])),
     [selectedWeekDates, weatherByDate],
@@ -1101,9 +1102,11 @@ export default function FamilyCalendarClient() {
       ) : null}
 
       <div className="familyCalendarGrid" aria-label="달력 월간 보기">
-        <section className="familyCalendarWeek familyCalendarWeekHeaderRow" aria-hidden="true">
+        <section className="familyCalendarWeek familyCalendarWeekHeaderRow" aria-label="달력 요일">
           <div className="familyCalendarWeekDates familyCalendarWeekHeader">
-            <span className="familyCalendarTimeRailSpacer familyCalendarTimeRailSpacerEmpty" aria-hidden="true" />
+            <Link className="familyCalendarCaregiverReviewGutter" href={caregiverReviewHref}>
+              돌봄
+            </Link>
             {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
               <span className="familyCalendarWeekDay familyCalendarWeekHeaderDay" key={label}>{label}</span>
             ))}
