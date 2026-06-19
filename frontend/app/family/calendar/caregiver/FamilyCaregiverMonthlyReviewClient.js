@@ -75,18 +75,20 @@ function buildReviewWeeks(monthDate, caregiverHoursByDate) {
 
 function buildReviewText(monthDate, caregiverHoursByDate) {
   const weeks = buildReviewWeeks(monthDate, caregiverHoursByDate);
+  const calendarIndent = "     ";
   const weekdayHeader = FAMILY_CALENDAR_DAY_LABELS.map((label) => padCell(label)).join("");
+  const separator = "-".repeat(weekdayHeader.length);
   const lines = [
     formatReviewMonth(monthDate),
     "",
-    weekdayHeader,
-    "-".repeat(weekdayHeader.length),
+    `${calendarIndent}${weekdayHeader}`,
+    `${calendarIndent}${separator}`,
   ];
 
   weeks.forEach((week, index) => {
     if (index > 0) lines.push("");
-    lines.push(week.map((day) => padCell(day?.day || "")).join(""));
-    lines.push(week.map((day) => padCell(day ? formatFamilyCaregiverHours(day.hours) || "0" : "")).join(""));
+    lines.push(`${calendarIndent}${week.map((day) => padCell(day?.day || "")).join("")}`);
+    lines.push(`${calendarIndent}${week.map((day) => padCell(day ? formatFamilyCaregiverHours(day.hours) || "0" : "")).join("")}`);
   });
 
   return lines.join("\n");
