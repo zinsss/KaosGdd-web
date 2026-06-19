@@ -257,10 +257,23 @@
   opacity: 1;
 }
 
+.familyCalendarItemDated.familyTimetableEntryPink { --family-calendar-event-outline: #ffc6dc; }
+.familyCalendarItemDated.familyTimetableEntryRose { --family-calendar-event-outline: #ffb3c7; }
+.familyCalendarItemDated.familyTimetableEntryPeach { --family-calendar-event-outline: #ffd2ba; }
+.familyCalendarItemDated.familyTimetableEntryYellow { --family-calendar-event-outline: #ffe08a; }
+.familyCalendarItemDated.familyTimetableEntryMint { --family-calendar-event-outline: #c9f2d2; }
+.familyCalendarItemDated.familyTimetableEntryGreen { --family-calendar-event-outline: #bcebc2; }
+.familyCalendarItemDated.familyTimetableEntrySky { --family-calendar-event-outline: #c9f2ff; }
+.familyCalendarItemDated.familyTimetableEntryBlue { --family-calendar-event-outline: #c7dcff; }
+.familyCalendarItemDated.familyTimetableEntryLavender { --family-calendar-event-outline: #e0c8ff; }
+.familyCalendarItemDated.familyTimetableEntryPurple { --family-calendar-event-outline: #e8bff0; }
+.familyCalendarItemDated.familyTimetableEntryCream { --family-calendar-event-outline: #fff1b8; }
+.familyCalendarItemDated.familyTimetableEntryGray { --family-calendar-event-outline: #ded8d2; }
+
 .familyCalendarItemDated {
-  background: transparent;
-  box-shadow: inset 0 0 0 2px rgba(216, 111, 152, 0.36);
-  opacity: 0.92;
+  background: #fffafd;
+  box-shadow: inset 0 0 0 2px var(--family-calendar-event-outline, #ffc6dc);
+  opacity: 1;
 }
 
 @media (max-width: 640px) {

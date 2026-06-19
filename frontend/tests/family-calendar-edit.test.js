@@ -306,6 +306,7 @@ test("family calendar timed items render by duration across hour boundaries", as
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const calendarCss = await readSource("../app/styles/family-calendar.css");
   const compactCss = await readSource("../app/styles/family-calendar-compact-month.css");
+  const polishCss = await readSource("../app/styles/family-polish.css");
 
   for (const value of [
     "function timedItemRange(item)",
@@ -342,11 +343,16 @@ test("family calendar timed items render by duration across hour boundaries", as
   assert.ok(calendarCss.includes("min-height: var(--family-calendar-timed-area-height);"));
   assert.ok(calendarCss.includes(".familyCalendarTimedItem {"));
   assert.ok(calendarCss.includes("pointer-events: auto;"));
+  assert.match(calendarCss, /\.familyCalendarTimedItem\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?text-align:\s*center;/);
+  assert.match(calendarCss, /\.familyCalendarEditItem\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?text-align:\s*center;/);
   assert.ok(calendarCss.includes(".familyCalendarTimedItem span:first-child,"));
   assert.ok(calendarCss.includes("text-overflow: ellipsis;"));
   assert.ok(compactCss.includes(".familyCalendarTimedItemsLayer"));
   assert.ok(compactCss.includes("grid-template-columns: var(--family-calendar-expanded-rail-width, 34px) repeat(7, minmax(0, 1fr));"));
   assert.ok(compactCss.includes("grid-template-columns: var(--family-calendar-expanded-rail-width, 28px) repeat(7, minmax(0, 1fr));"));
+  assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPink\s*\{[\s\S]*?--family-calendar-event-outline:\s*#ffc6dc;/);
+  assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryBlue\s*\{[\s\S]*?--family-calendar-event-outline:\s*#c7dcff;/);
+  assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?box-shadow:\s*inset 0 0 0 2px var\(--family-calendar-event-outline, #ffc6dc\);/);
 });
 
 test("family caregiver monthly review renders fixed-width calendar and wage summary", async () => {

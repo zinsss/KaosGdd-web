@@ -363,10 +363,12 @@
   z-index: 2;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 3px;
   min-height: 18px;
   padding: 2px 4px;
   font-size: 12px;
+  text-align: center;
   pointer-events: auto;
 }
 
@@ -829,10 +831,12 @@
   z-index: 2;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 3px;
   min-height: 18px;
   padding: 2px 4px;
   font-size: 12px;
+  text-align: center;
   touch-action: none;
   pointer-events: auto;
 }
