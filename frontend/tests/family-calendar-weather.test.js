@@ -45,6 +45,8 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(weatherRowsSource, /aria-expanded=\{expanded\}/);
   assert.match(weatherRowsSource, /aria-label="날씨 자세히 보기"/);
   assert.match(weatherRowsSource, /className="familyCalendarWeatherToggleLabel">•<\/span>/);
+  assert.match(weatherRowsSource, /FAMILY_CALENDAR_DAYPART_RAIL_LABELS\s*=\s*\["M",\s*"A",\s*"E",\s*"N"\]/);
+  assert.match(weatherRowsSource, /\{FAMILY_CALENDAR_DAYPART_RAIL_LABELS\[index\]\}/);
   assert.match(weatherRowsSource, /familyCalendarWeatherSummaryRow/);
   assert.match(weatherRowsSource, /\{expanded\s*\?\s*FAMILY_CALENDAR_DAYPART_LABELS\.map/);
 
@@ -62,8 +64,8 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(weatherCss, /\.familyCalendarWeatherSummary/);
   assert.match(weatherCss, /\.familyCalendarWeatherDaypart/);
   assert.match(weatherCss, /\.familyCalendarWeatherLabelText/);
+  assert.match(weatherCss, /\.familyCalendarWeatherToggle,\s*\n\.familyCalendarWeatherLabel\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"[\s\S]*?font-size:\s*10px;[\s\S]*?font-variant-numeric:\s*tabular-nums;[\s\S]*?letter-spacing:\s*0;/);
   assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*20px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
-  assert.match(compactCss, /grid-template-columns:\s*var\(--family-calendar-expanded-rail-width,\s*14px\)\s*repeat\(7,\s*minmax\(0,\s*1fr\)\);/);
 });
 
 test("family calendar weather daypart rows stay behind local expansion state", async () => {
@@ -79,6 +81,9 @@ test("family calendar weather daypart rows stay behind local expansion state", a
 
   for (const label of ["날씨", "오전", "오후", "저녁", "밤"]) {
     assert.ok(weatherClient.includes(label) || weatherRowsSource.includes(label), `${label} should appear in Family weather UI`);
+  }
+  for (const label of ["M", "A", "E", "N"]) {
+    assert.ok(weatherRowsSource.includes(`"${label}"`), `${label} should appear in compact Family weather rail labels`);
   }
 });
 

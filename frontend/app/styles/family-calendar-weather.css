@@ -50,10 +50,12 @@
   min-height: 24px;
   min-width: 0;
   padding: 2px 0 0;
-  color: rgba(150, 130, 190, 0.55);
-  font: inherit;
-  font-size: 13px;
+  color: rgba(120, 95, 160, 0.62);
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
   font-weight: 900;
+  letter-spacing: 0;
   line-height: 1;
   text-align: center;
   white-space: nowrap;
