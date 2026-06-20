@@ -310,6 +310,9 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes('data-family-calendar-drop={selected && editingCalendar ? "date" : undefined}'));
   assert.ok(calendarSource.includes('data-family-calendar-drop="allDay"'));
   assert.ok(calendarSource.includes('className="familyCalendarAllDayItem familyCalendarAllDayItemEditable"'));
+  assert.ok(calendarSource.includes("familyCalendarExpandedWeek familyCalendarExpandedWeekEditable familyCalendarExpandedWeekEditing"));
+  assert.ok(calendarSource.includes('className="familyCalendarEditModeBadge"'));
+  assert.ok(calendarSource.includes("편집 중"));
   assert.ok(calendarSource.includes("if (target.type === \"allDay\")"));
   assert.ok(calendarSource.includes('return `${weekday} 종일`.trim();'));
   assert.ok(calendarSource.includes('const weekDropElement = elements.find((element) => element instanceof HTMLElement && element.dataset.familyCalendarWeekDrop);'));
@@ -377,6 +380,10 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarCss.includes(".familyCalendarDragReadout {"));
   assert.ok(calendarCss.includes(".familyCalendarAllDayItemEditable {"));
   assert.ok(calendarCss.includes(".familyCalendarAllDaySlotDropTarget {"));
+  assert.match(calendarCss, /\.familyCalendarExpandedWeekEditing\s*\{[\s\S]*?border:\s*1px dashed rgba\(180, 120, 190, 0\.45\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(180, 120, 190, 0\.12\);/);
+  assert.match(calendarCss, /\.familyCalendarEditModeBadge\s*\{[\s\S]*?background:\s*rgba\(245, 235, 255, 0\.82\);[\s\S]*?color:\s*rgba\(110, 75, 145, 0\.88\);/);
+  assert.match(calendarCss, /\.familyCalendarEditItem::before,\s*\n\.familyCalendarAllDayItemEditable::before\s*\{[\s\S]*?content:\s*"⋮";[\s\S]*?position:\s*absolute;[\s\S]*?pointer-events:\s*none;/);
+  assert.ok(!calendarCss.includes(".familyCalendarTimedItem::before"));
   assert.ok(calendarCss.includes(".familyCalendarWeekDragTarget {"));
   assert.ok(calendarCss.includes(".familyCalendarWeekDragTargetPrev {"));
   assert.ok(calendarCss.includes(".familyCalendarWeekDragTargetNext {"));

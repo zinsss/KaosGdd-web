@@ -256,6 +256,33 @@
   padding-right: 2px;
 }
 
+.familyCalendarExpandedWeekEditing {
+  border: 1px dashed rgba(180, 120, 190, 0.45);
+  border-radius: 8px;
+  padding: 7px;
+  box-shadow: inset 0 0 0 1px rgba(180, 120, 190, 0.12);
+}
+
+.familyCalendarEditModeBadgeRow {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+.familyCalendarEditModeBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 2px 7px;
+  background: rgba(245, 235, 255, 0.82);
+  color: rgba(110, 75, 145, 0.88);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.2;
+  box-shadow: inset 0 0 0 1px rgba(180, 120, 190, 0.22);
+}
+
 .familyCalendarTimeRow {
   display: grid;
   grid-template-columns: 20px repeat(7, minmax(0, 1fr));
@@ -989,7 +1016,20 @@
 }
 
 .familyCalendarAllDayItemEditable {
+  position: relative;
   touch-action: none;
+}
+
+.familyCalendarEditItem::before,
+.familyCalendarAllDayItemEditable::before {
+  content: "⋮";
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  color: rgba(120, 85, 150, 0.45);
+  font-size: 10px;
+  line-height: 1;
+  pointer-events: none;
 }
 
 .familyCalendarAllDaySlotDropTarget {
