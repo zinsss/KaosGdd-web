@@ -93,6 +93,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes('type="checkbox"'));
   assert.ok(eventFormSource.includes('{draft.allDay ? null : ('));
   assert.ok(eventFormSource.includes('familyCalendarFormGridAllDay'));
+  assert.ok(eventFormSource.includes('className="familyCalendarFormDateField"'));
+  assert.equal((eventFormSource.match(/className="familyCalendarFormTimeField"/g) || []).length, 2);
   assert.equal((eventFormSource.match(/취소/g) || []).length, 1);
   assert.ok(!eventFormSource.includes("familyTaskActionButton"));
   assert.ok(eventFormSource.includes('placeholder="새 일정"'));
@@ -142,8 +144,14 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(calendarCss.includes(".familyCalendarFormToggle {"));
   assert.ok(calendarCss.includes(".familyCalendarFormToggleControl {"));
   assert.ok(calendarCss.includes(".familyCalendarFormGridAllDay {"));
+  assert.match(calendarCss, /\.familyCalendarForm,\s*\n\.familyRoniPanel\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?box-sizing:\s*border-box;[\s\S]*?min-width:\s*0;/);
+  assert.match(calendarCss, /\.familyCalendarForm label\s*\{[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarForm input,\s*\n\.familyCalendarForm select,\s*\n\.familyCalendarForm textarea,\s*\n\.familyCalendarForm button\s*\{[\s\S]*?box-sizing:\s*border-box;/);
+  assert.match(calendarCss, /\.familyCalendarForm input,\s*\n\.familyCalendarForm select,\s*\n\.familyCalendarForm textarea\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormGrid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?min-width:\s*0;/);
+  assert.match(calendarCss, /\.familyCalendarFormDateField,\s*\n\.familyCalendarFormTimeField\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?max-width:\s*100%;/);
+  assert.match(calendarCss, /\.familyCalendarForm \.familyTimetableColorField,\s*\n\.familyCalendarForm \.familyTimetableColorChips\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?box-sizing:\s*border-box;/);
+  assert.match(calendarCss, /@media \(max-width: 640px\)\s*\{[\s\S]*?\.familyCalendarFormGrid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?\}[\s\S]*?\.familyCalendarFormDateField,\s*\n\s*\.familyCalendarFormGridAllDay \.familyCalendarFormDateField\s*\{[\s\S]*?grid-column:\s*1 \/ -1;/);
   assert.match(calendarCss, /\.familyCalendarFormActions\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormActions > \*\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormActions \.familyTaskDelete\s*\{[\s\S]*?grid-column:\s*1 \/ -1;/);
