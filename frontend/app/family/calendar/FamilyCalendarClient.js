@@ -872,13 +872,16 @@ function FamilyCalendarEditWeek({
 
   return (
     <div
-      className="familyCalendarExpandedWeek familyCalendarExpandedWeekEditable"
+      className="familyCalendarExpandedWeek familyCalendarExpandedWeekEditable familyCalendarExpandedWeekEditing"
       aria-label="수정 주간 시간표"
       onPointerCancel={finishDatedDrag}
       onPointerMove={moveDatedDrag}
       onPointerUp={finishDatedDrag}
       ref={editScrollRef}
     >
+      <div className="familyCalendarEditModeBadgeRow">
+        <span className="familyCalendarEditModeBadge">편집 중</span>
+      </div>
       {hasWeatherRows ? (
         <FamilyCalendarWeatherRows
           expanded={weatherExpanded}
