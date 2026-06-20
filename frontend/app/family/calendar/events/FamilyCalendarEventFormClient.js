@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -144,9 +143,6 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
                 <h2>{pageTitle}</h2>
                 <p>달력에 적어둘 일정을 써요.</p>
               </div>
-              <Link className="familyTaskActionButton" href="/family/calendar">
-                취소
-              </Link>
             </div>
 
             <label>

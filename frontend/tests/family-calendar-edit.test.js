@@ -93,6 +93,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes('type="checkbox"'));
   assert.ok(eventFormSource.includes('{draft.allDay ? null : ('));
   assert.ok(eventFormSource.includes('familyCalendarFormGridAllDay'));
+  assert.equal((eventFormSource.match(/취소/g) || []).length, 1);
+  assert.ok(!eventFormSource.includes("familyTaskActionButton"));
   assert.ok(eventFormSource.includes('placeholder="새 일정"'));
   assert.ok(eventFormSource.includes('allDay: item.allDay === true,'));
   assert.ok(eventFormSource.includes('allDay: item.allDay === true,'));
@@ -140,6 +142,11 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(calendarCss.includes(".familyCalendarFormToggle {"));
   assert.ok(calendarCss.includes(".familyCalendarFormToggleControl {"));
   assert.ok(calendarCss.includes(".familyCalendarFormGridAllDay {"));
+  assert.match(calendarCss, /\.familyCalendarForm input,\s*\n\.familyCalendarForm select,\s*\n\.familyCalendarForm textarea,\s*\n\.familyCalendarForm button\s*\{[\s\S]*?box-sizing:\s*border-box;/);
+  assert.match(calendarCss, /\.familyCalendarFormGrid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?min-width:\s*0;/);
+  assert.match(calendarCss, /\.familyCalendarFormActions\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
+  assert.match(calendarCss, /\.familyCalendarFormActions > \*\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
+  assert.match(calendarCss, /\.familyCalendarFormActions \.familyTaskDelete\s*\{[\s\S]*?grid-column:\s*1 \/ -1;/);
   assert.match(polishCss, /\.familyCalendarItemRoni\.familyTimetableEntryPink\s*\{\s*background:\s*#ffc6dc;\s*\}/);
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPink\s*\{[\s\S]*?--family-calendar-event-outline:\s*#ffc6dc;[\s\S]*?--family-calendar-event-fill-soft:\s*rgba\(255, 198, 220, 0\.28\);/);
   assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?box-shadow:\s*inset 0 0 0 2px var\(--family-calendar-event-outline, #ffc6dc\);/);
