@@ -1096,6 +1096,13 @@
   min-width: 0;
 }
 
+.familyCalendarForm,
+.familyCalendarForm *,
+.familyCalendarForm *::before,
+.familyCalendarForm *::after {
+  box-sizing: border-box;
+}
+
 .familyCalendarFormHeader {
   display: flex;
   align-items: flex-start;
@@ -1127,8 +1134,10 @@
 .familyCalendarForm label {
   display: grid;
   gap: 5px;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
+  overflow: hidden;
   color: rgba(78, 37, 54, 0.68);
   font-size: 15px;
   font-weight: 950;
@@ -1145,8 +1154,11 @@
 .familyCalendarForm select,
 .familyCalendarForm textarea {
   width: 100%;
+  inline-size: 100%;
   max-width: 100%;
+  max-inline-size: 100%;
   min-width: 0;
+  min-inline-size: 0;
   min-height: 42px;
   box-sizing: border-box;
   border: 1px solid rgba(214, 128, 157, 0.28);
@@ -1201,8 +1213,19 @@
 
 .familyCalendarFormDateField,
 .familyCalendarFormTimeField {
+  width: 100%;
   min-width: 0;
+  min-inline-size: 0;
   max-width: 100%;
+  max-inline-size: 100%;
+  overflow: hidden;
+}
+
+.familyCalendarFormDateField input,
+.familyCalendarFormTimeField input {
+  display: block;
+  min-inline-size: 0;
+  max-inline-size: 100%;
 }
 
 .familyCalendarFormGridAllDay {
@@ -1464,6 +1487,8 @@
 
   .familyCalendarFormGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 10px;
+    row-gap: 10px;
   }
 
   .familyCalendarFormDateField,
