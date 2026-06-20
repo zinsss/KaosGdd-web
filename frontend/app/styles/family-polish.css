@@ -240,15 +240,15 @@
 }
 
 .familyCalendarItemRoni.familyTimetableEntryPink { background: #ffc6dc; }
-.familyCalendarItemRoni.familyTimetableEntryRose { background: #ffb3c7; }
+.familyCalendarItemRoni.familyTimetableEntryRose { background: #ffb6a8; }
 .familyCalendarItemRoni.familyTimetableEntryPeach { background: #ffd2ba; }
 .familyCalendarItemRoni.familyTimetableEntryYellow { background: #ffe08a; }
 .familyCalendarItemRoni.familyTimetableEntryMint { background: #c9f2d2; }
 .familyCalendarItemRoni.familyTimetableEntryGreen { background: #bcebc2; }
-.familyCalendarItemRoni.familyTimetableEntrySky { background: #c9f2ff; }
-.familyCalendarItemRoni.familyTimetableEntryBlue { background: #c7dcff; }
-.familyCalendarItemRoni.familyTimetableEntryLavender { background: #e0c8ff; }
-.familyCalendarItemRoni.familyTimetableEntryPurple { background: #e8bff0; }
+.familyCalendarItemRoni.familyTimetableEntrySky { background: #b7f1ff; }
+.familyCalendarItemRoni.familyTimetableEntryBlue { background: #b8c8ff; }
+.familyCalendarItemRoni.familyTimetableEntryLavender { background: #d4ccff; }
+.familyCalendarItemRoni.familyTimetableEntryPurple { background: #f0b2e8; }
 .familyCalendarItemRoni.familyTimetableEntryCream { background: #fff1b8; }
 .familyCalendarItemRoni.familyTimetableEntryGray { background: #ded8d2; }
 
@@ -263,8 +263,8 @@
 }
 
 .familyCalendarItemDated.familyTimetableEntryRose {
-  --family-calendar-event-outline: #ffb3c7;
-  --family-calendar-event-fill-soft: rgba(255, 179, 199, 0.28);
+  --family-calendar-event-outline: #ffb6a8;
+  --family-calendar-event-fill-soft: rgba(255, 182, 168, 0.3);
 }
 
 .familyCalendarItemDated.familyTimetableEntryPeach {
@@ -288,23 +288,23 @@
 }
 
 .familyCalendarItemDated.familyTimetableEntrySky {
-  --family-calendar-event-outline: #c9f2ff;
-  --family-calendar-event-fill-soft: rgba(201, 242, 255, 0.34);
+  --family-calendar-event-outline: #b7f1ff;
+  --family-calendar-event-fill-soft: rgba(183, 241, 255, 0.34);
 }
 
 .familyCalendarItemDated.familyTimetableEntryBlue {
-  --family-calendar-event-outline: #c7dcff;
-  --family-calendar-event-fill-soft: rgba(199, 220, 255, 0.32);
+  --family-calendar-event-outline: #b8c8ff;
+  --family-calendar-event-fill-soft: rgba(184, 200, 255, 0.32);
 }
 
 .familyCalendarItemDated.familyTimetableEntryLavender {
-  --family-calendar-event-outline: #e0c8ff;
-  --family-calendar-event-fill-soft: rgba(224, 200, 255, 0.3);
+  --family-calendar-event-outline: #d4ccff;
+  --family-calendar-event-fill-soft: rgba(212, 204, 255, 0.3);
 }
 
 .familyCalendarItemDated.familyTimetableEntryPurple {
-  --family-calendar-event-outline: #e8bff0;
-  --family-calendar-event-fill-soft: rgba(232, 191, 240, 0.3);
+  --family-calendar-event-outline: #f0b2e8;
+  --family-calendar-event-fill-soft: rgba(240, 178, 232, 0.3);
 }
 
 .familyCalendarItemDated.familyTimetableEntryCream {
