@@ -44,7 +44,7 @@ function WeatherCell({ children, className = "" }) {
 export default function FamilyCalendarWeatherRows({ expanded = false, onToggle = null, selectedWeekDates, weatherByDate, weatherDaypartsByDate }) {
   return (
     <>
-      <div className="familyCalendarTimeRow familyCalendarWeatherRow familyCalendarWeatherSummaryRow">
+      <div className={`familyCalendarTimeRow familyCalendarWeatherRow familyCalendarWeatherSummaryRow${expanded ? "" : " familyCalendarSectionSeparated"}`}>
         {onToggle ? (
           <button
             aria-expanded={expanded}
@@ -73,7 +73,7 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
         })}
       </div>
       {expanded ? FAMILY_CALENDAR_DAYPART_LABELS.map((defaultLabel, index) => (
-        <div className="familyCalendarTimeRow familyCalendarWeatherRow" key={defaultLabel}>
+        <div className={`familyCalendarTimeRow familyCalendarWeatherRow${index === FAMILY_CALENDAR_DAYPART_LABELS.length - 1 ? " familyCalendarSectionSeparated" : ""}`} key={defaultLabel}>
           <span className="familyCalendarTimeLabel familyCalendarWeatherLabel">{FAMILY_CALENDAR_DAYPART_RAIL_LABELS[index]}</span>
           {selectedWeekDates.map((date) => {
             const weather = weatherDaypartsByDate[date]?.[index];
