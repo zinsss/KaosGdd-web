@@ -162,17 +162,17 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
             </label>
 
             <div className={`familyCalendarFormGrid${draft.allDay ? " familyCalendarFormGridAllDay" : ""}`}>
-              <label>
+              <label className="familyCalendarFormDateField">
                 <span>날짜</span>
                 <input type="date" value={draft.date} onChange={(event) => updateDraft("date", event.target.value)} />
               </label>
               {draft.allDay ? null : (
                 <>
-                  <label>
+                  <label className="familyCalendarFormTimeField">
                     <span>시작</span>
                     <input type="time" value={draft.startTime} onChange={(event) => updateDraft("startTime", event.target.value)} />
                   </label>
-                  <label>
+                  <label className="familyCalendarFormTimeField">
                     <span>끝</span>
                     <input type="time" value={draft.endTime} onChange={(event) => updateDraft("endTime", event.target.value)} />
                   </label>

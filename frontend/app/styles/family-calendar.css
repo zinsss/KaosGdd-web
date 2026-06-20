@@ -1085,11 +1085,14 @@
 .familyRoniPanel {
   display: grid;
   gap: 12px;
+  width: 100%;
+  max-width: 100%;
   border: 1px solid rgba(214, 128, 157, 0.2);
   border-radius: 8px;
   padding: 14px;
   background: #fffafd;
   box-shadow: 0 8px 18px rgba(151, 69, 98, 0.1);
+  box-sizing: border-box;
   min-width: 0;
 }
 
@@ -1124,6 +1127,7 @@
 .familyCalendarForm label {
   display: grid;
   gap: 5px;
+  max-width: 100%;
   min-width: 0;
   color: rgba(78, 37, 54, 0.68);
   font-size: 15px;
@@ -1190,11 +1194,32 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
+  width: 100%;
+  max-width: 100%;
   min-width: 0;
+}
+
+.familyCalendarFormDateField,
+.familyCalendarFormTimeField {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .familyCalendarFormGridAllDay {
   grid-template-columns: minmax(0, 1fr);
+}
+
+.familyCalendarForm .familyTimetableColorField,
+.familyCalendarForm .familyTimetableColorChips {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.familyCalendarForm .familyTimetableColorChips {
+  grid-template-columns: repeat(auto-fit, minmax(34px, 42px));
+  gap: 8px;
 }
 
 .familyCalendarFormActionsInline,
@@ -1387,7 +1412,12 @@
   }
 
   .familyCalendarFormGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .familyCalendarFormDateField,
+  .familyCalendarFormGridAllDay .familyCalendarFormDateField {
+    grid-column: 1 / -1;
   }
 
   .familyCalendarFormActionsInline > *,
