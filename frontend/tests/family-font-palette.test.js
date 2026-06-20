@@ -3,17 +3,17 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const TIMETABLE_COLORS = [
-  ["Pink", "#ffd8e5"],
-  ["Rose", "#ffe4ec"],
+  ["Pink", "#ffd2e2"],
+  ["Rose", "#ffc0b5"],
   ["Cream", "#fff8df"],
   ["Yellow", "#fff0a8"],
   ["Peach", "#ffd9b8"],
   ["Mint", "#d6f5ea"],
   ["Green", "#dff5cf"],
-  ["Sky", "#d9f1ff"],
-  ["Blue", "#dbeafe"],
-  ["Purple", "#eadcff"],
-  ["Lavender", "#f0e7ff"],
+  ["Sky", "#bdf4ff"],
+  ["Blue", "#b9ccff"],
+  ["Purple", "#f3b7e8"],
+  ["Lavender", "#d7d0ff"],
   ["Gray", "#ece8e3"],
 ];
 

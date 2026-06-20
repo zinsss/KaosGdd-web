@@ -69,6 +69,7 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
   const [draft, setDraft] = useState(() => eventToDraft(createDefaultFamilyCalendarItem()));
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
   const editing = Boolean(eventId);
 
   useEffect(() => {
@@ -89,6 +90,8 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
   }, [items, loaded]);
 
   const pageTitle = useMemo(() => (editing ? "일정 수정" : "일정 추가"), [editing]);
+  const selectedColorClass = familyCalendarColorClassName(draft.color);
+  const selectedColorLabel = FAMILY_CALENDAR_COLOR_LABELS[draft.color] || FAMILY_CALENDAR_COLOR_LABELS.pink;
 
   function updateDraft(field, value) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -180,21 +183,35 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
               )}
             </div>
 
-            <div className="familyTimetableColorField">
-              <span>색상</span>
-              <div className="familyTimetableColorChips" role="radiogroup" aria-label="색상">
-                {FAMILY_CALENDAR_COLOR_KEYS.map((color) => (
-                  <button
-                    aria-label={FAMILY_CALENDAR_COLOR_LABELS[color]}
-                    aria-pressed={draft.color === color}
-                    className={`familyTimetableColorChip familyTimetableColorChip${familyCalendarColorClassName(color)}${draft.color === color ? " familyTimetableColorChipActive" : ""}`}
-                    key={color}
-                    onClick={() => updateDraft("color", color)}
-                    title={FAMILY_CALENDAR_COLOR_LABELS[color]}
-                    type="button"
-                  />
-                ))}
-              </div>
+            <div className={`familyTimetableColorField familyCalendarColorPicker${colorPickerOpen ? " familyCalendarColorPickerOpen" : ""}`}>
+              <button
+                aria-expanded={colorPickerOpen}
+                className="familyCalendarColorPickerToggle"
+                onClick={() => setColorPickerOpen((current) => !current)}
+                type="button"
+              >
+                <span className="familyCalendarColorPickerTitle">색상</span>
+                <span className={`familyCalendarColorPickerSwatch familyTimetableColorChip${selectedColorClass}`} aria-hidden="true" />
+                <span className="familyCalendarColorPickerValue">{selectedColorLabel}</span>
+                <span className="familyCalendarColorPickerChevron" aria-hidden="true">
+                  {colorPickerOpen ? "▴" : "▾"}
+                </span>
+              </button>
+              {colorPickerOpen ? (
+                <div className="familyTimetableColorChips" role="radiogroup" aria-label="색상">
+                  {FAMILY_CALENDAR_COLOR_KEYS.map((color) => (
+                    <button
+                      aria-label={FAMILY_CALENDAR_COLOR_LABELS[color]}
+                      aria-pressed={draft.color === color}
+                      className={`familyTimetableColorChip familyTimetableColorChip${familyCalendarColorClassName(color)}${draft.color === color ? " familyTimetableColorChipActive" : ""}`}
+                      key={color}
+                      onClick={() => updateDraft("color", color)}
+                      title={FAMILY_CALENDAR_COLOR_LABELS[color]}
+                      type="button"
+                    />
+                  ))}
+                </div>
+              ) : null}
             </div>
 
             <label>

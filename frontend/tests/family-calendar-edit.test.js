@@ -105,6 +105,11 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes("FAMILY_CALENDAR_COLOR_KEYS.map"));
   assert.ok(eventFormSource.includes("FAMILY_CALENDAR_COLOR_LABELS[color]"));
   assert.ok(eventFormSource.includes("familyTimetableColorChip"));
+  assert.ok(eventFormSource.includes("const [colorPickerOpen, setColorPickerOpen] = useState(false);"));
+  assert.ok(eventFormSource.includes("className=\"familyCalendarColorPickerToggle\""));
+  assert.ok(eventFormSource.includes("aria-expanded={colorPickerOpen}"));
+  assert.ok(eventFormSource.includes("familyCalendarColorPickerSwatch"));
+  assert.ok(eventFormSource.includes("{colorPickerOpen ? ("));
   assert.ok(!eventFormSource.includes("colorIsUnavailable"));
   assert.ok(!eventFormSource.includes("familyTimetableColorChipDisabled"));
   assert.ok(roniSource.includes("FAMILY_CALENDAR_COLOR_KEYS.map"));
@@ -151,6 +156,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarFormGrid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormDateField,\s*\n\.familyCalendarFormTimeField\s*\{[\s\S]*?min-width:\s*0;[\s\S]*?max-width:\s*100%;/);
   assert.match(calendarCss, /\.familyCalendarForm \.familyTimetableColorField,\s*\n\.familyCalendarForm \.familyTimetableColorChips\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?box-sizing:\s*border-box;/);
+  assert.match(calendarCss, /\.familyCalendarColorPickerToggle\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto auto auto;[\s\S]*?min-height:\s*38px;/);
+  assert.match(calendarCss, /\.familyCalendarColorPickerSwatch\s*\{[\s\S]*?width:\s*14px;[\s\S]*?height:\s*14px;/);
   assert.match(calendarCss, /@media \(max-width: 640px\)\s*\{[\s\S]*?\.familyCalendarFormGrid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?\}[\s\S]*?\.familyCalendarFormDateField,\s*\n\s*\.familyCalendarFormGridAllDay \.familyCalendarFormDateField\s*\{[\s\S]*?grid-column:\s*1 \/ -1;/);
   assert.match(calendarCss, /\.familyCalendarFormActions\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormActions > \*\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
@@ -460,7 +467,11 @@ test("family calendar timed items render by duration across hour boundaries", as
   assert.ok(compactCss.includes(".familyCalendarTimedItemsLayer"));
   assert.ok(compactCss.includes("grid-template-columns: var(--family-calendar-expanded-rail-width, 20px) repeat(7, minmax(0, 1fr));"));
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPink\s*\{[\s\S]*?--family-calendar-event-outline:\s*#ffc6dc;/);
-  assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryBlue\s*\{[\s\S]*?--family-calendar-event-outline:\s*#c7dcff;/);
+  assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryRose\s*\{[\s\S]*?--family-calendar-event-outline:\s*#ffb6a8;/);
+  assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntrySky\s*\{[\s\S]*?--family-calendar-event-outline:\s*#b7f1ff;/);
+  assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryBlue\s*\{[\s\S]*?--family-calendar-event-outline:\s*#b8c8ff;/);
+  assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryLavender\s*\{[\s\S]*?--family-calendar-event-outline:\s*#d4ccff;/);
+  assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPurple\s*\{[\s\S]*?--family-calendar-event-outline:\s*#f0b2e8;/);
   assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?box-shadow:\s*inset 0 0 0 2px var\(--family-calendar-event-outline, #ffc6dc\);/);
 });
 
