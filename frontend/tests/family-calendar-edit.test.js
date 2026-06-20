@@ -415,7 +415,9 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarCss.includes(".familyCalendarDragReadout {"));
   assert.ok(calendarCss.includes(".familyCalendarAllDayItemEditable {"));
   assert.ok(calendarCss.includes(".familyCalendarAllDaySlotDropTarget {"));
-  assert.match(calendarCss, /\.familyCalendarExpandedWeekEditing\s*\{[\s\S]*?border:\s*1px dashed rgba\(180, 120, 190, 0\.45\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(180, 120, 190, 0\.12\);/);
+  assert.match(calendarCss, /\.familyCalendarExpandedWeekEditing\s*\{[\s\S]*?border:\s*0;[\s\S]*?padding:\s*0;[\s\S]*?background:\s*rgba\(230, 220, 255, 0\.22\);[\s\S]*?box-shadow:\s*none;/);
+  assert.ok(!calendarCss.includes("border: 1px dashed rgba(180, 120, 190, 0.45);"));
+  assert.match(calendarCss, /\.familyCalendarSectionSeparated,\s*\n\.familyCalendarCaregiverRow,\s*\n\.familyCalendarAllDayRow\s*\{[\s\S]*?box-shadow:\s*inset 0 -1px 0 rgba\(180, 120, 190, 0\.13\);/);
   assert.match(calendarCss, /\.familyCalendarEditModeBadge\s*\{[\s\S]*?background:\s*rgba\(245, 235, 255, 0\.82\);[\s\S]*?color:\s*rgba\(110, 75, 145, 0\.88\);/);
   assert.match(calendarCss, /\.familyCalendarEditItem::before,\s*\n\.familyCalendarAllDayItemEditable::before\s*\{[\s\S]*?content:\s*"⋮";[\s\S]*?position:\s*absolute;[\s\S]*?pointer-events:\s*none;/);
   assert.ok(!calendarCss.includes(".familyCalendarTimedItem::before"));

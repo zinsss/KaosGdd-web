@@ -48,6 +48,7 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(weatherRowsSource, /FAMILY_CALENDAR_DAYPART_RAIL_LABELS\s*=\s*\["M",\s*"A",\s*"E",\s*"N"\]/);
   assert.match(weatherRowsSource, /\{FAMILY_CALENDAR_DAYPART_RAIL_LABELS\[index\]\}/);
   assert.match(weatherRowsSource, /familyCalendarWeatherSummaryRow/);
+  assert.match(weatherRowsSource, /familyCalendarSectionSeparated/);
   assert.match(weatherRowsSource, /\{expanded\s*\?\s*FAMILY_CALENDAR_DAYPART_LABELS\.map/);
 
   const weatherIndex = calendarSource.indexOf("<FamilyCalendarWeatherRows");
