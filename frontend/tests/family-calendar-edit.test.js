@@ -151,11 +151,11 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(calendarCss.includes(".familyCalendarFormGridAllDay {"));
   assert.match(calendarCss, /\.familyCalendarForm,\s*\n\.familyRoniPanel\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?box-sizing:\s*border-box;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarForm,\s*\n\.familyCalendarForm \*,\s*\n\.familyCalendarForm \*::before,\s*\n\.familyCalendarForm \*::after\s*\{[\s\S]*?box-sizing:\s*border-box;/);
-  assert.match(calendarCss, /\.familyCalendarForm label\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*hidden;/);
+  assert.match(calendarCss, /\.familyCalendarForm label\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*visible;/);
   assert.match(calendarCss, /\.familyCalendarForm input,\s*\n\.familyCalendarForm select,\s*\n\.familyCalendarForm textarea,\s*\n\.familyCalendarForm button\s*\{[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(calendarCss, /\.familyCalendarForm input,\s*\n\.familyCalendarForm select,\s*\n\.familyCalendarForm textarea\s*\{[\s\S]*?width:\s*100%;[\s\S]*?inline-size:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?max-inline-size:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?min-inline-size:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormGrid\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(0, 1fr\)\);[\s\S]*?min-width:\s*0;/);
-  assert.match(calendarCss, /\.familyCalendarFormDateField,\s*\n\.familyCalendarFormTimeField\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?min-inline-size:\s*0;[\s\S]*?max-width:\s*100%;[\s\S]*?max-inline-size:\s*100%;[\s\S]*?overflow:\s*hidden;/);
+  assert.match(calendarCss, /\.familyCalendarFormDateField,\s*\n\.familyCalendarFormTimeField\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?min-inline-size:\s*0;[\s\S]*?max-width:\s*100%;[\s\S]*?max-inline-size:\s*100%;[\s\S]*?overflow:\s*visible;/);
   assert.match(calendarCss, /\.familyCalendarFormDateField input,\s*\n\.familyCalendarFormTimeField input\s*\{[\s\S]*?display:\s*block;[\s\S]*?min-inline-size:\s*0;[\s\S]*?max-inline-size:\s*100%;/);
   assert.match(calendarCss, /\.familyCalendarForm \.familyTimetableColorField,\s*\n\.familyCalendarForm \.familyTimetableColorChips\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(calendarCss, /\.familyCalendarColorPickerToggle\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto auto auto;[\s\S]*?min-height:\s*38px;/);
