@@ -375,11 +375,14 @@ function CalendarItemLink({
   return (
     <Link
       className={`familyCalendarItem familyCalendarItem${item.type === "roni" ? "Roni" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${className ? ` ${className}` : ""}${dragging ? " familyCalendarEditItemDragging" : ""}`}
+      draggable={dragEnabledItem ? false : undefined}
       href={href}
       key={`${item.type}-${item.id}`}
       onClick={dragging || suppressRoniNavigation ? (event) => event.preventDefault() : undefined}
+      onDragStart={dragEnabledItem ? (event) => event.preventDefault() : undefined}
       onPointerCancel={cancelRoniChoice}
       onPointerDown={dragEnabledItem ? (event) => {
+        if (event.pointerType === "mouse" && event.button !== 0) return;
         event.stopPropagation();
         if (editableDatedItem && onStartDatedDrag) onStartDatedDrag(event, item);
         if (editableRoniItem && onStartRoniDrag) onStartRoniDrag(event, item);
