@@ -447,6 +447,7 @@ test("family calendar timed items render by duration across hour boundaries", as
   assert.match(calendarCss, /\.familyCalendarEditItem\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?border-radius:\s*4px;[\s\S]*?text-align:\s*center;/);
   assert.match(calendarCss, /\.familyCalendarTimedItem,\s*\n\.familyCalendarEditItem\s*\{[\s\S]*?border-radius:\s*4px;/);
   assert.ok(calendarCss.includes(".familyCalendarTimedItem span:first-child,"));
+  assert.match(calendarCss, /\.familyCalendarTimedItem span:first-child,\s*\n\.familyCalendarEditItem span:first-child\s*\{[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?width:\s*100%;[\s\S]*?height:\s*100%;[\s\S]*?text-align:\s*center;/);
   assert.ok(calendarCss.includes("text-overflow: ellipsis;"));
   assert.ok(compactCss.includes(".familyCalendarTimedItemsLayer"));
   assert.ok(compactCss.includes("grid-template-columns: var(--family-calendar-expanded-rail-width, 20px) repeat(7, minmax(0, 1fr));"));
