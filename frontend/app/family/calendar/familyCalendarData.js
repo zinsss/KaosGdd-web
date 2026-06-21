@@ -158,9 +158,53 @@ export function normalizeFamilyCaregiverHour(value) {
   return numeric;
 }
 
+export function parseFamilyCaregiverTime(value) {
+  const match = String(value || "").match(/^(\d{2}):(\d{2})$/);
+  if (!match) return null;
+  const hour = Number(match[1]);
+  const minute = Number(match[2]);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
+  return hour * 60 + minute;
+}
+
+export function minutesToFamilyCaregiverTime(totalMinutes) {
+  const minutesInDay = 24 * 60;
+  const normalized = Math.max(0, Math.min(minutesInDay - 1, Number(totalMinutes) || 0));
+  const hour = Math.floor(normalized / 60);
+  const minute = normalized % 60;
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+export function normalizeFamilyCaregiverSession(session) {
+  if (!session || typeof session !== "object") return null;
+  const start = String(session.start || "");
+  const end = String(session.end || "");
+  const startMinutes = parseFamilyCaregiverTime(start);
+  const endMinutes = parseFamilyCaregiverTime(end);
+  if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) return null;
+  return { start, end };
+}
+
+export function normalizeFamilyCaregiverSessions(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(normalizeFamilyCaregiverSession).filter(Boolean);
+}
+
+export function familyCaregiverSessionDurationHours(session) {
+  const normalized = normalizeFamilyCaregiverSession(session);
+  if (!normalized) return 0;
+  return (parseFamilyCaregiverTime(normalized.end) - parseFamilyCaregiverTime(normalized.start)) / 60;
+}
+
+export function calculateFamilyCaregiverHours(value) {
+  const legacyHours = normalizeFamilyCaregiverHour(value);
+  if (legacyHours !== null) return legacyHours;
+  return normalizeFamilyCaregiverSessions(value).reduce((total, session) => total + familyCaregiverSessionDurationHours(session), 0);
+}
+
 export function formatFamilyCaregiverHours(value) {
-  const normalized = normalizeFamilyCaregiverHour(value);
-  if (normalized === null) return "";
+  const normalized = calculateFamilyCaregiverHours(value);
+  if (!Number.isFinite(normalized) || normalized <= 0) return "";
   return Number.isInteger(normalized) ? String(normalized) : normalized.toFixed(1);
 }
 
@@ -168,8 +212,14 @@ export function normalizeFamilyCaregiverHoursMap(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return {};
   return Object.entries(value).reduce((next, [dateKey, hours]) => {
     if (!parseFamilyDateKey(dateKey)) return next;
-    const normalized = normalizeFamilyCaregiverHour(hours);
-    if (normalized !== null) next[formatFamilyDateKey(parseFamilyDateKey(dateKey))] = normalized;
+    const normalizedDate = formatFamilyDateKey(parseFamilyDateKey(dateKey));
+    const normalizedLegacy = normalizeFamilyCaregiverHour(hours);
+    if (normalizedLegacy !== null) {
+      next[normalizedDate] = normalizedLegacy;
+      return next;
+    }
+    const normalizedSessions = normalizeFamilyCaregiverSessions(hours);
+    if (normalizedSessions.length) next[normalizedDate] = normalizedSessions;
     return next;
   }, {});
 }

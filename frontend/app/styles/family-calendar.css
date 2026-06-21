@@ -501,23 +501,75 @@
 
 .familyCalendarCaregiverPicker {
   grid-column: 2 / -1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
+  display: grid;
+  gap: 7px;
   min-width: 0;
   border-radius: 8px;
-  padding: 5px;
+  padding: 7px;
   background: rgba(242, 243, 255, 0.58);
   box-shadow: inset 0 0 0 1px rgba(217, 214, 255, 0.82);
 }
 
-.familyCalendarCaregiverOption {
+.familyCalendarCaregiverPickerTitle,
+.familyCalendarCaregiverTotal,
+.familyCalendarCaregiverError {
+  min-width: 0;
+  color: rgba(70, 82, 150, 0.84);
+  font-size: 13px;
+  font-weight: 950;
+  line-height: 1.2;
+}
+
+.familyCalendarCaregiverSessions {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.familyCalendarCaregiverSessionRow {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.familyCalendarCaregiverSessionLabel {
+  color: rgba(78, 37, 54, 0.62);
+  font-size: 12px;
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+.familyCalendarCaregiverSessionValue {
+  min-width: 0;
+  overflow: hidden;
+  color: #4b2536;
+  font-size: 13px;
+  font-weight: 950;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.familyCalendarCaregiverSessionSeparator {
+  color: rgba(78, 37, 54, 0.5);
+  font-size: 14px;
+  font-weight: 950;
+}
+
+.familyCalendarCaregiverTimeButton,
+.familyCalendarCaregiverAddSession,
+.familyCalendarCaregiverRemoveSession,
+.familyCalendarCaregiverSave,
+.familyCalendarCaregiverCancel {
   appearance: none;
   border: 0;
-  min-width: 28px;
+  min-width: 0;
   min-height: 26px;
   border-radius: 999px;
-  padding: 0 7px;
+  padding: 0 8px;
   background: #f2f3ff;
   color: #6c63ff;
   font: inherit;
@@ -526,10 +578,40 @@
   box-shadow: inset 0 0 0 1px #d9d6ff;
 }
 
-.familyCalendarCaregiverOption[aria-selected="true"] {
+.familyCalendarCaregiverRemoveSession {
+  color: #9d3657;
+}
+
+.familyCalendarCaregiverError {
+  color: #9d3657;
+}
+
+.familyCalendarCaregiverPickerFooter,
+.familyCalendarCaregiverPickerActions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-width: 0;
+}
+
+.familyCalendarCaregiverPickerActions {
+  justify-content: stretch;
+}
+
+.familyCalendarCaregiverPickerActions > * {
+  flex: 1 1 0;
+}
+
+.familyCalendarCaregiverSave {
   background: #d9d6ff;
   color: #fff;
   box-shadow: none;
+}
+
+.familyCalendarCaregiverCancel {
+  background: rgba(255, 250, 253, 0.9);
+  color: rgba(78, 37, 54, 0.72);
 }
 
 .familyCaregiverReviewPage {
@@ -1661,6 +1743,18 @@
   .familyCalendarFormTimeRow {
     grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
     gap: 8px;
+  }
+
+  .familyCalendarCaregiverSessionRow {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+
+  .familyCalendarCaregiverSessionSeparator {
+    display: none;
+  }
+
+  .familyCalendarCaregiverRemoveSession {
+    grid-column: 1 / -1;
   }
 
   .familyCalendarFormActionsInline > *,
