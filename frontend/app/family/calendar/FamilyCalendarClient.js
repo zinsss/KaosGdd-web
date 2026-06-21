@@ -18,10 +18,12 @@ import FamilyCalendarWeatherDebugPanel from "./FamilyCalendarWeatherDebugPanel";
 import {
   FAMILY_CALENDAR_DAY_LABELS,
   addFamilyDays,
+  calculateFamilyCaregiverExtraTotal,
   calculateFamilyCaregiverHours,
   createFamilyCalendarId,
   familyCalendarColorClassName,
   formatFamilyCaregiverHours,
+  formatFamilyCaregiverWon,
   formatFamilyDateKey,
   getDefaultSelectedWeekKeyForMonth,
   getFamilyMonthWeeks,
@@ -31,6 +33,8 @@ import {
   loadFamilyRoniOverrides,
   loadFamilyRounState,
   minutesToFamilyCaregiverTime,
+  normalizeFamilyCaregiverDayRecord,
+  normalizeFamilyCaregiverExtras,
   normalizeFamilyCaregiverSessions,
   parseFamilyCaregiverTime,
   parseFamilyDateKey,
@@ -409,24 +413,29 @@ function FamilyCaregiverHoursRow({
   selectedWeekDates,
 }) {
   const [draftSessions, setDraftSessions] = useState([]);
+  const [draftExtras, setDraftExtras] = useState([]);
   const [draftError, setDraftError] = useState("");
 
   useEffect(() => {
     if (!activeDate) {
       setDraftSessions([]);
+      setDraftExtras([]);
       setDraftError("");
       return;
     }
     const storedValue = caregiverHoursByDate[activeDate];
-    const normalizedSessions = normalizeFamilyCaregiverSessions(storedValue);
+    const normalizedRecord = normalizeFamilyCaregiverDayRecord(storedValue);
+    const normalizedSessions = normalizedRecord.sessions;
     if (normalizedSessions.length) {
       setDraftSessions(normalizedSessions);
+      setDraftExtras(normalizedRecord.extras);
       setDraftError("");
       return;
     }
-    const legacyHours = calculateFamilyCaregiverHours(storedValue);
+    const legacyHours = normalizedRecord.legacyHours || 0;
     const legacyEnd = legacyHours > 0 ? minutesToFamilyCaregiverTime(9 * 60 + Math.round(legacyHours * 60)) : "10:00";
     setDraftSessions([{ start: "09:00", end: legacyEnd }]);
+    setDraftExtras(normalizedRecord.extras);
     setDraftError("");
   }, [activeDate, caregiverHoursByDate]);
 
@@ -453,16 +462,36 @@ function FamilyCaregiverHoursRow({
     setDraftError("");
   }
 
+  function addDraftExtra() {
+    setDraftExtras((current) => [...current, { label: "", amount: "" }]);
+  }
+
+  function updateDraftExtra(index, field, value) {
+    setDraftExtras((current) => current.map((extra, extraIndex) => (
+      extraIndex === index
+        ? { ...extra, [field]: field === "amount" ? value.replace(/[^\d]/g, "") : value }
+        : extra
+    )));
+  }
+
+  function removeDraftExtra(index) {
+    setDraftExtras((current) => current.filter((_, extraIndex) => extraIndex !== index));
+  }
+
   function saveDraftSessions() {
     const normalized = normalizeFamilyCaregiverSessions(draftSessions);
     if (normalized.length !== draftSessions.length) {
       setDraftError("끝 시간이 시작 시간보다 늦어야 해요.");
       return;
     }
-    onChangeHours(activeDate, normalized);
+    onChangeHours(activeDate, {
+      sessions: normalized,
+      extras: normalizeFamilyCaregiverExtras(draftExtras),
+    });
   }
 
   const draftTotal = calculateFamilyCaregiverHours(draftSessions);
+  const draftExtraTotal = calculateFamilyCaregiverExtraTotal({ extras: draftExtras });
 
   return (
     <>
@@ -487,45 +516,88 @@ function FamilyCaregiverHoursRow({
         <div className="familyCalendarTimeRow familyCalendarCaregiverPickerRow">
           <span className="familyCalendarTimeLabel familyCalendarCaregiverPickerLabel">•</span>
           <div className="familyCalendarCaregiverPicker" aria-label={`${activeDate} 돌봄 시간`}>
-            <strong className="familyCalendarCaregiverPickerTitle">돌봄 시간</strong>
-            <div className="familyCalendarCaregiverSessions">
-              {draftSessions.map((session, index) => (
-                <div className="familyCalendarCaregiverSessionRow" key={`${activeDate}-${index}`}>
-                  <label className="familyCalendarCaregiverTimeButton">
-                    {session.start}
-                    <input
-                      aria-label="돌봄 시작 시간 선택"
-                      className="familyCalendarNativePickerInput"
-                      type="time"
-                      value={session.start}
-                      onChange={(event) => updateDraftSession(index, "start", event.target.value)}
-                    />
-                  </label>
-                  <span className="familyCalendarCaregiverSessionSeparator" aria-hidden="true">~</span>
-                  <label className="familyCalendarCaregiverTimeButton">
-                    {session.end}
-                    <input
-                      aria-label="돌봄 끝 시간 선택"
-                      className="familyCalendarNativePickerInput"
-                      type="time"
-                      value={session.end}
-                      onChange={(event) => updateDraftSession(index, "end", event.target.value)}
-                    />
-                  </label>
-                  {draftSessions.length > 1 ? (
-                    <button aria-label="돌봄 시간 삭제" className="familyCalendarCaregiverRemoveSession" type="button" onClick={() => removeDraftSession(index)}>
-                      삭제
-                    </button>
-                  ) : null}
+            <div className="familyCalendarCaregiverEditorGrid">
+              <section className="familyCalendarCaregiverEditorSection" aria-label="돌봄 시간">
+                <strong className="familyCalendarCaregiverPickerTitle">돌봄 시간</strong>
+                <div className="familyCalendarCaregiverSessions">
+                  {draftSessions.map((session, index) => (
+                    <div className="familyCalendarCaregiverSessionRow" key={`${activeDate}-${index}`}>
+                      <span className="familyCalendarCaregiverSessionNumber">{index + 1}</span>
+                      <label className="familyCalendarCaregiverTimeButton">
+                        {session.start}
+                        <input
+                          aria-label="돌봄 시작 시간 선택"
+                          className="familyCalendarNativePickerInput"
+                          type="time"
+                          value={session.start}
+                          onChange={(event) => updateDraftSession(index, "start", event.target.value)}
+                        />
+                      </label>
+                      <span className="familyCalendarCaregiverSessionSeparator" aria-hidden="true">~</span>
+                      <label className="familyCalendarCaregiverTimeButton">
+                        {session.end}
+                        <input
+                          aria-label="돌봄 끝 시간 선택"
+                          className="familyCalendarNativePickerInput"
+                          type="time"
+                          value={session.end}
+                          onChange={(event) => updateDraftSession(index, "end", event.target.value)}
+                        />
+                      </label>
+                      <span className="familyCalendarCaregiverSessionHours">
+                        {formatFamilyCaregiverHours([session]) || "0"}시간
+                      </span>
+                      {draftSessions.length > 1 ? (
+                        <button aria-label="돌봄 시간 삭제" className="familyCalendarCaregiverRemoveSession" type="button" onClick={() => removeDraftSession(index)}>
+                          ×
+                        </button>
+                      ) : null}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            {draftError ? <p className="familyCalendarCaregiverError">{draftError}</p> : null}
-            <div className="familyCalendarCaregiverPickerFooter">
-              <button className="familyCalendarCaregiverAddSession" type="button" onClick={addDraftSession}>
-                + 추가
-              </button>
-              <span className="familyCalendarCaregiverTotal">총 {formatFamilyCaregiverHours(draftTotal) || "0"}시간</span>
+                {draftError ? <p className="familyCalendarCaregiverError">{draftError}</p> : null}
+                <div className="familyCalendarCaregiverPickerFooter">
+                  <button className="familyCalendarCaregiverAddSession" type="button" onClick={addDraftSession}>
+                    + 추가
+                  </button>
+                  <span className="familyCalendarCaregiverTotal">총 {formatFamilyCaregiverHours(draftTotal) || "0"}시간</span>
+                </div>
+              </section>
+              <section className="familyCalendarCaregiverEditorSection" aria-label="추가 요금">
+                <strong className="familyCalendarCaregiverPickerTitle">추가 요금</strong>
+                <div className="familyCalendarCaregiverExtras">
+                  {draftExtras.map((extra, index) => (
+                    <div className="familyCalendarCaregiverExtraRow" key={`${activeDate}-extra-${index}`}>
+                      <input
+                        aria-label="추가 요금 내용"
+                        className="familyCalendarCaregiverExtraLabelInput"
+                        type="text"
+                        value={extra.label}
+                        placeholder="내용"
+                        onChange={(event) => updateDraftExtra(index, "label", event.target.value)}
+                      />
+                      <input
+                        aria-label="추가 요금 금액"
+                        className="familyCalendarCaregiverExtraAmountInput"
+                        inputMode="numeric"
+                        type="text"
+                        value={extra.amount}
+                        placeholder="금액"
+                        onChange={(event) => updateDraftExtra(index, "amount", event.target.value)}
+                      />
+                      <button aria-label="추가 요금 삭제" className="familyCalendarCaregiverRemoveExtra" type="button" onClick={() => removeDraftExtra(index)}>
+                        ×
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="familyCalendarCaregiverPickerFooter">
+                  <button className="familyCalendarCaregiverAddExtra" type="button" onClick={addDraftExtra}>
+                    + 요금 추가
+                  </button>
+                  <span className="familyCalendarCaregiverExtraTotal">추가 {formatFamilyCaregiverWon(draftExtraTotal)}</span>
+                </div>
+              </section>
             </div>
             <div className="familyCalendarCaregiverPickerActions">
               <button className="familyCalendarCaregiverSave" type="button" onClick={saveDraftSessions}>
@@ -1387,11 +1459,14 @@ export default function FamilyCalendarClient() {
   function changeCaregiverHours(date, value) {
     setCaregiverHoursByDate((current) => {
       const nextHours = { ...current };
-      const normalized = normalizeFamilyCaregiverSessions(value);
-      if (!normalized.length) {
+      const normalized = normalizeFamilyCaregiverDayRecord(value);
+      if (!normalized.sessions.length && !normalized.extras.length && !normalized.legacyHours) {
         delete nextHours[date];
       } else {
-        nextHours[date] = normalized;
+        nextHours[date] = {
+          sessions: normalized.sessions,
+          extras: normalized.extras,
+        };
       }
       saveFamilyCaregiverHours(nextHours);
       return nextHours;

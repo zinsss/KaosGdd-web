@@ -4,15 +4,21 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  calculateFamilyCaregiverExtraTotal,
   calculateFamilyCaregiverHours,
   FAMILY_CALENDAR_DAY_LABELS,
+  formatFamilyCaregiverWon,
   formatFamilyCaregiverHours,
   formatFamilyDateKey,
   loadFamilyCaregiverHourlyWage,
   loadFamilyCaregiverHours,
+  loadFamilyCaregiverMonthlySettings,
+  normalizeFamilyCaregiverDayRecord,
   normalizeFamilyCaregiverHourlyWage,
+  normalizeFamilyCaregiverMonthlySettingsMap,
   padFamilyDatePart,
-  saveFamilyCaregiverHourlyWage,
+  resolveFamilyCaregiverMonthlySetting,
+  saveFamilyCaregiverMonthlySettings,
 } from "../familyCalendarData";
 
 function monthFromSearchParam(month) {
@@ -30,9 +36,7 @@ function formatReviewMonthParam(monthDate) {
 }
 
 function formatWon(value) {
-  const numeric = Number(value);
-  const safeValue = Number.isFinite(numeric) && numeric > 0 ? Math.round(numeric) : 0;
-  return `${safeValue.toLocaleString("ko-KR")}원`;
+  return formatFamilyCaregiverWon(value);
 }
 
 function fixedDisplayWidth(value) {
@@ -64,8 +68,11 @@ function buildReviewWeeks(monthDate, caregiverHoursByDate) {
     const dayIndex = date.getDay();
     const dateKey = formatFamilyDateKey(date);
     week[dayIndex] = {
+      dateKey,
       day,
       hours: calculateFamilyCaregiverHours(caregiverHoursByDate[dateKey]),
+      extras: calculateFamilyCaregiverExtraTotal(caregiverHoursByDate[dateKey]),
+      extraNotes: formatDailyExtraNotes(caregiverHoursByDate[dateKey]),
     };
     if (dayIndex === 6 || day === lastDate) {
       weeks.push(week);
@@ -74,6 +81,11 @@ function buildReviewWeeks(monthDate, caregiverHoursByDate) {
   }
 
   return weeks;
+}
+
+function formatDailyExtraNotes(value) {
+  const record = normalizeFamilyCaregiverDayRecord(value);
+  return record.extras.map((extra) => `${extra.label || "추가"} ${extra.amount.toLocaleString("ko-KR")}`).join(", ");
 }
 
 function buildReviewText(monthDate, caregiverHoursByDate) {
@@ -105,20 +117,44 @@ function summarizeMonth(monthDate, caregiverHoursByDate) {
         summary.days += 1;
         summary.hours += day.hours;
       }
+      summary.extras += day.extras;
       return summary;
     },
-    { days: 0, hours: 0 },
+    { days: 0, hours: 0, extras: 0 },
   );
+}
+
+function buildDailyBreakdown(monthDate, caregiverHoursByDate, hourlyWage) {
+  const year = monthDate.getFullYear();
+  const month = monthDate.getMonth();
+  const lastDate = new Date(year, month + 1, 0, 12, 0, 0, 0).getDate();
+  return Array.from({ length: lastDate }, (_, index) => {
+    const date = new Date(year, month, index + 1, 12, 0, 0, 0);
+    const dateKey = formatFamilyDateKey(date);
+    const value = caregiverHoursByDate[dateKey];
+    const hours = calculateFamilyCaregiverHours(value);
+    const extras = calculateFamilyCaregiverExtraTotal(value);
+    return {
+      dateLabel: `${month + 1}/${index + 1}`,
+      weekday: FAMILY_CALENDAR_DAY_LABELS[date.getDay()],
+      hours,
+      basePay: hours * hourlyWage,
+      extras,
+      notes: formatDailyExtraNotes(value),
+    };
+  });
 }
 
 export default function FamilyCaregiverMonthlyReviewClient({ month }) {
   const monthDate = useMemo(() => monthFromSearchParam(month), [month]);
   const [caregiverHoursByDate, setCaregiverHoursByDate] = useState({});
-  const [hourlyWage, setHourlyWage] = useState(0);
+  const [monthlySettingsByKey, setMonthlySettingsByKey] = useState({});
+  const [fallbackHourlyWage, setFallbackHourlyWage] = useState(0);
 
   useEffect(() => {
     setCaregiverHoursByDate(loadFamilyCaregiverHours());
-    setHourlyWage(loadFamilyCaregiverHourlyWage());
+    setMonthlySettingsByKey(loadFamilyCaregiverMonthlySettings());
+    setFallbackHourlyWage(loadFamilyCaregiverHourlyWage());
   }, []);
 
   const reviewText = useMemo(
@@ -129,13 +165,39 @@ export default function FamilyCaregiverMonthlyReviewClient({ month }) {
     () => summarizeMonth(monthDate, caregiverHoursByDate),
     [caregiverHoursByDate, monthDate],
   );
-  const totalWage = summary.hours * hourlyWage;
+  const monthSetting = useMemo(
+    () => resolveFamilyCaregiverMonthlySetting(
+      monthlySettingsByKey,
+      monthDate.getFullYear(),
+      monthDate.getMonth() + 1,
+      fallbackHourlyWage,
+    ),
+    [fallbackHourlyWage, monthDate, monthlySettingsByKey],
+  );
+  const dailyBreakdown = useMemo(
+    () => buildDailyBreakdown(monthDate, caregiverHoursByDate, monthSetting.hourlyWage),
+    [caregiverHoursByDate, monthDate, monthSetting.hourlyWage],
+  );
+  const baseWage = summary.hours * monthSetting.hourlyWage;
+  const totalWage = baseWage + summary.extras + monthSetting.transportFee;
   const monthParam = formatReviewMonthParam(monthDate);
 
-  function changeHourlyWage(event) {
-    const nextWage = normalizeFamilyCaregiverHourlyWage(event.target.value.replace(/[^\d]/g, ""));
-    setHourlyWage(nextWage);
-    saveFamilyCaregiverHourlyWage(nextWage);
+  function updateMonthSetting(field, value) {
+    const nextValue = normalizeFamilyCaregiverHourlyWage(value.replace(/[^\d]/g, ""));
+    setMonthlySettingsByKey((current) => {
+      const normalizedCurrent = normalizeFamilyCaregiverMonthlySettingsMap(current);
+      const monthKey = formatReviewMonthParam(monthDate);
+      const nextSetting = {
+        ...monthSetting,
+        [field]: nextValue,
+      };
+      const nextSettings = {
+        ...normalizedCurrent,
+        [monthKey]: nextSetting,
+      };
+      saveFamilyCaregiverMonthlySettings(nextSettings);
+      return nextSettings;
+    });
   }
 
   return (
@@ -151,26 +213,67 @@ export default function FamilyCaregiverMonthlyReviewClient({ month }) {
       <pre className="caregiverMonthlyReviewText">{reviewText}</pre>
       <section className="familyCaregiverReviewSummary" aria-label="돌봄 보수 요약">
         <div>
-          <span>이번 달 총 일수/시간</span>
+          <span>총 돌봄 시간</span>
           <strong>{summary.days}일 / {formatTotalHours(summary.hours)}시간</strong>
         </div>
         <label>
-          <span>시간당 보수</span>
+          <span>시급</span>
           <span className="familyCaregiverWageField">
             <input
-              aria-label="시간당 보수"
+              aria-label="시급"
               inputMode="numeric"
-              onChange={changeHourlyWage}
+              onChange={(event) => updateMonthSetting("hourlyWage", event.target.value)}
               type="text"
-              value={hourlyWage.toLocaleString("ko-KR")}
+              value={monthSetting.hourlyWage.toLocaleString("ko-KR")}
             />
             원
           </span>
         </label>
         <div>
-          <span>이번 달 보수</span>
+          <span>기본 급여</span>
+          <strong>{formatWon(baseWage)}</strong>
+        </div>
+        <div>
+          <span>추가 요금 합계</span>
+          <strong>{formatWon(summary.extras)}</strong>
+        </div>
+        <label>
+          <span>교통비</span>
+          <span className="familyCaregiverWageField">
+            <input
+              aria-label="교통비"
+              inputMode="numeric"
+              onChange={(event) => updateMonthSetting("transportFee", event.target.value)}
+              type="text"
+              value={monthSetting.transportFee.toLocaleString("ko-KR")}
+            />
+            원
+          </span>
+        </label>
+        <div>
+          <span>총 지급액</span>
           <strong>{formatWon(totalWage)}</strong>
         </div>
+      </section>
+      <section className="familyCaregiverDailyBreakdown" aria-label="일별 돌봄 내역">
+        <div className="familyCaregiverDailyBreakdownHeader">
+          <span>날짜</span>
+          <span>요일</span>
+          <span>돌봄 시간</span>
+          <span>기본 급여</span>
+          <span>추가 요금</span>
+          <span>비고</span>
+        </div>
+        {dailyBreakdown.map((day) => (
+          <div className="familyCaregiverDailyBreakdownRow" key={`${monthParam}-${day.dateLabel}`}>
+            <span>{day.dateLabel}</span>
+            <span>{day.weekday}</span>
+            <span>{formatFamilyCaregiverHours(day.hours) || "0"}시간</span>
+            <span>{formatWon(day.basePay)}</span>
+            <span>{formatWon(day.extras)}</span>
+            <span>{day.notes}</span>
+          </div>
+        ))}
       </section>
     </main>
   );
@@ -179,7 +282,9 @@ export default function FamilyCaregiverMonthlyReviewClient({ month }) {
 export {
   buildReviewText,
   buildReviewWeeks,
+  buildDailyBreakdown,
   fixedDisplayWidth,
+  formatDailyExtraNotes,
   formatReviewMonth,
   formatWon,
   summarizeMonth,

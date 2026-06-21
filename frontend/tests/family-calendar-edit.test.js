@@ -3,21 +3,29 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
 import {
+  calculateFamilyCaregiverExtraTotal,
   calculateFamilyCaregiverHours,
   FAMILY_CAREGIVER_HOUR_VALUES,
   FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY,
   FAMILY_CAREGIVER_HOURS_STORAGE_KEY,
+  FAMILY_CAREGIVER_MONTHLY_SETTINGS_STORAGE_KEY,
   FAMILY_CALENDAR_COLOR_KEYS,
   FAMILY_CALENDAR_COLOR_LABELS,
   familyCaregiverSessionDurationHours,
   formatFamilyCaregiverHours,
+  formatFamilyCaregiverWon,
   minutesToFamilyCaregiverTime,
+  normalizeFamilyCaregiverDayRecord,
+  normalizeFamilyCaregiverExtra,
+  normalizeFamilyCaregiverExtras,
   normalizeFamilyCaregiverHour,
   normalizeFamilyCaregiverHourlyWage,
   normalizeFamilyCaregiverHoursMap,
+  normalizeFamilyCaregiverMonthlySettingsMap,
   normalizeFamilyCaregiverSession,
   normalizeFamilyCaregiverSessions,
   parseFamilyCaregiverTime,
+  resolveFamilyCaregiverMonthlySetting,
 } from "../app/family/calendar/familyCalendarData.js";
 
 async function readSource(path) {
@@ -359,6 +367,13 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
     { start: "12:00", end: "15:30" },
     { start: "18:00", end: "20:00" },
   ]), "5.5");
+  assert.equal(formatFamilyCaregiverHours({
+    sessions: [
+      { start: "12:00", end: "15:30" },
+      { start: "18:00", end: "20:00" },
+    ],
+    extras: [{ label: "택시", amount: 12000 }],
+  }), "5.5");
   assert.equal(formatFamilyCaregiverHours(0), "");
   assert.equal(normalizeFamilyCaregiverHour(0), null);
   assert.equal(normalizeFamilyCaregiverHour(0.25), null);
@@ -377,20 +392,62 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
     { start: "12:00", end: "15:30" },
     { start: "18:00", end: "20:00" },
   ]);
+  assert.deepEqual(normalizeFamilyCaregiverExtra({ label: " 야간 ", amount: "5000" }), { label: "야간", amount: 5000 });
+  assert.deepEqual(normalizeFamilyCaregiverExtras([
+    { label: "야간", amount: 5000 },
+    { label: "", amount: "" },
+    { label: "택시", amount: 12000 },
+  ]), [
+    { label: "야간", amount: 5000 },
+    { label: "택시", amount: 12000 },
+  ]);
+  assert.deepEqual(normalizeFamilyCaregiverDayRecord({
+    sessions: [{ start: "12:00", end: "15:30" }],
+    extras: [{ label: "식사", amount: 7000 }],
+  }), {
+    legacyHours: null,
+    sessions: [{ start: "12:00", end: "15:30" }],
+    extras: [{ label: "식사", amount: 7000 }],
+  });
+  assert.deepEqual(normalizeFamilyCaregiverDayRecord([{ start: "12:00", end: "15:30" }]), {
+    legacyHours: null,
+    sessions: [{ start: "12:00", end: "15:30" }],
+    extras: [],
+  });
+  assert.deepEqual(normalizeFamilyCaregiverDayRecord(2), {
+    legacyHours: 2,
+    sessions: [],
+    extras: [],
+  });
+  assert.equal(calculateFamilyCaregiverExtraTotal({
+    sessions: [{ start: "12:00", end: "15:30" }],
+    extras: [{ label: "야간", amount: 5000 }, { label: "택시", amount: 12000 }],
+  }), 17000);
   assert.deepEqual(normalizeFamilyCaregiverHoursMap({
     "2026-06-08": 2,
     "2026-06-09": [{ start: "12:00", end: "15:30" }],
+    "2026-06-11": {
+      sessions: [{ start: "18:00", end: "20:00" }],
+      extras: [{ label: "야간", amount: 5000 }],
+    },
     "2026-06-10": 0,
     bad: 4,
   }), {
     "2026-06-08": 2,
     "2026-06-09": [{ start: "12:00", end: "15:30" }],
+    "2026-06-11": {
+      sessions: [{ start: "18:00", end: "20:00" }],
+      extras: [{ label: "야간", amount: 5000 }],
+    },
   });
 
   assert.ok(dataSource.includes('export const FAMILY_CAREGIVER_HOURS_STORAGE_KEY = "familyCaregiverHours.v1";'));
+  assert.ok(dataSource.includes("export function normalizeFamilyCaregiverDayRecord(value)"));
+  assert.ok(dataSource.includes("export function normalizeFamilyCaregiverExtras(value)"));
+  assert.ok(dataSource.includes("export function calculateFamilyCaregiverExtraTotal(value)"));
   assert.ok(dataSource.includes("export function normalizeFamilyCaregiverSessions(value)"));
   assert.ok(dataSource.includes("export function calculateFamilyCaregiverHours(value)"));
-  assert.ok(calendarSource.includes("const normalized = normalizeFamilyCaregiverSessions(value);"));
+  assert.ok(calendarSource.includes("const normalized = normalizeFamilyCaregiverDayRecord(value);"));
   assert.ok(calendarSource.includes("function FamilyCaregiverHoursRow("));
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarCaregiverRow"'));
   assert.ok(calendarSource.includes('<span className="familyCalendarTimeLabel familyCalendarCaregiverLabel">•</span>'));
@@ -398,8 +455,14 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarSource.includes("href={caregiverReviewHref}"));
   assert.ok(calendarSource.includes("♥"));
   assert.ok(calendarSource.includes("돌봄 시간"));
+  assert.ok(calendarSource.includes("추가 요금"));
+  assert.ok(calendarSource.includes("+ 요금 추가"));
+  assert.ok(calendarSource.includes("추가 {formatFamilyCaregiverWon(draftExtraTotal)}"));
+  assert.ok(calendarSource.includes("{index + 1}"));
   assert.ok(calendarSource.includes("addDraftSession"));
   assert.ok(calendarSource.includes("removeDraftSession"));
+  assert.ok(calendarSource.includes("addDraftExtra"));
+  assert.ok(calendarSource.includes("removeDraftExtra"));
   assert.ok(calendarSource.includes("saveDraftSessions"));
   assert.ok(calendarSource.includes("끝 시간이 시작 시간보다 늦어야 해요."));
   assert.ok(calendarSource.includes("familyCalendarCaregiverSessionRow"));
@@ -412,6 +475,9 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(!calendarSource.includes('className="familyCalendarCaregiverSessionValue"'));
   assert.ok(calendarSource.includes('aria-label="돌봄 시작 시간 선택"'));
   assert.ok(calendarSource.includes('aria-label="돌봄 끝 시간 선택"'));
+  assert.ok(calendarSource.includes('aria-label="추가 요금 내용"'));
+  assert.ok(calendarSource.includes('aria-label="추가 요금 금액"'));
+  assert.ok(!calendarSource.includes("<select"));
   assert.ok(!calendarSource.includes("openCaregiverTimePicker"));
   assert.ok(!calendarSource.includes("timeInputRefs"));
   assert.ok(calendarSource.includes("setCaregiverHoursByDate(loadFamilyCaregiverHours());"));
@@ -427,8 +493,12 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.match(calendarCss, /\.familyCalendarCaregiverSlotActive\s*\{[\s\S]*?background:\s*#e8eaff;[\s\S]*?color:\s*#5b54d9;[\s\S]*?box-shadow:\s*inset 0 0 0 2px rgba\(153, 145, 255, 0\.46\);/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverPicker {"));
   assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
+  assert.ok(calendarCss.includes(".familyCalendarCaregiverEditorGrid {"));
+  assert.match(calendarCss, /\.familyCalendarCaregiverEditorGrid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\);/);
+  assert.ok(calendarCss.includes(".familyCalendarCaregiverExtraRow {"));
+  assert.match(calendarCss, /\.familyCalendarCaregiverExtraRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) minmax\(54px, 0\.7fr\) auto;/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverSessionRow {"));
-  assert.match(calendarCss, /\.familyCalendarCaregiverSessionRow\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*5px;/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverSessionRow\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*5px;/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverTimeButton,"));
   assert.match(calendarCss, /\.familyCalendarCaregiverTimeButton\s*\{[\s\S]*?position:\s*relative;[\s\S]*?display:\s*inline-flex;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?overflow:\s*hidden;[\s\S]*?cursor:\s*pointer;/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverAddSession,"));
@@ -619,20 +689,50 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
   const calendarCss = await readSource("../app/styles/family-calendar.css");
 
   assert.equal(FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY, "familyCaregiverHourlyWage.v1");
+  assert.equal(FAMILY_CAREGIVER_MONTHLY_SETTINGS_STORAGE_KEY, "familyCaregiverMonthlySettings.v1");
   assert.equal(normalizeFamilyCaregiverHourlyWage("15000"), 15000);
   assert.equal(normalizeFamilyCaregiverHourlyWage("15000.9"), 15000);
   assert.equal(normalizeFamilyCaregiverHourlyWage("-1"), 0);
+  assert.equal(formatFamilyCaregiverWon(742500), "₩742,500");
+  assert.deepEqual(normalizeFamilyCaregiverMonthlySettingsMap({
+    "2026-06": { year: 2026, month: 6, hourlyWage: 12000, transportFee: 100000 },
+    "2026-07": { year: 2026, month: 7, hourlyWage: 13000, transportFee: 120000 },
+  }), {
+    "2026-06": { year: 2026, month: 6, hourlyWage: 12000, transportFee: 100000 },
+    "2026-07": { year: 2026, month: 7, hourlyWage: 13000, transportFee: 120000 },
+  });
+  assert.deepEqual(resolveFamilyCaregiverMonthlySetting({
+    "2026-06": { year: 2026, month: 6, hourlyWage: 12000, transportFee: 100000 },
+    "2026-07": { year: 2026, month: 7, hourlyWage: 13000, transportFee: 120000 },
+  }, 2026, 8, 9000), {
+    year: 2026,
+    month: 8,
+    hourlyWage: 13000,
+    transportFee: 120000,
+  });
+  assert.deepEqual(resolveFamilyCaregiverMonthlySetting({}, 2026, 6, 9000), {
+    year: 2026,
+    month: 6,
+    hourlyWage: 9000,
+    transportFee: 0,
+  });
 
   assert.ok(dataSource.includes('export const FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY = "familyCaregiverHourlyWage.v1";'));
+  assert.ok(dataSource.includes('export const FAMILY_CAREGIVER_MONTHLY_SETTINGS_STORAGE_KEY = "familyCaregiverMonthlySettings.v1";'));
   assert.ok(dataSource.includes("export function loadFamilyCaregiverHourlyWage()"));
-  assert.ok(dataSource.includes("export function saveFamilyCaregiverHourlyWage(value)"));
+  assert.ok(dataSource.includes("export function loadFamilyCaregiverMonthlySettings()"));
+  assert.ok(dataSource.includes("export function saveFamilyCaregiverMonthlySettings(settingsMap)"));
+  assert.ok(dataSource.includes("export function resolveFamilyCaregiverMonthlySetting(settingsMap, year, month, fallbackHourlyWage = 0)"));
 
   assert.ok(reviewPageSource.includes("FamilyCaregiverMonthlyReviewClient"));
   assert.ok(reviewPageSource.includes('title: "돌봄 - KaosGdd"'));
   assert.ok(reviewSource.includes("function buildReviewText("));
   assert.ok(reviewSource.includes("function buildReviewWeeks("));
+  assert.ok(reviewSource.includes("function buildDailyBreakdown("));
+  assert.ok(reviewSource.includes("function formatDailyExtraNotes("));
   assert.ok(reviewSource.includes("function summarizeMonth("));
   assert.ok(reviewSource.includes("calculateFamilyCaregiverHours(caregiverHoursByDate[dateKey])"));
+  assert.ok(reviewSource.includes("calculateFamilyCaregiverExtraTotal(caregiverHoursByDate[dateKey])"));
   assert.ok(reviewSource.includes("function fixedDisplayWidth("));
   assert.ok(reviewSource.includes("const REVIEW_CALENDAR_CELL_WIDTH = 6;"));
   assert.ok(reviewSource.includes("function padCell(value, width = REVIEW_CALENDAR_CELL_WIDTH)"));
@@ -651,16 +751,27 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
   assert.ok(reviewSource.includes('formatFamilyCaregiverHours(day.hours) || "0"'));
   assert.ok(reviewSource.includes("summary.days += 1;"));
   assert.ok(reviewSource.includes("summary.hours += day.hours;"));
-  assert.ok(reviewSource.includes("const totalWage = summary.hours * hourlyWage;"));
-  assert.ok(reviewSource.includes("saveFamilyCaregiverHourlyWage(nextWage);"));
-  assert.ok(reviewSource.includes('aria-label="시간당 보수"'));
+  assert.ok(reviewSource.includes("summary.extras += day.extras;"));
+  assert.ok(reviewSource.includes("const baseWage = summary.hours * monthSetting.hourlyWage;"));
+  assert.ok(reviewSource.includes("const totalWage = baseWage + summary.extras + monthSetting.transportFee;"));
+  assert.ok(reviewSource.includes("saveFamilyCaregiverMonthlySettings(nextSettings);"));
+  assert.ok(reviewSource.includes('aria-label="시급"'));
+  assert.ok(reviewSource.includes('aria-label="교통비"'));
   assert.ok(reviewSource.includes('type="text"'));
   assert.ok(reviewSource.includes('className="familyCaregiverWageField"'));
   assert.ok(reviewSource.includes('href={`/family/calendar?month=${monthParam}`}'));
   assert.ok(reviewSource.includes("달력으로"));
-  assert.ok(reviewSource.includes("이번 달 총 일수/시간"));
-  assert.ok(reviewSource.includes("시간당 보수"));
-  assert.ok(reviewSource.includes("이번 달 보수"));
+  assert.ok(reviewSource.includes("총 돌봄 시간"));
+  assert.ok(reviewSource.includes("시급"));
+  assert.ok(reviewSource.includes("기본 급여"));
+  assert.ok(reviewSource.includes("추가 요금 합계"));
+  assert.ok(reviewSource.includes("교통비"));
+  assert.ok(reviewSource.includes("총 지급액"));
+  assert.ok(reviewSource.includes('aria-label="일별 돌봄 내역"'));
+  assert.ok(reviewSource.includes("날짜"));
+  assert.ok(reviewSource.includes("요일"));
+  assert.ok(reviewSource.includes("돌봄 시간"));
+  assert.ok(reviewSource.includes("비고"));
   assert.ok(reviewSource.includes('.toLocaleString("ko-KR")'));
 
   assert.ok(calendarCss.includes(".caregiverMonthlyReviewText {"));
@@ -670,5 +781,8 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
   assert.match(calendarCss, /\.caregiverMonthlyReviewText\s*\{[\s\S]*?font-variant-numeric:\s*tabular-nums;/);
   assert.ok(calendarCss.includes(".familyCaregiverReviewSummary {"));
   assert.ok(calendarCss.includes(".familyCaregiverWageField {"));
+  assert.ok(calendarCss.includes(".familyCaregiverDailyBreakdown {"));
+  assert.ok(calendarCss.includes(".familyCaregiverDailyBreakdownHeader,"));
+  assert.ok(calendarCss.includes(".familyCaregiverDailyBreakdownRow {"));
   assert.ok(calendarCss.includes(".familyCaregiverReviewBack {"));
 });
