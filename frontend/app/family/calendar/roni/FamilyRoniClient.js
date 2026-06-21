@@ -617,14 +617,31 @@ export default function FamilyRoniClient() {
               {error ? <p className="familyCalendarFormError">{error}</p> : null}
 
               <div className="familyCalendarFormGrid">
-                <label>
+                <div className="familyRoniTimePickerRow">
                   <span>시작</span>
-                  <input type="time" value={draft.startTime} onChange={(event) => updateDraft("startTime", event.target.value)} />
-                </label>
-                <label>
+                  <label className="familyCalendarPickerButton familyRoniTimePickerButton">
+                    {draft.startTime}
+                    <input
+                      aria-label="로운이 일정 시작 시간 선택"
+                      className="familyCalendarNativePickerInput"
+                      type="time"
+                      value={draft.startTime}
+                      onChange={(event) => updateDraft("startTime", event.target.value)}
+                    />
+                  </label>
+                  <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
                   <span>끝</span>
-                  <input type="time" value={draft.endTime} onChange={(event) => updateDraft("endTime", event.target.value)} />
-                </label>
+                  <label className="familyCalendarPickerButton familyRoniTimePickerButton">
+                    {draft.endTime}
+                    <input
+                      aria-label="로운이 일정 끝 시간 선택"
+                      className="familyCalendarNativePickerInput"
+                      type="time"
+                      value={draft.endTime}
+                      onChange={(event) => updateDraft("endTime", event.target.value)}
+                    />
+                  </label>
+                </div>
               </div>
 
               <div className="familyTimetableColorField">
