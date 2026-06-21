@@ -8,6 +8,7 @@ export const FAMILY_ROUN_ASSIGNMENT_STORAGE_KEY = "kaosgdd.family.rounAssignment
 export const FAMILY_RONI_OVERRIDE_STORAGE_KEY = "kaosgdd.family.roniOverrides.v1";
 export const FAMILY_CAREGIVER_HOURS_STORAGE_KEY = "familyCaregiverHours.v1";
 export const FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY = "familyCaregiverHourlyWage.v1";
+export const FAMILY_CAREGIVER_MONTHLY_SETTINGS_STORAGE_KEY = "familyCaregiverMonthlySettings.v1";
 export const FAMILY_RONI_DEFAULT_TEMPLATE_NAME = "기본 시간표";
 export const FAMILY_CALENDAR_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 export const FAMILY_CAREGIVER_HOUR_VALUES = Array.from({ length: 25 }, (_, index) => index * 0.5);
@@ -190,6 +191,44 @@ export function normalizeFamilyCaregiverSessions(value) {
   return value.map(normalizeFamilyCaregiverSession).filter(Boolean);
 }
 
+export function normalizeFamilyCaregiverExtra(extra) {
+  if (!extra || typeof extra !== "object") return null;
+  const label = String(extra.label || "").trim();
+  const amount = Math.max(0, Math.floor(Number(extra.amount) || 0));
+  if (!label && amount <= 0) return null;
+  return { label, amount };
+}
+
+export function normalizeFamilyCaregiverExtras(value) {
+  if (!Array.isArray(value)) return [];
+  return value.map(normalizeFamilyCaregiverExtra).filter(Boolean);
+}
+
+export function normalizeFamilyCaregiverDayRecord(value) {
+  const legacyHours = normalizeFamilyCaregiverHour(value);
+  if (legacyHours !== null) {
+    return { legacyHours, sessions: [], extras: [] };
+  }
+
+  if (Array.isArray(value)) {
+    return {
+      legacyHours: null,
+      sessions: normalizeFamilyCaregiverSessions(value),
+      extras: [],
+    };
+  }
+
+  if (!value || typeof value !== "object") {
+    return { legacyHours: null, sessions: [], extras: [] };
+  }
+
+  return {
+    legacyHours: normalizeFamilyCaregiverHour(value.legacyHours),
+    sessions: normalizeFamilyCaregiverSessions(value.sessions),
+    extras: normalizeFamilyCaregiverExtras(value.extras),
+  };
+}
+
 export function familyCaregiverSessionDurationHours(session) {
   const normalized = normalizeFamilyCaregiverSession(session);
   if (!normalized) return 0;
@@ -197,9 +236,15 @@ export function familyCaregiverSessionDurationHours(session) {
 }
 
 export function calculateFamilyCaregiverHours(value) {
-  const legacyHours = normalizeFamilyCaregiverHour(value);
-  if (legacyHours !== null) return legacyHours;
-  return normalizeFamilyCaregiverSessions(value).reduce((total, session) => total + familyCaregiverSessionDurationHours(session), 0);
+  const record = normalizeFamilyCaregiverDayRecord(value);
+  if (record.sessions.length) {
+    return record.sessions.reduce((total, session) => total + familyCaregiverSessionDurationHours(session), 0);
+  }
+  return record.legacyHours || 0;
+}
+
+export function calculateFamilyCaregiverExtraTotal(value) {
+  return normalizeFamilyCaregiverDayRecord(value).extras.reduce((total, extra) => total + extra.amount, 0);
 }
 
 export function formatFamilyCaregiverHours(value) {
@@ -220,6 +265,15 @@ export function normalizeFamilyCaregiverHoursMap(value) {
     }
     const normalizedSessions = normalizeFamilyCaregiverSessions(hours);
     if (normalizedSessions.length) next[normalizedDate] = normalizedSessions;
+    if (!Array.isArray(hours) && hours && typeof hours === "object") {
+      const normalizedRecord = normalizeFamilyCaregiverDayRecord(hours);
+      if (normalizedRecord.sessions.length || normalizedRecord.extras.length) {
+        next[normalizedDate] = {
+          sessions: normalizedRecord.sessions,
+          extras: normalizedRecord.extras,
+        };
+      }
+    }
     return next;
   }, {});
 }
@@ -228,6 +282,65 @@ export function normalizeFamilyCaregiverHourlyWage(value) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric) || numeric < 0) return 0;
   return Math.floor(numeric);
+}
+
+export function formatFamilyCaregiverWon(value) {
+  const numeric = Math.max(0, Math.round(Number(value) || 0));
+  return `₩${numeric.toLocaleString("ko-KR")}`;
+}
+
+export function formatFamilyCaregiverMonthKey(year, month) {
+  const safeYear = Number(year);
+  const safeMonth = Number(month);
+  if (!Number.isInteger(safeYear) || !Number.isInteger(safeMonth) || safeMonth < 1 || safeMonth > 12) return "";
+  return `${safeYear}-${padFamilyDatePart(safeMonth)}`;
+}
+
+export function normalizeFamilyCaregiverMonthlySetting(setting) {
+  if (!setting || typeof setting !== "object") return null;
+  const year = Number(setting.year);
+  const month = Number(setting.month);
+  const monthKey = formatFamilyCaregiverMonthKey(year, month);
+  if (!monthKey) return null;
+  return {
+    year,
+    month,
+    hourlyWage: normalizeFamilyCaregiverHourlyWage(setting.hourlyWage),
+    transportFee: normalizeFamilyCaregiverHourlyWage(setting.transportFee),
+  };
+}
+
+export function normalizeFamilyCaregiverMonthlySettingsMap(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.entries(value).reduce((next, [monthKey, setting]) => {
+    const normalized = normalizeFamilyCaregiverMonthlySetting(setting);
+    const normalizedKey = normalized ? formatFamilyCaregiverMonthKey(normalized.year, normalized.month) : "";
+    if (normalized && normalizedKey && (!monthKey || monthKey === normalizedKey)) {
+      next[normalizedKey] = normalized;
+    }
+    return next;
+  }, {});
+}
+
+function previousMonthKeys(year, month, settingsMap) {
+  const currentKey = formatFamilyCaregiverMonthKey(year, month);
+  return Object.keys(settingsMap)
+    .filter((key) => key < currentKey)
+    .sort((a, b) => b.localeCompare(a));
+}
+
+export function resolveFamilyCaregiverMonthlySetting(settingsMap, year, month, fallbackHourlyWage = 0) {
+  const normalizedMap = normalizeFamilyCaregiverMonthlySettingsMap(settingsMap);
+  const monthKey = formatFamilyCaregiverMonthKey(year, month);
+  const current = normalizedMap[monthKey];
+  if (current) return current;
+  const previous = normalizedMap[previousMonthKeys(year, month, normalizedMap)[0]];
+  return {
+    year,
+    month,
+    hourlyWage: previous?.hourlyWage ?? normalizeFamilyCaregiverHourlyWage(fallbackHourlyWage),
+    transportFee: previous?.transportFee ?? 0,
+  };
 }
 
 export function normalizeFamilyRoniOverride(override) {
@@ -482,6 +595,14 @@ export function saveFamilyCaregiverHourlyWage(value) {
   } catch {
     return;
   }
+}
+
+export function loadFamilyCaregiverMonthlySettings() {
+  return normalizeFamilyCaregiverMonthlySettingsMap(readFamilyStorageObject(FAMILY_CAREGIVER_MONTHLY_SETTINGS_STORAGE_KEY));
+}
+
+export function saveFamilyCaregiverMonthlySettings(settingsMap) {
+  writeFamilyStorageObject(FAMILY_CAREGIVER_MONTHLY_SETTINGS_STORAGE_KEY, normalizeFamilyCaregiverMonthlySettingsMap(settingsMap));
 }
 
 export function loadFamilyRoniItemsForDate(dateKey) {
