@@ -148,55 +148,39 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
               </div>
             </div>
 
-            <label>
-              <span>일정 이름</span>
+            <label className="familyCalendarFormTitleField">
+              <span>일정이름</span>
               <input placeholder="새 일정" value={draft.title} onChange={(event) => updateDraft("title", event.target.value)} />
             </label>
             {error ? <p className="familyCalendarFormError">{error}</p> : null}
 
-            <label className="familyCalendarFormToggle">
-              <span>종일 일정</span>
-              <input
-                checked={draft.allDay}
-                className="familyCalendarFormToggleControl"
-                type="checkbox"
-                onChange={(event) => toggleAllDay(event.target.checked)}
-              />
-            </label>
-
-            <div className={`familyCalendarFormGrid${draft.allDay ? " familyCalendarFormGridAllDay" : ""}`}>
-              <label className="familyCalendarFormDateField">
-                <span>날짜</span>
-                <input type="date" value={draft.date} onChange={(event) => updateDraft("date", event.target.value)} />
-              </label>
-              {draft.allDay ? null : (
-                <>
-                  <label className="familyCalendarFormTimeField">
-                    <span>시작</span>
-                    <input type="time" value={draft.startTime} onChange={(event) => updateDraft("startTime", event.target.value)} />
-                  </label>
-                  <label className="familyCalendarFormTimeField">
-                    <span>끝</span>
-                    <input type="time" value={draft.endTime} onChange={(event) => updateDraft("endTime", event.target.value)} />
-                  </label>
-                </>
-              )}
-            </div>
-
-            <div className={`familyTimetableColorField familyCalendarColorPicker${colorPickerOpen ? " familyCalendarColorPickerOpen" : ""}`}>
-              <button
-                aria-expanded={colorPickerOpen}
-                className="familyCalendarColorPickerToggle"
-                onClick={() => setColorPickerOpen((current) => !current)}
-                type="button"
-              >
-                <span className="familyCalendarColorPickerTitle">색상</span>
-                <span className={`familyCalendarColorPickerSwatch familyTimetableColorChip${selectedColorClass}`} aria-hidden="true" />
-                <span className="familyCalendarColorPickerValue">{selectedColorLabel}</span>
-                <span className="familyCalendarColorPickerChevron" aria-hidden="true">
-                  {colorPickerOpen ? "▴" : "▾"}
-                </span>
-              </button>
+            <div className="familyCalendarFormMeta">
+              <div className="familyCalendarFormMetaRow">
+                <div className={`familyTimetableColorField familyCalendarColorPicker${colorPickerOpen ? " familyCalendarColorPickerOpen" : ""}`}>
+                  <button
+                    aria-expanded={colorPickerOpen}
+                    className="familyCalendarColorPickerToggle"
+                    onClick={() => setColorPickerOpen((current) => !current)}
+                    type="button"
+                  >
+                    <span className="familyCalendarColorPickerTitle">색상</span>
+                    <span className="familyCalendarColorPickerValue">{selectedColorLabel}</span>
+                    <span className={`familyCalendarColorPickerSwatch familyTimetableColorChip${selectedColorClass}`} aria-hidden="true" />
+                    <span className="familyCalendarColorPickerChevron" aria-hidden="true">
+                      {colorPickerOpen ? "▴" : "▾"}
+                    </span>
+                  </button>
+                </div>
+                <label className="familyCalendarFormToggle familyCalendarFormAllDayInline">
+                  <span>종일 일정</span>
+                  <input
+                    checked={draft.allDay}
+                    className="familyCalendarFormToggleControl"
+                    type="checkbox"
+                    onChange={(event) => toggleAllDay(event.target.checked)}
+                  />
+                </label>
+              </div>
               {colorPickerOpen ? (
                 <div className="familyTimetableColorChips" role="radiogroup" aria-label="색상">
                   {FAMILY_CALENDAR_COLOR_KEYS.map((color) => (
@@ -212,6 +196,26 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
                   ))}
                 </div>
               ) : null}
+            </div>
+
+            <div className={`familyCalendarFormGrid${draft.allDay ? " familyCalendarFormGridAllDay" : ""}`}>
+              <label className="familyCalendarFormDateField">
+                <span>날짜</span>
+                <input type="date" value={draft.date} onChange={(event) => updateDraft("date", event.target.value)} />
+              </label>
+              {draft.allDay ? null : (
+                <div className="familyCalendarFormTimeRow">
+                  <label className="familyCalendarFormTimeField">
+                    <span>시작</span>
+                    <input type="time" value={draft.startTime} onChange={(event) => updateDraft("startTime", event.target.value)} />
+                  </label>
+                  <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
+                  <label className="familyCalendarFormTimeField">
+                    <span>끝</span>
+                    <input type="time" value={draft.endTime} onChange={(event) => updateDraft("endTime", event.target.value)} />
+                  </label>
+                </div>
+              )}
             </div>
 
             <label>
