@@ -111,6 +111,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.equal((eventFormSource.match(/className="familyCalendarDateTimeCluster"/g) || []).length, 2);
   assert.equal((eventFormSource.match(/className="familyCalendarPickerButton familyCalendarDateTimeValueButton"/g) || []).length, 3);
   assert.ok(eventFormSource.includes('className="familyCalendarDateTimeDivider"'));
+  assert.ok(eventFormSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>'));
+  assert.ok(!eventFormSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">|</span>'));
   assert.ok(eventFormSource.includes("function formatKoreanDate(dateString)"));
   assert.ok(!eventFormSource.includes("function openNativePicker(inputRef)"));
   assert.ok(!eventFormSource.includes("showPicker()"));
@@ -201,7 +203,7 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarDateTimeRow\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*6px 14px;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarDateTimeDivider\s*\{[\s\S]*?min-height:\s*28px;[\s\S]*?color:\s*rgba\(78, 37, 54, 0\.32\);/);
   assert.match(calendarCss, /\.familyCalendarDateTimeCluster\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*5px;[\s\S]*?max-width:\s*100%;/);
-  assert.match(calendarCss, /\.familyCalendarDateTimeValueButton,\s*\n\.familyRoniTimePickerButton\s*\{[\s\S]*?font-size:\s*15px;[\s\S]*?min-height:\s*30px;/);
+  assert.match(calendarCss, /\.familyCalendarDateTimeValueButton,\s*\n\.familyRoniTimePickerButton,\s*\n\.familyRoniWeekdayPickerButton\s*\{[\s\S]*?font-size:\s*15px;[\s\S]*?min-height:\s*30px;/);
   assert.match(calendarCss, /\.familyCalendarPickerRow\s*\{[\s\S]*?grid-template-columns:\s*auto minmax\(0, 1fr\) auto;[\s\S]*?min-height:\s*34px;/);
   assert.match(calendarCss, /\.familyCalendarPickerButton\s*\{[\s\S]*?position:\s*relative;[\s\S]*?display:\s*inline-flex;[\s\S]*?overflow:\s*hidden;[\s\S]*?border-radius:\s*999px;[\s\S]*?width:\s*auto !important;[\s\S]*?min-height:\s*28px;[\s\S]*?cursor:\s*pointer;/);
   assert.match(calendarCss, /\.familyCalendarNativePickerInput\s*\{[\s\S]*?position:\s*absolute !important;[\s\S]*?inset:\s*0 !important;[\s\S]*?width:\s*100% !important;[\s\S]*?height:\s*100% !important;[\s\S]*?opacity:\s*0\.001;[\s\S]*?cursor:\s*pointer;/);
