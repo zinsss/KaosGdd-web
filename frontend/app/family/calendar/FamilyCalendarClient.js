@@ -1082,6 +1082,10 @@ function FamilyCalendarEditWeek({
 }
 
 export default function FamilyCalendarClient() {
+  const router = useRouter();
+  const dateLongPressTimerRef = useRef(null);
+  const dateLongPressStartRef = useRef(null);
+  const suppressDateClickRef = useRef("");
   const [datedItems, setDatedItems] = useState([]);
   const [rounState, setRounState] = useState({ plans: [], assignments: [] });
   const [roniOverrides, setRoniOverrides] = useState([]);
@@ -1094,6 +1098,7 @@ export default function FamilyCalendarClient() {
   const [weatherExpanded, setWeatherExpanded] = useState(false);
   const [caregiverHoursByDate, setCaregiverHoursByDate] = useState({});
   const [activeCaregiverDate, setActiveCaregiverDate] = useState("");
+  const [pressedDateKey, setPressedDateKey] = useState("");
 
   useEffect(() => {
     setDatedItems(loadFamilyCalendarItems());
@@ -1172,6 +1177,12 @@ export default function FamilyCalendarClient() {
   }, [selectedWeekKey, calendarMode, monthDate]);
 
   useEffect(() => {
+    return () => {
+      if (dateLongPressTimerRef.current) window.clearTimeout(dateLongPressTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
     if (!editingCalendar) return;
     console.log("Family daily weather", weatherItems);
     console.log("Family selected week weatherByDate", selectedWeekWeatherByDate);
@@ -1237,6 +1248,58 @@ export default function FamilyCalendarClient() {
 
   function selectWeek(weekKey) {
     setSelectedWeekKey(weekKey);
+  }
+
+  function clearDateLongPress() {
+    if (dateLongPressTimerRef.current) window.clearTimeout(dateLongPressTimerRef.current);
+    dateLongPressTimerRef.current = null;
+    dateLongPressStartRef.current = null;
+    setPressedDateKey("");
+  }
+
+  function startDateLongPress(event, dateKey) {
+    if (event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    clearDateLongPress();
+    dateLongPressStartRef.current = {
+      dateKey,
+      x: touch.clientX,
+      y: touch.clientY,
+    };
+    setPressedDateKey(dateKey);
+    dateLongPressTimerRef.current = window.setTimeout(() => {
+      suppressDateClickRef.current = dateKey;
+      dateLongPressTimerRef.current = null;
+      dateLongPressStartRef.current = null;
+      setPressedDateKey("");
+      router.push(`/family/calendar/events/new?date=${dateKey}`);
+    }, FAMILY_CALENDAR_LONG_PRESS_MS);
+  }
+
+  function moveDateLongPress(event) {
+    const pending = dateLongPressStartRef.current;
+    if (!pending || event.touches.length !== 1) return;
+    const touch = event.touches[0];
+    if (
+      Math.abs(touch.clientX - pending.x) > FAMILY_CALENDAR_LONG_PRESS_MOVE_LIMIT ||
+      Math.abs(touch.clientY - pending.y) > FAMILY_CALENDAR_LONG_PRESS_MOVE_LIMIT
+    ) {
+      clearDateLongPress();
+    }
+  }
+
+  function endDateLongPress() {
+    clearDateLongPress();
+  }
+
+  function clickDateCell(event, weekKey, dateKey) {
+    if (suppressDateClickRef.current === dateKey) {
+      suppressDateClickRef.current = "";
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+    selectWeek(weekKey);
   }
 
   function toggleWeekSelection(weekKey) {
@@ -1416,12 +1479,16 @@ export default function FamilyCalendarClient() {
                   const count = datedItemsByDate[day.dateKey] || 0;
                   return (
                     <button
-                      className={`familyCalendarWeekDay familyCalendarWeekDateButton${day.inMonth ? "" : " familyCalendarDateOutside"}${selected ? "" : " familyCalendarWeekDateButtonCollapsed"}`}
+                      className={`familyCalendarWeekDay familyCalendarWeekDateButton${day.inMonth ? "" : " familyCalendarDateOutside"}${selected ? "" : " familyCalendarWeekDateButtonCollapsed"}${pressedDateKey === day.dateKey ? " familyCalendarWeekDateButtonPressed" : ""}`}
                       data-day-index={selected && editingCalendar ? dayIndex : undefined}
                       data-family-calendar-drop={selected && editingCalendar ? "date" : undefined}
                       key={day.dateKey}
                       type="button"
-                      onClick={() => selectWeek(week.key)}
+                      onClick={(event) => clickDateCell(event, week.key, day.dateKey)}
+                      onTouchCancel={endDateLongPress}
+                      onTouchEnd={endDateLongPress}
+                      onTouchMove={moveDateLongPress}
+                      onTouchStart={(event) => startDateLongPress(event, day.dateKey)}
                     >
                       <span className="familyCalendarWeekDateNumber">{day.date.getDate()}</span>
                       {!selected ? (

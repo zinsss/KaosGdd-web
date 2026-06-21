@@ -297,6 +297,38 @@ ${compactCss}`;
   assert.ok(combinedCss.includes("white-space: nowrap;"));
 });
 
+test("family calendar date cells support mobile long press add without changing tap selection", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const baseCalendarCss = await readSource("../app/styles/family-calendar.css");
+
+  assert.ok(calendarSource.includes("FAMILY_CALENDAR_LONG_PRESS_MS = 600"));
+  assert.ok(calendarSource.includes("FAMILY_CALENDAR_LONG_PRESS_MOVE_LIMIT = 10"));
+  assert.ok(calendarSource.includes("const dateLongPressTimerRef = useRef(null);"));
+  assert.ok(calendarSource.includes("const dateLongPressStartRef = useRef(null);"));
+  assert.ok(calendarSource.includes('const [pressedDateKey, setPressedDateKey] = useState("");'));
+  assert.ok(calendarSource.includes("function startDateLongPress(event, dateKey)"));
+  assert.ok(calendarSource.includes("function moveDateLongPress(event)"));
+  assert.ok(calendarSource.includes("function clickDateCell(event, weekKey, dateKey)"));
+  assert.ok(calendarSource.includes("router.push(`/family/calendar/events/new?date=${dateKey}`);"));
+  assert.ok(calendarSource.includes("suppressDateClickRef.current = dateKey;"));
+  assert.ok(calendarSource.includes("event.preventDefault();"));
+  assert.ok(calendarSource.includes("event.stopPropagation();"));
+  assert.ok(calendarSource.includes("selectWeek(weekKey);"));
+  assert.ok(calendarSource.includes("onTouchStart={(event) => startDateLongPress(event, day.dateKey)}"));
+  assert.ok(calendarSource.includes("onTouchMove={moveDateLongPress}"));
+  assert.ok(calendarSource.includes("onTouchEnd={endDateLongPress}"));
+  assert.ok(calendarSource.includes("onTouchCancel={endDateLongPress}"));
+  assert.ok(calendarSource.includes("familyCalendarWeekDateButtonPressed"));
+  assert.match(
+    calendarSource,
+    /Math\.abs\(touch\.clientX - pending\.x\) > FAMILY_CALENDAR_LONG_PRESS_MOVE_LIMIT \|\|\s*\n\s*Math\.abs\(touch\.clientY - pending\.y\) > FAMILY_CALENDAR_LONG_PRESS_MOVE_LIMIT/,
+  );
+  assert.match(
+    baseCalendarCss,
+    /\.familyCalendarWeekDateButtonPressed\s*\{[\s\S]*?background:\s*rgba\(216, 111, 152, 0\.16\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(216, 111, 152, 0\.18\);/,
+  );
+});
+
 test("family calendar caregiver hours row stores date-specific session ranges", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
