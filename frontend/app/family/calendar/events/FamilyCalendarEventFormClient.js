@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import FamilyHeader from "../../FamilyHeader";
@@ -15,6 +15,7 @@ import {
 } from "../familyCalendarData";
 
 const FAMILY_CALENDAR_EVENT_DEFAULT_DURATION_MINUTES = 40;
+const FAMILY_CALENDAR_WEEKDAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
 function addMinutesToTime(timeString, minutesToAdd) {
   const match = String(timeString || "").match(/^(\d{1,2}):(\d{2})$/);
@@ -33,6 +34,30 @@ function validDateParam(value) {
 
 function validTimeParam(value) {
   return /^\d{2}:\d{2}$/.test(String(value || "")) ? value : "";
+}
+
+function formatKoreanDate(dateString) {
+  const date = validDateParam(dateString);
+  if (!date) return "날짜 선택";
+  const [year, month, day] = date.split("-").map(Number);
+  const localDate = new Date(year, month - 1, day);
+  const weekday = FAMILY_CALENDAR_WEEKDAY_LABELS[localDate.getDay()] || "";
+  return `${year}.${String(month).padStart(2, "0")}.${String(day).padStart(2, "0")}(${weekday})`;
+}
+
+function openNativePicker(inputRef) {
+  const input = inputRef.current;
+  if (!input) return;
+  if (typeof input.showPicker === "function") {
+    try {
+      input.showPicker();
+      return;
+    } catch {
+      // Fall through to focus/click for browsers that gate showPicker.
+    }
+  }
+  input.focus();
+  input.click();
 }
 
 function eventToDraft(item) {
@@ -65,6 +90,9 @@ function eventPrefillFromLocation() {
 
 export default function FamilyCalendarEventFormClient({ eventId = "" }) {
   const router = useRouter();
+  const dateInputRef = useRef(null);
+  const startTimeInputRef = useRef(null);
+  const endTimeInputRef = useRef(null);
   const [items, setItems] = useState([]);
   const [draft, setDraft] = useState(() => eventToDraft(createDefaultFamilyCalendarItem()));
   const [loaded, setLoaded] = useState(false);
@@ -199,21 +227,57 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
             </div>
 
             <div className={`familyCalendarFormGrid${draft.allDay ? " familyCalendarFormGridAllDay" : ""}`}>
-              <label className="familyCalendarFormDateField">
-                <span>날짜</span>
-                <input type="date" value={draft.date} onChange={(event) => updateDraft("date", event.target.value)} />
-              </label>
+              <div className="familyCalendarPickerRow familyCalendarFormDateField">
+                <span className="familyCalendarPickerLabel">날짜</span>
+                <span className="familyCalendarPickerValue">{formatKoreanDate(draft.date)}</span>
+                <button aria-label="날짜 선택" className="familyCalendarPickerButton" onClick={() => openNativePicker(dateInputRef)} type="button">
+                  달력
+                </button>
+                <input
+                  aria-hidden="true"
+                  className="familyCalendarNativePickerInput"
+                  ref={dateInputRef}
+                  tabIndex={-1}
+                  type="date"
+                  value={draft.date}
+                  onChange={(event) => updateDraft("date", event.target.value)}
+                />
+              </div>
               {draft.allDay ? null : (
-                <div className="familyCalendarFormTimeRow">
-                  <label className="familyCalendarFormTimeField">
-                    <span>시작</span>
-                    <input type="time" value={draft.startTime} onChange={(event) => updateDraft("startTime", event.target.value)} />
-                  </label>
+                <div className="familyCalendarFormTimeRow" data-all-day-hidden={draft.allDay ? "true" : "false"}>
+                  <div className="familyCalendarFormTimeField">
+                    <span className="familyCalendarPickerLabel">시작</span>
+                    <span className="familyCalendarPickerValue">{draft.startTime}</span>
+                    <button aria-label="시작 시간 선택" className="familyCalendarPickerButton" onClick={() => openNativePicker(startTimeInputRef)} type="button">
+                      시간
+                    </button>
+                    <input
+                      aria-hidden="true"
+                      className="familyCalendarNativePickerInput"
+                      ref={startTimeInputRef}
+                      tabIndex={-1}
+                      type="time"
+                      value={draft.startTime}
+                      onChange={(event) => updateDraft("startTime", event.target.value)}
+                    />
+                  </div>
                   <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
-                  <label className="familyCalendarFormTimeField">
-                    <span>끝</span>
-                    <input type="time" value={draft.endTime} onChange={(event) => updateDraft("endTime", event.target.value)} />
-                  </label>
+                  <div className="familyCalendarFormTimeField">
+                    <span className="familyCalendarPickerLabel">끝</span>
+                    <span className="familyCalendarPickerValue">{draft.endTime}</span>
+                    <button aria-label="끝 시간 선택" className="familyCalendarPickerButton" onClick={() => openNativePicker(endTimeInputRef)} type="button">
+                      시간
+                    </button>
+                    <input
+                      aria-hidden="true"
+                      className="familyCalendarNativePickerInput"
+                      ref={endTimeInputRef}
+                      tabIndex={-1}
+                      type="time"
+                      value={draft.endTime}
+                      onChange={(event) => updateDraft("endTime", event.target.value)}
+                    />
+                  </div>
                 </div>
               )}
             </div>
