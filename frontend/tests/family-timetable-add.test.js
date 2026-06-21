@@ -48,10 +48,8 @@ test("family timetable keeps local schedule editor foundations", async () => {
     "주간시간표 템플릿",
     "+ 시간표",
     "제목",
-    "시작",
-    "끝",
+    "시간",
     "색상",
-    "글씨체",
     "메모",
     "저장",
     "취소",
@@ -66,15 +64,36 @@ test("family timetable keeps local schedule editor foundations", async () => {
   for (const day of ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]) {
     assert.ok(weekdaySources.includes(day), `${day} should remain available to the Roun editor`);
   }
-  for (const value of ["dayOfWeek", "startTime", "endTime", "color", "fontFamily", "normalizeFamilyRoniItem"]) {
+  for (const value of ["dayOfWeek", "startTime", "endTime", "sessions", "slots", "color", "fontFamily", "normalizeFamilyRoniItem"]) {
     assert.ok(roniSource.includes(value));
   }
+  assert.ok(dataSource.includes("Array.isArray(item.sessions)"), "Roun item normalization should accept sessions arrays");
+  assert.ok(dataSource.includes("sessions: slots"), "Roun item normalization should preserve normalized sessions");
+  assert.ok(roniSource.includes("function roniSessions(item)"), "Roun editor should normalize legacy slots and sessions together");
+  assert.ok(roniSource.includes("return roniSessions(item).flatMap((slot, slotIndex) => {"), "each session should render as an independent timetable block");
+  assert.ok(roniSource.includes("...item,"), "each rendered session block should retain the parent item fields");
+  assert.ok(roniSource.includes("setDraft(roniToDraft(block));"), "editing any session block should open the shared parent item draft");
   assert.ok(roniSource.includes('className="familyRoniTimePickerRow"'));
+  assert.ok(roniSource.includes('className="familyRoniSessionList"'));
+  assert.ok(roniSource.includes('className="familyRoniSessionListLabel">시간</span>'));
+  assert.ok(roniSource.includes('className="familyTaskActionButton familyRoniSessionAdd"'));
+  assert.ok(roniSource.includes("+ 요일/시간"));
+  assert.ok(roniSource.includes("function addDraftSession()"));
+  assert.ok(roniSource.includes("function removeDraftSession(sessionIndex)"));
+  assert.ok(roniSource.includes("if (!current || (current.sessions || []).length <= 1) return current;"));
+  assert.ok(roniSource.includes("function shortWeekdayLabel(dayOfWeek)"));
+  assert.ok(roniSource.includes('className="familyCalendarPickerButton familyRoniWeekdayPickerButton"'));
+  assert.ok(roniSource.includes('aria-label="로운이 일정 요일 선택"'));
+  assert.ok(!roniSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>'));
+  assert.ok(!roniSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">|</span>'));
   assert.equal((roniSource.match(/className="familyCalendarPickerButton familyRoniTimePickerButton"/g) || []).length, 2);
   assert.ok(roniSource.includes('aria-label="로운이 일정 시작 시간 선택"'));
   assert.ok(roniSource.includes('aria-label="로운이 일정 끝 시간 선택"'));
   assert.ok(!roniSource.includes('<input type="time" value={draft.startTime}'));
   assert.ok(!roniSource.includes('<input type="time" value={draft.endTime}'));
+  assert.ok(!roniSource.includes('<select value={draft.dayOfWeek}'));
+  assert.ok(!roniSource.includes("FAMILY_TIMETABLE_FONT_PRESETS"));
+  assert.ok(!roniSource.includes("<span>글씨체</span>"));
   assert.ok(globalsCss.includes("family-timetable-add.css"));
   assert.ok(globalsCss.includes("family-roni-templates.css"));
   assert.ok(addCss.includes(".familyTimetableSlot"));
@@ -82,7 +101,13 @@ test("family timetable keeps local schedule editor foundations", async () => {
   assert.ok(addCss.includes(".familyTimetableColorChips"));
   assert.ok(addCss.includes("font-size: 0"));
   assert.ok(addCss.includes(".familyTimetableCopyPills"));
-  assert.ok((await readSource("../app/styles/family-calendar.css")).includes(".familyRoniTimePickerRow {"));
+  const calendarCss = await readSource("../app/styles/family-calendar.css");
+  assert.ok(calendarCss.includes(".familyRoniTimePickerRow {"));
+  assert.ok(calendarCss.includes(".familyRoniWeekdayPickerButton"));
+  assert.ok(calendarCss.includes(".familyCalendarDatePickerPill,"));
+  assert.ok(calendarCss.includes(".familyCalendarTimePickerPill,"));
+  assert.ok(calendarCss.includes(".familyRoniSessionList {"));
+  assert.ok(calendarCss.includes(".familyRoniSessionRemove"));
 });
 
 test("family timetable exposes twelve fixed pastel color options", async () => {

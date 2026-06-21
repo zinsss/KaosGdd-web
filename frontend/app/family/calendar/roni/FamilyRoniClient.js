@@ -22,7 +22,6 @@ import {
 } from "../familyCalendarData.js";
 import {
   FAMILY_TIMETABLE_DEFAULT_FONT,
-  FAMILY_TIMETABLE_FONT_PRESETS,
   getFamilyTimetableFontFamily,
   normalizeFamilyTimetableFont,
 } from "../../familyTimetableFonts.js";
@@ -68,16 +67,27 @@ function slotMinutesFromPoint(clientY, rect) {
   return ROUN_TIMETABLE_START_HOUR * 60 + snapRounMinutes(minutesFromStart);
 }
 
-function roniToDraft(item, slotIndex = 0) {
-  const slots = Array.isArray(item.slots) && item.slots.length ? item.slots : [item];
-  const slot = slots[slotIndex] || slots[0] || item;
-  return {
-    id: item.id || "",
-    slotIndex,
-    title: item.title || "",
+function roniSessions(item) {
+  const rawSessions = Array.isArray(item.sessions) && item.sessions.length
+    ? item.sessions
+    : item.slots;
+  return (Array.isArray(rawSessions) && rawSessions.length ? rawSessions : [item]).map((slot) => ({
     dayOfWeek: String(slot.dayOfWeek ?? item.dayOfWeek ?? 0),
     startTime: slot.startTime || item.startTime || "09:00",
     endTime: slot.endTime || item.endTime || "09:40",
+  }));
+}
+
+function roniToDraft(item) {
+  const sessions = roniSessions(item);
+  const firstSession = sessions[0] || { dayOfWeek: "0", startTime: "09:00", endTime: "09:40" };
+  return {
+    id: item.id || "",
+    title: item.title || "",
+    dayOfWeek: firstSession.dayOfWeek,
+    startTime: firstSession.startTime,
+    endTime: firstSession.endTime,
+    sessions,
     memo: item.memo || "",
     color: item.color || "pink",
     fontFamily: normalizeFamilyTimetableFont(item.fontFamily || FAMILY_TIMETABLE_DEFAULT_FONT),
@@ -89,14 +99,17 @@ function weekdayLabel(dayOfWeek) {
   return FAMILY_CALENDAR_WEEKDAY_OPTIONS.find((option) => option.dayOfWeek === Number(dayOfWeek))?.label || "월요일";
 }
 
+function shortWeekdayLabel(dayOfWeek) {
+  return weekdayLabel(dayOfWeek).replace("요일", "");
+}
+
 function todayDateKey() {
   return formatFamilyDateKey(new Date());
 }
 
 function buildRounBlocks(items) {
   return items.flatMap((item) => {
-    const slots = Array.isArray(item.slots) && item.slots.length ? item.slots : [item];
-    return slots.flatMap((slot, slotIndex) => {
+    return roniSessions(item).flatMap((slot, slotIndex) => {
       const start = parseTimeMinutes(slot.startTime || item.startTime);
       const end = parseTimeMinutes(slot.endTime || item.endTime);
       const dayOfWeek = Number(slot.dayOfWeek ?? item.dayOfWeek);
@@ -277,6 +290,7 @@ export default function FamilyRoniClient() {
       startTime,
       endTime,
       slots: [{ dayOfWeek, startTime, endTime }],
+      sessions: [{ dayOfWeek, startTime, endTime }],
     });
   }
 
@@ -287,7 +301,7 @@ export default function FamilyRoniClient() {
   }
 
   function startEditRoni(block) {
-    setDraft(roniToDraft(block, block.slotIndex));
+    setDraft(roniToDraft(block));
     setActionBlock(null);
     setError("");
   }
@@ -302,12 +316,64 @@ export default function FamilyRoniClient() {
     if (field === "title" && value.trim()) setError("");
   }
 
+  function updateDraftSession(sessionIndex, field, value) {
+    setDraft((current) => {
+      if (!current) return current;
+      const sessions = (current.sessions || []).map((session, index) => (
+        index === sessionIndex ? { ...session, [field]: value } : session
+      ));
+      const firstSession = sessions[0] || current;
+      return {
+        ...current,
+        sessions,
+        dayOfWeek: firstSession.dayOfWeek,
+        startTime: firstSession.startTime,
+        endTime: firstSession.endTime,
+      };
+    });
+  }
+
+  function addDraftSession() {
+    setDraft((current) => {
+      if (!current) return current;
+      const sessions = current.sessions?.length ? current.sessions : roniSessions(current);
+      const previous = sessions[sessions.length - 1] || { dayOfWeek: new Date().getDay(), startTime: "09:00", endTime: "09:40" };
+      const nextDay = (Number(previous.dayOfWeek) + 1) % 7;
+      return {
+        ...current,
+        sessions: [
+          ...sessions,
+          {
+            dayOfWeek: String(nextDay),
+            startTime: previous.startTime,
+            endTime: previous.endTime,
+          },
+        ],
+      };
+    });
+  }
+
+  function removeDraftSession(sessionIndex) {
+    setDraft((current) => {
+      if (!current || (current.sessions || []).length <= 1) return current;
+      const sessions = current.sessions.filter((_, index) => index !== sessionIndex);
+      const firstSession = sessions[0] || current;
+      return {
+        ...current,
+        sessions,
+        dayOfWeek: firstSession.dayOfWeek,
+        startTime: firstSession.startTime,
+        endTime: firstSession.endTime,
+      };
+    });
+  }
+
   function replaceItemSlot(item, slotIndex, slotValues) {
-    const currentSlots = Array.isArray(item.slots) && item.slots.length ? item.slots : [{
-      dayOfWeek: item.dayOfWeek,
-      startTime: item.startTime,
-      endTime: item.endTime,
-    }];
+    const currentSlots = roniSessions(item).map((slot) => ({
+      dayOfWeek: Number(slot.dayOfWeek),
+      startTime: slot.startTime,
+      endTime: slot.endTime,
+    }));
     const nextSlots = currentSlots.map((slot, index) => (index === slotIndex ? { ...slot, ...slotValues } : slot));
     const firstSlot = nextSlots[0];
     return {
@@ -316,6 +382,7 @@ export default function FamilyRoniClient() {
       startTime: firstSlot.startTime,
       endTime: firstSlot.endTime,
       slots: nextSlots,
+      sessions: nextSlots,
     };
   }
 
@@ -326,18 +393,19 @@ export default function FamilyRoniClient() {
       return;
     }
 
-    const slotValues = {
-      dayOfWeek: Number(draft.dayOfWeek),
-      startTime: draft.startTime,
-      endTime: draft.endTime,
-    };
+    const slotValues = (draft.sessions?.length ? draft.sessions : roniSessions(draft)).map((session) => ({
+      dayOfWeek: Number(session.dayOfWeek),
+      startTime: session.startTime,
+      endTime: session.endTime,
+    }));
     const normalized = normalizeFamilyRoniItem({
       ...draft,
       title: draft.title.trim(),
-      dayOfWeek: slotValues.dayOfWeek,
-      startTime: slotValues.startTime,
-      endTime: slotValues.endTime,
-      slots: [slotValues],
+      dayOfWeek: slotValues[0]?.dayOfWeek,
+      startTime: slotValues[0]?.startTime,
+      endTime: slotValues[0]?.endTime,
+      slots: slotValues,
+      sessions: slotValues,
       fontFamily: normalizeFamilyTimetableFont(draft.fontFamily),
     });
     if (!normalized) {
@@ -357,7 +425,9 @@ export default function FamilyRoniClient() {
           color: normalized.color,
           fontFamily: normalized.fontFamily,
           active: normalized.active,
-        }, draft.slotIndex || 0, slotValues);
+          slots: normalized.slots,
+          sessions: normalized.sessions,
+        }, 0, normalized.slots[0]);
       })
       : [...currentItems, normalized];
     updateOpenedPlanItems(nextItems);
@@ -374,11 +444,20 @@ export default function FamilyRoniClient() {
 
   function copyRoni(block) {
     if (!openedPlan || !block) return;
+    const sessions = roniSessions(block).map((session) => ({
+      dayOfWeek: Number(session.dayOfWeek),
+      startTime: session.startTime,
+      endTime: session.endTime,
+    }));
     const copy = normalizeFamilyRoniItem({
       ...block,
       id: createFamilyCalendarId(),
       title: block.title,
-      slots: [{ dayOfWeek: block.dayOfWeek, startTime: block.startTime, endTime: block.endTime }],
+      dayOfWeek: sessions[0]?.dayOfWeek,
+      startTime: sessions[0]?.startTime,
+      endTime: sessions[0]?.endTime,
+      slots: sessions,
+      sessions,
     });
     if (!copy) return;
     updateOpenedPlanItems([...(openedPlan.items || []), copy]);
@@ -617,30 +696,59 @@ export default function FamilyRoniClient() {
               {error ? <p className="familyCalendarFormError">{error}</p> : null}
 
               <div className="familyCalendarFormGrid">
-                <div className="familyRoniTimePickerRow">
-                  <span>시작</span>
-                  <label className="familyCalendarPickerButton familyRoniTimePickerButton">
-                    {draft.startTime}
-                    <input
-                      aria-label="로운이 일정 시작 시간 선택"
-                      className="familyCalendarNativePickerInput"
-                      type="time"
-                      value={draft.startTime}
-                      onChange={(event) => updateDraft("startTime", event.target.value)}
-                    />
-                  </label>
-                  <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
-                  <span>끝</span>
-                  <label className="familyCalendarPickerButton familyRoniTimePickerButton">
-                    {draft.endTime}
-                    <input
-                      aria-label="로운이 일정 끝 시간 선택"
-                      className="familyCalendarNativePickerInput"
-                      type="time"
-                      value={draft.endTime}
-                      onChange={(event) => updateDraft("endTime", event.target.value)}
-                    />
-                  </label>
+                <div className="familyRoniSessionList">
+                  <span className="familyRoniSessionListLabel">시간</span>
+                  {(draft.sessions?.length ? draft.sessions : roniSessions(draft)).map((session, sessionIndex) => (
+                    <div className="familyRoniTimePickerRow" key={sessionIndex}>
+                      <label className="familyCalendarPickerButton familyRoniWeekdayPickerButton">
+                        {shortWeekdayLabel(session.dayOfWeek)}
+                        <select
+                          aria-label="로운이 일정 요일 선택"
+                          className="familyCalendarNativePickerInput"
+                          value={session.dayOfWeek}
+                          onChange={(event) => updateDraftSession(sessionIndex, "dayOfWeek", event.target.value)}
+                        >
+                          {FAMILY_CALENDAR_WEEKDAY_OPTIONS.map((option) => (
+                            <option value={option.dayOfWeek} key={option.dayOfWeek}>
+                              {option.label}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="familyCalendarPickerButton familyRoniTimePickerButton">
+                        {session.startTime}
+                        <input
+                          aria-label="로운이 일정 시작 시간 선택"
+                          className="familyCalendarNativePickerInput"
+                          type="time"
+                          value={session.startTime}
+                          onChange={(event) => updateDraftSession(sessionIndex, "startTime", event.target.value)}
+                        />
+                      </label>
+                      <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
+                      <label className="familyCalendarPickerButton familyRoniTimePickerButton">
+                        {session.endTime}
+                        <input
+                          aria-label="로운이 일정 끝 시간 선택"
+                          className="familyCalendarNativePickerInput"
+                          type="time"
+                          value={session.endTime}
+                          onChange={(event) => updateDraftSession(sessionIndex, "endTime", event.target.value)}
+                        />
+                      </label>
+                      <button
+                        className="familyRoniSessionRemove"
+                        disabled={(draft.sessions || []).length <= 1}
+                        onClick={() => removeDraftSession(sessionIndex)}
+                        type="button"
+                      >
+                        삭제
+                      </button>
+                    </div>
+                  ))}
+                  <button className="familyTaskActionButton familyRoniSessionAdd" onClick={addDraftSession} type="button">
+                    + 요일/시간
+                  </button>
                 </div>
               </div>
 
@@ -659,17 +767,6 @@ export default function FamilyRoniClient() {
                   ))}
                 </div>
               </div>
-
-              <label>
-                <span>글씨체</span>
-                <select value={draft.fontFamily} onChange={(event) => updateDraft("fontFamily", event.target.value)}>
-                  {FAMILY_TIMETABLE_FONT_PRESETS.map((preset) => (
-                    <option value={preset.value} key={preset.value}>
-                      {preset.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
 
               <label>
                 <span>메모</span>

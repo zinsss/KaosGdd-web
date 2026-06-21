@@ -273,7 +273,12 @@ export function normalizeFamilyRoniItem(item) {
     startTime: item.startTime,
     endTime: item.endTime,
   };
-  const slots = Array.isArray(item.slots) && item.slots.length > 0 ? item.slots.map((slot) => normalizeFamilyRoniSlot(slot, fallback)) : [normalizeFamilyRoniSlot(item, fallback)];
+  const rawSessions = Array.isArray(item.sessions) && item.sessions.length > 0
+    ? item.sessions
+    : item.slots;
+  const slots = Array.isArray(rawSessions) && rawSessions.length > 0
+    ? rawSessions.map((slot) => normalizeFamilyRoniSlot(slot, fallback))
+    : [normalizeFamilyRoniSlot(item, fallback)];
   const firstSlot = slots[0];
   return {
     id: String(item.id || createFamilyCalendarId()),
@@ -282,6 +287,7 @@ export function normalizeFamilyRoniItem(item) {
     startTime: firstSlot.startTime,
     endTime: firstSlot.endTime,
     slots,
+    sessions: slots,
     memo: String(item.memo || ""),
     color: normalizeFamilyCalendarColor(item.color),
     fontFamily: normalizeFamilyTimetableFont(item.fontFamily || FAMILY_TIMETABLE_DEFAULT_FONT),

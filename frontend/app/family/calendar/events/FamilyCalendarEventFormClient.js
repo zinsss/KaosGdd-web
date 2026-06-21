@@ -212,7 +212,7 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
               <div className="familyCalendarDateTimeSection">
                 <span className="familyCalendarDateTimeTitle">날짜/시간</span>
                 <div className="familyCalendarDateTimeRow">
-                  <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton">
+                  <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton familyCalendarDatePickerPill">
                     {formatKoreanDate(draft.date)}
                     <input
                       aria-label="날짜 선택"
@@ -224,9 +224,8 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
                   </label>
                   {draft.allDay ? null : (
                     <>
-                      <span className="familyCalendarDateTimeDivider" aria-hidden="true">|</span>
                       <span className="familyCalendarDateTimeCluster">
-                        <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton">
+                        <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton familyCalendarTimePickerPill">
                           {draft.startTime}
                           <input
                             aria-label="시작 시간 선택"
@@ -239,7 +238,7 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
                       </span>
                       <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
                       <span className="familyCalendarDateTimeCluster">
-                        <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton">
+                        <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton familyCalendarTimePickerPill">
                           {draft.endTime}
                           <input
                             aria-label="끝 시간 선택"
