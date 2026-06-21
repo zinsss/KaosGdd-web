@@ -224,7 +224,7 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
                   </label>
                   {draft.allDay ? null : (
                     <>
-                      <span className="familyCalendarDateTimeDivider" aria-hidden="true">|</span>
+                      <span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>
                       <span className="familyCalendarDateTimeCluster">
                         <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton">
                           {draft.startTime}
