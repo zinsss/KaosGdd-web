@@ -410,7 +410,6 @@ function FamilyCaregiverHoursRow({
 }) {
   const [draftSessions, setDraftSessions] = useState([]);
   const [draftError, setDraftError] = useState("");
-  const timeInputRefs = useRef({});
 
   useEffect(() => {
     if (!activeDate) {
@@ -430,21 +429,6 @@ function FamilyCaregiverHoursRow({
     setDraftSessions([{ start: "09:00", end: legacyEnd }]);
     setDraftError("");
   }, [activeDate, caregiverHoursByDate]);
-
-  function openCaregiverTimePicker(key) {
-    const input = timeInputRefs.current[key];
-    if (!input) return;
-    if (typeof input.showPicker === "function") {
-      try {
-        input.showPicker();
-        return;
-      } catch {
-        // Fallback below for browsers that gate showPicker.
-      }
-    }
-    input.focus();
-    input.click();
-  }
 
   function updateDraftSession(index, field, value) {
     setDraftSessions((current) => current.map((session, sessionIndex) => (
@@ -509,37 +493,29 @@ function FamilyCaregiverHoursRow({
                 <div className="familyCalendarCaregiverSessionRow" key={`${activeDate}-${index}`}>
                   <span className="familyCalendarCaregiverSessionLabel">시작</span>
                   <span className="familyCalendarCaregiverSessionValue">{session.start}</span>
-                  <button className="familyCalendarCaregiverTimeButton" type="button" onClick={() => openCaregiverTimePicker(`${index}-start`)}>
+                  <label className="familyCalendarCaregiverTimeButton">
                     시간
-                  </button>
-                  <input
-                    aria-hidden="true"
-                    className="familyCalendarNativePickerInput"
-                    ref={(element) => {
-                      if (element) timeInputRefs.current[`${index}-start`] = element;
-                    }}
-                    tabIndex={-1}
-                    type="time"
-                    value={session.start}
-                    onChange={(event) => updateDraftSession(index, "start", event.target.value)}
-                  />
+                    <input
+                      aria-label="돌봄 시작 시간 선택"
+                      className="familyCalendarNativePickerInput"
+                      type="time"
+                      value={session.start}
+                      onChange={(event) => updateDraftSession(index, "start", event.target.value)}
+                    />
+                  </label>
                   <span className="familyCalendarCaregiverSessionSeparator" aria-hidden="true">~</span>
                   <span className="familyCalendarCaregiverSessionLabel">끝</span>
                   <span className="familyCalendarCaregiverSessionValue">{session.end}</span>
-                  <button className="familyCalendarCaregiverTimeButton" type="button" onClick={() => openCaregiverTimePicker(`${index}-end`)}>
+                  <label className="familyCalendarCaregiverTimeButton">
                     시간
-                  </button>
-                  <input
-                    aria-hidden="true"
-                    className="familyCalendarNativePickerInput"
-                    ref={(element) => {
-                      if (element) timeInputRefs.current[`${index}-end`] = element;
-                    }}
-                    tabIndex={-1}
-                    type="time"
-                    value={session.end}
-                    onChange={(event) => updateDraftSession(index, "end", event.target.value)}
-                  />
+                    <input
+                      aria-label="돌봄 끝 시간 선택"
+                      className="familyCalendarNativePickerInput"
+                      type="time"
+                      value={session.end}
+                      onChange={(event) => updateDraftSession(index, "end", event.target.value)}
+                    />
+                  </label>
                   {draftSessions.length > 1 ? (
                     <button aria-label="돌봄 시간 삭제" className="familyCalendarCaregiverRemoveSession" type="button" onClick={() => removeDraftSession(index)}>
                       삭제
