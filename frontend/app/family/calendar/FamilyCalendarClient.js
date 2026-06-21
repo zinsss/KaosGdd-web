@@ -491,7 +491,6 @@ function FamilyCaregiverHoursRow({
             <div className="familyCalendarCaregiverSessions">
               {draftSessions.map((session, index) => (
                 <div className="familyCalendarCaregiverSessionRow" key={`${activeDate}-${index}`}>
-                  <span className="familyCalendarCaregiverSessionLabel">시작</span>
                   <label className="familyCalendarCaregiverTimeButton">
                     {session.start}
                     <input
@@ -503,7 +502,6 @@ function FamilyCaregiverHoursRow({
                     />
                   </label>
                   <span className="familyCalendarCaregiverSessionSeparator" aria-hidden="true">~</span>
-                  <span className="familyCalendarCaregiverSessionLabel">끝</span>
                   <label className="familyCalendarCaregiverTimeButton">
                     {session.end}
                     <input

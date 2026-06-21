@@ -84,7 +84,7 @@ test("family timetable keeps local schedule editor foundations", async () => {
   assert.ok(roniSource.includes("function shortWeekdayLabel(dayOfWeek)"));
   assert.ok(roniSource.includes('className="familyCalendarPickerButton familyRoniWeekdayPickerButton"'));
   assert.ok(roniSource.includes('aria-label="로운이 일정 요일 선택"'));
-  assert.ok(roniSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>'));
+  assert.ok(!roniSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>'));
   assert.ok(!roniSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">|</span>'));
   assert.equal((roniSource.match(/className="familyCalendarPickerButton familyRoniTimePickerButton"/g) || []).length, 2);
   assert.ok(roniSource.includes('aria-label="로운이 일정 시작 시간 선택"'));
@@ -104,6 +104,8 @@ test("family timetable keeps local schedule editor foundations", async () => {
   const calendarCss = await readSource("../app/styles/family-calendar.css");
   assert.ok(calendarCss.includes(".familyRoniTimePickerRow {"));
   assert.ok(calendarCss.includes(".familyRoniWeekdayPickerButton"));
+  assert.ok(calendarCss.includes(".familyCalendarDatePickerPill,"));
+  assert.ok(calendarCss.includes(".familyCalendarTimePickerPill,"));
   assert.ok(calendarCss.includes(".familyRoniSessionList {"));
   assert.ok(calendarCss.includes(".familyRoniSessionRemove"));
 });

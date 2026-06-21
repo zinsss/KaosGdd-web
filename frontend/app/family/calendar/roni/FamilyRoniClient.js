@@ -715,7 +715,6 @@ export default function FamilyRoniClient() {
                           ))}
                         </select>
                       </label>
-                      <span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>
                       <label className="familyCalendarPickerButton familyRoniTimePickerButton">
                         {session.startTime}
                         <input
