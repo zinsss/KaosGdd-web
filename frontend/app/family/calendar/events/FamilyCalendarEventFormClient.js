@@ -42,7 +42,7 @@ function formatKoreanDate(dateString) {
   const [year, month, day] = date.split("-").map(Number);
   const localDate = new Date(year, month - 1, day);
   const weekday = FAMILY_CALENDAR_WEEKDAY_LABELS[localDate.getDay()] || "";
-  return `${String(year).slice(-2)}.${String(month).padStart(2, "0")}.${String(day).padStart(2, "0")}(${weekday})`;
+  return `${year}.${String(month).padStart(2, "0")}.${String(day).padStart(2, "0")} (${weekday})`;
 }
 
 function eventToDraft(item) {
@@ -212,25 +212,22 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
               <div className="familyCalendarDateTimeSection">
                 <span className="familyCalendarDateTimeTitle">날짜/시간</span>
                 <div className="familyCalendarDateTimeRow">
-                  <span className="familyCalendarDateTimeCluster">
-                    <span className="familyCalendarPickerValue">{formatKoreanDate(draft.date)}</span>
-                    <label className="familyCalendarPickerButton">
-                      달력
-                      <input
-                        aria-label="날짜 선택"
-                        className="familyCalendarNativePickerInput"
-                        type="date"
-                        value={draft.date}
-                        onChange={(event) => updateDraft("date", event.target.value)}
-                      />
-                    </label>
-                  </span>
+                  <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton">
+                    {formatKoreanDate(draft.date)}
+                    <input
+                      aria-label="날짜 선택"
+                      className="familyCalendarNativePickerInput"
+                      type="date"
+                      value={draft.date}
+                      onChange={(event) => updateDraft("date", event.target.value)}
+                    />
+                  </label>
                   {draft.allDay ? null : (
                     <>
+                      <span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>
                       <span className="familyCalendarDateTimeCluster">
-                        <span className="familyCalendarPickerValue">{draft.startTime}</span>
-                        <label className="familyCalendarPickerButton">
-                          시간
+                        <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton">
+                          {draft.startTime}
                           <input
                             aria-label="시작 시간 선택"
                             className="familyCalendarNativePickerInput"
@@ -242,9 +239,8 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
                       </span>
                       <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
                       <span className="familyCalendarDateTimeCluster">
-                        <span className="familyCalendarPickerValue">{draft.endTime}</span>
-                        <label className="familyCalendarPickerButton">
-                          시간
+                        <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton">
+                          {draft.endTime}
                           <input
                             aria-label="끝 시간 선택"
                             className="familyCalendarNativePickerInput"

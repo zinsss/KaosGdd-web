@@ -1406,6 +1406,17 @@
   line-height: 1;
 }
 
+.familyCalendarDateTimeDivider {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  color: rgba(78, 37, 54, 0.32);
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .familyCalendarDateTimeSection {
   position: relative;
   display: grid;
@@ -1448,6 +1459,15 @@
   align-items: center;
   gap: 5px;
   max-width: 100%;
+}
+
+.familyCalendarDateTimeValueButton,
+.familyRoniTimePickerButton,
+.familyRoniWeekdayPickerButton {
+  color: rgba(78, 37, 54, 0.9);
+  font-size: 15px;
+  min-height: 30px;
+  padding: 0 10px;
 }
 
 .familyCalendarPickerRow {
@@ -1512,6 +1532,23 @@
 .familyCalendarPickerButton:focus-visible {
   outline: 2px solid rgba(216, 111, 152, 0.42);
   outline-offset: 2px;
+}
+
+.familyRoniTimePickerRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.familyRoniTimePickerRow > span:not(.familyCalendarFormTimeSeparator):not(.familyCalendarDateTimeDivider) {
+  color: rgba(78, 37, 54, 0.68);
+  font-size: 15px;
+  font-weight: 950;
+  white-space: nowrap;
 }
 
 .familyCalendarNativePickerInput {

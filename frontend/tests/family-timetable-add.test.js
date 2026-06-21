@@ -69,6 +69,18 @@ test("family timetable keeps local schedule editor foundations", async () => {
   for (const value of ["dayOfWeek", "startTime", "endTime", "color", "fontFamily", "normalizeFamilyRoniItem"]) {
     assert.ok(roniSource.includes(value));
   }
+  assert.ok(roniSource.includes('className="familyRoniTimePickerRow"'));
+  assert.ok(roniSource.includes("function shortWeekdayLabel(dayOfWeek)"));
+  assert.ok(roniSource.includes('className="familyCalendarPickerButton familyRoniWeekdayPickerButton"'));
+  assert.ok(roniSource.includes('aria-label="로운이 일정 요일 선택"'));
+  assert.ok(roniSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>'));
+  assert.ok(!roniSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">|</span>'));
+  assert.equal((roniSource.match(/className="familyCalendarPickerButton familyRoniTimePickerButton"/g) || []).length, 2);
+  assert.ok(roniSource.includes('aria-label="로운이 일정 시작 시간 선택"'));
+  assert.ok(roniSource.includes('aria-label="로운이 일정 끝 시간 선택"'));
+  assert.ok(!roniSource.includes('<input type="time" value={draft.startTime}'));
+  assert.ok(!roniSource.includes('<input type="time" value={draft.endTime}'));
+  assert.ok(!roniSource.includes('<select value={draft.dayOfWeek}'));
   assert.ok(globalsCss.includes("family-timetable-add.css"));
   assert.ok(globalsCss.includes("family-roni-templates.css"));
   assert.ok(addCss.includes(".familyTimetableSlot"));
@@ -76,6 +88,9 @@ test("family timetable keeps local schedule editor foundations", async () => {
   assert.ok(addCss.includes(".familyTimetableColorChips"));
   assert.ok(addCss.includes("font-size: 0"));
   assert.ok(addCss.includes(".familyTimetableCopyPills"));
+  const calendarCss = await readSource("../app/styles/family-calendar.css");
+  assert.ok(calendarCss.includes(".familyRoniTimePickerRow {"));
+  assert.ok(calendarCss.includes(".familyRoniWeekdayPickerButton"));
 });
 
 test("family timetable exposes twelve fixed pastel color options", async () => {

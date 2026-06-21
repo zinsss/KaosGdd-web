@@ -89,6 +89,10 @@ function weekdayLabel(dayOfWeek) {
   return FAMILY_CALENDAR_WEEKDAY_OPTIONS.find((option) => option.dayOfWeek === Number(dayOfWeek))?.label || "월요일";
 }
 
+function shortWeekdayLabel(dayOfWeek) {
+  return weekdayLabel(dayOfWeek).replace("요일", "");
+}
+
 function todayDateKey() {
   return formatFamilyDateKey(new Date());
 }
@@ -617,14 +621,46 @@ export default function FamilyRoniClient() {
               {error ? <p className="familyCalendarFormError">{error}</p> : null}
 
               <div className="familyCalendarFormGrid">
-                <label>
-                  <span>시작</span>
-                  <input type="time" value={draft.startTime} onChange={(event) => updateDraft("startTime", event.target.value)} />
-                </label>
-                <label>
+                <div className="familyRoniTimePickerRow">
+                  <label className="familyCalendarPickerButton familyRoniWeekdayPickerButton">
+                    {shortWeekdayLabel(draft.dayOfWeek)}
+                    <select
+                      aria-label="로운이 일정 요일 선택"
+                      className="familyCalendarNativePickerInput"
+                      value={draft.dayOfWeek}
+                      onChange={(event) => updateDraft("dayOfWeek", event.target.value)}
+                    >
+                      {FAMILY_CALENDAR_WEEKDAY_OPTIONS.map((option) => (
+                        <option value={option.dayOfWeek} key={option.dayOfWeek}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>
+                  <label className="familyCalendarPickerButton familyRoniTimePickerButton">
+                    {draft.startTime}
+                    <input
+                      aria-label="로운이 일정 시작 시간 선택"
+                      className="familyCalendarNativePickerInput"
+                      type="time"
+                      value={draft.startTime}
+                      onChange={(event) => updateDraft("startTime", event.target.value)}
+                    />
+                  </label>
+                  <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
                   <span>끝</span>
-                  <input type="time" value={draft.endTime} onChange={(event) => updateDraft("endTime", event.target.value)} />
-                </label>
+                  <label className="familyCalendarPickerButton familyRoniTimePickerButton">
+                    {draft.endTime}
+                    <input
+                      aria-label="로운이 일정 끝 시간 선택"
+                      className="familyCalendarNativePickerInput"
+                      type="time"
+                      value={draft.endTime}
+                      onChange={(event) => updateDraft("endTime", event.target.value)}
+                    />
+                  </label>
+                </div>
               </div>
 
               <div className="familyTimetableColorField">
