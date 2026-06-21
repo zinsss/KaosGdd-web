@@ -109,9 +109,11 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes('className="familyCalendarDateTimeTitle">날짜/시간</span>'));
   assert.ok(eventFormSource.includes('className="familyCalendarDateTimeRow"'));
   assert.equal((eventFormSource.match(/className="familyCalendarDateTimeCluster"/g) || []).length, 2);
-  assert.equal((eventFormSource.match(/className="familyCalendarPickerButton familyCalendarDateTimeValueButton"/g) || []).length, 3);
-  assert.ok(eventFormSource.includes('className="familyCalendarDateTimeDivider"'));
-  assert.ok(eventFormSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>'));
+  assert.equal((eventFormSource.match(/familyCalendarDateTimeValueButton/g) || []).length, 3);
+  assert.ok(eventFormSource.includes("familyCalendarDatePickerPill"));
+  assert.equal((eventFormSource.match(/familyCalendarTimePickerPill/g) || []).length, 2);
+  assert.ok(!eventFormSource.includes('className="familyCalendarDateTimeDivider"'));
+  assert.ok(!eventFormSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>'));
   assert.ok(!eventFormSource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">|</span>'));
   assert.ok(eventFormSource.includes("function formatKoreanDate(dateString)"));
   assert.ok(!eventFormSource.includes("function openNativePicker(inputRef)"));
@@ -201,9 +203,10 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarDateTimeSection\s*\{[\s\S]*?display:\s*grid;[\s\S]*?gap:\s*6px;[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarDateTimeTitle\s*\{[\s\S]*?font-size:\s*15px;[\s\S]*?font-weight:\s*950;/);
   assert.match(calendarCss, /\.familyCalendarDateTimeRow\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*6px 14px;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
-  assert.match(calendarCss, /\.familyCalendarDateTimeDivider\s*\{[\s\S]*?min-height:\s*28px;[\s\S]*?color:\s*rgba\(78, 37, 54, 0\.32\);/);
   assert.match(calendarCss, /\.familyCalendarDateTimeCluster\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*5px;[\s\S]*?max-width:\s*100%;/);
   assert.match(calendarCss, /\.familyCalendarDateTimeValueButton,\s*\n\.familyRoniTimePickerButton,\s*\n\.familyRoniWeekdayPickerButton\s*\{[\s\S]*?font-size:\s*15px;[\s\S]*?min-height:\s*30px;/);
+  assert.match(calendarCss, /\.familyCalendarDatePickerPill,\s*\n\.familyRoniWeekdayPickerButton\s*\{[\s\S]*?background:\s*rgba\(245, 232, 255, 0\.9\);[\s\S]*?color:\s*rgba\(112, 74, 150, 0\.94\);/);
+  assert.match(calendarCss, /\.familyCalendarTimePickerPill,\s*\n\.familyRoniTimePickerButton\s*\{[\s\S]*?background:\s*#fff0f5;[\s\S]*?color:\s*#8d3f5d;/);
   assert.match(calendarCss, /\.familyCalendarPickerRow\s*\{[\s\S]*?grid-template-columns:\s*auto minmax\(0, 1fr\) auto;[\s\S]*?min-height:\s*34px;/);
   assert.match(calendarCss, /\.familyCalendarPickerButton\s*\{[\s\S]*?position:\s*relative;[\s\S]*?display:\s*inline-flex;[\s\S]*?overflow:\s*hidden;[\s\S]*?border-radius:\s*999px;[\s\S]*?width:\s*auto !important;[\s\S]*?min-height:\s*28px;[\s\S]*?cursor:\s*pointer;/);
   assert.match(calendarCss, /\.familyCalendarNativePickerInput\s*\{[\s\S]*?position:\s*absolute !important;[\s\S]*?inset:\s*0 !important;[\s\S]*?width:\s*100% !important;[\s\S]*?height:\s*100% !important;[\s\S]*?opacity:\s*0\.001;[\s\S]*?cursor:\s*pointer;/);
@@ -404,6 +407,8 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarSource.includes('className="familyCalendarCaregiverTimeButton"'));
   assert.ok(calendarSource.includes("{session.start}"));
   assert.ok(calendarSource.includes("{session.end}"));
+  assert.ok(!calendarSource.includes('className="familyCalendarCaregiverSessionLabel">시작</span>'));
+  assert.ok(!calendarSource.includes('className="familyCalendarCaregiverSessionLabel">끝</span>'));
   assert.ok(!calendarSource.includes('className="familyCalendarCaregiverSessionValue"'));
   assert.ok(calendarSource.includes('aria-label="돌봄 시작 시간 선택"'));
   assert.ok(calendarSource.includes('aria-label="돌봄 끝 시간 선택"'));
@@ -423,6 +428,7 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarCss.includes(".familyCalendarCaregiverPicker {"));
   assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverSessionRow {"));
+  assert.match(calendarCss, /\.familyCalendarCaregiverSessionRow\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*5px;/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverTimeButton,"));
   assert.match(calendarCss, /\.familyCalendarCaregiverTimeButton\s*\{[\s\S]*?position:\s*relative;[\s\S]*?display:\s*inline-flex;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?overflow:\s*hidden;[\s\S]*?cursor:\s*pointer;/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverAddSession,"));

@@ -533,8 +533,8 @@
 
 .familyCalendarCaregiverSessionRow {
   position: relative;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto auto minmax(0, 1fr) auto auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 5px;
   min-width: 0;
@@ -1470,6 +1470,19 @@
   padding: 0 10px;
 }
 
+.familyCalendarDatePickerPill,
+.familyRoniWeekdayPickerButton {
+  background: rgba(245, 232, 255, 0.9);
+  color: rgba(112, 74, 150, 0.94);
+  box-shadow: inset 0 0 0 1px rgba(180, 120, 190, 0.26);
+}
+
+.familyCalendarTimePickerPill,
+.familyRoniTimePickerButton {
+  background: #fff0f5;
+  color: #8d3f5d;
+}
+
 .familyCalendarPickerRow {
   position: relative;
   display: grid;
@@ -1882,16 +1895,8 @@
     gap: 8px;
   }
 
-  .familyCalendarCaregiverSessionRow {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-  }
-
-  .familyCalendarCaregiverSessionSeparator {
-    display: none;
-  }
-
   .familyCalendarCaregiverRemoveSession {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
   }
 
   .familyCalendarFormActionsInline > *,
