@@ -69,6 +69,12 @@ test("family timetable keeps local schedule editor foundations", async () => {
   for (const value of ["dayOfWeek", "startTime", "endTime", "color", "fontFamily", "normalizeFamilyRoniItem"]) {
     assert.ok(roniSource.includes(value));
   }
+  assert.ok(roniSource.includes('className="familyRoniTimePickerRow"'));
+  assert.equal((roniSource.match(/className="familyCalendarPickerButton familyRoniTimePickerButton"/g) || []).length, 2);
+  assert.ok(roniSource.includes('aria-label="로운이 일정 시작 시간 선택"'));
+  assert.ok(roniSource.includes('aria-label="로운이 일정 끝 시간 선택"'));
+  assert.ok(!roniSource.includes('<input type="time" value={draft.startTime}'));
+  assert.ok(!roniSource.includes('<input type="time" value={draft.endTime}'));
   assert.ok(globalsCss.includes("family-timetable-add.css"));
   assert.ok(globalsCss.includes("family-roni-templates.css"));
   assert.ok(addCss.includes(".familyTimetableSlot"));
@@ -76,6 +82,7 @@ test("family timetable keeps local schedule editor foundations", async () => {
   assert.ok(addCss.includes(".familyTimetableColorChips"));
   assert.ok(addCss.includes("font-size: 0"));
   assert.ok(addCss.includes(".familyTimetableCopyPills"));
+  assert.ok((await readSource("../app/styles/family-calendar.css")).includes(".familyRoniTimePickerRow {"));
 });
 
 test("family timetable exposes twelve fixed pastel color options", async () => {
