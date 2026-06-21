@@ -1329,7 +1329,8 @@
 
 .familyCalendarFormGrid > label,
 .familyCalendarFormGrid > .familyCalendarPickerRow,
-.familyCalendarFormGrid > .familyCalendarFormTimeRow {
+.familyCalendarFormGrid > .familyCalendarFormTimeRow,
+.familyCalendarFormGrid > .familyCalendarDateTimeSection {
   width: auto;
   max-width: 100%;
   min-width: 0;
@@ -1383,11 +1384,55 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 32px;
+  min-height: 28px;
   color: rgba(78, 37, 54, 0.62);
   font-size: 16px;
   font-weight: 950;
   line-height: 1;
+}
+
+.familyCalendarDateTimeSection {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.familyCalendarDateTimeTitle {
+  min-width: 0;
+  color: rgba(78, 37, 54, 0.72);
+  font-size: 15px;
+  font-weight: 950;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.familyCalendarDateTimeRow {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  color: #4b2536;
+}
+
+.familyCalendarDateTimeRow > .familyCalendarPickerValue,
+.familyCalendarDateTimeCluster {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.familyCalendarDateTimeCluster {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
 }
 
 .familyCalendarPickerRow {
@@ -1728,11 +1773,6 @@
     grid-template-columns: minmax(0, 1fr);
     column-gap: 0;
     row-gap: 10px;
-  }
-
-  .familyCalendarFormDateField,
-  .familyCalendarFormGridAllDay .familyCalendarFormDateField {
-    grid-column: 1 / -1;
   }
 
   .familyCalendarFormMetaRow {
