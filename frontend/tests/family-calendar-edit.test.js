@@ -3,15 +3,21 @@ import { readFile } from "node:fs/promises";
 import { test } from "node:test";
 
 import {
+  calculateFamilyCaregiverHours,
   FAMILY_CAREGIVER_HOUR_VALUES,
   FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY,
   FAMILY_CAREGIVER_HOURS_STORAGE_KEY,
   FAMILY_CALENDAR_COLOR_KEYS,
   FAMILY_CALENDAR_COLOR_LABELS,
+  familyCaregiverSessionDurationHours,
   formatFamilyCaregiverHours,
+  minutesToFamilyCaregiverTime,
   normalizeFamilyCaregiverHour,
   normalizeFamilyCaregiverHourlyWage,
   normalizeFamilyCaregiverHoursMap,
+  normalizeFamilyCaregiverSession,
+  normalizeFamilyCaregiverSessions,
+  parseFamilyCaregiverTime,
 } from "../app/family/calendar/familyCalendarData.js";
 
 async function readSource(path) {
@@ -277,7 +283,7 @@ ${compactCss}`;
   assert.ok(combinedCss.includes("white-space: nowrap;"));
 });
 
-test("family calendar caregiver hours row stores date-specific half-hour values", async () => {
+test("family calendar caregiver hours row stores date-specific session ranges", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const calendarCss = await readSource("../app/styles/family-calendar.css");
@@ -292,30 +298,56 @@ test("family calendar caregiver hours row stores date-specific half-hour values"
 
   assert.equal(formatFamilyCaregiverHours(2), "2");
   assert.equal(formatFamilyCaregiverHours(2.5), "2.5");
+  assert.equal(formatFamilyCaregiverHours([{ start: "12:00", end: "15:30" }]), "3.5");
+  assert.equal(formatFamilyCaregiverHours([
+    { start: "12:00", end: "15:30" },
+    { start: "18:00", end: "20:00" },
+  ]), "5.5");
   assert.equal(formatFamilyCaregiverHours(0), "");
   assert.equal(normalizeFamilyCaregiverHour(0), null);
   assert.equal(normalizeFamilyCaregiverHour(0.25), null);
   assert.equal(normalizeFamilyCaregiverHour(12.5), null);
+  assert.equal(parseFamilyCaregiverTime("12:30"), 750);
+  assert.equal(minutesToFamilyCaregiverTime(750), "12:30");
+  assert.deepEqual(normalizeFamilyCaregiverSession({ start: "12:00", end: "15:30" }), { start: "12:00", end: "15:30" });
+  assert.equal(normalizeFamilyCaregiverSession({ start: "15:30", end: "12:00" }), null);
+  assert.equal(familyCaregiverSessionDurationHours({ start: "13:10", end: "14:40" }), 1.5);
+  assert.equal(calculateFamilyCaregiverHours([{ start: "09:00", end: "09:30" }]), 0.5);
+  assert.deepEqual(normalizeFamilyCaregiverSessions([
+    { start: "12:00", end: "15:30" },
+    { start: "18:00", end: "20:00" },
+    { start: "20:00", end: "18:00" },
+  ]), [
+    { start: "12:00", end: "15:30" },
+    { start: "18:00", end: "20:00" },
+  ]);
   assert.deepEqual(normalizeFamilyCaregiverHoursMap({
     "2026-06-08": 2,
-    "2026-06-09": 3.5,
+    "2026-06-09": [{ start: "12:00", end: "15:30" }],
     "2026-06-10": 0,
     bad: 4,
   }), {
     "2026-06-08": 2,
-    "2026-06-09": 3.5,
+    "2026-06-09": [{ start: "12:00", end: "15:30" }],
   });
 
   assert.ok(dataSource.includes('export const FAMILY_CAREGIVER_HOURS_STORAGE_KEY = "familyCaregiverHours.v1";'));
-  assert.ok(dataSource.includes("export const FAMILY_CAREGIVER_HOUR_VALUES = Array.from({ length: 25 }, (_, index) => index * 0.5);"));
-  assert.ok(calendarSource.includes("delete nextHours[date];"));
+  assert.ok(dataSource.includes("export function normalizeFamilyCaregiverSessions(value)"));
+  assert.ok(dataSource.includes("export function calculateFamilyCaregiverHours(value)"));
+  assert.ok(calendarSource.includes("const normalized = normalizeFamilyCaregiverSessions(value);"));
   assert.ok(calendarSource.includes("function FamilyCaregiverHoursRow("));
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarCaregiverRow"'));
   assert.ok(calendarSource.includes('<span className="familyCalendarTimeLabel familyCalendarCaregiverLabel">•</span>'));
   assert.ok(calendarSource.includes('className="familyCalendarCaregiverReviewGutter"'));
   assert.ok(calendarSource.includes("href={caregiverReviewHref}"));
   assert.ok(calendarSource.includes("♥"));
-  assert.ok(calendarSource.includes("FAMILY_CAREGIVER_HOUR_VALUES.map((value)"));
+  assert.ok(calendarSource.includes("돌봄 시간"));
+  assert.ok(calendarSource.includes("addDraftSession"));
+  assert.ok(calendarSource.includes("removeDraftSession"));
+  assert.ok(calendarSource.includes("saveDraftSessions"));
+  assert.ok(calendarSource.includes("끝 시간이 시작 시간보다 늦어야 해요."));
+  assert.ok(calendarSource.includes("familyCalendarCaregiverSessionRow"));
+  assert.ok(calendarSource.includes("familyCalendarNativePickerInput"));
   assert.ok(calendarSource.includes("setCaregiverHoursByDate(loadFamilyCaregiverHours());"));
   assert.ok(calendarSource.includes("saveFamilyCaregiverHours(nextHours);"));
   assert.ok(calendarSource.includes("family/calendar/caregiver?month="));
@@ -329,6 +361,10 @@ test("family calendar caregiver hours row stores date-specific half-hour values"
   assert.match(calendarCss, /\.familyCalendarCaregiverSlotActive\s*\{[\s\S]*?background:\s*#e8eaff;[\s\S]*?color:\s*#5b54d9;[\s\S]*?box-shadow:\s*inset 0 0 0 2px rgba\(153, 145, 255, 0\.46\);/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverPicker {"));
   assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
+  assert.ok(calendarCss.includes(".familyCalendarCaregiverSessionRow {"));
+  assert.ok(calendarCss.includes(".familyCalendarCaregiverTimeButton,"));
+  assert.ok(calendarCss.includes(".familyCalendarCaregiverAddSession,"));
+  assert.ok(calendarCss.includes(".familyCalendarCaregiverPickerActions {"));
 });
 
 test("family calendar edit mode drag moves dated items and creates Roun overrides", async () => {
@@ -528,6 +564,7 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
   assert.ok(reviewSource.includes("function buildReviewText("));
   assert.ok(reviewSource.includes("function buildReviewWeeks("));
   assert.ok(reviewSource.includes("function summarizeMonth("));
+  assert.ok(reviewSource.includes("calculateFamilyCaregiverHours(caregiverHoursByDate[dateKey])"));
   assert.ok(reviewSource.includes("function fixedDisplayWidth("));
   assert.ok(reviewSource.includes("const REVIEW_CALENDAR_CELL_WIDTH = 6;"));
   assert.ok(reviewSource.includes("function padCell(value, width = REVIEW_CALENDAR_CELL_WIDTH)"));

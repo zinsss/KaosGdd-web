@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  calculateFamilyCaregiverHours,
   FAMILY_CALENDAR_DAY_LABELS,
   formatFamilyCaregiverHours,
   formatFamilyDateKey,
@@ -64,7 +65,7 @@ function buildReviewWeeks(monthDate, caregiverHoursByDate) {
     const dateKey = formatFamilyDateKey(date);
     week[dayIndex] = {
       day,
-      hours: caregiverHoursByDate[dateKey] || 0,
+      hours: calculateFamilyCaregiverHours(caregiverHoursByDate[dateKey]),
     };
     if (dayIndex === 6 || day === lastDate) {
       weeks.push(week);

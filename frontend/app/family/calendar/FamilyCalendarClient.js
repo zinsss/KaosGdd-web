@@ -17,8 +17,8 @@ import FamilyCalendarWeatherRows from "./FamilyCalendarWeatherRows";
 import FamilyCalendarWeatherDebugPanel from "./FamilyCalendarWeatherDebugPanel";
 import {
   FAMILY_CALENDAR_DAY_LABELS,
-  FAMILY_CAREGIVER_HOUR_VALUES,
   addFamilyDays,
+  calculateFamilyCaregiverHours,
   createFamilyCalendarId,
   familyCalendarColorClassName,
   formatFamilyCaregiverHours,
@@ -30,7 +30,9 @@ import {
   loadFamilyCalendarItems,
   loadFamilyRoniOverrides,
   loadFamilyRounState,
-  normalizeFamilyCaregiverHour,
+  minutesToFamilyCaregiverTime,
+  normalizeFamilyCaregiverSessions,
+  parseFamilyCaregiverTime,
   parseFamilyDateKey,
   padFamilyDatePart,
   resolveFamilyRounPlanForDate,
@@ -406,6 +408,78 @@ function FamilyCaregiverHoursRow({
   onToggleDate,
   selectedWeekDates,
 }) {
+  const [draftSessions, setDraftSessions] = useState([]);
+  const [draftError, setDraftError] = useState("");
+  const timeInputRefs = useRef({});
+
+  useEffect(() => {
+    if (!activeDate) {
+      setDraftSessions([]);
+      setDraftError("");
+      return;
+    }
+    const storedValue = caregiverHoursByDate[activeDate];
+    const normalizedSessions = normalizeFamilyCaregiverSessions(storedValue);
+    if (normalizedSessions.length) {
+      setDraftSessions(normalizedSessions);
+      setDraftError("");
+      return;
+    }
+    const legacyHours = calculateFamilyCaregiverHours(storedValue);
+    const legacyEnd = legacyHours > 0 ? minutesToFamilyCaregiverTime(9 * 60 + Math.round(legacyHours * 60)) : "10:00";
+    setDraftSessions([{ start: "09:00", end: legacyEnd }]);
+    setDraftError("");
+  }, [activeDate, caregiverHoursByDate]);
+
+  function openCaregiverTimePicker(key) {
+    const input = timeInputRefs.current[key];
+    if (!input) return;
+    if (typeof input.showPicker === "function") {
+      try {
+        input.showPicker();
+        return;
+      } catch {
+        // Fallback below for browsers that gate showPicker.
+      }
+    }
+    input.focus();
+    input.click();
+  }
+
+  function updateDraftSession(index, field, value) {
+    setDraftSessions((current) => current.map((session, sessionIndex) => (
+      sessionIndex === index ? { ...session, [field]: value } : session
+    )));
+    setDraftError("");
+  }
+
+  function addDraftSession() {
+    setDraftSessions((current) => {
+      const previous = current.at(-1);
+      const previousEnd = parseFamilyCaregiverTime(previous?.end) ?? 9 * 60;
+      const start = Math.min(previousEnd, 23 * 60 - 60);
+      const end = Math.min(start + 60, 23 * 60 + 59);
+      return [...current, { start: minutesToFamilyCaregiverTime(start), end: minutesToFamilyCaregiverTime(end) }];
+    });
+    setDraftError("");
+  }
+
+  function removeDraftSession(index) {
+    setDraftSessions((current) => current.filter((_, sessionIndex) => sessionIndex !== index));
+    setDraftError("");
+  }
+
+  function saveDraftSessions() {
+    const normalized = normalizeFamilyCaregiverSessions(draftSessions);
+    if (normalized.length !== draftSessions.length) {
+      setDraftError("끝 시간이 시작 시간보다 늦어야 해요.");
+      return;
+    }
+    onChangeHours(activeDate, normalized);
+  }
+
+  const draftTotal = calculateFamilyCaregiverHours(draftSessions);
+
   return (
     <>
       <div className="familyCalendarTimeRow familyCalendarCaregiverRow">
@@ -428,19 +502,67 @@ function FamilyCaregiverHoursRow({
       {activeDate ? (
         <div className="familyCalendarTimeRow familyCalendarCaregiverPickerRow">
           <span className="familyCalendarTimeLabel familyCalendarCaregiverPickerLabel">•</span>
-          <div className="familyCalendarCaregiverPicker" role="listbox" aria-label={`${activeDate} 돌봄 시간 선택`}>
-            {FAMILY_CAREGIVER_HOUR_VALUES.map((value) => (
-              <button
-                aria-selected={(caregiverHoursByDate[activeDate] || 0) === value}
-                className="familyCalendarCaregiverOption"
-                key={value}
-                role="option"
-                type="button"
-                onClick={() => onChangeHours(activeDate, value)}
-              >
-                {value === 0 ? "0" : formatFamilyCaregiverHours(value)}
+          <div className="familyCalendarCaregiverPicker" aria-label={`${activeDate} 돌봄 시간`}>
+            <strong className="familyCalendarCaregiverPickerTitle">돌봄 시간</strong>
+            <div className="familyCalendarCaregiverSessions">
+              {draftSessions.map((session, index) => (
+                <div className="familyCalendarCaregiverSessionRow" key={`${activeDate}-${index}`}>
+                  <span className="familyCalendarCaregiverSessionLabel">시작</span>
+                  <span className="familyCalendarCaregiverSessionValue">{session.start}</span>
+                  <button className="familyCalendarCaregiverTimeButton" type="button" onClick={() => openCaregiverTimePicker(`${index}-start`)}>
+                    시간
+                  </button>
+                  <input
+                    aria-hidden="true"
+                    className="familyCalendarNativePickerInput"
+                    ref={(element) => {
+                      if (element) timeInputRefs.current[`${index}-start`] = element;
+                    }}
+                    tabIndex={-1}
+                    type="time"
+                    value={session.start}
+                    onChange={(event) => updateDraftSession(index, "start", event.target.value)}
+                  />
+                  <span className="familyCalendarCaregiverSessionSeparator" aria-hidden="true">~</span>
+                  <span className="familyCalendarCaregiverSessionLabel">끝</span>
+                  <span className="familyCalendarCaregiverSessionValue">{session.end}</span>
+                  <button className="familyCalendarCaregiverTimeButton" type="button" onClick={() => openCaregiverTimePicker(`${index}-end`)}>
+                    시간
+                  </button>
+                  <input
+                    aria-hidden="true"
+                    className="familyCalendarNativePickerInput"
+                    ref={(element) => {
+                      if (element) timeInputRefs.current[`${index}-end`] = element;
+                    }}
+                    tabIndex={-1}
+                    type="time"
+                    value={session.end}
+                    onChange={(event) => updateDraftSession(index, "end", event.target.value)}
+                  />
+                  {draftSessions.length > 1 ? (
+                    <button aria-label="돌봄 시간 삭제" className="familyCalendarCaregiverRemoveSession" type="button" onClick={() => removeDraftSession(index)}>
+                      삭제
+                    </button>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+            {draftError ? <p className="familyCalendarCaregiverError">{draftError}</p> : null}
+            <div className="familyCalendarCaregiverPickerFooter">
+              <button className="familyCalendarCaregiverAddSession" type="button" onClick={addDraftSession}>
+                + 추가
               </button>
-            ))}
+              <span className="familyCalendarCaregiverTotal">총 {formatFamilyCaregiverHours(draftTotal) || "0"}시간</span>
+            </div>
+            <div className="familyCalendarCaregiverPickerActions">
+              <button className="familyCalendarCaregiverSave" type="button" onClick={saveDraftSessions}>
+                저장
+              </button>
+              <button className="familyCalendarCaregiverCancel" type="button" onClick={() => onToggleDate("")}>
+                취소
+              </button>
+            </div>
           </div>
         </div>
       ) : null}
@@ -1230,8 +1352,8 @@ export default function FamilyCalendarClient() {
   function changeCaregiverHours(date, value) {
     setCaregiverHoursByDate((current) => {
       const nextHours = { ...current };
-      const normalized = normalizeFamilyCaregiverHour(value);
-      if (normalized === null || normalized === 0) {
+      const normalized = normalizeFamilyCaregiverSessions(value);
+      if (!normalized.length) {
         delete nextHours[date];
       } else {
         nextHours[date] = normalized;
