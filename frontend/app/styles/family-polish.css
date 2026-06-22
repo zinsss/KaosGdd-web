@@ -189,6 +189,9 @@
 
 .familyTaskForm,
 .familyDoneTasks {
+  width: auto;
+  max-width: calc(100% - 32px);
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -220,7 +223,10 @@
 .familyTaskFormActions,
 .familyDoneTaskActions,
 .familyTaskHeaderActions {
+  display: flex;
+  flex-wrap: wrap;
   min-width: 0;
+  max-width: 100%;
 }
 
 .familyTaskSave,
@@ -387,6 +393,8 @@
 
   .familyTaskForm,
   .familyDoneTasks {
+    width: auto;
+    max-width: calc(100% - 24px);
     margin: 12px;
   }
 
