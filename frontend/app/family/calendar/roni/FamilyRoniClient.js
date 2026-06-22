@@ -160,6 +160,8 @@ export default function FamilyRoniClient() {
   const [draft, setDraft] = useState(null);
   const [error, setError] = useState("");
   const [planError, setPlanError] = useState("");
+  const [expandedPlanId, setExpandedPlanId] = useState("");
+  const [planTitleDraft, setPlanTitleDraft] = useState("");
   const [applyPlanId, setApplyPlanId] = useState("");
   const [applyDate, setApplyDate] = useState(todayDateKey());
   const [actionBlock, setActionBlock] = useState(null);
@@ -169,13 +171,17 @@ export default function FamilyRoniClient() {
   useEffect(() => {
     const loadedState = loadFamilyRounState();
     setRounState(loadedState);
-    setOpenedPlanId(loadedState.plans[0]?.id || "");
+    setExpandedPlanId(loadedState.plans[0]?.id || "");
     setLoaded(true);
   }, []);
 
   const openedPlan = useMemo(() => {
-    return rounState.plans.find((plan) => plan.id === openedPlanId) || rounState.plans[0] || null;
+    return openedPlanId ? rounState.plans.find((plan) => plan.id === openedPlanId) || null : null;
   }, [openedPlanId, rounState.plans]);
+
+  useEffect(() => {
+    setPlanTitleDraft(openedPlan?.name || "");
+  }, [openedPlan?.id, openedPlan?.name]);
 
   const visibleItems = useMemo(() => {
     return (openedPlan?.items || [])
@@ -207,22 +213,16 @@ export default function FamilyRoniClient() {
   }
 
   function startNewPlan() {
-    const name = window.prompt("시간표 이름");
-    if (name === null) return;
-    if (!name.trim()) {
-      setPlanError("시간표 이름을 입력해주세요.");
-      return;
-    }
-
-    const nextPlan = createFamilyRounPlan(name.trim(), []);
+    const nextPlan = createFamilyRounPlan("새 시간표", []);
     persistRounState({ ...rounState, plans: [...rounState.plans, nextPlan] });
     setOpenedPlanId(nextPlan.id);
+    setExpandedPlanId("");
     setDraft(null);
     setPlanError("");
   }
 
   function saveOpenedPlan() {
-    if (!openedPlan?.name?.trim()) {
+    if (!openedPlan || !planTitleDraft.trim()) {
       setPlanError("시간표 이름을 입력해주세요.");
       return;
     }
@@ -231,7 +231,7 @@ export default function FamilyRoniClient() {
       ...rounState,
       plans: rounState.plans.map((plan) => (
         plan.id === openedPlan.id
-          ? { ...plan, name: plan.name.trim(), updatedAt: now }
+          ? { ...plan, name: planTitleDraft.trim(), updatedAt: now }
           : plan
       )),
     });
@@ -240,22 +240,29 @@ export default function FamilyRoniClient() {
 
   function openPlan(planId) {
     setOpenedPlanId(planId);
+    setExpandedPlanId("");
     setDraft(null);
     setActionBlock(null);
     setError("");
     setPlanError("");
   }
 
+  function closePlanEditor() {
+    setOpenedPlanId("");
+    setDraft(null);
+    setActionBlock(null);
+    setDragState(null);
+    setError("");
+    setPlanError("");
+  }
+
   function copyPlan(plan) {
-    const name = window.prompt("시간표 이름", `${plan.name} 복사`);
-    if (name === null) return;
-    if (!name.trim()) {
-      setPlanError("시간표 이름을 입력해주세요.");
-      return;
-    }
-    const copiedPlan = createFamilyRounPlan(name.trim(), plan.items || []);
+    const copiedPlan = createFamilyRounPlan(`${plan.name} 복사`, plan.items || []);
     persistRounState({ ...rounState, plans: [...rounState.plans, copiedPlan] });
     setOpenedPlanId(copiedPlan.id);
+    setExpandedPlanId("");
+    setDraft(null);
+    setActionBlock(null);
     setPlanError("");
   }
 
@@ -267,8 +274,9 @@ export default function FamilyRoniClient() {
     if (!window.confirm("삭제할까요?")) return;
     const nextPlans = rounState.plans.filter((plan) => plan.id !== planId);
     const nextAssignments = rounState.assignments.filter((assignment) => assignment.planId !== planId);
-    const savedState = persistRounState({ plans: nextPlans, assignments: nextAssignments });
-    setOpenedPlanId(savedState.plans[0]?.id || "");
+    persistRounState({ plans: nextPlans, assignments: nextAssignments });
+    setOpenedPlanId((current) => (current === planId ? "" : current));
+    setExpandedPlanId((current) => (current === planId ? "" : current));
     setDraft(null);
     setActionBlock(null);
     setPlanError("");
@@ -565,151 +573,188 @@ export default function FamilyRoniClient() {
       <div className="familyCard familyCalendarPageCard">
         <FamilyHeader active="roun" />
         <main className="familyCalendarFormPage">
-          <section className="familyRoniPanel">
-            <div className="familyCalendarFormHeader">
-              <div>
-                <h2>로운이</h2>
-                <p>주간시간표 템플릿을 여러 개 저장하고, 날짜별 적용 이력으로 달력에 반영해요.</p>
+          {!openedPlan ? (
+            <section className="familyRoniPanel">
+              <div className="familyCalendarFormHeader">
+                <div>
+                  <h2>로운이 시간표</h2>
+                  <p>주간시간표 템플릿을 고르고 필요할 때만 열어 고쳐요.</p>
+                </div>
+                <div className="familyCalendarFormActions familyCalendarFormActionsInline">
+                  <button className="familyTaskActionButton familyTaskActionButtonPrimary" type="button" onClick={startNewPlan}>
+                    새로 만들기
+                  </button>
+                </div>
               </div>
-              <div className="familyCalendarFormActions familyCalendarFormActionsInline">
-                <button className="familyTaskActionButton" type="button" onClick={saveOpenedPlan}>
-                  시간표 저장
-                </button>
-                <button className="familyTaskActionButton" type="button" onClick={startNewPlan}>
-                  새 시간표
-                </button>
-                <Link className="familyTaskActionButton" href="/family/calendar">
-                  취소
-                </Link>
-              </div>
-            </div>
 
-            {planError ? <p className="familyCalendarFormError">{planError}</p> : null}
+              {planError ? <p className="familyCalendarFormError">{planError}</p> : null}
 
-            <div className="familyRoniTemplateSheet" aria-label="주간시간표 목록">
-              {rounState.plans.length ? rounState.plans.map((plan) => (
-                <div className="familyRoniTemplateRow" key={plan.id}>
-                  <strong>{plan.name}</strong>
-                  <div className="familyRoniTemplateActions">
-                    <button type="button" onClick={() => openPlan(plan.id)}>고치기</button>
-                    <button type="button" onClick={() => copyPlan(plan)}>복사</button>
-                    <button type="button" onClick={() => startApplyPlan(plan.id)}>적용하기</button>
-                    <button type="button" onClick={() => deletePlan(plan.id)}>삭제</button>
+              <div className="familyRoniTemplateSheet familyRoniTemplateList" aria-label="주간시간표 목록">
+                {rounState.plans.length ? rounState.plans.map((plan) => {
+                  const expanded = expandedPlanId === plan.id;
+                  return (
+                    <div className={`familyRoniTemplateRow${expanded ? " familyRoniTemplateRowExpanded" : ""}`} key={plan.id}>
+                      <button
+                        aria-expanded={expanded}
+                        className="familyRoniTemplateToggle"
+                        type="button"
+                        onClick={() => setExpandedPlanId((current) => (current === plan.id ? "" : plan.id))}
+                      >
+                        <strong>{plan.name}</strong>
+                      </button>
+                      {expanded ? (
+                        <div className="familyRoniTemplateActions">
+                          <button type="button" onClick={() => openPlan(plan.id)}>열기</button>
+                          <button type="button" onClick={() => startApplyPlan(plan.id)}>적용하기</button>
+                          <button type="button" onClick={() => deletePlan(plan.id)}>삭제</button>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                }) : (
+                  <div className="familyRoniTemplateEmpty">
+                    <p>아직 시간표가 없습니다.</p>
+                    <button type="button" onClick={startNewPlan}>새로 만들기</button>
                   </div>
-                </div>
-              )) : (
-                <div className="familyRoniTemplateEmpty">
-                  <p>아직 시간표가 없습니다.</p>
-                  <button type="button" onClick={startNewPlan}>새 시간표</button>
-                </div>
-              )}
-            </div>
-
-            {applyPlanId ? (
-              <div className="familyRoniApplyConfirm" role="dialog" aria-label="적용할까요?">
-                <label>
-                  <span>몇년 몇월 몇일부터 적용할까요?</span>
-                  <input type="date" value={applyDate} onChange={(event) => setApplyDate(event.target.value)} />
-                </label>
-                <button type="button" onClick={confirmApplyPlan}>적용</button>
-                <button type="button" onClick={() => setApplyPlanId("")}>취소</button>
+                )}
               </div>
-            ) : null}
 
-            <div className="familyRoniTemplateStatus">
-              <p>주간시간표: {openedPlan?.name || FAMILY_RONI_DEFAULT_TEMPLATE_NAME}</p>
-              <small>이 시간표는 달력 생성에 사용됩니다.</small>
-            </div>
+              {applyPlanId ? (
+                <div className="familyRoniApplyConfirm" role="dialog" aria-label="적용할까요?">
+                  <label>
+                    <span>몇년 몇월 몇일부터 적용할까요?</span>
+                    <input type="date" value={applyDate} onChange={(event) => setApplyDate(event.target.value)} />
+                  </label>
+                  <button type="button" onClick={confirmApplyPlan}>적용</button>
+                  <button type="button" onClick={() => setApplyPlanId("")}>취소</button>
+                </div>
+              ) : null}
+            </section>
+          ) : (
+            <section className="familyRoniPanel familyRoniEditorPanel">
+              <div className="familyRounEditorHeader">
+                <button className="familyTaskActionButton" type="button" onClick={closePlanEditor}>
+                  ← 목록
+                </button>
+                <label className="familyRounPlanTitleField">
+                  <input aria-label="시간표 제목" value={planTitleDraft} onChange={(event) => setPlanTitleDraft(event.target.value)} />
+                </label>
+                <div className="familyRounEditorHeaderActions">
+                  <button type="button" onClick={() => startApplyPlan(openedPlan.id)}>적용하기</button>
+                  <button type="button" onClick={() => deletePlan(openedPlan.id)}>삭제</button>
+                  <button type="button" onClick={() => copyPlan(openedPlan)}>다른이름으로 저장</button>
+                  <button type="button" onClick={saveOpenedPlan}>저장</button>
+                </div>
+              </div>
 
-            <div className="familyRounEditorToolbar">
-              <button className="familyTaskActionButton familyTaskActionButtonPrimary" type="button" onClick={() => startNewRoni()}>
-                + 시간표
-              </button>
-            </div>
+              {planError ? <p className="familyCalendarFormError">{planError}</p> : null}
 
-            <div
-              className="familyRounWeeklyGrid"
-              aria-label="주간시간표 템플릿"
-              onPointerMove={moveBlockDrag}
-              onPointerUp={finishBlockDrag}
-              onPointerCancel={() => setDragState(null)}
-              style={{ "--family-roun-body-height": `${ROUN_TIMETABLE_BODY_HEIGHT}px` }}
-            >
-              <span className="familyRounGridCorner" aria-hidden="true" />
-              {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
-                <span className="familyRounDayHeader" key={label}>{label}</span>
-              ))}
-              <div className="familyRounTimeRail" aria-label="시간">
-                {ROUN_TIMETABLE_HOURS.map((hour) => (
-                  <span className="familyRounHourLabel" key={hour} style={{ top: `${(hour - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT}px` }}>
-                    {String(hour).padStart(2, "0")}:00
-                  </span>
+              {applyPlanId ? (
+                <div className="familyRoniApplyConfirm" role="dialog" aria-label="적용할까요?">
+                  <label>
+                    <span>몇년 몇월 몇일부터 적용할까요?</span>
+                    <input type="date" value={applyDate} onChange={(event) => setApplyDate(event.target.value)} />
+                  </label>
+                  <button type="button" onClick={confirmApplyPlan}>적용</button>
+                  <button type="button" onClick={() => setApplyPlanId("")}>취소</button>
+                </div>
+              ) : null}
+
+              <div className="familyRoniTemplateStatus">
+                <p>주간시간표</p>
+                <small>이 시간표는 달력 생성에 사용됩니다.</small>
+              </div>
+
+              <div className="familyRounEditorToolbar">
+                <button className="familyTaskActionButton familyTaskActionButtonPrimary" type="button" onClick={() => startNewRoni()}>
+                  + 시간표
+                </button>
+              </div>
+
+              <div
+                className="familyRounWeeklyGrid"
+                aria-label="주간시간표 템플릿"
+                onPointerMove={moveBlockDrag}
+                onPointerUp={finishBlockDrag}
+                onPointerCancel={() => setDragState(null)}
+                style={{ "--family-roun-body-height": `${ROUN_TIMETABLE_BODY_HEIGHT}px` }}
+              >
+                <span className="familyRounGridCorner" aria-hidden="true" />
+                {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
+                  <span className="familyRounDayHeader" key={label}>{label}</span>
+                ))}
+                <div className="familyRounTimeRail" aria-label="시간">
+                  {ROUN_TIMETABLE_HOURS.map((hour) => (
+                    <span className="familyRounHourLabel" key={hour} style={{ top: `${(hour - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT}px` }}>
+                      {String(hour).padStart(2, "0")}:00
+                    </span>
+                  ))}
+                </div>
+                {FAMILY_CALENDAR_DAY_LABELS.map((label, dayIndex) => (
+                  <div
+                    className={`familyRounDayColumn${dragState?.target?.dayOfWeek === dayIndex ? " familyRounDayColumnTarget" : ""}`}
+                    data-day-index={dayIndex}
+                    data-roun-day-column="true"
+                    key={label}
+                    onClick={(event) => clickEmptySlot(event, dayIndex)}
+                  >
+                    {ROUN_TIMETABLE_VISIBLE_HOURS.map((hour) => (
+                      <div className="familyRounHour" key={hour} style={{ top: `${(hour - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT}px` }}>
+                        <span />
+                        <span />
+                        <span />
+                        <span />
+                        <span />
+                      </div>
+                    ))}
+                    {visibleBlocks.filter((block) => block.dayOfWeek === dayIndex).map((block) => (
+                      <button
+                        className={`familyRounBlock familyTimetableEntry${familyCalendarColorClassName(block.color)}${dragState?.block?.blockId === block.blockId ? " familyRounBlockDragging" : ""}`}
+                        draggable={false}
+                        key={block.blockId}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          if (suppressBlockClickRef.current) return;
+                          setActionBlock(block);
+                        }}
+                        onDragStart={(event) => event.preventDefault()}
+                        onPointerDown={(event) => startBlockDrag(event, block)}
+                        style={rounBlockStyle(block)}
+                        title={`${block.title} ${block.startTime}-${block.endTime}`}
+                        type="button"
+                      >
+                        <span>{block.title}</span>
+                      </button>
+                    ))}
+                  </div>
                 ))}
               </div>
-              {FAMILY_CALENDAR_DAY_LABELS.map((label, dayIndex) => (
-                <div
-                  className={`familyRounDayColumn${dragState?.target?.dayOfWeek === dayIndex ? " familyRounDayColumnTarget" : ""}`}
-                  data-day-index={dayIndex}
-                  data-roun-day-column="true"
-                  key={label}
-                  onClick={(event) => clickEmptySlot(event, dayIndex)}
+
+              {dragState?.moved ? (
+                <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
+                  {dragState.block.title}
+                </span>
+              ) : null}
+              {dragState?.moved && dragState.target ? (
+                <span
+                  className="familyCalendarDragReadout familyRounDragReadout"
+                  style={{ left: `${dragState.x}px`, top: `${dragState.y - 64}px` }}
                 >
-                  {ROUN_TIMETABLE_VISIBLE_HOURS.map((hour) => (
-                    <div className="familyRounHour" key={hour} style={{ top: `${(hour - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT}px` }}>
-                      <span />
-                      <span />
-                      <span />
-                      <span />
-                      <span />
-                    </div>
-                  ))}
-                  {visibleBlocks.filter((block) => block.dayOfWeek === dayIndex).map((block) => (
-                    <button
-                      className={`familyRounBlock familyTimetableEntry${familyCalendarColorClassName(block.color)}${dragState?.block?.blockId === block.blockId ? " familyRounBlockDragging" : ""}`}
-                      draggable={false}
-                      key={block.blockId}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        if (suppressBlockClickRef.current) return;
-                        setActionBlock(block);
-                      }}
-                      onDragStart={(event) => event.preventDefault()}
-                      onPointerDown={(event) => startBlockDrag(event, block)}
-                      style={rounBlockStyle(block)}
-                      title={`${block.title} ${block.startTime}-${block.endTime}`}
-                      type="button"
-                    >
-                      <span>{block.title}</span>
-                    </button>
-                  ))}
+                  {formatRounDragReadout(dragState.block, dragState.target)}
+                </span>
+              ) : null}
+
+              {actionBlock ? (
+                <div className="familyRounActionSheet" role="dialog" aria-label="시간표 항목">
+                  <p>{actionBlock.title}</p>
+                  <button type="button" onClick={() => startEditRoni(actionBlock)}>고치기</button>
+                  <button type="button" onClick={() => copyRoni(actionBlock)}>복사</button>
+                  <button type="button" onClick={() => deleteRoni(actionBlock.id)}>삭제</button>
+                  <button type="button" onClick={() => setActionBlock(null)}>취소</button>
                 </div>
-              ))}
-            </div>
-
-            {dragState?.moved ? (
-              <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
-                {dragState.block.title}
-              </span>
-            ) : null}
-            {dragState?.moved && dragState.target ? (
-              <span
-                className="familyCalendarDragReadout familyRounDragReadout"
-                style={{ left: `${dragState.x}px`, top: `${dragState.y - 64}px` }}
-              >
-                {formatRounDragReadout(dragState.block, dragState.target)}
-              </span>
-            ) : null}
-
-            {actionBlock ? (
-              <div className="familyRounActionSheet" role="dialog" aria-label="시간표 항목">
-                <p>{actionBlock.title}</p>
-                <button type="button" onClick={() => startEditRoni(actionBlock)}>고치기</button>
-                <button type="button" onClick={() => copyRoni(actionBlock)}>복사</button>
-                <button type="button" onClick={() => deleteRoni(actionBlock.id)}>삭제</button>
-                <button type="button" onClick={() => setActionBlock(null)}>취소</button>
-              </div>
-            ) : null}
-          </section>
+              ) : null}
+            </section>
+          )}
 
           <section className="familyRoniPanel" aria-label="적용 이력">
             <div className="familyCalendarFormHeader">

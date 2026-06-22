@@ -156,13 +156,18 @@ test("family Roun timetable uses template library plus date-based assignments", 
   for (const value of [
     "로운이",
     "주간시간표",
-    "시간표 저장",
+    "로운이 시간표",
+    "새로 만들기",
     "새 시간표",
-    "시간표 이름",
+    "시간표 제목",
     "시간표 이름을 입력해주세요.",
+    "열기",
     "적용하기",
     "적용 이력",
     "몇년 몇월 몇일부터 적용할까요?",
+    "← 목록",
+    "다른이름으로 저장",
+    "저장",
     "고치기",
     "복사",
     "삭제",
@@ -175,12 +180,28 @@ test("family Roun timetable uses template library plus date-based assignments", 
   }
 
   assert.ok(roniSource.includes('type="date"'), "applying a Roun template should use a date picker");
+  assert.ok(roniSource.includes("const [expandedPlanId, setExpandedPlanId] = useState(\"\");"), "template list rows should expand independently from editor state");
+  assert.ok(roniSource.includes("const [planTitleDraft, setPlanTitleDraft] = useState(\"\");"), "opened editor should keep an editable title draft");
+  assert.ok(roniSource.includes("!openedPlan ? ("), "main Roun page should render the template list before opening a template");
+  assert.ok(roniSource.includes("className=\"familyRoniTemplateToggle\""), "template rows should be compact clickable toggles");
+  assert.ok(roniSource.includes("aria-expanded={expanded}"), "expanded template rows should expose expanded state");
+  assert.ok(roniSource.includes("onClick={() => openPlan(plan.id)}>열기</button>"), "expanded rows should open the full editor");
+  assert.ok(roniSource.includes("onClick={startNewPlan}"), "new template button should create and open a template");
+  assert.ok(roniSource.includes("const nextPlan = createFamilyRounPlan(\"새 시간표\", []);"), "new templates should start blank with the default title");
+  assert.ok(roniSource.includes("setOpenedPlanId(nextPlan.id);"), "new templates should open immediately in editor mode");
+  assert.ok(roniSource.includes("function closePlanEditor()"), "editor should provide a way back to the list");
+  assert.ok(roniSource.includes("copyPlan(openedPlan)"), "editor save-as should duplicate the current template");
   assert.ok(roniSource.includes("assignments: [...rounState.assignments, nextAssignment]"), "repeated template assignments should be appended as timeline entries");
   assert.ok(roniSource.includes("deleteAssignment"), "assignment deletion should be available");
   assert.ok(roniSource.includes("rounState.assignments.filter((assignment) => assignment.id !== assignmentId)"), "deleting an assignment should not delete a template");
   assert.ok(roniSource.includes("rounState.plans.length <= 1"), "last timetable deletion should be blocked");
   assert.ok(roniCss.includes(".familyRoniTemplateActions"));
   assert.ok(roniCss.includes("flex-wrap: wrap"));
+  assert.ok(roniCss.includes(".familyRoniTemplateList"));
+  assert.ok(roniCss.includes(".familyRoniTemplateToggle"));
+  assert.ok(roniCss.includes(".familyRounEditorHeader"));
+  assert.ok(roniCss.includes(".familyRounPlanTitleField input"));
+  assert.ok(roniCss.includes(".familyRounEditorHeaderActions"));
   assert.ok(roniCss.includes(".familyRoniTemplateRow strong"));
   assert.ok(roniCss.includes("overflow-wrap: anywhere"));
 
