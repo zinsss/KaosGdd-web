@@ -199,6 +199,12 @@ test("family Roun timetable uses template library plus date-based assignments", 
   assert.ok(roniSource.includes("deleteAssignment"), "assignment deletion should be available");
   assert.ok(roniSource.includes("rounState.assignments.filter((assignment) => assignment.id !== assignmentId)"), "deleting an assignment should not delete a template");
   assert.ok(roniSource.includes("{openedPlan ? (\n            <section className=\"familyRoniPanel\" aria-label=\"적용 이력\">"), "assignment history should not render on the main template list");
+  assert.ok(roniSource.includes("const assignmentLogRows = useMemo("), "assignment history should render as compact log rows");
+  assert.ok(roniSource.includes("getRounAssignmentEndDate(sortedAssignments[index + 1]?.startDate)"), "assignment log should derive bounded end dates from the next assignment");
+  assert.ok(roniSource.includes("formatFamilyDateKey(addFamilyDays(parsedDate, -1))"), "derived assignment end date should use the day before the next start date");
+  assert.ok(roniSource.includes("`${assignment.startDateText} 부터 적용.`"), "open-ended assignment should render as a single log sentence");
+  assert.ok(roniSource.includes("`${assignment.startDateText} 부터 ${assignment.endDateText} 까지 적용.`"), "bounded assignment should render as a single log sentence");
+  assert.ok(roniSource.includes("className=\"familyRoniAssignmentLogLine\""), "assignment entries should use log-line markup");
   assert.ok(roniSource.includes("rounState.plans.length <= 1"), "last timetable deletion should be blocked");
   assert.ok(roniCss.includes(".familyRoniTemplateActions"));
   assert.ok(roniCss.includes("flex-wrap: wrap"));
@@ -207,6 +213,10 @@ test("family Roun timetable uses template library plus date-based assignments", 
   assert.ok(roniCss.includes(".familyRoniAppliedStar"));
   assert.match(roniCss, /\.familyRoniAppliedStar\s*\{[\s\S]*?display:\s*inline;[\s\S]*?color:\s*#d86f98;/);
   assert.doesNotMatch(roniCss.match(/\.familyRoniAppliedStar\s*\{[\s\S]*?\}/)?.[0] || "", /background|border-radius|box-shadow/);
+  assert.ok(roniCss.includes(".familyRoniAssignmentLog"));
+  assert.ok(roniCss.includes(".familyRoniAssignmentLogLine"));
+  assert.match(roniCss, /\.familyRoniAssignmentLogLine\s*\{[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*baseline;/);
+  assert.match(roniCss, /\.familyRoniAssignmentLogLine button\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?box-shadow:\s*none;/);
   assert.ok(roniCss.includes(".familyRounEditorHeader"));
   assert.ok(roniCss.includes(".familyRounPlanTitleField input"));
   assert.ok(roniCss.includes(".familyRounEditorHeaderActions"));

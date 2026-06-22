@@ -13,6 +13,7 @@ import {
   snapFamilyScheduleMinutes,
 } from "../familyCalendarDrag.js";
 import {
+  addFamilyDays,
   FAMILY_CALENDAR_DAY_LABELS,
   FAMILY_CALENDAR_COLOR_KEYS,
   FAMILY_CALENDAR_COLOR_LABELS,
@@ -25,6 +26,7 @@ import {
   formatFamilyDateKey,
   loadFamilyRounState,
   normalizeFamilyRoniItem,
+  parseFamilyDateKey,
   resolveFamilyRounPlanForDate,
   saveFamilyRounState,
   updateFamilyRounPlanItems,
@@ -103,6 +105,16 @@ function shortWeekdayLabel(dayOfWeek) {
 
 function todayDateKey() {
   return formatFamilyDateKey(new Date());
+}
+
+function formatRounAssignmentDate(dateKey) {
+  const parsedDate = parseFamilyDateKey(dateKey);
+  return parsedDate ? formatFamilyDateKey(parsedDate).replaceAll("-", ".") : "";
+}
+
+function getRounAssignmentEndDate(nextStartDate) {
+  const parsedDate = parseFamilyDateKey(nextStartDate);
+  return parsedDate ? formatFamilyDateKey(addFamilyDays(parsedDate, -1)) : "";
 }
 
 function buildRounBlocks(items) {
@@ -192,14 +204,23 @@ export default function FamilyRoniClient() {
 
   const visibleBlocks = useMemo(() => buildRounBlocks(visibleItems), [visibleItems]);
 
-  const assignmentRows = useMemo(() => {
-    return [...rounState.assignments]
-      .sort((a, b) => String(b.startDate).localeCompare(String(a.startDate)))
-      .map((assignment) => ({
-        ...assignment,
-        planName: rounState.plans.find((plan) => plan.id === assignment.planId)?.name || FAMILY_RONI_DEFAULT_TEMPLATE_NAME,
-      }));
-  }, [rounState.assignments, rounState.plans]);
+  const assignmentLogRows = useMemo(() => {
+    const sortedAssignments = [...rounState.assignments]
+      .filter((assignment) => parseFamilyDateKey(assignment.startDate))
+      .sort((a, b) => String(a.startDate).localeCompare(String(b.startDate)));
+
+    return sortedAssignments
+      .map((assignment, index) => {
+        const endDate = getRounAssignmentEndDate(sortedAssignments[index + 1]?.startDate);
+        return {
+          ...assignment,
+          startDateText: formatRounAssignmentDate(assignment.startDate),
+          endDateText: formatRounAssignmentDate(endDate),
+        };
+      })
+      .filter((assignment) => assignment.planId === openedPlan?.id)
+      .sort((a, b) => String(b.startDate).localeCompare(String(a.startDate)));
+  }, [openedPlan?.id, rounState.assignments]);
 
   const appliedPlanId = useMemo(() => {
     return resolveFamilyRounPlanForDate(todayDateKey(), rounState)?.id || "";
@@ -769,15 +790,16 @@ export default function FamilyRoniClient() {
               <div className="familyCalendarFormHeader">
                 <h2>적용 이력</h2>
               </div>
-              <div className="familyRoniTemplateSheet">
-                {assignmentRows.length ? assignmentRows.map((assignment) => (
-                  <div className="familyRoniTemplateRow" key={assignment.id}>
-                    <strong>{assignment.planName}</strong>
-                    <span>{assignment.startDate} ~</span>
-                    <div className="familyRoniTemplateActions">
-                      <button type="button" onClick={() => deleteAssignment(assignment.id)}>삭제</button>
-                    </div>
-                  </div>
+              <div className="familyRoniAssignmentLog">
+                {assignmentLogRows.length ? assignmentLogRows.map((assignment) => (
+                  <p className="familyRoniAssignmentLogLine" key={assignment.id}>
+                    <span>
+                      {assignment.endDateText
+                        ? `${assignment.startDateText} 부터 ${assignment.endDateText} 까지 적용.`
+                        : `${assignment.startDateText} 부터 적용.`}
+                    </span>
+                    <button type="button" onClick={() => deleteAssignment(assignment.id)}>삭제</button>
+                  </p>
                 )) : <p className="familyTaskEmpty">적용 이력이 없습니다.</p>}
               </div>
             </section>
