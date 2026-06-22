@@ -57,6 +57,7 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.match(taskCss, /\.familyTaskMeta\s*\{[\s\S]*?justify-content:\s*space-between;[\s\S]*?flex-wrap:\s*nowrap;/);
   assert.match(taskCss, /\.familyTaskDateBadge\s*\{[\s\S]*?margin-left:\s*auto;[\s\S]*?background:\s*transparent;[\s\S]*?color:\s*rgba\(78, 37, 54, 0\.46\);/);
   assert.match(taskCss, /\.familyTaskPriorityShareRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;[\s\S]*?align-items:\s*end;/);
+  assert.match(taskCss, /\.familyTaskSongField\s*\{[\s\S]*?gap:\s*8px;[\s\S]*?min-width:\s*96px;[\s\S]*?min-height:\s*42px;[\s\S]*?padding:\s*0 14px;/);
   assert.match(taskCss, /\.familyTaskSongField input\s*\{[\s\S]*?width:\s*auto;[\s\S]*?accent-color:\s*#d86f98;/);
   assert.match(taskCss, /\.familyTaskHeaderActions\s*\{[\s\S]*?flex-wrap:\s*nowrap;/);
   assert.match(taskCss, /\.familyTaskRowActions\s*\{[\s\S]*?flex-wrap:\s*nowrap;/);

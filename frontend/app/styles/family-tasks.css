@@ -429,8 +429,10 @@
   align-items: center;
   justify-content: center;
   align-self: end;
+  gap: 8px;
+  min-width: 96px;
   min-height: 42px;
-  padding: 0 10px;
+  padding: 0 14px;
   border: 1px solid rgba(214, 128, 157, 0.22);
   border-radius: 8px;
   background: #fffafd;
