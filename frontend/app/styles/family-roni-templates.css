@@ -11,6 +11,10 @@
   box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.16);
 }
 
+.familyRoniTemplateList {
+  background: #fffafd;
+}
+
 .familyRoniTemplateStatus p,
 .familyRoniApplyConfirm p,
 .familyRoniTemplateEmpty p,
@@ -65,6 +69,41 @@
   min-width: 0;
 }
 
+.familyRoniTemplateList .familyRoniTemplateRow {
+  grid-template-columns: minmax(0, 1fr);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.12);
+}
+
+.familyRoniTemplateList .familyRoniTemplateRowExpanded {
+  gap: 10px;
+  background: #fff5f8;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.22);
+}
+
+.familyRoniTemplateToggle {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  border: 0;
+  min-width: 0;
+  min-height: 30px;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.familyRoniTemplateList .familyRoniTemplateToggle {
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .familyRoniTemplateRow strong {
   min-width: 0;
   color: #4b2536;
@@ -108,6 +147,55 @@
   display: flex;
   justify-content: flex-end;
   min-width: 0;
+}
+
+.familyRounEditorHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.familyRounPlanTitleField {
+  min-width: 0;
+}
+
+.familyRounPlanTitleField input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fffafd;
+  color: #4b2536;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 950;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.18);
+}
+
+.familyRounEditorHeaderActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
+}
+
+.familyRounEditorHeaderActions button {
+  appearance: none;
+  border: 0;
+  min-height: 34px;
+  border-radius: 999px;
+  padding: 0 12px;
+  background: #fff0f5;
+  color: #8d3f5d;
+  font: inherit;
+  font-weight: 950;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.22);
+  white-space: nowrap;
 }
 
 .familyRounWeeklyGrid {
@@ -241,12 +329,14 @@
 
 @media (max-width: 640px) {
   .familyRoniTemplateRow,
-  .familyRoniApplyConfirm {
+  .familyRoniApplyConfirm,
+  .familyRounEditorHeader {
     grid-template-columns: 1fr;
     justify-items: stretch;
   }
 
-  .familyRoniTemplateActions {
+  .familyRoniTemplateActions,
+  .familyRounEditorHeaderActions {
     justify-content: flex-start;
   }
 
@@ -254,6 +344,7 @@
   .familyRoniTemplateRow button,
   .familyRoniTemplateEmpty button,
   .familyRoniApplyConfirm button,
+  .familyRounEditorHeaderActions button,
   .familyRounActionSheet button {
     min-height: 32px;
     padding: 0 10px;
