@@ -15,7 +15,7 @@ test("family tasks use finalized standard Korean labels", async () => {
   const polishCss = await readSource("../app/styles/family-polish.css");
   const combinedSource = `${taskHelperSource}\n${dashboardSource}\n${formSource}\n${doneSource}`;
 
-  for (const label of ["전체", "내 할 일", "쏭 할 일", "할 일", "+ 할 일", "완료", "완료 취소", "저장", "취소", "삭제"]) {
+  for (const label of ["전체", "내 할 일", "쏭 할 일", "할일", "새로 만들기", "완료", "완료 취소", "저장", "취소", "삭제"]) {
     assert.ok(combinedSource.includes(label), `${label} should appear in Family task sources`);
   }
 
@@ -25,6 +25,16 @@ test("family tasks use finalized standard Korean labels", async () => {
   for (const selector of [".familyTaskSection", ".familyTaskCard", ".familyTaskForm", ".familyDoneTaskRow"]) {
     assert.ok(taskCss.includes(selector));
   }
+  assert.ok(dashboardSource.includes("const [expandedTaskId, setExpandedTaskId] = useState(\"\");"), "task rows should expand only when selected");
+  assert.ok(dashboardSource.includes("aria-expanded={expanded}"), "collapsed task rows should expose expansion state");
+  assert.ok(dashboardSource.includes("className=\"familyTaskRowToggle\""), "task rows should be compact toggles by default");
+  assert.ok(dashboardSource.includes("className=\"familyTaskRowActions\""), "task actions should appear only in expanded rows");
+  assert.ok(dashboardSource.includes("<h2>할일</h2>"), "Family task page should use the compact 할일 title");
+  assert.ok(dashboardSource.includes("formatFamilyDate(task.due_date)"), "due dates should remain compact inline text");
+  assert.ok(!dashboardSource.includes("familyCalendarDashboardCard"), "Family task page should not render a calendar dashboard card");
+  assert.ok(!dashboardSource.includes("일정과 로운이 시간표를 함께 봐요."), "Family task page should not render calendar helper copy");
+  assert.ok(taskCss.includes(".familyTaskRowToggle"));
+  assert.ok(taskCss.includes(".familyTaskRowActions"));
   assert.ok(polishCss.includes(".familyTaskDateInput"));
   assert.ok(polishCss.includes("max-width: 100%"));
 

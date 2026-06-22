@@ -127,6 +127,10 @@
   box-shadow: 0 6px 14px rgba(151, 69, 98, 0.14);
 }
 
+.familyTaskActionButtonDanger {
+  color: rgba(150, 58, 92, 0.92);
+}
+
 .familyTaskActionButtonMuted {
   opacity: 0.64;
 }
@@ -138,13 +142,18 @@
 
 .familyTaskCard {
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 28px 28px;
-  align-items: center;
-  gap: 10px;
+  gap: 8px;
   border-radius: 8px;
-  padding: 10px;
+  padding: 8px 10px;
   background: #fff5f8;
   box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.16);
+}
+
+.familyTaskCardExpanded {
+  background: #fffafd;
+  box-shadow:
+    inset 0 0 0 1px rgba(214, 128, 157, 0.24),
+    0 8px 18px rgba(151, 69, 98, 0.08);
 }
 
 .familyTaskCardDragging {
@@ -155,6 +164,42 @@
   box-shadow:
     inset 0 0 0 2px rgba(216, 111, 152, 0.42),
     0 8px 18px rgba(151, 69, 98, 0.12);
+}
+
+.familyTaskRowToggle {
+  appearance: none;
+  border: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  min-width: 0;
+  width: 100%;
+  padding: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+}
+
+.familyTaskRowToggle:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid rgba(216, 111, 152, 0.32);
+  outline-offset: 3px;
+}
+
+.familyTaskRowActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.familyTaskRowActions .familyTaskActionButton {
+  min-height: 30px;
+  padding: 0 9px;
+  font-size: 14px;
 }
 
 .familyTaskDragHandle,
