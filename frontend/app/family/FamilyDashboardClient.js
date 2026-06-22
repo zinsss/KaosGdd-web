@@ -9,7 +9,7 @@ import {
   FAMILY_TASK_DEFAULT_PRIORITY,
   FAMILY_TASK_PRIORITIES,
   FAMILY_TASK_PRIORITY_ASSIGNEE,
-  formatFamilyDate,
+  formatFamilyTaskDueDate,
   loadFamilyTasks,
   saveFamilyTasks,
   sortActiveFamilyTasks,
@@ -26,23 +26,16 @@ function moveTaskId(taskIds, sourceId, targetId) {
   return nextIds;
 }
 
-function getPriorityEmoji(priority) {
-  const normalizedPriority = FAMILY_TASK_PRIORITIES.includes(priority) ? priority : FAMILY_TASK_DEFAULT_PRIORITY;
-  return normalizedPriority.split(" ")[0];
-}
-
 function getTaskCardBadges(task) {
   const assignee = task.assignee || FAMILY_TASK_DEFAULT_ASSIGNEE;
+  const priority = FAMILY_TASK_PRIORITIES.includes(task.priority) ? task.priority : FAMILY_TASK_DEFAULT_PRIORITY;
+  const badges = [{ className: "familyTaskBadgePriority", label: priority, title: priority }];
 
   if (assignee === FAMILY_TASK_PRIORITY_ASSIGNEE) {
-    return [{ className: "familyTaskBadgePriority", label: getPriorityEmoji(task.priority), title: task.priority || FAMILY_TASK_DEFAULT_PRIORITY }];
+    badges.push({ className: "familyTaskBadgeSong", label: "쏭", title: "쏭" });
   }
 
-  if (assignee === "전체") {
-    return [{ className: "familyTaskBadgeAny", label: "👫", title: assignee }];
-  }
-
-  return [{ className: "familyTaskBadgeSelf", label: "👸🏻", title: FAMILY_TASK_DEFAULT_ASSIGNEE }];
+  return badges;
 }
 
 export default function FamilyDashboardClient() {
@@ -180,14 +173,16 @@ export default function FamilyDashboardClient() {
                         onClick={() => toggleTask(task.id)}
                       >
                         <div className="familyTaskCardBody">
-                          <h3>{task.title}</h3>
+                          <h3><span aria-hidden="true">•</span>{task.title}</h3>
                           <div className="familyTaskMeta">
-                            {task.due_date ? <span className="familyTaskDateBadge">{formatFamilyDate(task.due_date)}</span> : null}
-                            {taskBadges.map((badge) => (
-                              <span className={`familyTaskBadge ${badge.className}`} title={badge.title} key={badge.className}>
-                                {badge.label}
-                              </span>
-                            ))}
+                            <span className="familyTaskMetaBadges">
+                              {taskBadges.map((badge) => (
+                                <span className={`familyTaskBadge ${badge.className}`} title={badge.title} key={badge.className}>
+                                  {badge.label}
+                                </span>
+                              ))}
+                            </span>
+                            {task.due_date ? <span className="familyTaskDateBadge">{formatFamilyTaskDueDate(task.due_date)}</span> : null}
                           </div>
                         </div>
                       </button>
