@@ -306,14 +306,22 @@
 
 .familyTaskPageCard {
   min-height: auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .familyTaskForm,
 .familyDoneTasks {
   display: grid;
   gap: 12px;
+  width: calc(100% - 32px);
+  max-width: calc(100% - 32px);
+  min-width: 0;
   margin: 16px;
   padding: 14px;
+  box-sizing: border-box;
 }
 
 .familyTaskForm label {
@@ -329,7 +337,10 @@
 .familyTaskForm select,
 .familyTaskForm textarea {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   min-height: 42px;
+  box-sizing: border-box;
   border: 1px solid rgba(214, 128, 157, 0.28);
   border-radius: 8px;
   padding: 9px 10px;
@@ -354,6 +365,9 @@
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .familyTaskFormError {
@@ -411,6 +425,12 @@
     padding: 12px;
   }
 
+  .familyTaskForm,
+  .familyDoneTasks {
+    width: calc(100% - 24px);
+    max-width: calc(100% - 24px);
+  }
+
   .familyTaskSectionHeader,
   .familyDoneTaskRow {
     flex-direction: column;
@@ -421,6 +441,8 @@
   .familyTaskFormActions,
   .familyDoneTaskActions {
     justify-content: stretch;
+    flex-wrap: wrap;
+    min-width: 0;
   }
 
   .familyTaskActionButton,
@@ -432,6 +454,6 @@
   }
 
   .familyTaskFormGrid {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 }
