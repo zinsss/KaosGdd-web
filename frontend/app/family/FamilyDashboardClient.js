@@ -151,10 +151,10 @@ export default function FamilyDashboardClient() {
               </div>
               <div className="familyTaskHeaderActions">
                 <Link className="familyTaskActionButton familyTaskActionButtonPrimary" href="/family/tasks/new">
-                  새로 만들기
+                  + 할일
                 </Link>
                 <Link className="familyTaskActionButton" href="/family/tasks/done">
-                  완료
+                  완료한 할일
                 </Link>
               </div>
             </div>
@@ -196,7 +196,7 @@ export default function FamilyDashboardClient() {
                           <Link className="familyTaskActionButton" href={`/family/tasks/${task.id}/edit`}>
                             수정
                           </Link>
-                          <button className="familyTaskActionButton" type="button" onClick={() => completeTask(task.id)}>
+                          <button className="familyTaskActionButton familyTaskActionButtonDone" type="button" onClick={() => completeTask(task.id)}>
                             완료
                           </button>
                           <button className="familyTaskActionButton familyTaskActionButtonDanger" type="button" onClick={() => deleteTask(task.id)}>

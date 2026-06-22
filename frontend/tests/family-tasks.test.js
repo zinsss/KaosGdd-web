@@ -15,7 +15,7 @@ test("family tasks use finalized standard Korean labels", async () => {
   const polishCss = await readSource("../app/styles/family-polish.css");
   const combinedSource = `${taskHelperSource}\n${dashboardSource}\n${formSource}\n${doneSource}`;
 
-  for (const label of ["전체", "내 할 일", "쏭 할 일", "할일", "새로 만들기", "완료", "완료 취소", "저장", "취소", "삭제"]) {
+  for (const label of ["전체", "내 할 일", "쏭 할 일", "할일", "+ 할일", "완료한 할일", "완료", "완료 취소", "저장", "취소", "삭제"]) {
     assert.ok(combinedSource.includes(label), `${label} should appear in Family task sources`);
   }
 
@@ -29,12 +29,19 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(dashboardSource.includes("aria-expanded={expanded}"), "collapsed task rows should expose expansion state");
   assert.ok(dashboardSource.includes("className=\"familyTaskRowToggle\""), "task rows should be compact toggles by default");
   assert.ok(dashboardSource.includes("className=\"familyTaskRowActions\""), "task actions should appear only in expanded rows");
+  assert.ok(dashboardSource.includes("familyTaskActionButtonDone"), "done action should have a lavender action style hook");
+  assert.ok(dashboardSource.includes("familyTaskActionButtonDanger"), "delete action should have a darker pink action style hook");
   assert.ok(dashboardSource.includes("<h2>할일</h2>"), "Family task page should use the compact 할일 title");
   assert.ok(dashboardSource.includes("formatFamilyDate(task.due_date)"), "due dates should remain compact inline text");
   assert.ok(!dashboardSource.includes("familyCalendarDashboardCard"), "Family task page should not render a calendar dashboard card");
   assert.ok(!dashboardSource.includes("일정과 로운이 시간표를 함께 봐요."), "Family task page should not render calendar helper copy");
   assert.ok(taskCss.includes(".familyTaskRowToggle"));
   assert.ok(taskCss.includes(".familyTaskRowActions"));
+  assert.match(taskCss, /\.familyTaskHeaderActions\s*\{[\s\S]*?flex-wrap:\s*nowrap;/);
+  assert.match(taskCss, /\.familyTaskRowActions\s*\{[\s\S]*?flex-wrap:\s*nowrap;/);
+  assert.match(taskCss, /\.familyTaskActionButtonDone\s*\{[\s\S]*?background:\s*rgba\(245,\s*235,\s*255,\s*0\.86\);[\s\S]*?color:\s*rgba\(110,\s*75,\s*145,\s*0\.9\);/);
+  assert.match(taskCss, /\.familyTaskActionButtonDanger\s*\{[\s\S]*?background:\s*rgba\(255,\s*232,\s*241,\s*0\.88\);[\s\S]*?color:\s*rgba\(150,\s*58,\s*92,\s*0\.94\);/);
+  assert.match(taskCss, /@media \(max-width:\s*360px\)\s*\{[\s\S]*?\.familyTaskHeaderActions,[\s\S]*?\.familyTaskRowActions\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
   assert.match(taskCss, /\.familyTaskPageCard\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(taskCss, /\.familyTaskForm,[\s\S]*?\.familyDoneTasks\s*\{[\s\S]*?width:\s*calc\(100% - 32px\);[\s\S]*?max-width:\s*calc\(100% - 32px\);[\s\S]*?min-width:\s*0;[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(taskCss, /\.familyTaskForm input,[\s\S]*?\.familyTaskForm select,[\s\S]*?\.familyTaskForm textarea\s*\{[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?box-sizing:\s*border-box;/);
