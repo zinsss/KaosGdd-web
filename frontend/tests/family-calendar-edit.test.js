@@ -495,6 +495,8 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverEditorGrid {"));
   assert.match(calendarCss, /\.familyCalendarCaregiverEditorGrid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\);/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverEditorGrid::before\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?top:\s*2px;[\s\S]*?bottom:\s*2px;[\s\S]*?left:\s*50%;[\s\S]*?width:\s*1px;[\s\S]*?pointer-events:\s*none;[\s\S]*?rgba\(214, 128, 157, 0\.18\)/);
+  assert.match(calendarCss, /@media \(max-width: 380px\)\s*\{[\s\S]*?\.familyCalendarCaregiverEditorGrid::before\s*\{[\s\S]*?top:\s*50%;[\s\S]*?right:\s*0;[\s\S]*?width:\s*auto;[\s\S]*?height:\s*1px;[\s\S]*?to right/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverExtraRow {"));
   assert.match(calendarCss, /\.familyCalendarCaregiverExtraRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) minmax\(54px, 0\.7fr\) auto;/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverSessionRow {"));
@@ -731,6 +733,12 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
   assert.ok(reviewSource.includes("function buildDailyBreakdown("));
   assert.ok(reviewSource.includes("function formatDailyExtraNotes("));
   assert.ok(reviewSource.includes("function summarizeMonth("));
+  assert.ok(reviewSource.includes("const [dailyBreakdownExpanded, setDailyBreakdownExpanded] = useState(false);"));
+  assert.ok(reviewSource.includes("aria-expanded={dailyBreakdownExpanded}"));
+  assert.ok(reviewSource.includes("className=\"familyCaregiverDailyBreakdownToggle\""));
+  assert.ok(reviewSource.includes("setDailyBreakdownExpanded((current) => !current)"));
+  assert.ok(reviewSource.includes("{formatReviewMonth(monthDate)} 자세히 보기"));
+  assert.ok(reviewSource.includes("dailyBreakdownExpanded ? ("));
   assert.ok(reviewSource.includes("calculateFamilyCaregiverHours(caregiverHoursByDate[dateKey])"));
   assert.ok(reviewSource.includes("calculateFamilyCaregiverExtraTotal(caregiverHoursByDate[dateKey])"));
   assert.ok(reviewSource.includes("function fixedDisplayWidth("));
@@ -781,6 +789,10 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
   assert.match(calendarCss, /\.caregiverMonthlyReviewText\s*\{[\s\S]*?font-variant-numeric:\s*tabular-nums;/);
   assert.ok(calendarCss.includes(".familyCaregiverReviewSummary {"));
   assert.ok(calendarCss.includes(".familyCaregiverWageField {"));
+  assert.ok(calendarCss.includes(".familyCaregiverDailyBreakdownToggle {"));
+  assert.match(calendarCss, /\.familyCaregiverDailyBreakdownToggle\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?color:\s*#d86f98;[\s\S]*?text-align:\s*left;/);
+  assert.match(calendarCss, /\.familyCaregiverDailyBreakdownToggle::before\s*\{[\s\S]*?content:\s*"▸";/);
+  assert.match(calendarCss, /\.familyCaregiverDailyBreakdownToggle\[aria-expanded="true"\]::before\s*\{[\s\S]*?content:\s*"▾";/);
   assert.ok(calendarCss.includes(".familyCaregiverDailyBreakdown {"));
   assert.ok(calendarCss.includes(".familyCaregiverDailyBreakdownHeader,"));
   assert.ok(calendarCss.includes(".familyCaregiverDailyBreakdownRow {"));

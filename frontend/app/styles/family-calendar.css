@@ -516,10 +516,29 @@
 }
 
 .familyCalendarCaregiverEditorGrid {
+  position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
   min-width: 0;
+}
+
+.familyCalendarCaregiverEditorGrid::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgba(214, 128, 157, 0),
+    rgba(214, 128, 157, 0.18) 14%,
+    rgba(214, 128, 157, 0.18) 86%,
+    rgba(214, 128, 157, 0)
+  );
 }
 
 .familyCalendarCaregiverEditorSection {
@@ -814,6 +833,34 @@
   font-size: 13px;
   font-weight: 950;
   text-align: right;
+}
+
+.familyCaregiverDailyBreakdownToggle {
+  appearance: none;
+  border: 0;
+  min-width: 0;
+  min-height: 34px;
+  border-radius: 8px;
+  padding: 7px 10px;
+  background: #fffafd;
+  color: #d86f98;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 950;
+  text-align: left;
+  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.16);
+  cursor: pointer;
+}
+
+.familyCaregiverDailyBreakdownToggle::before {
+  content: "▸";
+  display: inline-block;
+  margin-right: 6px;
+  color: rgba(180, 120, 190, 0.72);
+}
+
+.familyCaregiverDailyBreakdownToggle[aria-expanded="true"]::before {
+  content: "▾";
 }
 
 .familyCaregiverDailyBreakdown {
@@ -2014,6 +2061,23 @@
 @media (max-width: 380px) {
   .familyCalendarCaregiverEditorGrid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .familyCalendarCaregiverEditorGrid::before {
+    top: 50%;
+    right: 0;
+    bottom: auto;
+    left: 0;
+    width: auto;
+    height: 1px;
+    transform: translateY(-50%);
+    background: linear-gradient(
+      to right,
+      rgba(214, 128, 157, 0),
+      rgba(214, 128, 157, 0.18) 14%,
+      rgba(214, 128, 157, 0.18) 86%,
+      rgba(214, 128, 157, 0)
+    );
   }
 }
 

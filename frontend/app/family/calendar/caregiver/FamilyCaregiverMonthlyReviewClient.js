@@ -150,6 +150,7 @@ export default function FamilyCaregiverMonthlyReviewClient({ month }) {
   const [caregiverHoursByDate, setCaregiverHoursByDate] = useState({});
   const [monthlySettingsByKey, setMonthlySettingsByKey] = useState({});
   const [fallbackHourlyWage, setFallbackHourlyWage] = useState(0);
+  const [dailyBreakdownExpanded, setDailyBreakdownExpanded] = useState(false);
 
   useEffect(() => {
     setCaregiverHoursByDate(loadFamilyCaregiverHours());
@@ -210,7 +211,6 @@ export default function FamilyCaregiverMonthlyReviewClient({ month }) {
           달력으로
         </Link>
       </div>
-      <pre className="caregiverMonthlyReviewText">{reviewText}</pre>
       <section className="familyCaregiverReviewSummary" aria-label="돌봄 보수 요약">
         <div>
           <span>총 돌봄 시간</span>
@@ -255,26 +255,39 @@ export default function FamilyCaregiverMonthlyReviewClient({ month }) {
           <strong>{formatWon(totalWage)}</strong>
         </div>
       </section>
-      <section className="familyCaregiverDailyBreakdown" aria-label="일별 돌봄 내역">
-        <div className="familyCaregiverDailyBreakdownHeader">
-          <span>날짜</span>
-          <span>요일</span>
-          <span>돌봄 시간</span>
-          <span>기본 급여</span>
-          <span>추가 요금</span>
-          <span>비고</span>
-        </div>
-        {dailyBreakdown.map((day) => (
-          <div className="familyCaregiverDailyBreakdownRow" key={`${monthParam}-${day.dateLabel}`}>
-            <span>{day.dateLabel}</span>
-            <span>{day.weekday}</span>
-            <span>{formatFamilyCaregiverHours(day.hours) || "0"}시간</span>
-            <span>{formatWon(day.basePay)}</span>
-            <span>{formatWon(day.extras)}</span>
-            <span>{day.notes}</span>
-          </div>
-        ))}
-      </section>
+      <button
+        aria-expanded={dailyBreakdownExpanded}
+        className="familyCaregiverDailyBreakdownToggle"
+        type="button"
+        onClick={() => setDailyBreakdownExpanded((current) => !current)}
+      >
+        {formatReviewMonth(monthDate)} 자세히 보기
+      </button>
+      {dailyBreakdownExpanded ? (
+        <>
+          <pre className="caregiverMonthlyReviewText">{reviewText}</pre>
+          <section className="familyCaregiverDailyBreakdown" aria-label="일별 돌봄 내역">
+            <div className="familyCaregiverDailyBreakdownHeader">
+              <span>날짜</span>
+              <span>요일</span>
+              <span>돌봄 시간</span>
+              <span>기본 급여</span>
+              <span>추가 요금</span>
+              <span>비고</span>
+            </div>
+            {dailyBreakdown.map((day) => (
+              <div className="familyCaregiverDailyBreakdownRow" key={`${monthParam}-${day.dateLabel}`}>
+                <span>{day.dateLabel}</span>
+                <span>{day.weekday}</span>
+                <span>{formatFamilyCaregiverHours(day.hours) || "0"}시간</span>
+                <span>{formatWon(day.basePay)}</span>
+                <span>{formatWon(day.extras)}</span>
+                <span>{day.notes}</span>
+              </div>
+            ))}
+          </section>
+        </>
+      ) : null}
     </main>
   );
 }
