@@ -25,6 +25,7 @@ import {
   formatFamilyDateKey,
   loadFamilyRounState,
   normalizeFamilyRoniItem,
+  resolveFamilyRounPlanForDate,
   saveFamilyRounState,
   updateFamilyRounPlanItems,
 } from "../familyCalendarData.js";
@@ -199,6 +200,10 @@ export default function FamilyRoniClient() {
         planName: rounState.plans.find((plan) => plan.id === assignment.planId)?.name || FAMILY_RONI_DEFAULT_TEMPLATE_NAME,
       }));
   }, [rounState.assignments, rounState.plans]);
+
+  const appliedPlanId = useMemo(() => {
+    return resolveFamilyRounPlanForDate(todayDateKey(), rounState)?.id || "";
+  }, [rounState]);
 
   function persistRounState(nextState) {
     const savedState = saveFamilyRounState(nextState);
@@ -600,7 +605,10 @@ export default function FamilyRoniClient() {
                         type="button"
                         onClick={() => setExpandedPlanId((current) => (current === plan.id ? "" : plan.id))}
                       >
-                        <strong>{plan.name}</strong>
+                        <strong>
+                          {plan.name}
+                          {appliedPlanId === plan.id ? <span className="familyRoniAppliedStar" aria-label="현재 적용 중">★</span> : null}
+                        </strong>
                       </button>
                       {expanded ? (
                         <div className="familyRoniTemplateActions">
@@ -756,22 +764,24 @@ export default function FamilyRoniClient() {
             </section>
           )}
 
-          <section className="familyRoniPanel" aria-label="적용 이력">
-            <div className="familyCalendarFormHeader">
-              <h2>적용 이력</h2>
-            </div>
-            <div className="familyRoniTemplateSheet">
-              {assignmentRows.length ? assignmentRows.map((assignment) => (
-                <div className="familyRoniTemplateRow" key={assignment.id}>
-                  <strong>{assignment.planName}</strong>
-                  <span>{assignment.startDate} ~</span>
-                  <div className="familyRoniTemplateActions">
-                    <button type="button" onClick={() => deleteAssignment(assignment.id)}>삭제</button>
+          {openedPlan ? (
+            <section className="familyRoniPanel" aria-label="적용 이력">
+              <div className="familyCalendarFormHeader">
+                <h2>적용 이력</h2>
+              </div>
+              <div className="familyRoniTemplateSheet">
+                {assignmentRows.length ? assignmentRows.map((assignment) => (
+                  <div className="familyRoniTemplateRow" key={assignment.id}>
+                    <strong>{assignment.planName}</strong>
+                    <span>{assignment.startDate} ~</span>
+                    <div className="familyRoniTemplateActions">
+                      <button type="button" onClick={() => deleteAssignment(assignment.id)}>삭제</button>
+                    </div>
                   </div>
-                </div>
-              )) : <p className="familyTaskEmpty">적용 이력이 없습니다.</p>}
-            </div>
-          </section>
+                )) : <p className="familyTaskEmpty">적용 이력이 없습니다.</p>}
+              </div>
+            </section>
+          ) : null}
 
           {draft ? (
             <form className="familyCalendarForm" onSubmit={saveRoni}>

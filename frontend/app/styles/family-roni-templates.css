@@ -111,6 +111,13 @@
   overflow-wrap: anywhere;
 }
 
+.familyRoniAppliedStar {
+  display: inline;
+  margin-left: 6px;
+  color: #d86f98;
+  font-weight: 950;
+}
+
 .familyRoniTemplateActions,
 .familyRounActionSheet {
   display: flex;
