@@ -230,6 +230,11 @@
   outline: 2px solid rgba(216, 111, 152, 0.52);
 }
 
+.familyRounDragReadout {
+  text-align: center;
+  white-space: pre-line;
+}
+
 .familyRounActionSheet {
   justify-content: flex-start;
 }

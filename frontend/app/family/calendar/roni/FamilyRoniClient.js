@@ -5,6 +5,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import FamilyHeader from "../../FamilyHeader";
 import {
+  FAMILY_SCHEDULE_DRAG_MOVE_LIMIT,
+  familyScheduleSlotMinutesFromPoint,
+  formatFamilyScheduleDragRangeLabel,
+  minutesToFamilyScheduleTime,
+  parseFamilyScheduleTimeMinutes,
+  snapFamilyScheduleMinutes,
+} from "../familyCalendarDrag.js";
+import {
   FAMILY_CALENDAR_DAY_LABELS,
   FAMILY_CALENDAR_COLOR_KEYS,
   FAMILY_CALENDAR_COLOR_LABELS,
@@ -31,7 +39,7 @@ const ROUN_TIMETABLE_END_HOUR = 22;
 const ROUN_TIMETABLE_SLOT_MINUTES = 10;
 const ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES = 40;
 const ROUN_TIMETABLE_HOUR_HEIGHT = 48;
-const ROUN_TIMETABLE_DRAG_MOVE_LIMIT = 8;
+const ROUN_TIMETABLE_DRAG_MOVE_LIMIT = FAMILY_SCHEDULE_DRAG_MOVE_LIMIT;
 const ROUN_TIMETABLE_HOURS = Array.from(
   { length: ROUN_TIMETABLE_END_HOUR - ROUN_TIMETABLE_START_HOUR + 1 },
   (_, index) => ROUN_TIMETABLE_START_HOUR + index,
@@ -40,31 +48,20 @@ const ROUN_TIMETABLE_VISIBLE_HOURS = ROUN_TIMETABLE_HOURS.slice(0, -1);
 const ROUN_TIMETABLE_BODY_HEIGHT =
   (ROUN_TIMETABLE_END_HOUR - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT;
 
-function parseTimeMinutes(timeString) {
-  const match = String(timeString || "").match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return null;
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  if (!Number.isInteger(hour) || !Number.isInteger(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
-  return hour * 60 + minute;
-}
-
-function minutesToFamilyTime(totalMinutes) {
-  const minutesInDay = 24 * 60;
-  const normalized = ((totalMinutes % minutesInDay) + minutesInDay) % minutesInDay;
-  const hour = Math.floor(normalized / 60);
-  const minute = normalized % 60;
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-}
+const parseTimeMinutes = parseFamilyScheduleTimeMinutes;
+const minutesToFamilyTime = minutesToFamilyScheduleTime;
 
 function snapRounMinutes(totalMinutes) {
-  return Math.floor(totalMinutes / ROUN_TIMETABLE_SLOT_MINUTES) * ROUN_TIMETABLE_SLOT_MINUTES;
+  return snapFamilyScheduleMinutes(totalMinutes);
 }
 
 function slotMinutesFromPoint(clientY, rect) {
-  const y = Math.max(0, Math.min(rect.height - 1, clientY - rect.top));
-  const minutesFromStart = Math.floor(y / ROUN_TIMETABLE_HOUR_HEIGHT * 60);
-  return ROUN_TIMETABLE_START_HOUR * 60 + snapRounMinutes(minutesFromStart);
+  return familyScheduleSlotMinutesFromPoint(
+    clientY,
+    rect,
+    ROUN_TIMETABLE_START_HOUR,
+    ROUN_TIMETABLE_HOUR_HEIGHT,
+  );
 }
 
 function roniSessions(item) {
@@ -135,6 +132,25 @@ function rounBlockStyle(block) {
   const top = (block.startMinutes - rangeStart) / 60 * ROUN_TIMETABLE_HOUR_HEIGHT;
   const height = Math.max(20, (block.endMinutes - block.startMinutes) / 60 * ROUN_TIMETABLE_HOUR_HEIGHT);
   return { top: `${top}px`, height: `${height}px`, fontFamily: getFamilyTimetableFontFamily(block.fontFamily) || undefined };
+}
+
+function rounDragTargetRange(block, target) {
+  if (!block || !target) return null;
+  const duration = Math.max(
+    ROUN_TIMETABLE_SLOT_MINUTES,
+    (parseTimeMinutes(block.endTime) ?? block.startMinutes + ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES) - block.startMinutes,
+  );
+  return {
+    dayOfWeek: target.dayOfWeek,
+    startMinutes: target.startMinutes,
+    endMinutes: Math.min(ROUN_TIMETABLE_END_HOUR * 60, target.startMinutes + duration),
+  };
+}
+
+function formatRounDragReadout(block, target) {
+  const range = rounDragTargetRange(block, target);
+  if (!block || !range) return "";
+  return `${block.title}\n${formatFamilyScheduleDragRangeLabel(range.dayOfWeek, range.startMinutes, range.endMinutes)}`;
 }
 
 export default function FamilyRoniClient() {
@@ -470,10 +486,14 @@ export default function FamilyRoniClient() {
       ROUN_TIMETABLE_SLOT_MINUTES,
       (parseTimeMinutes(block.endTime) ?? block.startMinutes + ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES) - block.startMinutes,
     );
+    const boundedStartMinutes = Math.max(
+      ROUN_TIMETABLE_START_HOUR * 60,
+      Math.min(ROUN_TIMETABLE_END_HOUR * 60 - duration, startMinutes),
+    );
     const slotValues = {
       dayOfWeek,
-      startTime: minutesToFamilyTime(startMinutes),
-      endTime: minutesToFamilyTime(startMinutes + duration),
+      startTime: minutesToFamilyTime(boundedStartMinutes),
+      endTime: minutesToFamilyTime(boundedStartMinutes + duration),
     };
     const nextItems = (openedPlan.items || []).map((item) => (
       item.id === block.id ? replaceItemSlot(item, block.slotIndex, slotValues) : item
@@ -491,10 +511,21 @@ export default function FamilyRoniClient() {
   }
 
   function startBlockDrag(event, block) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
     if (event.button !== undefined && event.button !== 0) return;
     event.stopPropagation();
     event.currentTarget.setPointerCapture?.(event.pointerId);
-    setDragState({ block, startX: event.clientX, startY: event.clientY, moved: false, target: null });
+    setDragState({
+      block,
+      dragElement: event.currentTarget,
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      x: event.clientX,
+      y: event.clientY,
+      moved: false,
+      target: null,
+    });
   }
 
   function moveBlockDrag(event) {
@@ -502,14 +533,17 @@ export default function FamilyRoniClient() {
     const moved = dragState.moved || Math.hypot(event.clientX - dragState.startX, event.clientY - dragState.startY) >= ROUN_TIMETABLE_DRAG_MOVE_LIMIT;
     if (!moved) return;
     event.preventDefault();
-    setDragState({ ...dragState, moved, target: targetFromPoint(event.clientX, event.clientY) });
+    setDragState({ ...dragState, x: event.clientX, y: event.clientY, moved, target: targetFromPoint(event.clientX, event.clientY) });
   }
 
   function finishBlockDrag(event) {
     if (!dragState) return;
     event.preventDefault();
+    dragState.dragElement?.releasePointerCapture?.(event.pointerId);
     if (dragState.moved && dragState.target) {
       updateBlockTime(dragState.block, dragState.target.dayOfWeek, dragState.target.startMinutes);
+    }
+    if (dragState.moved) {
       suppressBlockClickRef.current = true;
       window.setTimeout(() => {
         suppressBlockClickRef.current = false;
@@ -632,12 +666,14 @@ export default function FamilyRoniClient() {
                   {visibleBlocks.filter((block) => block.dayOfWeek === dayIndex).map((block) => (
                     <button
                       className={`familyRounBlock familyTimetableEntry${familyCalendarColorClassName(block.color)}${dragState?.block?.blockId === block.blockId ? " familyRounBlockDragging" : ""}`}
+                      draggable={false}
                       key={block.blockId}
                       onClick={(event) => {
                         event.stopPropagation();
                         if (suppressBlockClickRef.current) return;
                         setActionBlock(block);
                       }}
+                      onDragStart={(event) => event.preventDefault()}
                       onPointerDown={(event) => startBlockDrag(event, block)}
                       style={rounBlockStyle(block)}
                       title={`${block.title} ${block.startTime}-${block.endTime}`}
@@ -649,6 +685,20 @@ export default function FamilyRoniClient() {
                 </div>
               ))}
             </div>
+
+            {dragState?.moved ? (
+              <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
+                {dragState.block.title}
+              </span>
+            ) : null}
+            {dragState?.moved && dragState.target ? (
+              <span
+                className="familyCalendarDragReadout familyRounDragReadout"
+                style={{ left: `${dragState.x}px`, top: `${dragState.y - 64}px` }}
+              >
+                {formatRounDragReadout(dragState.block, dragState.target)}
+              </span>
+            ) : null}
 
             {actionBlock ? (
               <div className="familyRounActionSheet" role="dialog" aria-label="시간표 항목">

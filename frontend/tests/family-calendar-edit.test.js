@@ -513,7 +513,11 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   const calendarCss = await readSource("../app/styles/family-calendar.css");
 
   for (const value of [
-    "FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT = 8",
+    "FAMILY_SCHEDULE_DRAG_MOVE_LIMIT",
+    "FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT = FAMILY_SCHEDULE_DRAG_MOVE_LIMIT",
+    "familyScheduleSlotMinutesFromPoint",
+    "familyScheduleSlotMinutesFromRowPoint",
+    "formatFamilyScheduleDragTimeLabel",
     "FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX = 48",
     "FAMILY_CALENDAR_AUTO_SCROLL_STEP_PX = 14",
     "function movedItemValues(item, target)",
@@ -598,8 +602,7 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("function formatDragTargetLabel(target)"));
   assert.ok(calendarSource.includes("if (!target) return \"\";"));
   assert.ok(calendarSource.includes('if (target.type !== "time") return "";'));
-  assert.ok(calendarSource.includes("FAMILY_CALENDAR_DAY_LABELS[target.dayIndex]"));
-  assert.ok(calendarSource.includes("minutesToFamilyTime(target.startMinutes)"));
+  assert.ok(calendarSource.includes("formatFamilyScheduleDragTimeLabel(target.dayIndex, target.startMinutes)"));
   assert.ok(calendarSource.includes('className="familyCalendarDragReadout"'));
   assert.ok(calendarSource.includes('style={{ left: `${dragState.x}px`, top: `${dragState.y - 64}px` }}'));
   assert.ok(calendarSource.includes("{formatDragTargetLabel(dragState.target)}"));

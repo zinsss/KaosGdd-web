@@ -198,6 +198,7 @@ test("family Roun timetable uses template library plus date-based assignments", 
 test("family Roun weekly grid editor supports add edit copy delete and drag", async () => {
   const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
   const roniCss = await readSource("../app/styles/family-roni-templates.css");
+  const dragSource = await readSource("../app/family/calendar/familyCalendarDrag.js");
 
   for (const value of [
     "ROUN_TIMETABLE_START_HOUR = 8",
@@ -214,8 +215,31 @@ test("family Roun weekly grid editor supports add edit copy delete and drag", as
     "moveBlockDrag",
     "finishBlockDrag",
     "updateBlockTime",
+    "formatRounDragReadout",
+    "rounDragTargetRange",
   ]) {
     assert.ok(roniSource.includes(value), `${value} should exist for the Roun weekly editor`);
+  }
+
+  for (const value of [
+    "FAMILY_SCHEDULE_DRAG_MOVE_LIMIT",
+    "familyScheduleSlotMinutesFromPoint",
+    "formatFamilyScheduleDragRangeLabel",
+    "minutesToFamilyScheduleTime",
+    "parseFamilyScheduleTimeMinutes",
+    "snapFamilyScheduleMinutes",
+  ]) {
+    assert.ok(roniSource.includes(value), `${value} should be reused from the shared Family schedule drag helpers`);
+  }
+
+  for (const value of [
+    "FAMILY_SCHEDULE_DRAG_SLOT_MINUTES = 10",
+    "FAMILY_SCHEDULE_DRAG_MOVE_LIMIT = 8",
+    "formatFamilyScheduleDragTimeLabel",
+    "formatFamilyScheduleDragRangeLabel",
+    "familyScheduleSlotMinutesFromPoint",
+  ]) {
+    assert.ok(dragSource.includes(value), `${value} should exist in the shared drag helper`);
   }
 
   for (const label of ["일", "월", "화", "수", "목", "금", "토"]) {
@@ -234,4 +258,16 @@ test("family Roun weekly grid editor supports add edit copy delete and drag", as
   assert.ok(roniCss.includes(".familyRounBlock"));
   assert.ok(roniCss.includes("position: absolute;"));
   assert.ok(roniCss.includes("touch-action: none;"));
+  assert.ok(roniSource.includes('if (event.pointerType === "mouse" && event.button !== 0) return;'));
+  assert.ok(roniSource.includes("event.currentTarget.setPointerCapture?.(event.pointerId);"));
+  assert.ok(roniSource.includes("dragState.dragElement?.releasePointerCapture?.(event.pointerId);"));
+  assert.ok(roniSource.includes("draggable={false}"));
+  assert.ok(roniSource.includes("onDragStart={(event) => event.preventDefault()}"));
+  assert.ok(roniSource.includes('className="familyCalendarDragGhost"'));
+  assert.ok(roniSource.includes('className="familyCalendarDragReadout familyRounDragReadout"'));
+  assert.ok(roniSource.includes('style={{ left: `${dragState.x}px`, top: `${dragState.y - 64}px` }}'));
+  assert.ok(roniSource.includes("formatRounDragReadout(dragState.block, dragState.target)"));
+  assert.ok(roniSource.includes("replaceItemSlot(item, block.slotIndex, slotValues)"), "dragging should update only the moved session");
+  assert.ok(roniCss.includes(".familyRounDragReadout {"));
+  assert.ok(roniCss.includes("white-space: pre-line;"));
 });
