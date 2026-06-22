@@ -2,8 +2,8 @@ export const FAMILY_TASKS_STORAGE_KEY = "kaosgdd.family.tasks.v1";
 export const FAMILY_TASK_ASSIGNEES = ["내 할 일", "쏭 할 일", "전체"];
 export const FAMILY_TASK_DEFAULT_ASSIGNEE = "내 할 일";
 export const FAMILY_TASK_PRIORITY_ASSIGNEE = "쏭 할 일";
-export const FAMILY_TASK_PRIORITIES = ["😐 보통", "🙂 조금 빨리", "⭐ 중요"];
-export const FAMILY_TASK_DEFAULT_PRIORITY = "😐 보통";
+export const FAMILY_TASK_PRIORITIES = ["💤 언젠가는...", "😄 보통", "⭐️ 중요! 늦지않기", "‼️ 꼭! 죽어도 하기"];
+export const FAMILY_TASK_DEFAULT_PRIORITY = "😄 보통";
 
 export function createFamilyTaskId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -27,12 +27,7 @@ export function normalizeFamilyTask(task) {
 
   const now = new Date().toISOString();
   const assignee = FAMILY_TASK_ASSIGNEES.includes(task.assignee) ? task.assignee : FAMILY_TASK_DEFAULT_ASSIGNEE;
-  const priority =
-    assignee === FAMILY_TASK_PRIORITY_ASSIGNEE && FAMILY_TASK_PRIORITIES.includes(task.priority)
-      ? task.priority
-      : assignee === FAMILY_TASK_PRIORITY_ASSIGNEE
-        ? FAMILY_TASK_DEFAULT_PRIORITY
-        : "";
+  const priority = FAMILY_TASK_PRIORITIES.includes(task.priority) ? task.priority : FAMILY_TASK_DEFAULT_PRIORITY;
   const sortOrder = Number.isFinite(Number(task.sort_order)) ? Number(task.sort_order) : fallbackSortOrder(task);
 
   return {
@@ -94,6 +89,18 @@ export function formatFamilyDate(dateValue) {
     day: "numeric",
     weekday: "short",
   }).format(date);
+}
+
+export function formatFamilyTaskDueDate(dateValue) {
+  if (!dateValue) return "";
+  const date = new Date(`${dateValue}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return String(dateValue);
+
+  const year = String(date.getFullYear()).slice(-2);
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  const weekday = ["일", "월", "화", "수", "목", "금", "토"][date.getDay()];
+  return `${year}-${month}-${day}(${weekday})까지`;
 }
 
 export function formatFamilyDateTime(dateValue) {

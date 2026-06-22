@@ -15,8 +15,12 @@ test("family tasks use finalized standard Korean labels", async () => {
   const polishCss = await readSource("../app/styles/family-polish.css");
   const combinedSource = `${taskHelperSource}\n${dashboardSource}\n${formSource}\n${doneSource}`;
 
-  for (const label of ["전체", "내 할 일", "쏭 할 일", "할일", "+ 할일", "완료한 할일", "완료", "완료 취소", "저장", "취소", "삭제"]) {
+  for (const label of ["할일", "+ 할일", "완료한 할일", "완료", "완료 취소", "저장", "취소", "삭제", "쏭"]) {
     assert.ok(combinedSource.includes(label), `${label} should appear in Family task sources`);
+  }
+
+  for (const priority of ["💤 언젠가는...", "😄 보통", "⭐️ 중요! 늦지않기", "‼️ 꼭! 죽어도 하기"]) {
+    assert.ok(combinedSource.includes(priority), `${priority} should appear in Family task sources`);
   }
 
   for (const value of ["kaosgdd.family.tasks.v1", "sort_order", "completed_at", "FAMILY_TASK_DEFAULT_ASSIGNEE", "FAMILY_TASK_PRIORITY_ASSIGNEE"]) {
@@ -32,11 +36,28 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(dashboardSource.includes("familyTaskActionButtonDone"), "done action should have a lavender action style hook");
   assert.ok(dashboardSource.includes("familyTaskActionButtonDanger"), "delete action should have a darker pink action style hook");
   assert.ok(dashboardSource.includes("<h2>할일</h2>"), "Family task page should use the compact 할일 title");
-  assert.ok(dashboardSource.includes("formatFamilyDate(task.due_date)"), "due dates should remain compact inline text");
+  assert.ok(dashboardSource.includes("formatFamilyTaskDueDate(task.due_date)"), "due dates should use yy-mm-dd(ddd)까지 formatting");
+  assert.ok(taskHelperSource.includes("return `${year}-${month}-${day}(${weekday})까지`;"));
+  assert.ok(dashboardSource.includes("<h3><span aria-hidden=\"true\">•</span>{task.title}</h3>"), "task title should render as primary bullet line");
+  assert.ok(dashboardSource.includes('className="familyTaskMetaBadges"'), "priority and 쏭 badges should render as the second-line left group");
+  assert.ok(dashboardSource.includes('className="familyTaskDateBadge"'), "due date should render as a right-aligned second-line value");
+  assert.ok(dashboardSource.includes('familyTaskBadgeSong'), "쏭 badge should render only for shared tasks");
+  assert.doesNotMatch(dashboardSource, /FAMILY_TASK_PRIORITIES\.map/);
+  assert.ok(!dashboardSource.includes("우선순위:"), "task list should not render a priority label prefix");
   assert.ok(!dashboardSource.includes("familyCalendarDashboardCard"), "Family task page should not render a calendar dashboard card");
   assert.ok(!dashboardSource.includes("일정과 로운이 시간표를 함께 봐요."), "Family task page should not render calendar helper copy");
+  assert.ok(!formSource.includes("<span>담당자</span>"), "task form should not render the assignee label");
+  assert.ok(!formSource.includes("FAMILY_TASK_ASSIGNEES.map"), "task form should not render the assignee combobox");
+  assert.ok(formSource.includes('className="familyTaskPriorityShareRow"'), "priority and 쏭 controls should share one row");
+  assert.ok(formSource.includes('className="familyTaskSongField"'), "task form should render the 쏭 checkbox field");
+  assert.ok(formSource.includes('type="checkbox"'), "쏭 should be a checkbox");
+  assert.ok(formSource.includes("priority: FAMILY_TASK_DEFAULT_PRIORITY"), "new task default priority should be 보통");
   assert.ok(taskCss.includes(".familyTaskRowToggle"));
   assert.ok(taskCss.includes(".familyTaskRowActions"));
+  assert.match(taskCss, /\.familyTaskMeta\s*\{[\s\S]*?justify-content:\s*space-between;[\s\S]*?flex-wrap:\s*nowrap;/);
+  assert.match(taskCss, /\.familyTaskDateBadge\s*\{[\s\S]*?margin-left:\s*auto;[\s\S]*?background:\s*transparent;[\s\S]*?color:\s*rgba\(78, 37, 54, 0\.46\);/);
+  assert.match(taskCss, /\.familyTaskPriorityShareRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;[\s\S]*?align-items:\s*end;/);
+  assert.match(taskCss, /\.familyTaskSongField input\s*\{[\s\S]*?width:\s*auto;[\s\S]*?accent-color:\s*#d86f98;/);
   assert.match(taskCss, /\.familyTaskHeaderActions\s*\{[\s\S]*?flex-wrap:\s*nowrap;/);
   assert.match(taskCss, /\.familyTaskRowActions\s*\{[\s\S]*?flex-wrap:\s*nowrap;/);
   assert.match(taskCss, /\.familyTaskActionButtonDone\s*\{[\s\S]*?background:\s*rgba\(245,\s*235,\s*255,\s*0\.86\);[\s\S]*?color:\s*rgba\(110,\s*75,\s*145,\s*0\.9\);/);

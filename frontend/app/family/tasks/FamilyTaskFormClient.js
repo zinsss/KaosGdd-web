@@ -6,7 +6,6 @@ import { useEffect, useMemo, useState } from "react";
 
 import FamilyHeader from "../FamilyHeader";
 import {
-  FAMILY_TASK_ASSIGNEES,
   FAMILY_TASK_DEFAULT_ASSIGNEE,
   FAMILY_TASK_DEFAULT_PRIORITY,
   FAMILY_TASK_PRIORITIES,
@@ -21,7 +20,7 @@ const EMPTY_DRAFT = {
   title: "",
   description: "",
   assignee: FAMILY_TASK_DEFAULT_ASSIGNEE,
-  priority: "",
+  priority: FAMILY_TASK_DEFAULT_PRIORITY,
   due_date: "",
 };
 
@@ -50,27 +49,24 @@ export default function FamilyTaskFormClient({ taskId = null }) {
       title: task.title,
       description: task.description,
       assignee,
-      priority: assignee === FAMILY_TASK_PRIORITY_ASSIGNEE ? task.priority || FAMILY_TASK_DEFAULT_PRIORITY : "",
+      priority: task.priority || FAMILY_TASK_DEFAULT_PRIORITY,
       due_date: task.due_date,
     });
   }, [taskId]);
 
   const pageTitle = useMemo(() => (isEditing ? "할 일 수정" : "할 일 추가"), [isEditing]);
-  const showPriority = draft.assignee === FAMILY_TASK_PRIORITY_ASSIGNEE;
+  const sharedWithSong = draft.assignee === FAMILY_TASK_PRIORITY_ASSIGNEE;
 
   function updateDraft(field, value) {
-    setDraft((current) => {
-      if (field === "assignee") {
-        return {
-          ...current,
-          assignee: value,
-          priority: value === FAMILY_TASK_PRIORITY_ASSIGNEE ? current.priority || FAMILY_TASK_DEFAULT_PRIORITY : "",
-        };
-      }
-
-      return { ...current, [field]: value };
-    });
+    setDraft((current) => ({ ...current, [field]: value }));
     if (field === "title" && value.trim()) setError("");
+  }
+
+  function updateSongShared(checked) {
+    setDraft((current) => ({
+      ...current,
+      assignee: checked ? FAMILY_TASK_PRIORITY_ASSIGNEE : FAMILY_TASK_DEFAULT_ASSIGNEE,
+    }));
   }
 
   function goDashboard() {
@@ -150,18 +146,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
           </label>
 
           <div className="familyTaskFormGrid">
-            <label>
-              <span>담당자</span>
-              <select value={draft.assignee} onChange={(event) => updateDraft("assignee", event.target.value)}>
-                {FAMILY_TASK_ASSIGNEES.map((assignee) => (
-                  <option value={assignee} key={assignee}>
-                    {assignee}
-                  </option>
-                ))}
-              </select>
-            </label>
-
-            {showPriority ? (
+            <div className="familyTaskPriorityShareRow">
               <label className="familyTaskPriorityField">
                 <span>중요도</span>
                 <select value={draft.priority || FAMILY_TASK_DEFAULT_PRIORITY} onChange={(event) => updateDraft("priority", event.target.value)}>
@@ -172,7 +157,11 @@ export default function FamilyTaskFormClient({ taskId = null }) {
                   ))}
                 </select>
               </label>
-            ) : null}
+              <label className="familyTaskSongField">
+                <input type="checkbox" checked={sharedWithSong} onChange={(event) => updateSongShared(event.target.checked)} />
+                <span>쏭</span>
+              </label>
+            </div>
 
             <label>
               <span>날짜</span>
