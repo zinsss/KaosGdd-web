@@ -1528,8 +1528,13 @@ export default function FamilyCalendarClient() {
 
         {weeks.map((week) => {
           const selected = Boolean(selectedWeekKey) && week.key === selectedWeekKey;
+          const weekClassName = [
+            "familyCalendarWeek",
+            selected ? "familyCalendarWeekSelected" : "",
+            selected && editingCalendar ? "familyCalendarWeekEditingSelected" : "",
+          ].filter(Boolean).join(" ");
           return (
-            <section className={`familyCalendarWeek${selected ? " familyCalendarWeekSelected" : ""}`} key={week.key}>
+            <section className={weekClassName} key={week.key}>
               <div className="familyCalendarWeekDates">
                 <button
                   className="familyCalendarWeekToggle"
