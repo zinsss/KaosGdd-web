@@ -23,8 +23,9 @@ async function getNoteRaw(id) {
 }
 
 export default async function NoteDetailPage({ params }) {
-  const result = await getNote(params.id);
-  const rawResult = result.ok ? await getNoteRaw(params.id) : { ok: false, raw: "" };
+  const { id } = await params;
+  const result = await getNote(id);
+  const rawResult = result.ok ? await getNoteRaw(id) : { ok: false, raw: "" };
 
   return (
     <main className="page">
