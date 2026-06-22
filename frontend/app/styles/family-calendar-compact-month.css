@@ -36,6 +36,28 @@
   padding: 8px 6px 6px;
 }
 
+.familyCalendarWeekEditingSelected {
+  border-color: rgba(180, 120, 190, 0.36);
+  background: rgba(230, 220, 255, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(180, 120, 190, 0.1);
+}
+
+.familyCalendarWeekEditingSelected .familyCalendarWeekDates,
+.familyCalendarWeekEditingSelected .familyCalendarWeekDateButton,
+.familyCalendarWeekEditingSelected .familyCalendarTimeRailSpacer,
+.familyCalendarWeekEditingSelected .familyCalendarExpandedWeek,
+.familyCalendarWeekEditingSelected .familyCalendarSectionSeparated,
+.familyCalendarWeekEditingSelected .familyCalendarWeatherRow,
+.familyCalendarWeekEditingSelected .familyCalendarCaregiverRow,
+.familyCalendarWeekEditingSelected .familyCalendarAllDayRow,
+.familyCalendarWeekEditingSelected .familyCalendarTimeRow,
+.familyCalendarWeekEditingSelected .familyCalendarTimedItemsLayer,
+.familyCalendarWeekEditingSelected .familyCalendarTimeLabel,
+.familyCalendarWeekEditingSelected .familyCalendarTimedDaySlot,
+.familyCalendarWeekEditingSelected .familyCalendarCaregiverPicker {
+  background-color: transparent;
+}
+
 .familyCalendarWeek::before,
 .familyCalendarWeek::after {
   content: none;
@@ -150,7 +172,7 @@
   border: 0;
   border-radius: 8px;
   padding: 0;
-  background: rgba(230, 220, 255, 0.22);
+  background: transparent;
   box-shadow: none;
 }
 
