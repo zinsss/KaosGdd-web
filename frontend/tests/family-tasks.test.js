@@ -54,6 +54,9 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.match(polishCss, /\.familyTaskForm,[\s\S]*?\.familyDoneTasks\s*\{[\s\S]*?width:\s*auto;[\s\S]*?max-width:\s*calc\(100% - 32px\);[\s\S]*?overflow:\s*hidden;/);
   assert.match(polishCss, /\.familyTaskFormActions,[\s\S]*?\.familyDoneTaskActions,[\s\S]*?\.familyTaskHeaderActions\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap;[\s\S]*?max-width:\s*100%;/);
   assert.match(polishCss, /@media \(max-width:\s*640px\)\s*\{[\s\S]*?\.familyTaskForm,[\s\S]*?\.familyDoneTasks\s*\{[\s\S]*?width:\s*auto;[\s\S]*?max-width:\s*calc\(100% - 24px\);[\s\S]*?margin:\s*12px;/);
+  assert.match(polishCss, /\.familyTaskHeaderActions,[\s\S]*?\.familyTaskRowActions,[\s\S]*?\.familyTaskFormActions\s*\{[\s\S]*?flex-direction:\s*row;[\s\S]*?flex-wrap:\s*nowrap;/);
+  assert.match(polishCss, /\.familyTaskHeaderActions \.familyTaskActionButton,[\s\S]*?\.familyTaskRowActions \.familyTaskActionButton,[\s\S]*?\.familyTaskFormActions \.familyTaskSave,[\s\S]*?\.familyTaskFormActions \.familyTaskCancel,[\s\S]*?\.familyTaskFormActions \.familyTaskDelete\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?width:\s*auto;/);
+  assert.match(polishCss, /@media \(max-width:\s*340px\)\s*\{[\s\S]*?\.familyTaskHeaderActions,[\s\S]*?\.familyTaskRowActions,[\s\S]*?\.familyTaskFormActions\s*\{[\s\S]*?flex-wrap:\s*wrap;/);
   assert.ok(!polishCss.includes("width: 100vw"), "Family polish CSS should not use 100vw for task forms");
 
   for (const oldString of ["고치까", "치아라", "다했데이", "도로묵이다", "고마하자", "안하면 죽는다", "왠만하면 빨리해라", "니가 해라", "내가 하께", "아무나 하자"]) {

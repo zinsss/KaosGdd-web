@@ -443,3 +443,41 @@
     font-size: 13px;
   }
 }
+
+.familyTaskHeaderActions,
+.familyTaskRowActions,
+.familyTaskFormActions {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+}
+
+.familyTaskHeaderActions {
+  justify-content: flex-start;
+}
+
+.familyTaskRowActions,
+.familyTaskFormActions {
+  justify-content: flex-end;
+}
+
+.familyTaskHeaderActions .familyTaskActionButton,
+.familyTaskRowActions .familyTaskActionButton,
+.familyTaskFormActions .familyTaskSave,
+.familyTaskFormActions .familyTaskCancel,
+.familyTaskFormActions .familyTaskDelete {
+  flex: 0 0 auto;
+  width: auto;
+  max-width: 100%;
+  white-space: nowrap;
+}
+
+@media (max-width: 340px) {
+  .familyTaskHeaderActions,
+  .familyTaskRowActions,
+  .familyTaskFormActions {
+    flex-wrap: wrap;
+  }
+}
