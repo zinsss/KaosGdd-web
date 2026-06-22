@@ -16,6 +16,14 @@ import {
 import FamilyCalendarWeatherRows from "./FamilyCalendarWeatherRows";
 import FamilyCalendarWeatherDebugPanel from "./FamilyCalendarWeatherDebugPanel";
 import {
+  FAMILY_SCHEDULE_DRAG_MOVE_LIMIT,
+  familyScheduleSlotMinutesFromPoint,
+  familyScheduleSlotMinutesFromRowPoint,
+  formatFamilyScheduleDragTimeLabel,
+  minutesToFamilyScheduleTime,
+  parseFamilyScheduleTimeMinutes,
+} from "./familyCalendarDrag";
+import {
   FAMILY_CALENDAR_DAY_LABELS,
   addFamilyDays,
   calculateFamilyCaregiverExtraTotal,
@@ -52,7 +60,7 @@ const FAMILY_CALENDAR_EDIT_END_HOUR = 22;
 const FAMILY_CALENDAR_EDIT_HOUR_HEIGHT = 60;
 const FAMILY_CALENDAR_LONG_PRESS_MS = 600;
 const FAMILY_CALENDAR_LONG_PRESS_MOVE_LIMIT = 10;
-const FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT = 8;
+const FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT = FAMILY_SCHEDULE_DRAG_MOVE_LIMIT;
 const FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX = 48;
 const FAMILY_CALENDAR_AUTO_SCROLL_STEP_PX = 14;
 const FAMILY_CALENDAR_DEFAULT_EVENT_DURATION_MINUTES = 40;
@@ -75,26 +83,11 @@ function formatDragTargetLabel(target) {
     return `${weekday} 종일`.trim();
   }
   if (target.type !== "time") return "";
-  const weekday = FAMILY_CALENDAR_DAY_LABELS[target.dayIndex] || "";
-  return `${weekday} ${minutesToFamilyTime(target.startMinutes)}`.trim();
+  return formatFamilyScheduleDragTimeLabel(target.dayIndex, target.startMinutes);
 }
 
-function minutesToFamilyTime(totalMinutes) {
-  const minutesInDay = 24 * 60;
-  const normalized = ((totalMinutes % minutesInDay) + minutesInDay) % minutesInDay;
-  const hour = Math.floor(normalized / 60);
-  const minute = normalized % 60;
-  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
-}
-
-function parseTimeMinutes(timeString) {
-  const match = String(timeString || "").match(/^(\d{1,2}):(\d{2})$/);
-  if (!match) return null;
-  const hour = Number(match[1]);
-  const minute = Number(match[2]);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute) || hour < 0 || hour > 23 || minute < 0 || minute > 59) return null;
-  return hour * 60 + minute;
-}
+const minutesToFamilyTime = minutesToFamilyScheduleTime;
+const parseTimeMinutes = parseFamilyScheduleTimeMinutes;
 
 function eventDurationMinutes(item) {
   const start = parseTimeMinutes(item.startTime);
@@ -174,16 +167,16 @@ function slotTimeFromPointer(event) {
 }
 
 function slotTimeFromPoint(clientY, rect) {
-  const y = Math.max(0, Math.min(rect.height - 1, clientY - rect.top));
-  const minutesFromStart = Math.floor(y / FAMILY_CALENDAR_EDIT_HOUR_HEIGHT * 60);
-  const snappedMinutes = Math.floor(minutesFromStart / 10) * 10;
-  return FAMILY_CALENDAR_EDIT_START_HOUR * 60 + snappedMinutes;
+  return familyScheduleSlotMinutesFromPoint(
+    clientY,
+    rect,
+    FAMILY_CALENDAR_EDIT_START_HOUR,
+    FAMILY_CALENDAR_EDIT_HOUR_HEIGHT,
+  );
 }
 
 function slotTimeFromRowPoint(clientY, rect, rowStartMinutes) {
-  const y = Math.max(0, Math.min(rect.height - 1, clientY - rect.top));
-  const snappedMinutes = Math.floor(y / 10) * 10;
-  return rowStartMinutes + snappedMinutes;
+  return familyScheduleSlotMinutesFromRowPoint(clientY, rect, rowStartMinutes);
 }
 
 function roniSourceKeys(item) {
