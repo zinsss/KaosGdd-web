@@ -297,6 +297,8 @@ test("family Roun weekly grid editor supports add edit copy delete and drag", as
   assert.ok(roniCss.includes(".familyRounBlock"));
   assert.ok(roniCss.includes("position: absolute;"));
   assert.ok(roniCss.includes("touch-action: none;"));
+  assert.match(roniCss, /\.familyRounBlock\s*\{[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?overflow:\s*hidden;[\s\S]*?text-align:\s*center;/);
+  assert.match(roniCss, /\.familyRounBlock span\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*hidden;[\s\S]*?text-overflow:\s*ellipsis;[\s\S]*?white-space:\s*nowrap;/);
   assert.ok(roniSource.includes('if (event.pointerType === "mouse" && event.button !== 0) return;'));
   assert.ok(roniSource.includes("event.currentTarget.setPointerCapture?.(event.pointerId);"));
   assert.ok(roniSource.includes("dragState.dragElement?.releasePointerCapture?.(event.pointerId);"));

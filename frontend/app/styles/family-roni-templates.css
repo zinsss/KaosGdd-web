@@ -325,12 +325,15 @@
   z-index: 3;
   left: 2px;
   right: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   overflow: hidden;
   border: 1px solid rgba(151, 69, 98, 0.12);
   border-radius: 7px;
   padding: 4px 3px;
   color: #4b2536;
-  text-align: left;
+  text-align: center;
   box-shadow: 0 5px 12px rgba(151, 69, 98, 0.12);
   cursor: grab;
   touch-action: none;
@@ -338,12 +341,14 @@
 
 .familyRounBlock span {
   display: block;
+  width: 100%;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 12px;
   font-weight: 950;
-  line-height: 1.18;
+  line-height: 1.1;
 }
 
 .familyRounBlockDragging {
