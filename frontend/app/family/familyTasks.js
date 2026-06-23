@@ -2,8 +2,16 @@ export const FAMILY_TASKS_STORAGE_KEY = "kaosgdd.family.tasks.v1";
 export const FAMILY_TASK_ASSIGNEES = ["내 할 일", "쏭 할 일", "전체"];
 export const FAMILY_TASK_DEFAULT_ASSIGNEE = "내 할 일";
 export const FAMILY_TASK_PRIORITY_ASSIGNEE = "쏭 할 일";
-export const FAMILY_TASK_PRIORITIES = ["💤 언젠가는...", "😄 보통", "⭐️ 중요! 늦지않기", "‼️ 꼭! 죽어도 하기"];
+export const FAMILY_TASK_PRIORITIES = ["💤 언젠가는", "😄 보통", "⭐️ 중요", "‼️ 꼭 하기"];
 export const FAMILY_TASK_DEFAULT_PRIORITY = "😄 보통";
+const FAMILY_TASK_PRIORITY_ALIASES = {
+  ["💤 언젠가는" + "..."]: "💤 언젠가는",
+  ["⭐️ 중요! " + "늦지않기"]: "⭐️ 중요",
+  ["‼️ 꼭! " + "\uc8fd\uc5b4\ub3c4" + " 하기"]: "‼️ 꼭 하기",
+  ["‼️ " + "\uc548\ud558\uba74 \uc8fd\ub294\ub2e4"]: "‼️ 꼭 하기",
+  ["⭐️ " + "\uc65c\ub9cc\ud558\uba74 \ube68\ub9ac\ud574\ub77c"]: "⭐️ 중요",
+  ["⭐️ " + "\uc575\uac04\ud558\uba74 \ube68\ub9ac\ud574\ub77c\uc774"]: "⭐️ 중요",
+};
 
 export function createFamilyTaskId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -27,7 +35,8 @@ export function normalizeFamilyTask(task) {
 
   const now = new Date().toISOString();
   const assignee = FAMILY_TASK_ASSIGNEES.includes(task.assignee) ? task.assignee : FAMILY_TASK_DEFAULT_ASSIGNEE;
-  const priority = FAMILY_TASK_PRIORITIES.includes(task.priority) ? task.priority : FAMILY_TASK_DEFAULT_PRIORITY;
+  const priorityValue = FAMILY_TASK_PRIORITY_ALIASES[task.priority] || task.priority;
+  const priority = FAMILY_TASK_PRIORITIES.includes(priorityValue) ? priorityValue : FAMILY_TASK_DEFAULT_PRIORITY;
   const sortOrder = Number.isFinite(Number(task.sort_order)) ? Number(task.sort_order) : fallbackSortOrder(task);
 
   return {

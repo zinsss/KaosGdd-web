@@ -266,20 +266,20 @@
   min-width: 0;
 }
 
-.familyCalendarItemRoni.familyTimetableEntryPink { background: #ffc6dc; }
-.familyCalendarItemRoni.familyTimetableEntryRose { background: #ffb6a8; }
-.familyCalendarItemRoni.familyTimetableEntryPeach { background: #ffd2ba; }
-.familyCalendarItemRoni.familyTimetableEntryYellow { background: #ffe08a; }
-.familyCalendarItemRoni.familyTimetableEntryMint { background: #c9f2d2; }
-.familyCalendarItemRoni.familyTimetableEntryGreen { background: #bcebc2; }
-.familyCalendarItemRoni.familyTimetableEntrySky { background: #b7f1ff; }
-.familyCalendarItemRoni.familyTimetableEntryBlue { background: #b8c8ff; }
-.familyCalendarItemRoni.familyTimetableEntryLavender { background: #d4ccff; }
-.familyCalendarItemRoni.familyTimetableEntryPurple { background: #f0b2e8; }
-.familyCalendarItemRoni.familyTimetableEntryCream { background: #fff1b8; }
-.familyCalendarItemRoni.familyTimetableEntryGray { background: #ded8d2; }
+.familyCalendarItemRouny.familyTimetableEntryPink { background: #ffc6dc; }
+.familyCalendarItemRouny.familyTimetableEntryRose { background: #ffb6a8; }
+.familyCalendarItemRouny.familyTimetableEntryPeach { background: #ffd2ba; }
+.familyCalendarItemRouny.familyTimetableEntryYellow { background: #ffe08a; }
+.familyCalendarItemRouny.familyTimetableEntryMint { background: #c9f2d2; }
+.familyCalendarItemRouny.familyTimetableEntryGreen { background: #bcebc2; }
+.familyCalendarItemRouny.familyTimetableEntrySky { background: #b7f1ff; }
+.familyCalendarItemRouny.familyTimetableEntryBlue { background: #b8c8ff; }
+.familyCalendarItemRouny.familyTimetableEntryLavender { background: #d4ccff; }
+.familyCalendarItemRouny.familyTimetableEntryPurple { background: #f0b2e8; }
+.familyCalendarItemRouny.familyTimetableEntryCream { background: #fff1b8; }
+.familyCalendarItemRouny.familyTimetableEntryGray { background: #ded8d2; }
 
-.familyCalendarItemRoni {
+.familyCalendarItemRouny {
   box-shadow: inset 0 0 0 1px rgba(78, 37, 54, 0.08);
   opacity: 1;
 }

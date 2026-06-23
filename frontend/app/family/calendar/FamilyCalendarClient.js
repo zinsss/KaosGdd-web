@@ -38,7 +38,7 @@ import {
   getFamilyWeekStart,
   loadFamilyCaregiverHours,
   loadFamilyCalendarItems,
-  loadFamilyRoniOverrides,
+  loadFamilyRounyOverrides,
   loadFamilyRounState,
   minutesToFamilyCaregiverTime,
   normalizeFamilyCaregiverDayRecord,
@@ -50,7 +50,7 @@ import {
   resolveFamilyRounPlanForDate,
   saveFamilyCaregiverHours,
   saveFamilyCalendarItems,
-  saveFamilyRoniOverrides,
+  saveFamilyRounyOverrides,
 } from "./familyCalendarData";
 
 const FAMILY_CALENDAR_MODE_VIEW = "view";
@@ -88,6 +88,14 @@ function formatDragTargetLabel(target) {
 
 const minutesToFamilyTime = minutesToFamilyScheduleTime;
 const parseTimeMinutes = parseFamilyScheduleTimeMinutes;
+
+function isRounyCalendarItem(item) {
+  return item?.type === "rouny" || item?.type === "roni";
+}
+
+function normalizedCalendarItemType(item) {
+  return isRounyCalendarItem(item) ? "rouny" : item?.type;
+}
 
 function eventDurationMinutes(item) {
   const start = parseTimeMinutes(item.startTime);
@@ -179,15 +187,15 @@ function slotTimeFromRowPoint(clientY, rect, rowStartMinutes) {
   return familyScheduleSlotMinutesFromRowPoint(clientY, rect, rowStartMinutes);
 }
 
-function roniSourceKeys(item) {
-  return [item.sourceRoniId, item.sourceId].filter(Boolean);
+function rounySourceKeys(item) {
+  return [item.sourceRounyId, item.sourceId].filter(Boolean);
 }
 
-function roniOverrideKey(sourceRoniId, date) {
-  return `${sourceRoniId}|${date}`;
+function rounyOverrideKey(sourceRounyId, date) {
+  return `${sourceRounyId}|${date}`;
 }
 
-function groupDeletedRoniOverridesByDate(overrides) {
+function groupDeletedRounyOverridesByDate(overrides) {
   return overrides
     .filter((override) => override.deleted)
     .reduce((grouped, override) => {
@@ -197,7 +205,7 @@ function groupDeletedRoniOverridesByDate(overrides) {
     }, {});
 }
 
-function applyRoniOverrideToItem(item, override, weekDates) {
+function applyRounyOverrideToItem(item, override, weekDates) {
   const dayIndex = weekDates.indexOf(override.date);
   if (dayIndex < 0) return null;
   return {
@@ -213,23 +221,23 @@ function applyRoniOverrideToItem(item, override, weekDates) {
   };
 }
 
-function applyRoniOverrides(generatedRoniItems, roniOverrides, weekDates) {
-  const weekOverrides = roniOverrides.filter((override) => weekDates.includes(override.date));
-  const overrideByRoniDate = new Map(
-    weekOverrides.map((override) => [roniOverrideKey(override.sourceRoniId, override.date), override]),
+function applyRounyOverrides(generatedRounyItems, rounyOverrides, weekDates) {
+  const weekOverrides = rounyOverrides.filter((override) => weekDates.includes(override.date));
+  const overrideByRounyDate = new Map(
+    weekOverrides.map((override) => [rounyOverrideKey(override.sourceRounyId, override.date), override]),
   );
-  const overriddenSources = new Set(weekOverrides.map((override) => override.sourceRoniId));
+  const overriddenSources = new Set(weekOverrides.map((override) => override.sourceRounyId));
   const appliedOverrideKeys = new Set();
 
-  const baseItems = generatedRoniItems.flatMap((item) => {
-    const sourceKeys = roniSourceKeys(item);
+  const baseItems = generatedRounyItems.flatMap((item) => {
+    const sourceKeys = rounySourceKeys(item);
     const exactOverride = sourceKeys
-      .map((sourceKey) => overrideByRoniDate.get(roniOverrideKey(sourceKey, item.date)))
+      .map((sourceKey) => overrideByRounyDate.get(rounyOverrideKey(sourceKey, item.date)))
       .find(Boolean);
     if (exactOverride) {
-      appliedOverrideKeys.add(roniOverrideKey(exactOverride.sourceRoniId, exactOverride.date));
+      appliedOverrideKeys.add(rounyOverrideKey(exactOverride.sourceRounyId, exactOverride.date));
       if (exactOverride.deleted) return [];
-      const overriddenItem = applyRoniOverrideToItem(item, exactOverride, weekDates);
+      const overriddenItem = applyRounyOverrideToItem(item, exactOverride, weekDates);
       return overriddenItem ? [overriddenItem] : [];
     }
     if (sourceKeys.some((sourceKey) => overriddenSources.has(sourceKey))) return [];
@@ -237,24 +245,24 @@ function applyRoniOverrides(generatedRoniItems, roniOverrides, weekDates) {
   });
 
   const movedOverrideItems = weekOverrides.flatMap((override) => {
-    const overrideKey = roniOverrideKey(override.sourceRoniId, override.date);
+    const overrideKey = rounyOverrideKey(override.sourceRounyId, override.date);
     if (appliedOverrideKeys.has(overrideKey) || override.deleted) return [];
-    const sourceItem = generatedRoniItems.find((item) => roniSourceKeys(item).includes(override.sourceRoniId));
+    const sourceItem = generatedRounyItems.find((item) => rounySourceKeys(item).includes(override.sourceRounyId));
     if (!sourceItem) return [];
-    const overriddenItem = applyRoniOverrideToItem(sourceItem, override, weekDates);
+    const overriddenItem = applyRounyOverrideToItem(sourceItem, override, weekDates);
     return overriddenItem ? [overriddenItem] : [];
   });
 
   return [...baseItems, ...movedOverrideItems];
 }
 
-function buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOverrides) {
+function buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, rounyOverrides) {
   const weekDates = FAMILY_CALENDAR_DAY_LABELS.map((_, dayIndex) => formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex)));
   const weekDatedItems = datedItems
     .filter((item) => weekDates.includes(item.date) && (item.allDay || item.startTime))
     .map((item) => ({ ...item, type: "dated", dayIndex: weekDates.indexOf(item.date) }));
 
-  const weekGeneratedRoniItems = weekDates.flatMap((date, dayIndex) => {
+  const weekGeneratedRounyItems = weekDates.flatMap((date, dayIndex) => {
     const plan = resolveFamilyRounPlanForDate(date, rounState);
     return (plan?.items || []).flatMap((item) =>
       (item.slots || [item]).flatMap((slot, slotIndex) => {
@@ -264,20 +272,20 @@ function buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOv
           id: `${plan.id}-${item.id}-${slotIndex}-${date}`,
           planId: plan.id,
           sourceId: item.id,
-          sourceRoniId: `${plan.id}:${item.id}:${slotIndex}`,
+          sourceRounyId: `${plan.id}:${item.id}:${slotIndex}`,
           sourceSlotIndex: slotIndex,
           date,
           dayIndex,
           startTime: slot.startTime,
           endTime: slot.endTime,
-          type: "roni",
+          type: "rouny",
         }];
       }),
     );
   });
-  const weekRoniItems = applyRoniOverrides(weekGeneratedRoniItems, roniOverrides, weekDates);
+  const weekRounyItems = applyRounyOverrides(weekGeneratedRounyItems, rounyOverrides, weekDates);
 
-  return [...weekRoniItems, ...weekDatedItems]
+  return [...weekRounyItems, ...weekDatedItems]
     .filter((item) => item.dayIndex >= 0 && item.dayIndex <= 6 && (item.allDay || item.startTime))
     .sort((a, b) => {
       if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
@@ -356,44 +364,45 @@ function CalendarItemLink({
   dragging = false,
   item,
   className = "",
-  onCancelRoniChoice = null,
+  onCancelRounyChoice = null,
   onStartDatedDrag = null,
-  onStartRoniChoice = null,
-  onStartRoniDrag = null,
-  roniChoiceItemId = "",
+  onStartRounyChoice = null,
+  onStartRounyDrag = null,
+  rounyChoiceItemId = "",
   style = undefined,
 }) {
-  const href = item.type === "roni" ? "/family/roun" : `/family/calendar/events/${item.id}/edit`;
+  const itemType = normalizedCalendarItemType(item);
+  const href = itemType === "rouny" ? "/family/roun" : `/family/calendar/events/${item.id}/edit`;
   const editItem = className.includes("familyCalendarEditItem");
   const allDayEditItem = className.includes("familyCalendarAllDayItemEditable");
   const dragEnabledItem = editItem || allDayEditItem;
-  const editableDatedItem = dragEnabledItem && item.type === "dated";
-  const editableRoniItem = dragEnabledItem && item.type === "roni";
-  const suppressRoniNavigation = editableRoniItem && roniChoiceItemId === item.id;
-  const cancelRoniChoice = editableRoniItem && onCancelRoniChoice ? onCancelRoniChoice : undefined;
+  const editableDatedItem = dragEnabledItem && itemType === "dated";
+  const editableRounyItem = dragEnabledItem && itemType === "rouny";
+  const suppressRounyNavigation = editableRounyItem && rounyChoiceItemId === item.id;
+  const cancelRounyChoice = editableRounyItem && onCancelRounyChoice ? onCancelRounyChoice : undefined;
   return (
     <Link
-      className={`familyCalendarItem familyCalendarItem${item.type === "roni" ? "Roni" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${className ? ` ${className}` : ""}${dragging ? " familyCalendarEditItemDragging" : ""}`}
+      className={`familyCalendarItem familyCalendarItem${itemType === "rouny" ? "Rouny" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${className ? ` ${className}` : ""}${dragging ? " familyCalendarEditItemDragging" : ""}`}
       draggable={dragEnabledItem ? false : undefined}
       href={href}
-      key={`${item.type}-${item.id}`}
-      onClick={dragging || suppressRoniNavigation ? (event) => event.preventDefault() : undefined}
+      key={`${itemType}-${item.id}`}
+      onClick={dragging || suppressRounyNavigation ? (event) => event.preventDefault() : undefined}
       onDragStart={dragEnabledItem ? (event) => event.preventDefault() : undefined}
-      onPointerCancel={cancelRoniChoice}
+      onPointerCancel={cancelRounyChoice}
       onPointerDown={dragEnabledItem ? (event) => {
         if (event.pointerType === "mouse" && event.button !== 0) return;
         event.stopPropagation();
         if (editableDatedItem && onStartDatedDrag) onStartDatedDrag(event, item);
-        if (editableRoniItem && onStartRoniDrag) onStartRoniDrag(event, item);
-        if (editableRoniItem && onStartRoniChoice) onStartRoniChoice(event, item);
+        if (editableRounyItem && onStartRounyDrag) onStartRounyDrag(event, item);
+        if (editableRounyItem && onStartRounyChoice) onStartRounyChoice(event, item);
       } : undefined}
-      onPointerLeave={cancelRoniChoice}
-      onPointerUp={cancelRoniChoice}
+      onPointerLeave={cancelRounyChoice}
+      onPointerUp={cancelRounyChoice}
       style={style ?? (editItem ? editItemStyle(item) : undefined)}
       title={item.allDay ? item.title : `${item.title} ${item.startTime}`}
     >
-      <span>{item.type === "roni" && item.overridden ? `!${item.title}` : item.title}</span>
-      {item.overridden ? <span className="familyCalendarRoniOverrideBadge">예외</span> : null}
+      <span>{itemType === "rouny" && item.overridden ? `!${item.title}` : item.title}</span>
+      {item.overridden ? <span className="familyCalendarRounyOverrideBadge">예외</span> : null}
     </Link>
   );
 }
@@ -608,16 +617,16 @@ function FamilyCaregiverHoursRow({
 }
 
 function FamilyCalendarTimedArea({
-  deletedRoniOverridesByDate = {},
+  deletedRounyOverridesByDate = {},
   dragState = null,
   editable = false,
-  onCancelRoniChoice = null,
-  onRestoreRoniOverride = null,
+  onCancelRounyChoice = null,
+  onRestoreRounyOverride = null,
   onStartDatedDrag = null,
-  onStartRoniChoice = null,
-  onStartRoniDrag = null,
+  onStartRounyChoice = null,
+  onStartRounyDrag = null,
   pendingSlotKey = "",
-  roniChoiceItemId = "",
+  rounyChoiceItemId = "",
   segment,
   selectedWeekStart,
   startSlotLongPress = null,
@@ -646,7 +655,7 @@ function FamilyCalendarTimedArea({
             </span>
             {FAMILY_CALENDAR_DAY_LABELS.map((_, dayIndex) => {
               const date = formatFamilyDateKey(addFamilyDays(selectedWeekStart, dayIndex));
-              const deletedOverrides = deletedRoniOverridesByDate[date] || [];
+              const deletedOverrides = deletedRounyOverridesByDate[date] || [];
               const hourStartMinutes = hour * 60;
               return (
                 <div
@@ -671,16 +680,16 @@ function FamilyCalendarTimedArea({
                     </span>
                   ) : null}
                   {editable && hour === FAMILY_CALENDAR_EDIT_START_HOUR && deletedOverrides.length ? (
-                    <div className="familyCalendarRoniRestoreStack">
+                    <div className="familyCalendarRounyRestoreStack">
                       {deletedOverrides.map((override) => (
                         <button
-                          className="familyCalendarRoniRestoreButton"
+                          className="familyCalendarRounyRestoreButton"
                           key={override.id}
                           type="button"
                           onPointerDown={(event) => event.stopPropagation()}
                           onClick={(event) => {
                             event.stopPropagation();
-                            onRestoreRoniOverride?.(override.id);
+                            onRestoreRounyOverride?.(override.id);
                           }}
                         >
                           되돌리기
@@ -717,12 +726,12 @@ function FamilyCalendarTimedArea({
                 className={editable ? "familyCalendarEditItem familyCalendarEditItemInline" : "familyCalendarTimedItem"}
                 dragging={dragState?.itemId === item.id}
                 item={item}
-                key={`${item.type}-${item.id}`}
-                onCancelRoniChoice={onCancelRoniChoice}
+                key={`${normalizedCalendarItemType(item)}-${item.id}`}
+                onCancelRounyChoice={onCancelRounyChoice}
                 onStartDatedDrag={onStartDatedDrag}
-                onStartRoniChoice={onStartRoniChoice}
-                onStartRoniDrag={onStartRoniDrag}
-                roniChoiceItemId={roniChoiceItemId}
+                onStartRounyChoice={onStartRounyChoice}
+                onStartRounyDrag={onStartRounyDrag}
+                rounyChoiceItemId={rounyChoiceItemId}
                 style={itemAxisStyle(item, segment.startMinutes, segment.endMinutes)}
               />
             ))}
@@ -738,12 +747,12 @@ function FamilyCalendarEditWeek({
   activeCaregiverDate,
   caregiverHoursByDate,
   datedItems,
-  deletedRoniOverridesByDate,
+  deletedRounyOverridesByDate,
   onChangeCaregiverHours,
-  onCreateRoniOverride,
-  onDeleteRoniThisWeek,
+  onCreateRounyOverride,
+  onDeleteRounyThisWeek,
   onMoveDatedItem,
-  onRestoreRoniOverride,
+  onRestoreRounyOverride,
   onSelectDragWeek,
   onToggleCaregiverDate,
   onToggleWeather,
@@ -758,13 +767,13 @@ function FamilyCalendarEditWeek({
   const editScrollRef = useRef(null);
   const longPressTimerRef = useRef(null);
   const longPressStartRef = useRef(null);
-  const roniChoiceTimerRef = useRef(null);
+  const rounyChoiceTimerRef = useRef(null);
   const dragStartRef = useRef(null);
   const autoScrollIntervalRef = useRef(null);
   const autoScrollDirectionRef = useRef(0);
   const [pendingSlotKey, setPendingSlotKey] = useState("");
   const [dragState, setDragState] = useState(null);
-  const [roniChoiceItem, setRoniChoiceItem] = useState(null);
+  const [rounyChoiceItem, setRounyChoiceItem] = useState(null);
   const editSegments = useMemo(
     () => buildEditTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay)),
     [selectedWeekItems],
@@ -782,14 +791,14 @@ function FamilyCalendarEditWeek({
     setPendingSlotKey("");
   }
 
-  function clearRoniChoiceTimer() {
-    if (roniChoiceTimerRef.current) window.clearTimeout(roniChoiceTimerRef.current);
-    roniChoiceTimerRef.current = null;
+  function clearRounyChoiceTimer() {
+    if (rounyChoiceTimerRef.current) window.clearTimeout(rounyChoiceTimerRef.current);
+    rounyChoiceTimerRef.current = null;
   }
 
-  function closeRoniChoiceSheet() {
-    clearRoniChoiceTimer();
-    setRoniChoiceItem(null);
+  function closeRounyChoiceSheet() {
+    clearRounyChoiceTimer();
+    setRounyChoiceItem(null);
   }
 
   function stopAutoScroll() {
@@ -801,10 +810,10 @@ function FamilyCalendarEditWeek({
   useEffect(() => {
     return () => {
       if (longPressTimerRef.current) window.clearTimeout(longPressTimerRef.current);
-      if (roniChoiceTimerRef.current) window.clearTimeout(roniChoiceTimerRef.current);
+      if (rounyChoiceTimerRef.current) window.clearTimeout(rounyChoiceTimerRef.current);
       longPressTimerRef.current = null;
       longPressStartRef.current = null;
-      roniChoiceTimerRef.current = null;
+      rounyChoiceTimerRef.current = null;
       stopAutoScroll();
     };
   }, []);
@@ -934,13 +943,14 @@ function FamilyCalendarEditWeek({
   function startCalendarItemDrag(event, item) {
     if (event.button !== undefined && event.button !== 0) return;
     clearPendingLongPress();
-    clearRoniChoiceTimer();
+    clearRounyChoiceTimer();
     event.currentTarget.setPointerCapture?.(event.pointerId);
-    const sourceItem = item.type === "dated" ? datedItems.find((candidate) => candidate.id === item.id) || item : item;
+    const itemType = normalizedCalendarItemType(item);
+    const sourceItem = itemType === "dated" ? datedItems.find((candidate) => candidate.id === item.id) || item : item;
     dragStartRef.current = {
       dragElement: event.currentTarget,
       item: sourceItem,
-      itemType: item.type,
+      itemType,
       pointerId: event.pointerId,
       x: event.clientX,
       y: event.clientY,
@@ -952,17 +962,17 @@ function FamilyCalendarEditWeek({
     startCalendarItemDrag(event, item);
   }
 
-  function startRoniDrag(event, item) {
+  function startRounyDrag(event, item) {
     startCalendarItemDrag(event, item);
   }
 
-  function startRoniChoice(event, item) {
+  function startRounyChoice(event, item) {
     if (event.button !== undefined && event.button !== 0) return;
     clearPendingLongPress();
-    clearRoniChoiceTimer();
-    roniChoiceTimerRef.current = window.setTimeout(() => {
-      setRoniChoiceItem(item);
-      clearRoniChoiceTimer();
+    clearRounyChoiceTimer();
+    rounyChoiceTimerRef.current = window.setTimeout(() => {
+      setRounyChoiceItem(item);
+      clearRounyChoiceTimer();
     }, FAMILY_CALENDAR_LONG_PRESS_MS);
   }
 
@@ -974,7 +984,7 @@ function FamilyCalendarEditWeek({
     }
     const moved = Math.hypot(event.clientX - pending.x, event.clientY - pending.y);
     if (moved < FAMILY_CALENDAR_DRAG_START_MOVE_LIMIT && !dragState) return;
-    clearRoniChoiceTimer();
+    clearRounyChoiceTimer();
     event.preventDefault();
     const target = dragTargetForItem(pending.item, findDropTarget(event.clientX, event.clientY));
     updateAutoScroll(event.clientY);
@@ -989,7 +999,7 @@ function FamilyCalendarEditWeek({
   }
 
   function finishDatedDrag(event) {
-    clearRoniChoiceTimer();
+    clearRounyChoiceTimer();
     const pending = dragStartRef.current;
     const currentDragState = dragState;
     stopAutoScroll();
@@ -1002,8 +1012,8 @@ function FamilyCalendarEditWeek({
     }
     if (!currentDragState?.target) return;
     event.preventDefault();
-    if (pending.itemType === "roni") {
-      onCreateRoniOverride(pending.item, currentDragState.target);
+    if (pending.itemType === "rouny") {
+      onCreateRounyOverride(pending.item, currentDragState.target);
       if (currentDragState.target.weekKey) onSelectDragWeek?.(currentDragState.target);
       return;
     }
@@ -1012,18 +1022,18 @@ function FamilyCalendarEditWeek({
   }
 
   function chooseThisWeekOnly() {
-    if (!roniChoiceItem) return;
-    onCreateRoniOverride(roniChoiceItem);
-    closeRoniChoiceSheet();
+    if (!rounyChoiceItem) return;
+    onCreateRounyOverride(rounyChoiceItem);
+    closeRounyChoiceSheet();
   }
 
   function chooseDeleteThisWeek() {
-    if (!roniChoiceItem) return;
-    onDeleteRoniThisWeek(roniChoiceItem);
-    closeRoniChoiceSheet();
+    if (!rounyChoiceItem) return;
+    onDeleteRounyThisWeek(rounyChoiceItem);
+    closeRounyChoiceSheet();
   }
 
-  function chooseRoniTemplate() {
+  function chooseRounyTemplate() {
     router.push("/family/roun");
   }
 
@@ -1072,7 +1082,7 @@ function FamilyCalendarEditWeek({
                   className="familyCalendarAllDayItem familyCalendarAllDayItemEditable"
                   dragging={dragState?.itemId === item.id}
                   item={item}
-                  key={`${item.type}-${item.id}`}
+                  key={`${normalizedCalendarItemType(item)}-${item.id}`}
                   onStartDatedDrag={startDatedDrag}
                 />
               ))}
@@ -1083,18 +1093,18 @@ function FamilyCalendarEditWeek({
       {editSegments.map((segment) => (
         <FamilyCalendarTimedArea
           clearPendingLongPress={clearPendingLongPress}
-          deletedRoniOverridesByDate={deletedRoniOverridesByDate}
+          deletedRounyOverridesByDate={deletedRounyOverridesByDate}
           dragState={dragState}
           editable
           key={`${segment.startMinutes}-${segment.endMinutes}`}
           moveSlotLongPress={moveSlotLongPress}
-          onCancelRoniChoice={clearRoniChoiceTimer}
-          onRestoreRoniOverride={onRestoreRoniOverride}
+          onCancelRounyChoice={clearRounyChoiceTimer}
+          onRestoreRounyOverride={onRestoreRounyOverride}
           onStartDatedDrag={startDatedDrag}
-          onStartRoniChoice={startRoniChoice}
-          onStartRoniDrag={startRoniDrag}
+          onStartRounyChoice={startRounyChoice}
+          onStartRounyDrag={startRounyDrag}
           pendingSlotKey={pendingSlotKey}
-          roniChoiceItemId={roniChoiceItem?.id || ""}
+          rounyChoiceItemId={rounyChoiceItem?.id || ""}
           segment={segment}
           selectedWeekStart={selectedWeekStart}
           startSlotLongPress={startSlotLongPress}
@@ -1129,13 +1139,13 @@ function FamilyCalendarEditWeek({
           {formatDragTargetLabel(dragState.target)}
         </span>
       ) : null}
-      {roniChoiceItem ? (
-        <div className="familyCalendarRoniChoiceSheet" role="dialog" aria-label="일정 옵션">
+      {rounyChoiceItem ? (
+        <div className="familyCalendarRounyChoiceSheet" role="dialog" aria-label="일정 옵션">
           <p>일정 옵션</p>
           <button type="button" onClick={chooseThisWeekOnly}>이번 주만 변경</button>
           <button type="button" onClick={chooseDeleteThisWeek}>이번 주만 일정 취소</button>
-          <button type="button" onClick={chooseRoniTemplate}>로운이 시간표 변경</button>
-          <button type="button" onClick={closeRoniChoiceSheet}>취소</button>
+          <button type="button" onClick={chooseRounyTemplate}>로운이 시간표 변경</button>
+          <button type="button" onClick={closeRounyChoiceSheet}>취소</button>
         </div>
       ) : null}
     </div>
@@ -1149,7 +1159,7 @@ export default function FamilyCalendarClient() {
   const suppressDateClickRef = useRef("");
   const [datedItems, setDatedItems] = useState([]);
   const [rounState, setRounState] = useState({ plans: [], assignments: [] });
-  const [roniOverrides, setRoniOverrides] = useState([]);
+  const [rounyOverrides, setRounyOverrides] = useState([]);
   const [monthDate, setMonthDate] = useState(() => new Date());
   const [selectedWeekKey, setSelectedWeekKey] = useState(() => formatFamilyDateKey(getFamilyWeekStart(new Date())));
   const [calendarMode, setCalendarMode] = useState(FAMILY_CALENDAR_MODE_VIEW);
@@ -1164,7 +1174,7 @@ export default function FamilyCalendarClient() {
   useEffect(() => {
     setDatedItems(loadFamilyCalendarItems());
     setRounState(loadFamilyRounState());
-    setRoniOverrides(loadFamilyRoniOverrides());
+    setRounyOverrides(loadFamilyRounyOverrides());
     setCaregiverHoursByDate(loadFamilyCaregiverHours());
   }, []);
 
@@ -1213,10 +1223,10 @@ export default function FamilyCalendarClient() {
     () => Object.fromEntries(selectedWeekDates.map((date) => [date, selectedWeekWeatherDayparts[date] || []])),
     [selectedWeekDates, selectedWeekWeatherDayparts],
   );
-  const deletedRoniOverridesByDate = useMemo(() => groupDeletedRoniOverridesByDate(roniOverrides), [roniOverrides]);
+  const deletedRounyOverridesByDate = useMemo(() => groupDeletedRounyOverridesByDate(rounyOverrides), [rounyOverrides]);
   const selectedWeekItems = useMemo(
-    () => buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, roniOverrides),
-    [selectedWeekStart, datedItems, rounState, roniOverrides],
+    () => buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, rounyOverrides),
+    [selectedWeekStart, datedItems, rounState, rounyOverrides],
   );
   const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(selectedWeekItems), [selectedWeekItems]);
   const selectedWeekTimedSegments = useMemo(
@@ -1394,35 +1404,35 @@ export default function FamilyCalendarClient() {
     });
   }
 
-  function upsertRoniOverride(roniItem, values) {
-    setRoniOverrides((current) => {
-      const sourceRoniId = roniItem.sourceRoniId || roniItem.sourceId;
+  function upsertRounyOverride(rounyItem, values) {
+    setRounyOverrides((current) => {
+      const sourceRounyId = rounyItem.sourceRounyId || rounyItem.sourceId;
       const nextOverride = {
         id: createFamilyCalendarId(),
-        sourceRoniId,
+        sourceRounyId,
         date: values.date,
         startTime: values.startTime,
         endTime: values.endTime,
-        title: roniItem.title,
+        title: rounyItem.title,
         deleted: values.deleted === true,
         overrideType: values.deleted === true ? "deleted" : "moved",
       };
       const nextOverrides = current
-        .filter((override) => override.id !== roniItem.overrideId)
-        .filter((override) => roniOverrideKey(override.sourceRoniId, override.date) !== roniOverrideKey(sourceRoniId, values.date))
+        .filter((override) => override.id !== rounyItem.overrideId)
+        .filter((override) => rounyOverrideKey(override.sourceRounyId, override.date) !== rounyOverrideKey(sourceRounyId, values.date))
         .concat(nextOverride);
-      saveFamilyRoniOverrides(nextOverrides);
+      saveFamilyRounyOverrides(nextOverrides);
       return nextOverrides;
     });
   }
 
-  function createRoniOverride(roniItem, target = null) {
-    const moved = target ? movedItemValues(roniItem, target) : {
-      date: roniItem.date,
-      startTime: roniItem.startTime,
-      endTime: roniItem.endTime,
+  function createRounyOverride(rounyItem, target = null) {
+    const moved = target ? movedItemValues(rounyItem, target) : {
+      date: rounyItem.date,
+      startTime: rounyItem.startTime,
+      endTime: rounyItem.endTime,
     };
-    upsertRoniOverride(roniItem, { ...moved, deleted: false });
+    upsertRounyOverride(rounyItem, { ...moved, deleted: false });
   }
 
   function selectDragWeek(target) {
@@ -1432,19 +1442,19 @@ export default function FamilyCalendarClient() {
     setSelectedWeekKey(formatFamilyDateKey(getFamilyWeekStart(targetDate)));
   }
 
-  function deleteRoniThisWeek(roniItem) {
-    upsertRoniOverride(roniItem, {
-      date: roniItem.date,
-      startTime: roniItem.startTime,
-      endTime: roniItem.endTime,
+  function deleteRounyThisWeek(rounyItem) {
+    upsertRounyOverride(rounyItem, {
+      date: rounyItem.date,
+      startTime: rounyItem.startTime,
+      endTime: rounyItem.endTime,
       deleted: true,
     });
   }
 
-  function restoreRoniOverride(overrideId) {
-    setRoniOverrides((current) => {
+  function restoreRounyOverride(overrideId) {
+    setRounyOverrides((current) => {
       const nextOverrides = current.filter((override) => override.id !== overrideId);
-      saveFamilyRoniOverrides(nextOverrides);
+      saveFamilyRounyOverrides(nextOverrides);
       return nextOverrides;
     });
   }
@@ -1576,12 +1586,12 @@ export default function FamilyCalendarClient() {
                   activeCaregiverDate={activeCaregiverDate}
                   caregiverHoursByDate={caregiverHoursByDate}
                   datedItems={datedItems}
-                  deletedRoniOverridesByDate={deletedRoniOverridesByDate}
+                  deletedRounyOverridesByDate={deletedRounyOverridesByDate}
                   onChangeCaregiverHours={changeCaregiverHours}
-                  onCreateRoniOverride={createRoniOverride}
-                  onDeleteRoniThisWeek={deleteRoniThisWeek}
+                  onCreateRounyOverride={createRounyOverride}
+                  onDeleteRounyThisWeek={deleteRounyThisWeek}
                   onMoveDatedItem={moveDatedItem}
-                  onRestoreRoniOverride={restoreRoniOverride}
+                  onRestoreRounyOverride={restoreRounyOverride}
                   onSelectDragWeek={selectDragWeek}
                   onToggleCaregiverDate={setActiveCaregiverDate}
                   onToggleWeather={() => setWeatherExpanded((current) => !current)}
@@ -1618,7 +1628,7 @@ export default function FamilyCalendarClient() {
                           {selectedWeekAllDayItems.map((items, dayIndex) => (
                             <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
                               {items.map((item) => (
-                                <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${item.type}-${item.id}`} />
+                                <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${normalizedCalendarItemType(item)}-${item.id}`} />
                               ))}
                             </div>
                           ))}

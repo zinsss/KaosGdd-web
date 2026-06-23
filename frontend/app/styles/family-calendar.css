@@ -429,8 +429,8 @@
   white-space: nowrap;
 }
 
-.familyCalendarTimedItem .familyCalendarRoniOverrideBadge,
-.familyCalendarEditItem .familyCalendarRoniOverrideBadge {
+.familyCalendarTimedItem .familyCalendarRounyOverrideBadge,
+.familyCalendarEditItem .familyCalendarRounyOverrideBadge {
   display: none;
 }
 
@@ -1077,7 +1077,7 @@
   top: 50px;
 }
 
-.familyCalendarRoniRestoreStack {
+.familyCalendarRounyRestoreStack {
   position: absolute;
   top: 4px;
   left: 2px;
@@ -1088,7 +1088,7 @@
   pointer-events: none;
 }
 
-.familyCalendarRoniRestoreButton {
+.familyCalendarRounyRestoreButton {
   appearance: none;
   border: 0;
   min-width: 0;
@@ -1152,7 +1152,7 @@
   right: 1px;
 }
 
-.familyCalendarRoniOverrideBadge {
+.familyCalendarRounyOverrideBadge {
   flex: 0 0 auto;
   border-radius: 999px;
   padding: 1px 4px;
@@ -1164,7 +1164,7 @@
   box-shadow: inset 0 0 0 1px rgba(216, 111, 152, 0.2);
 }
 
-.familyCalendarRoniChoiceSheet {
+.familyCalendarRounyChoiceSheet {
   display: grid;
   gap: 8px;
   border: 1px solid rgba(214, 128, 157, 0.22);
@@ -1174,14 +1174,14 @@
   box-shadow: 0 8px 18px rgba(151, 69, 98, 0.14);
 }
 
-.familyCalendarRoniChoiceSheet p {
+.familyCalendarRounyChoiceSheet p {
   margin: 0;
   color: #4b2536;
   font-size: 16px;
   font-weight: 950;
 }
 
-.familyCalendarRoniChoiceSheet button {
+.familyCalendarRounyChoiceSheet button {
   appearance: none;
   border: 0;
   min-height: 38px;
@@ -1323,7 +1323,7 @@
   white-space: nowrap;
 }
 
-.familyCalendarItemRoni {
+.familyCalendarItemRouny {
   background: transparent;
   box-shadow: inset 0 0 0 2px rgba(216, 111, 152, 0.28);
   opacity: 0.82;
@@ -1352,7 +1352,7 @@
 }
 
 .familyCalendarForm,
-.familyRoniPanel {
+.familyRounyPanel {
   display: grid;
   gap: 12px;
   width: 100%;
@@ -1383,8 +1383,8 @@
 
 .familyCalendarFormHeader h2,
 .familyCalendarFormHeader p,
-.familyRoniRow h3,
-.familyRoniRow p {
+.familyRounyRow h3,
+.familyRounyRow p {
   margin: 0;
 }
 
@@ -1395,7 +1395,7 @@
 }
 
 .familyCalendarFormHeader p,
-.familyRoniRow p {
+.familyRounyRow p {
   color: rgba(78, 37, 54, 0.58);
   font-size: 15px;
   font-weight: 850;
@@ -1629,8 +1629,8 @@
 }
 
 .familyCalendarDateTimeValueButton,
-.familyRoniTimePickerButton,
-.familyRoniWeekdayPickerButton {
+.familyRounyTimePickerButton,
+.familyRounyWeekdayPickerButton {
   color: rgba(78, 37, 54, 0.9);
   font-size: 15px;
   min-height: 30px;
@@ -1638,14 +1638,14 @@
 }
 
 .familyCalendarDatePickerPill,
-.familyRoniWeekdayPickerButton {
+.familyRounyWeekdayPickerButton {
   background: rgba(245, 232, 255, 0.9);
   color: rgba(112, 74, 150, 0.94);
   box-shadow: inset 0 0 0 1px rgba(180, 120, 190, 0.26);
 }
 
 .familyCalendarTimePickerPill,
-.familyRoniTimePickerButton {
+.familyRounyTimePickerButton {
   background: #fff0f5;
   color: #8d3f5d;
 }
@@ -1714,7 +1714,7 @@
   outline-offset: 2px;
 }
 
-.familyRoniTimePickerRow {
+.familyRounyTimePickerRow {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -1724,7 +1724,7 @@
   min-width: 0;
 }
 
-.familyRoniSessionList {
+.familyRounySessionList {
   display: grid;
   gap: 8px;
   width: 100%;
@@ -1732,21 +1732,21 @@
   min-width: 0;
 }
 
-.familyRoniSessionListLabel {
+.familyRounySessionListLabel {
   color: rgba(78, 37, 54, 0.72);
   font-size: 15px;
   font-weight: 950;
   line-height: 1.2;
 }
 
-.familyRoniTimePickerRow > span:not(.familyCalendarFormTimeSeparator):not(.familyCalendarDateTimeDivider) {
+.familyRounyTimePickerRow > span:not(.familyCalendarFormTimeSeparator):not(.familyCalendarDateTimeDivider) {
   color: rgba(78, 37, 54, 0.68);
   font-size: 15px;
   font-weight: 950;
   white-space: nowrap;
 }
 
-.familyRoniSessionRemove {
+.familyRounySessionRemove {
   appearance: none;
   border: 0;
   border-radius: 999px;
@@ -1760,11 +1760,11 @@
   box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.18);
 }
 
-.familyRoniSessionRemove:disabled {
+.familyRounySessionRemove:disabled {
   opacity: 0.35;
 }
 
-.familyRoniSessionAdd {
+.familyRounySessionAdd {
   justify-self: start;
 }
 
@@ -1858,7 +1858,7 @@
 }
 
 .familyCalendarFormActionsInline,
-.familyRoniRowActions {
+.familyRounyRowActions {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -1890,12 +1890,12 @@
   font-weight: 950;
 }
 
-.familyRoniList {
+.familyRounyList {
   display: grid;
   gap: 8px;
 }
 
-.familyRoniRow {
+.familyRounyRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1907,7 +1907,7 @@
   min-width: 0;
 }
 
-.familyRoniRow h3 {
+.familyRounyRow h3 {
   overflow: hidden;
   color: #4b2536;
   font-size: 18px;
@@ -1916,7 +1916,7 @@
   white-space: nowrap;
 }
 
-.familyRoniRowActions button {
+.familyRounyRowActions button {
   appearance: none;
   border: 0;
   min-height: 34px;
@@ -1930,7 +1930,7 @@
   box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.22);
 }
 
-.familyRoniRowActions button:last-child {
+.familyRounyRowActions button:last-child {
   color: #9d3657;
 }
 @media (max-width: 640px) {
@@ -1941,14 +1941,14 @@
 
   .familyCalendarIntro,
   .familyCalendarForm,
-  .familyRoniPanel {
+  .familyRounyPanel {
     align-items: stretch;
     padding: 12px;
   }
 
   .familyCalendarActions,
   .familyCalendarFormActionsInline,
-  .familyRoniRowActions {
+  .familyRounyRowActions {
     justify-content: flex-start;
   }
 
@@ -2036,12 +2036,12 @@
     font-size: 12px;
   }
 
-  .familyCalendarRoniRestoreButton {
+  .familyCalendarRounyRestoreButton {
     font-size: 9px;
   }
 
   .familyCalendarFormHeader,
-  .familyRoniRow {
+  .familyRounyRow {
     flex-direction: column;
     align-items: stretch;
   }
@@ -2063,7 +2063,7 @@
   }
 
   .familyCalendarFormActionsInline > *,
-  .familyRoniRowActions > * {
+  .familyRounyRowActions > * {
     flex: 1 1 auto;
   }
 }

@@ -65,15 +65,15 @@ test("family font no longer exposes Hyunok and remains Family-scoped", async () 
 test("family dashboard and calendar expose standard labels", async () => {
   const dashboardSource = await readSource("../app/family/FamilyDashboardClient.js");
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
-  const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
+  const rounySource = await readSource("../app/family/calendar/rouny/FamilyRounyClient.js");
   const calendarDataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const globalsCss = await readSource("../app/globals.css");
 
   for (const label of ["달력", "할 일", "로운이 시간표", "일정", "+ 일정"]) {
-    assert.ok((dashboardSource + calendarSource + roniSource).includes(label), `${label} should appear in dashboard/calendar UI`);
+    assert.ok((dashboardSource + calendarSource + rounySource).includes(label), `${label} should appear in dashboard/calendar UI`);
   }
   for (const oldLabel of ["로니", "로우니", "뭐라꼬?", "은제?", "모하꼬?"]) {
-    assert.ok(!(dashboardSource + calendarSource + roniSource).includes(oldLabel), `${oldLabel} should not appear in visible Family sources`);
+    assert.ok(!(dashboardSource + calendarSource + rounySource).includes(oldLabel), `${oldLabel} should not appear in visible Family sources`);
   }
   for (const value of [
     "kaosgdd.family.calendarItems.v1",
@@ -85,12 +85,12 @@ test("family dashboard and calendar expose standard labels", async () => {
     assert.ok(calendarDataSource.includes(value));
   }
   assert.ok(globalsCss.includes("family-calendar.css"));
-  assert.ok(globalsCss.includes("family-roni-templates.css"));
+  assert.ok(globalsCss.includes("family-rouny-templates.css"));
 });
 
 test("family polish keeps the baseline compact and overflow-safe", async () => {
   const polishCss = await readSource("../app/styles/family-polish.css");
-  const roniCss = await readSource("../app/styles/family-roni-templates.css");
+  const rounyCss = await readSource("../app/styles/family-rouny-templates.css");
 
   assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?--family-page-max:\s*var\(--app-column-max-width\);[\s\S]*?width:\s*min\(calc\(100% - \(var\(--app-column-edge-padding\) \* 2\)\), var\(--family-page-max\)\);[\s\S]*?max-width:\s*var\(--family-page-max\);[\s\S]*?box-sizing:\s*border-box;[\s\S]*?font-size:\s*14px;/);
   assert.match(polishCss, /\.familyCard,[\s\S]*?\.familyDashboard,[\s\S]*?\.familyCalendar,[\s\S]*?\.familyCalendarFormPage,[\s\S]*?\.familyTimetable,[\s\S]*?\.familyStream,[\s\S]*?\.familyTaskForm,[\s\S]*?\.familyDoneTasks\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
@@ -106,7 +106,7 @@ test("family polish keeps the baseline compact and overflow-safe", async () => {
   assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyTextLogo\s*\{[\s\S]*?font-size:\s*20px;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*?\.familyTextLogo\s*\{[\s\S]*?font-size:\s*18px;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*?\.familyHomeNavLink\s*\{[\s\S]*?font-size:\s*13px;/);
-  assert.match(roniCss, /\.familyRoniTemplateRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;/);
-  assert.match(roniCss, /\.familyRoniTemplateActions[\s\S]*?\{[\s\S]*?flex-wrap:\s*wrap;/);
-  assert.match(roniCss, /overflow-wrap:\s*anywhere;/);
+  assert.match(rounyCss, /\.familyRounyTemplateRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;/);
+  assert.match(rounyCss, /\.familyRounyTemplateActions[\s\S]*?\{[\s\S]*?flex-wrap:\s*wrap;/);
+  assert.match(rounyCss, /overflow-wrap:\s*anywhere;/);
 });

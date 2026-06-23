@@ -18,14 +18,14 @@ import {
   FAMILY_CALENDAR_COLOR_KEYS,
   FAMILY_CALENDAR_COLOR_LABELS,
   FAMILY_CALENDAR_WEEKDAY_OPTIONS,
-  FAMILY_RONI_DEFAULT_TEMPLATE_NAME,
-  createDefaultFamilyRoniItem,
+  FAMILY_ROUNY_DEFAULT_TEMPLATE_NAME,
+  createDefaultFamilyRounyItem,
   createFamilyCalendarId,
   createFamilyRounPlan,
   familyCalendarColorClassName,
   formatFamilyDateKey,
   loadFamilyRounState,
-  normalizeFamilyRoniItem,
+  normalizeFamilyRounyItem,
   parseFamilyDateKey,
   resolveFamilyRounPlanForDate,
   saveFamilyRounState,
@@ -67,7 +67,7 @@ function slotMinutesFromPoint(clientY, rect) {
   );
 }
 
-function roniSessions(item) {
+function rounySessions(item) {
   const rawSessions = Array.isArray(item.sessions) && item.sessions.length
     ? item.sessions
     : item.slots;
@@ -78,8 +78,8 @@ function roniSessions(item) {
   }));
 }
 
-function roniToDraft(item) {
-  const sessions = roniSessions(item);
+function rounyToDraft(item) {
+  const sessions = rounySessions(item);
   const firstSession = sessions[0] || { dayOfWeek: "0", startTime: "09:00", endTime: "09:40" };
   return {
     id: item.id || "",
@@ -119,7 +119,7 @@ function getRounAssignmentEndDate(nextStartDate) {
 
 function buildRounBlocks(items) {
   return items.flatMap((item) => {
-    return roniSessions(item).flatMap((slot, slotIndex) => {
+    return rounySessions(item).flatMap((slot, slotIndex) => {
       const start = parseTimeMinutes(slot.startTime || item.startTime);
       const end = parseTimeMinutes(slot.endTime || item.endTime);
       const dayOfWeek = Number(slot.dayOfWeek ?? item.dayOfWeek);
@@ -166,7 +166,7 @@ function formatRounDragReadout(block, target) {
   return `${block.title}\n${formatFamilyScheduleDragRangeLabel(range.dayOfWeek, range.startMinutes, range.endMinutes)}`;
 }
 
-export default function FamilyRoniClient() {
+export default function FamilyRounyClient() {
   const [rounState, setRounState] = useState({ plans: [], assignments: [] });
   const [openedPlanId, setOpenedPlanId] = useState("");
   const [loaded, setLoaded] = useState(false);
@@ -334,8 +334,8 @@ export default function FamilyRoniClient() {
   function draftForSlot(dayOfWeek, startMinutes) {
     const startTime = minutesToFamilyTime(startMinutes);
     const endTime = minutesToFamilyTime(startMinutes + ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES);
-    return roniToDraft({
-      ...createDefaultFamilyRoniItem(),
+    return rounyToDraft({
+      ...createDefaultFamilyRounyItem(),
       dayOfWeek,
       startTime,
       endTime,
@@ -344,14 +344,14 @@ export default function FamilyRoniClient() {
     });
   }
 
-  function startNewRoni(dayOfWeek = new Date().getDay(), startMinutes = ROUN_TIMETABLE_START_HOUR * 60 + 60) {
+  function startNewRouny(dayOfWeek = new Date().getDay(), startMinutes = ROUN_TIMETABLE_START_HOUR * 60 + 60) {
     setDraft(draftForSlot(dayOfWeek, startMinutes));
     setActionBlock(null);
     setError("");
   }
 
-  function startEditRoni(block) {
-    setDraft(roniToDraft(block));
+  function startEditRouny(block) {
+    setDraft(rounyToDraft(block));
     setActionBlock(null);
     setError("");
   }
@@ -386,7 +386,7 @@ export default function FamilyRoniClient() {
   function addDraftSession() {
     setDraft((current) => {
       if (!current) return current;
-      const sessions = current.sessions?.length ? current.sessions : roniSessions(current);
+      const sessions = current.sessions?.length ? current.sessions : rounySessions(current);
       const previous = sessions[sessions.length - 1] || { dayOfWeek: new Date().getDay(), startTime: "09:00", endTime: "09:40" };
       const nextDay = (Number(previous.dayOfWeek) + 1) % 7;
       return {
@@ -419,7 +419,7 @@ export default function FamilyRoniClient() {
   }
 
   function replaceItemSlot(item, slotIndex, slotValues) {
-    const currentSlots = roniSessions(item).map((slot) => ({
+    const currentSlots = rounySessions(item).map((slot) => ({
       dayOfWeek: Number(slot.dayOfWeek),
       startTime: slot.startTime,
       endTime: slot.endTime,
@@ -436,19 +436,19 @@ export default function FamilyRoniClient() {
     };
   }
 
-  function saveRoni(event) {
+  function saveRouny(event) {
     event.preventDefault();
     if (!draft?.title?.trim()) {
       setError("제목을 입력해주세요.");
       return;
     }
 
-    const slotValues = (draft.sessions?.length ? draft.sessions : roniSessions(draft)).map((session) => ({
+    const slotValues = (draft.sessions?.length ? draft.sessions : rounySessions(draft)).map((session) => ({
       dayOfWeek: Number(session.dayOfWeek),
       startTime: session.startTime,
       endTime: session.endTime,
     }));
-    const normalized = normalizeFamilyRoniItem({
+    const normalized = normalizeFamilyRounyItem({
       ...draft,
       title: draft.title.trim(),
       dayOfWeek: slotValues[0]?.dayOfWeek,
@@ -484,7 +484,7 @@ export default function FamilyRoniClient() {
     cancelEdit();
   }
 
-  function deleteRoni(itemId = draft?.id) {
+  function deleteRouny(itemId = draft?.id) {
     if (!itemId || !openedPlan) return;
     if (!window.confirm("삭제할까요?")) return;
     updateOpenedPlanItems((openedPlan.items || []).filter((item) => item.id !== itemId));
@@ -492,14 +492,14 @@ export default function FamilyRoniClient() {
     if (actionBlock?.id === itemId) setActionBlock(null);
   }
 
-  function copyRoni(block) {
+  function copyRouny(block) {
     if (!openedPlan || !block) return;
-    const sessions = roniSessions(block).map((session) => ({
+    const sessions = rounySessions(block).map((session) => ({
       dayOfWeek: Number(session.dayOfWeek),
       startTime: session.startTime,
       endTime: session.endTime,
     }));
-    const copy = normalizeFamilyRoniItem({
+    const copy = normalizeFamilyRounyItem({
       ...block,
       id: createFamilyCalendarId(),
       title: block.title,
@@ -589,7 +589,7 @@ export default function FamilyRoniClient() {
   function clickEmptySlot(event, dayOfWeek) {
     if (event.target !== event.currentTarget) return;
     const startMinutes = slotMinutesFromPoint(event.clientY, event.currentTarget.getBoundingClientRect());
-    startNewRoni(dayOfWeek, startMinutes);
+    startNewRouny(dayOfWeek, startMinutes);
   }
 
   if (!loaded) return null;
@@ -600,7 +600,7 @@ export default function FamilyRoniClient() {
         <FamilyHeader active="roun" />
         <main className="familyCalendarFormPage">
           {!openedPlan ? (
-            <section className="familyRoniPanel">
+            <section className="familyRounyPanel">
               <div className="familyCalendarFormHeader">
                 <div>
                   <h2>로운이 시간표</h2>
@@ -615,24 +615,24 @@ export default function FamilyRoniClient() {
 
               {planError ? <p className="familyCalendarFormError">{planError}</p> : null}
 
-              <div className="familyRoniTemplateSheet familyRoniTemplateList" aria-label="주간시간표 목록">
+              <div className="familyRounyTemplateSheet familyRounyTemplateList" aria-label="주간시간표 목록">
                 {rounState.plans.length ? rounState.plans.map((plan) => {
                   const expanded = expandedPlanId === plan.id;
                   return (
-                    <div className={`familyRoniTemplateRow${expanded ? " familyRoniTemplateRowExpanded" : ""}`} key={plan.id}>
+                    <div className={`familyRounyTemplateRow${expanded ? " familyRounyTemplateRowExpanded" : ""}`} key={plan.id}>
                       <button
                         aria-expanded={expanded}
-                        className="familyRoniTemplateToggle"
+                        className="familyRounyTemplateToggle"
                         type="button"
                         onClick={() => setExpandedPlanId((current) => (current === plan.id ? "" : plan.id))}
                       >
                         <strong>
                           {plan.name}
-                          {appliedPlanId === plan.id ? <span className="familyRoniAppliedStar" aria-label="현재 적용 중">★</span> : null}
+                          {appliedPlanId === plan.id ? <span className="familyRounyAppliedStar" aria-label="현재 적용 중">★</span> : null}
                         </strong>
                       </button>
                       {expanded ? (
-                        <div className="familyRoniTemplateActions">
+                        <div className="familyRounyTemplateActions">
                           <button type="button" onClick={() => openPlan(plan.id)}>열기</button>
                           <button type="button" onClick={() => startApplyPlan(plan.id)}>적용하기</button>
                           <button type="button" onClick={() => deletePlan(plan.id)}>삭제</button>
@@ -641,7 +641,7 @@ export default function FamilyRoniClient() {
                     </div>
                   );
                 }) : (
-                  <div className="familyRoniTemplateEmpty">
+                  <div className="familyRounyTemplateEmpty">
                     <p>아직 시간표가 없습니다.</p>
                     <button type="button" onClick={startNewPlan}>새로 만들기</button>
                   </div>
@@ -649,7 +649,7 @@ export default function FamilyRoniClient() {
               </div>
 
               {applyPlanId ? (
-                <div className="familyRoniApplyConfirm" role="dialog" aria-label="적용할까요?">
+                <div className="familyRounyApplyConfirm" role="dialog" aria-label="적용할까요?">
                   <label>
                     <span>몇년 몇월 몇일부터 적용할까요?</span>
                     <input type="date" value={applyDate} onChange={(event) => setApplyDate(event.target.value)} />
@@ -660,7 +660,7 @@ export default function FamilyRoniClient() {
               ) : null}
             </section>
           ) : (
-            <section className="familyRoniPanel familyRoniEditorPanel">
+            <section className="familyRounyPanel familyRounyEditorPanel">
               <div className="familyRounEditorHeader">
                 <button className="familyTaskActionButton" type="button" onClick={closePlanEditor}>
                   ← 목록
@@ -679,7 +679,7 @@ export default function FamilyRoniClient() {
               {planError ? <p className="familyCalendarFormError">{planError}</p> : null}
 
               {applyPlanId ? (
-                <div className="familyRoniApplyConfirm" role="dialog" aria-label="적용할까요?">
+                <div className="familyRounyApplyConfirm" role="dialog" aria-label="적용할까요?">
                   <label>
                     <span>몇년 몇월 몇일부터 적용할까요?</span>
                     <input type="date" value={applyDate} onChange={(event) => setApplyDate(event.target.value)} />
@@ -689,13 +689,13 @@ export default function FamilyRoniClient() {
                 </div>
               ) : null}
 
-              <div className="familyRoniTemplateStatus">
+              <div className="familyRounyTemplateStatus">
                 <p>주간시간표</p>
                 <small>이 시간표는 달력 생성에 사용됩니다.</small>
               </div>
 
               <div className="familyRounEditorToolbar">
-                <button className="familyTaskActionButton familyTaskActionButtonPrimary" type="button" onClick={() => startNewRoni()}>
+                <button className="familyTaskActionButton familyTaskActionButtonPrimary" type="button" onClick={() => startNewRouny()}>
                   + 시간표
                 </button>
               </div>
@@ -776,9 +776,9 @@ export default function FamilyRoniClient() {
               {actionBlock ? (
                 <div className="familyRounActionSheet" role="dialog" aria-label="시간표 항목">
                   <p>{actionBlock.title}</p>
-                  <button type="button" onClick={() => startEditRoni(actionBlock)}>고치기</button>
-                  <button type="button" onClick={() => copyRoni(actionBlock)}>복사</button>
-                  <button type="button" onClick={() => deleteRoni(actionBlock.id)}>삭제</button>
+                  <button type="button" onClick={() => startEditRouny(actionBlock)}>수정</button>
+                  <button type="button" onClick={() => copyRouny(actionBlock)}>복사</button>
+                  <button type="button" onClick={() => deleteRouny(actionBlock.id)}>삭제</button>
                   <button type="button" onClick={() => setActionBlock(null)}>취소</button>
                 </div>
               ) : null}
@@ -786,13 +786,13 @@ export default function FamilyRoniClient() {
           )}
 
           {openedPlan ? (
-            <section className="familyRoniPanel" aria-label="적용 이력">
+            <section className="familyRounyPanel" aria-label="적용 이력">
               <div className="familyCalendarFormHeader">
                 <h2>적용 이력</h2>
               </div>
-              <div className="familyRoniAssignmentLog">
+              <div className="familyRounyAssignmentLog">
                 {assignmentLogRows.length ? assignmentLogRows.map((assignment) => (
-                  <p className="familyRoniAssignmentLogLine" key={assignment.id}>
+                  <p className="familyRounyAssignmentLogLine" key={assignment.id}>
                     <span>
                       {assignment.endDateText
                         ? `${assignment.startDateText} 부터 ${assignment.endDateText} 까지 적용.`
@@ -806,11 +806,11 @@ export default function FamilyRoniClient() {
           ) : null}
 
           {draft ? (
-            <form className="familyCalendarForm" onSubmit={saveRoni}>
+            <form className="familyCalendarForm" onSubmit={saveRouny}>
               <div className="familyCalendarFormHeader">
                 <h2>{draft.id && visibleItems.some((item) => item.id === draft.id) ? "일정 수정" : "일정 추가"}</h2>
                 {draft.id && visibleItems.some((item) => item.id === draft.id) ? (
-                  <button className="familyTaskDelete" type="button" onClick={() => deleteRoni()}>
+                  <button className="familyTaskDelete" type="button" onClick={() => deleteRouny()}>
                     삭제
                   </button>
                 ) : null}
@@ -823,11 +823,11 @@ export default function FamilyRoniClient() {
               {error ? <p className="familyCalendarFormError">{error}</p> : null}
 
               <div className="familyCalendarFormGrid">
-                <div className="familyRoniSessionList">
-                  <span className="familyRoniSessionListLabel">시간</span>
-                  {(draft.sessions?.length ? draft.sessions : roniSessions(draft)).map((session, sessionIndex) => (
-                    <div className="familyRoniTimePickerRow" key={sessionIndex}>
-                      <label className="familyCalendarPickerButton familyRoniWeekdayPickerButton">
+                <div className="familyRounySessionList">
+                  <span className="familyRounySessionListLabel">시간</span>
+                  {(draft.sessions?.length ? draft.sessions : rounySessions(draft)).map((session, sessionIndex) => (
+                    <div className="familyRounyTimePickerRow" key={sessionIndex}>
+                      <label className="familyCalendarPickerButton familyRounyWeekdayPickerButton">
                         {shortWeekdayLabel(session.dayOfWeek)}
                         <select
                           aria-label="로운이 일정 요일 선택"
@@ -842,7 +842,7 @@ export default function FamilyRoniClient() {
                           ))}
                         </select>
                       </label>
-                      <label className="familyCalendarPickerButton familyRoniTimePickerButton">
+                      <label className="familyCalendarPickerButton familyRounyTimePickerButton">
                         {session.startTime}
                         <input
                           aria-label="로운이 일정 시작 시간 선택"
@@ -853,7 +853,7 @@ export default function FamilyRoniClient() {
                         />
                       </label>
                       <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
-                      <label className="familyCalendarPickerButton familyRoniTimePickerButton">
+                      <label className="familyCalendarPickerButton familyRounyTimePickerButton">
                         {session.endTime}
                         <input
                           aria-label="로운이 일정 끝 시간 선택"
@@ -864,7 +864,7 @@ export default function FamilyRoniClient() {
                         />
                       </label>
                       <button
-                        className="familyRoniSessionRemove"
+                        className="familyRounySessionRemove"
                         disabled={(draft.sessions || []).length <= 1}
                         onClick={() => removeDraftSession(sessionIndex)}
                         type="button"
@@ -873,7 +873,7 @@ export default function FamilyRoniClient() {
                       </button>
                     </div>
                   ))}
-                  <button className="familyTaskActionButton familyRoniSessionAdd" onClick={addDraftSession} type="button">
+                  <button className="familyTaskActionButton familyRounySessionAdd" onClick={addDraftSession} type="button">
                     + 요일/시간
                   </button>
                 </div>
