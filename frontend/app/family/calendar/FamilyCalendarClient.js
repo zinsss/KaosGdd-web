@@ -392,7 +392,7 @@ function CalendarItemLink({
       style={style ?? (editItem ? editItemStyle(item) : undefined)}
       title={item.allDay ? item.title : `${item.title} ${item.startTime}`}
     >
-      <span>{item.title}</span>
+      <span>{item.type === "roni" && item.overridden ? `!${item.title}` : item.title}</span>
       {item.overridden ? <span className="familyCalendarRoniOverrideBadge">예외</span> : null}
     </Link>
   );
