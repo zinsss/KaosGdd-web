@@ -1,7 +1,7 @@
 import FamilyTaskFormClient from "../../FamilyTaskFormClient";
 
 export const metadata = {
-  title: "고치까 - KaosGdd",
+  title: "할일 수정 - KaosGdd",
 };
 
 export default async function FamilyEditTaskPage({ params }) {

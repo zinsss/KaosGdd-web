@@ -1,15 +1,17 @@
 import { FAMILY_TIMETABLE_DEFAULT_FONT, normalizeFamilyTimetableFont } from "../familyTimetableFonts.js";
 
 export const FAMILY_CALENDAR_STORAGE_KEY = "kaosgdd.family.calendarItems.v1";
-export const FAMILY_RONI_STORAGE_KEY = "kaosgdd.family.defaultTimetable.v1";
-export const FAMILY_RONI_TEMPLATE_STORAGE_KEY = "kaosgdd.family.roniTimetableTemplates.v1";
+export const FAMILY_ROUNY_STORAGE_KEY = "kaosgdd.family.defaultTimetable.v1";
+export const FAMILY_ROUNY_TEMPLATE_STORAGE_KEY = "kaosgdd.family.rounyTimetableTemplates.v1";
+export const FAMILY_LEGACY_RONI_TEMPLATE_STORAGE_KEY = "kaosgdd.family.roniTimetableTemplates.v1";
 export const FAMILY_ROUN_PLAN_STORAGE_KEY = "kaosgdd.family.rounWeeklyPlans.v1";
 export const FAMILY_ROUN_ASSIGNMENT_STORAGE_KEY = "kaosgdd.family.rounAssignments.v1";
-export const FAMILY_RONI_OVERRIDE_STORAGE_KEY = "kaosgdd.family.roniOverrides.v1";
+export const FAMILY_ROUNY_OVERRIDE_STORAGE_KEY = "kaosgdd.family.rounyOverrides.v1";
+export const FAMILY_LEGACY_RONI_OVERRIDE_STORAGE_KEY = "kaosgdd.family.roniOverrides.v1";
 export const FAMILY_CAREGIVER_HOURS_STORAGE_KEY = "familyCaregiverHours.v1";
 export const FAMILY_CAREGIVER_HOURLY_WAGE_STORAGE_KEY = "familyCaregiverHourlyWage.v1";
 export const FAMILY_CAREGIVER_MONTHLY_SETTINGS_STORAGE_KEY = "familyCaregiverMonthlySettings.v1";
-export const FAMILY_RONI_DEFAULT_TEMPLATE_NAME = "기본 시간표";
+export const FAMILY_ROUNY_DEFAULT_TEMPLATE_NAME = "기본 시간표";
 export const FAMILY_CALENDAR_DAY_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 export const FAMILY_CAREGIVER_HOUR_VALUES = Array.from({ length: 25 }, (_, index) => index * 0.5);
 export const FAMILY_CALENDAR_WEEKDAY_OPTIONS = [
@@ -343,15 +345,15 @@ export function resolveFamilyCaregiverMonthlySetting(settingsMap, year, month, f
   };
 }
 
-export function normalizeFamilyRoniOverride(override) {
+export function normalizeFamilyRounyOverride(override) {
   if (!override || typeof override !== "object") return null;
-  const sourceRoniId = String(override.sourceRoniId || "");
+  const sourceRounyId = String(override.sourceRounyId || override.sourceRoniId || "");
   const parsedDate = parseFamilyDateKey(override.date);
-  if (!sourceRoniId || !parsedDate) return null;
+  if (!sourceRounyId || !parsedDate) return null;
 
   return {
     id: String(override.id || createFamilyCalendarId()),
-    sourceRoniId,
+    sourceRounyId,
     date: formatFamilyDateKey(parsedDate),
     startTime: String(override.startTime || ""),
     endTime: String(override.endTime || ""),
@@ -361,22 +363,22 @@ export function normalizeFamilyRoniOverride(override) {
   };
 }
 
-export function normalizeFamilyRoniDayOfWeek(dayOfWeek) {
+export function normalizeFamilyRounyDayOfWeek(dayOfWeek) {
   const value = Number(dayOfWeek);
   if (value === 7) return 0;
   if (Number.isInteger(value) && value >= 0 && value <= 6) return value;
   return 1;
 }
 
-function normalizeFamilyRoniSlot(slot, fallback = {}) {
+function normalizeFamilyRounySlot(slot, fallback = {}) {
   return {
-    dayOfWeek: normalizeFamilyRoniDayOfWeek(slot?.dayOfWeek ?? fallback.dayOfWeek),
+    dayOfWeek: normalizeFamilyRounyDayOfWeek(slot?.dayOfWeek ?? fallback.dayOfWeek),
     startTime: String(slot?.startTime || fallback.startTime || "09:00"),
     endTime: String(slot?.endTime || fallback.endTime || "09:40"),
   };
 }
 
-export function normalizeFamilyRoniItem(item) {
+export function normalizeFamilyRounyItem(item) {
   if (!item || typeof item !== "object" || item.active === false) return null;
   const title = String(item.title || "").trim();
   if (!title) return null;
@@ -390,8 +392,8 @@ export function normalizeFamilyRoniItem(item) {
     ? item.sessions
     : item.slots;
   const slots = Array.isArray(rawSessions) && rawSessions.length > 0
-    ? rawSessions.map((slot) => normalizeFamilyRoniSlot(slot, fallback))
-    : [normalizeFamilyRoniSlot(item, fallback)];
+    ? rawSessions.map((slot) => normalizeFamilyRounySlot(slot, fallback))
+    : [normalizeFamilyRounySlot(item, fallback)];
   const firstSlot = slots[0];
   return {
     id: String(item.id || createFamilyCalendarId()),
@@ -413,7 +415,7 @@ export function normalizeFamilyRounPlan(plan) {
   const name = String(plan.name || "").trim();
   if (!name) return null;
   const itemsSource = Array.isArray(plan.items) ? plan.items : plan.entries;
-  const items = Array.isArray(itemsSource) ? itemsSource.map(normalizeFamilyRoniItem).filter(Boolean) : [];
+  const items = Array.isArray(itemsSource) ? itemsSource.map(normalizeFamilyRounyItem).filter(Boolean) : [];
   const now = new Date().toISOString();
 
   return {
@@ -425,7 +427,7 @@ export function normalizeFamilyRounPlan(plan) {
   };
 }
 
-export function createFamilyRounPlan(name = FAMILY_RONI_DEFAULT_TEMPLATE_NAME, items = []) {
+export function createFamilyRounPlan(name = FAMILY_ROUNY_DEFAULT_TEMPLATE_NAME, items = []) {
   const now = new Date().toISOString();
   return normalizeFamilyRounPlan({
     id: createFamilyCalendarId(),
@@ -451,7 +453,7 @@ export function normalizeFamilyRounAssignment(assignment) {
 
 function normalizeFamilyRounState(state) {
   const plans = Array.isArray(state?.plans) ? state.plans.map(normalizeFamilyRounPlan).filter(Boolean) : [];
-  const safePlans = plans.length ? plans : [createFamilyRounPlan(FAMILY_RONI_DEFAULT_TEMPLATE_NAME, [])];
+  const safePlans = plans.length ? plans : [createFamilyRounPlan(FAMILY_ROUNY_DEFAULT_TEMPLATE_NAME, [])];
   const planIds = new Set(safePlans.map((plan) => plan.id));
   const assignments = Array.isArray(state?.assignments)
     ? state.assignments.map(normalizeFamilyRounAssignment).filter((assignment) => assignment && planIds.has(assignment.planId))
@@ -503,7 +505,9 @@ function writeFamilyStorageObject(storageKey, value) {
 }
 
 function migrateLegacyRounState() {
-  const oldTemplateState = readFamilyStorageObject(FAMILY_RONI_TEMPLATE_STORAGE_KEY);
+  const oldTemplateState =
+    readFamilyStorageObject(FAMILY_ROUNY_TEMPLATE_STORAGE_KEY) ||
+    readFamilyStorageObject(FAMILY_LEGACY_RONI_TEMPLATE_STORAGE_KEY);
   if (Array.isArray(oldTemplateState?.templates) && oldTemplateState.templates.length) {
     const oldPlanKey = "active" + "TemplateId";
     const plans = oldTemplateState.templates.map((template) => normalizeFamilyRounPlan({
@@ -520,9 +524,9 @@ function migrateLegacyRounState() {
     });
   }
 
-  const legacyItems = readFamilyStorageArray(FAMILY_RONI_STORAGE_KEY).map(normalizeFamilyRoniItem).filter(Boolean);
+  const legacyItems = readFamilyStorageArray(FAMILY_ROUNY_STORAGE_KEY).map(normalizeFamilyRounyItem).filter(Boolean);
   return normalizeFamilyRounState({
-    plans: [createFamilyRounPlan(FAMILY_RONI_DEFAULT_TEMPLATE_NAME, legacyItems)],
+    plans: [createFamilyRounPlan(FAMILY_ROUNY_DEFAULT_TEMPLATE_NAME, legacyItems)],
     assignments: [],
   });
 }
@@ -605,29 +609,33 @@ export function saveFamilyCaregiverMonthlySettings(settingsMap) {
   writeFamilyStorageObject(FAMILY_CAREGIVER_MONTHLY_SETTINGS_STORAGE_KEY, normalizeFamilyCaregiverMonthlySettingsMap(settingsMap));
 }
 
-export function loadFamilyRoniItemsForDate(dateKey) {
+export function loadFamilyRounyItemsForDate(dateKey) {
   const rounState = loadFamilyRounState();
   const plan = resolveFamilyRounPlanForDate(dateKey, rounState);
-  return (plan?.items || []).map(normalizeFamilyRoniItem).filter(Boolean);
+  return (plan?.items || []).map(normalizeFamilyRounyItem).filter(Boolean);
 }
 
-export function loadFamilyRoniItems() {
-  return loadFamilyRoniItemsForDate(formatFamilyDateKey(new Date()));
+export function loadFamilyRounyItems() {
+  return loadFamilyRounyItemsForDate(formatFamilyDateKey(new Date()));
 }
 
-export function saveFamilyRoniItems(items) {
+export function saveFamilyRounyItems(items) {
   const rounState = loadFamilyRounState();
   const plan = resolveFamilyRounPlanForDate(formatFamilyDateKey(new Date()), rounState) || rounState.plans[0];
-  const nextState = updateFamilyRounPlanItems(rounState, plan.id, items.map(normalizeFamilyRoniItem).filter(Boolean));
+  const nextState = updateFamilyRounPlanItems(rounState, plan.id, items.map(normalizeFamilyRounyItem).filter(Boolean));
   saveFamilyRounState(nextState);
 }
 
-export function loadFamilyRoniOverrides() {
-  return readFamilyStorageArray(FAMILY_RONI_OVERRIDE_STORAGE_KEY).map(normalizeFamilyRoniOverride).filter(Boolean);
+export function loadFamilyRounyOverrides() {
+  const overrides = [
+    ...readFamilyStorageArray(FAMILY_ROUNY_OVERRIDE_STORAGE_KEY),
+    ...readFamilyStorageArray(FAMILY_LEGACY_RONI_OVERRIDE_STORAGE_KEY),
+  ].map(normalizeFamilyRounyOverride).filter(Boolean);
+  return [...new Map(overrides.map((override) => [override.id, override])).values()];
 }
 
-export function saveFamilyRoniOverrides(overrides) {
-  writeFamilyStorageArray(FAMILY_RONI_OVERRIDE_STORAGE_KEY, overrides.map(normalizeFamilyRoniOverride).filter(Boolean));
+export function saveFamilyRounyOverrides(overrides) {
+  writeFamilyStorageArray(FAMILY_ROUNY_OVERRIDE_STORAGE_KEY, overrides.map(normalizeFamilyRounyOverride).filter(Boolean));
 }
 
 export function timeHourLabel(timeString) {
@@ -650,7 +658,7 @@ export function createDefaultFamilyCalendarItem() {
   };
 }
 
-export function createDefaultFamilyRoniItem() {
+export function createDefaultFamilyRounyItem() {
   const today = new Date();
   return {
     id: createFamilyCalendarId(),

@@ -19,8 +19,11 @@ test("family tasks use finalized standard Korean labels", async () => {
     assert.ok(combinedSource.includes(label), `${label} should appear in Family task sources`);
   }
 
-  for (const priority of ["💤 언젠가는...", "😄 보통", "⭐️ 중요! 늦지않기", "‼️ 꼭! 죽어도 하기"]) {
+  for (const priority of ["💤 언젠가는", "😄 보통", "⭐️ 중요", "‼️ 꼭 하기"]) {
     assert.ok(combinedSource.includes(priority), `${priority} should appear in Family task sources`);
+  }
+  for (const oldPriority of ["💤 언젠가는...", "⭐️ 중요! 늦지않기", "‼️ 꼭! 죽어도 하기"]) {
+    assert.ok(!combinedSource.includes(oldPriority), `${oldPriority} should not remain as a visible priority label`);
   }
 
   for (const value of ["kaosgdd.family.tasks.v1", "sort_order", "completed_at", "FAMILY_TASK_DEFAULT_ASSIGNEE", "FAMILY_TASK_PRIORITY_ASSIGNEE"]) {

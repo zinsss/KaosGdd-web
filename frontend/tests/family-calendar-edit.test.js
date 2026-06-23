@@ -24,6 +24,7 @@ import {
   normalizeFamilyCaregiverMonthlySettingsMap,
   normalizeFamilyCaregiverSession,
   normalizeFamilyCaregiverSessions,
+  normalizeFamilyRounyOverride,
   parseFamilyCaregiverTime,
   resolveFamilyCaregiverMonthlySetting,
 } from "../app/family/calendar/familyCalendarData.js";
@@ -42,13 +43,13 @@ test("family calendar uses finalized standard Korean wording", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const eventFormSource = await readSource("../app/family/calendar/events/FamilyCalendarEventFormClient.js");
   const headerSource = await readSource("../app/family/FamilyHeader.js");
-  const roniSource = await readSource("../app/family/roun/page.js");
+  const rounySource = await readSource("../app/family/roun/page.js");
   const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const calendarCss = await readSource("../app/styles/family-calendar.css");
   const combinedSource = `${calendarSource}
 ${eventFormSource}
 ${headerSource}
-${roniSource}`;
+${rounySource}`;
 
   for (const label of [
     "달력",
@@ -100,7 +101,7 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const eventFormSource = await readSource("../app/family/calendar/events/FamilyCalendarEventFormClient.js");
   const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
-  const roniSource = await readSource("../app/family/calendar/roni/FamilyRoniClient.js");
+  const rounySource = await readSource("../app/family/calendar/rouny/FamilyRounyClient.js");
   const calendarCss = await readSource("../app/styles/family-calendar.css");
   const polishCss = await readSource("../app/styles/family-polish.css");
 
@@ -160,7 +161,7 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes("{colorPickerOpen ? ("));
   assert.ok(!eventFormSource.includes("colorIsUnavailable"));
   assert.ok(!eventFormSource.includes("familyTimetableColorChipDisabled"));
-  assert.ok(roniSource.includes("FAMILY_CALENDAR_COLOR_KEYS.map"));
+  assert.ok(rounySource.includes("FAMILY_CALENDAR_COLOR_KEYS.map"));
   assert.deepEqual(FAMILY_CALENDAR_COLOR_KEYS, [
     "pink",
     "rose",
@@ -197,7 +198,7 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(calendarCss.includes(".familyCalendarFormToggle {"));
   assert.ok(calendarCss.includes(".familyCalendarFormToggleControl {"));
   assert.ok(calendarCss.includes(".familyCalendarFormGridAllDay {"));
-  assert.match(calendarCss, /\.familyCalendarForm,\s*\n\.familyRoniPanel\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?box-sizing:\s*border-box;[\s\S]*?min-width:\s*0;/);
+  assert.match(calendarCss, /\.familyCalendarForm,\s*\n\.familyRounyPanel\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?box-sizing:\s*border-box;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarForm,\s*\n\.familyCalendarForm \*,\s*\n\.familyCalendarForm \*::before,\s*\n\.familyCalendarForm \*::after\s*\{[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(calendarCss, /\.familyCalendarForm label\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*visible;/);
   assert.match(calendarCss, /\.familyCalendarForm input,\s*\n\.familyCalendarForm select,\s*\n\.familyCalendarForm textarea,\s*\n\.familyCalendarForm button\s*\{[\s\S]*?box-sizing:\s*border-box;/);
@@ -212,9 +213,9 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarDateTimeTitle\s*\{[\s\S]*?font-size:\s*15px;[\s\S]*?font-weight:\s*950;/);
   assert.match(calendarCss, /\.familyCalendarDateTimeRow\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*6px 14px;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarDateTimeCluster\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?align-items:\s*center;[\s\S]*?gap:\s*5px;[\s\S]*?max-width:\s*100%;/);
-  assert.match(calendarCss, /\.familyCalendarDateTimeValueButton,\s*\n\.familyRoniTimePickerButton,\s*\n\.familyRoniWeekdayPickerButton\s*\{[\s\S]*?font-size:\s*15px;[\s\S]*?min-height:\s*30px;/);
-  assert.match(calendarCss, /\.familyCalendarDatePickerPill,\s*\n\.familyRoniWeekdayPickerButton\s*\{[\s\S]*?background:\s*rgba\(245, 232, 255, 0\.9\);[\s\S]*?color:\s*rgba\(112, 74, 150, 0\.94\);/);
-  assert.match(calendarCss, /\.familyCalendarTimePickerPill,\s*\n\.familyRoniTimePickerButton\s*\{[\s\S]*?background:\s*#fff0f5;[\s\S]*?color:\s*#8d3f5d;/);
+  assert.match(calendarCss, /\.familyCalendarDateTimeValueButton,\s*\n\.familyRounyTimePickerButton,\s*\n\.familyRounyWeekdayPickerButton\s*\{[\s\S]*?font-size:\s*15px;[\s\S]*?min-height:\s*30px;/);
+  assert.match(calendarCss, /\.familyCalendarDatePickerPill,\s*\n\.familyRounyWeekdayPickerButton\s*\{[\s\S]*?background:\s*rgba\(245, 232, 255, 0\.9\);[\s\S]*?color:\s*rgba\(112, 74, 150, 0\.94\);/);
+  assert.match(calendarCss, /\.familyCalendarTimePickerPill,\s*\n\.familyRounyTimePickerButton\s*\{[\s\S]*?background:\s*#fff0f5;[\s\S]*?color:\s*#8d3f5d;/);
   assert.match(calendarCss, /\.familyCalendarPickerRow\s*\{[\s\S]*?grid-template-columns:\s*auto minmax\(0, 1fr\) auto;[\s\S]*?min-height:\s*34px;/);
   assert.match(calendarCss, /\.familyCalendarPickerButton\s*\{[\s\S]*?position:\s*relative;[\s\S]*?display:\s*inline-flex;[\s\S]*?overflow:\s*hidden;[\s\S]*?border-radius:\s*999px;[\s\S]*?width:\s*auto !important;[\s\S]*?min-height:\s*28px;[\s\S]*?cursor:\s*pointer;/);
   assert.match(calendarCss, /\.familyCalendarNativePickerInput\s*\{[\s\S]*?position:\s*absolute !important;[\s\S]*?inset:\s*0 !important;[\s\S]*?width:\s*100% !important;[\s\S]*?height:\s*100% !important;[\s\S]*?opacity:\s*0\.001;[\s\S]*?cursor:\s*pointer;/);
@@ -231,7 +232,7 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarFormActions\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormActions > \*\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormActions \.familyTaskDelete\s*\{[\s\S]*?grid-column:\s*1 \/ -1;/);
-  assert.match(polishCss, /\.familyCalendarItemRoni\.familyTimetableEntryPink\s*\{\s*background:\s*#ffc6dc;\s*\}/);
+  assert.match(polishCss, /\.familyCalendarItemRouny\.familyTimetableEntryPink\s*\{\s*background:\s*#ffc6dc;\s*\}/);
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPink\s*\{[\s\S]*?--family-calendar-event-outline:\s*#ffc6dc;[\s\S]*?--family-calendar-event-fill-soft:\s*rgba\(255, 198, 220, 0\.28\);/);
   assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?box-shadow:\s*inset 0 0 0 2px var\(--family-calendar-event-outline, #ffc6dc\);/);
   assert.match(polishCss, /\.familyCalendarAllDayItem\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*var\(--family-calendar-event-fill-soft, rgba\(255, 198, 220, 0\.28\)\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px var\(--family-calendar-event-outline, #ffc6dc\);/);
@@ -568,13 +569,15 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("onDragStart={dragEnabledItem ? (event) => event.preventDefault() : undefined}"));
   assert.ok(calendarSource.includes('if (event.pointerType === "mouse" && event.button !== 0) return;'));
   assert.ok(calendarSource.includes("event.currentTarget.setPointerCapture?.(event.pointerId);"));
-  assert.ok(calendarSource.includes("onClick={dragging || suppressRoniNavigation ? (event) => event.preventDefault() : undefined}"));
+  assert.ok(calendarSource.includes("onClick={dragging || suppressRounyNavigation ? (event) => event.preventDefault() : undefined}"));
   assert.ok(calendarSource.includes("pending?.dragElement?.releasePointerCapture?.(event.pointerId);"));
   assert.ok(calendarSource.includes("onMoveDatedItem(pending.item.id, currentDragState.target);"));
-  assert.ok(calendarSource.includes("onCreateRoniOverride(pending.item, currentDragState.target);"));
-  assert.ok(calendarSource.includes('item.type === "roni" && item.overridden ? `!${item.title}` : item.title'), "overridden Roun items should show ! in the visible title");
-  assert.ok(!calendarSource.includes("setPendingRoniMove"));
-  assert.ok(!calendarSource.includes("moveRoniTemplate"));
+  assert.ok(calendarSource.includes("onCreateRounyOverride(pending.item, currentDragState.target);"));
+  assert.ok(calendarSource.includes('itemType === "rouny" && item.overridden ? `!${item.title}` : item.title'), "overridden Rouny items should show ! in the visible title");
+  assert.ok(calendarSource.includes('item?.type === "rouny" || item?.type === "roni"'), "legacy roni item types should remain compatible");
+  assert.equal(normalizeFamilyRounyOverride({ sourceRoniId: "legacy", date: "2026-06-23" })?.sourceRounyId, "legacy");
+  assert.ok(!calendarSource.includes("setPendingRounyMove"));
+  assert.ok(!calendarSource.includes("moveRounyTemplate"));
 
   assert.ok(calendarSource.includes("function moveDatedItem(itemId, target)"));
   assert.ok(calendarSource.includes("const moved = movedItemValues(item, target);"));
@@ -582,15 +585,15 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("delete nextItem.startTime;"));
   assert.ok(calendarSource.includes("delete nextItem.endTime;"));
   assert.ok(calendarSource.includes("saveFamilyCalendarItems(nextItems);"));
-  assert.ok(calendarSource.includes("function upsertRoniOverride(roniItem, values)"));
+  assert.ok(calendarSource.includes("function upsertRounyOverride(rounyItem, values)"));
   assert.ok(calendarSource.includes('overrideType: values.deleted === true ? "deleted" : "moved",'));
-  assert.ok(calendarSource.includes("override.id !== roniItem.overrideId"));
-  assert.ok(calendarSource.includes("saveFamilyRoniOverrides(nextOverrides);"));
+  assert.ok(calendarSource.includes("override.id !== rounyItem.overrideId"));
+  assert.ok(calendarSource.includes("saveFamilyRounyOverrides(nextOverrides);"));
   assert.ok(dataSource.includes('overrideType: override.overrideType === "deleted" || override.deleted === true ? "deleted" : "moved",'));
 
   assert.ok(calendarSource.includes("familyCalendarEditItem familyCalendarEditItemInline"));
   assert.ok(calendarSource.includes("onStartDatedDrag={startDatedDrag}"));
-  assert.ok(calendarSource.includes("onStartRoniDrag={startRoniDrag}"));
+  assert.ok(calendarSource.includes("onStartRounyDrag={startRounyDrag}"));
   assert.ok(calendarSource.includes("onPointerMove={moveDatedDrag}"));
   assert.ok(calendarSource.includes("onPointerUp={finishDatedDrag}"));
   assert.ok(calendarSource.includes("dragState?.target?.type === \"time\""));
@@ -680,7 +683,7 @@ test("family calendar timed items render by duration across hour boundaries", as
   assert.match(calendarCss, /\.familyCalendarTimedItem,\s*\n\.familyCalendarEditItem\s*\{[\s\S]*?border-radius:\s*4px;/);
   assert.ok(calendarCss.includes(".familyCalendarTimedItem span:first-child,"));
   assert.match(calendarCss, /\.familyCalendarTimedItem span:first-child,\s*\n\.familyCalendarEditItem span:first-child\s*\{[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?width:\s*100%;[\s\S]*?height:\s*100%;[\s\S]*?overflow:\s*hidden;[\s\S]*?text-align:\s*center;/);
-  assert.match(calendarCss, /\.familyCalendarTimedItem \.familyCalendarRoniOverrideBadge,\s*\n\.familyCalendarEditItem \.familyCalendarRoniOverrideBadge\s*\{[\s\S]*?display:\s*none;/);
+  assert.match(calendarCss, /\.familyCalendarTimedItem \.familyCalendarRounyOverrideBadge,\s*\n\.familyCalendarEditItem \.familyCalendarRounyOverrideBadge\s*\{[\s\S]*?display:\s*none;/);
   assert.ok(calendarCss.includes("text-overflow: ellipsis;"));
   assert.ok(compactCss.includes(".familyCalendarTimedItemsLayer"));
   assert.ok(compactCss.includes("grid-template-columns: var(--family-calendar-expanded-rail-width, 20px) repeat(7, minmax(0, 1fr));"));
