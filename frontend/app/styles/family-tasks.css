@@ -259,13 +259,20 @@
 }
 
 .familyTaskCardBody {
+  display: flex;
+  align-items: center;
+  gap: 6px 8px;
+  flex-wrap: wrap;
+  width: 100%;
   min-width: 0;
 }
 
 .familyTaskCard h3 {
   display: flex;
   align-items: center;
+  flex: 1 1 12rem;
   gap: 6px;
+  min-width: 0;
   overflow: hidden;
   color: #4b2536;
   font-size: 17px;
@@ -275,12 +282,7 @@
 }
 
 .familyTaskMeta {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: nowrap;
-  margin-top: 4px;
+  display: contents;
   color: rgba(78, 37, 54, 0.58);
   font-size: 13px;
   font-weight: 800;
@@ -289,6 +291,7 @@
 .familyTaskMetaBadges {
   display: inline-flex;
   align-items: center;
+  flex: 0 0 auto;
   gap: 5px;
   min-width: 0;
   flex-wrap: wrap;

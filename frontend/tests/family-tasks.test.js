@@ -42,8 +42,8 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(dashboardSource.includes("formatFamilyTaskDueDate(task.due_date)"), "due dates should use yy-mm-dd(ddd)까지 formatting");
   assert.ok(taskHelperSource.includes("return `${year}-${month}-${day}(${weekday})까지`;"));
   assert.ok(dashboardSource.includes("<h3><span aria-hidden=\"true\">•</span>{task.title}</h3>"), "task title should render as primary bullet line");
-  assert.ok(dashboardSource.includes('className="familyTaskMetaBadges"'), "priority and 쏭 badges should render as the second-line left group");
-  assert.ok(dashboardSource.includes('className="familyTaskDateBadge"'), "due date should render as a right-aligned second-line value");
+  assert.ok(dashboardSource.includes('className="familyTaskMetaBadges"'), "priority and 쏭 badges should render inline beside the title");
+  assert.ok(dashboardSource.includes('className="familyTaskDateBadge"'), "due date should render as a right-aligned inline value");
   assert.ok(dashboardSource.includes('familyTaskBadgeSong'), "쏭 badge should render only for shared tasks");
   assert.doesNotMatch(dashboardSource, /FAMILY_TASK_PRIORITIES\.map/);
   assert.ok(!dashboardSource.includes("우선순위:"), "task list should not render a priority label prefix");
@@ -57,7 +57,10 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(formSource.includes("priority: FAMILY_TASK_DEFAULT_PRIORITY"), "new task default priority should be 보통");
   assert.ok(taskCss.includes(".familyTaskRowToggle"));
   assert.ok(taskCss.includes(".familyTaskRowActions"));
-  assert.match(taskCss, /\.familyTaskMeta\s*\{[\s\S]*?justify-content:\s*space-between;[\s\S]*?flex-wrap:\s*nowrap;/);
+  assert.match(taskCss, /\.familyTaskCardBody\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap;[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
+  assert.match(taskCss, /\.familyTaskCard h3\s*\{[\s\S]*?flex:\s*1 1 12rem;[\s\S]*?min-width:\s*0;[\s\S]*?text-overflow:\s*ellipsis;/);
+  assert.match(taskCss, /\.familyTaskMeta\s*\{[\s\S]*?display:\s*contents;/);
+  assert.match(taskCss, /\.familyTaskMetaBadges\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?flex-wrap:\s*wrap;/);
   assert.match(taskCss, /\.familyTaskDateBadge\s*\{[\s\S]*?margin-left:\s*auto;[\s\S]*?background:\s*transparent;[\s\S]*?color:\s*rgba\(78, 37, 54, 0\.46\);/);
   assert.match(taskCss, /\.familyTaskPriorityShareRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;[\s\S]*?align-items:\s*end;/);
   assert.match(taskCss, /\.familyTaskSongField\s*\{[\s\S]*?gap:\s*8px;[\s\S]*?min-width:\s*96px;[\s\S]*?min-height:\s*42px;[\s\S]*?padding:\s*0 14px;/);
