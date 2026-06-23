@@ -1325,12 +1325,12 @@
 
 .familyCalendarItemRouny {
   background: transparent;
-  box-shadow: inset 0 0 0 2px rgba(216, 111, 152, 0.28);
+  box-shadow: inset 0 0 0 1px rgba(216, 111, 152, 0.16);
   opacity: 0.82;
 }
 
 .familyCalendarItemDated {
-  box-shadow: inset 0 0 0 1px rgba(78, 37, 54, 0.08);
+  box-shadow: inset 0 0 0 1px rgba(78, 37, 54, 0.055);
 }
 
 .familyCalendarEmptyWeek {
