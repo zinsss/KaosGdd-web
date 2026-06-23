@@ -572,6 +572,7 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("pending?.dragElement?.releasePointerCapture?.(event.pointerId);"));
   assert.ok(calendarSource.includes("onMoveDatedItem(pending.item.id, currentDragState.target);"));
   assert.ok(calendarSource.includes("onCreateRoniOverride(pending.item, currentDragState.target);"));
+  assert.ok(calendarSource.includes('item.type === "roni" && item.overridden ? `!${item.title}` : item.title'), "overridden Roun items should show ! in the visible title");
   assert.ok(!calendarSource.includes("setPendingRoniMove"));
   assert.ok(!calendarSource.includes("moveRoniTemplate"));
 
