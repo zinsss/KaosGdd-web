@@ -38,6 +38,7 @@ const FAMILY_TIMETABLE_COLOR_LABELS = [
 
 test("family timetable keeps local schedule editor foundations", async () => {
   const rounySource = await readSource("../app/family/calendar/rouny/FamilyRounyClient.js");
+  const pickerSource = await readSource("../app/family/calendar/FamilyPickerButton.js");
   const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const globalsCss = await readSource("../app/globals.css");
   const addCss = await readSource("../app/styles/family-timetable-add.css");
@@ -83,15 +84,20 @@ test("family timetable keeps local schedule editor foundations", async () => {
   assert.ok(rounySource.includes("if (!current || (current.sessions || []).length <= 1) return current;"));
   assert.ok(rounySource.includes("function shortWeekdayLabel(dayOfWeek)"));
   assert.ok(rounySource.includes('className="familyCalendarPickerButton familyRounyWeekdayPickerButton"'));
-  assert.ok(rounySource.includes('aria-label="로운이 일정 요일 선택"'));
+  assert.ok(rounySource.includes("FamilySelectPickerButton"), "Rouny weekday control should use shared fallback picker");
+  assert.ok(rounySource.includes("FamilyTimePickerButton"), "Rouny time controls should use shared fallback picker");
+  assert.ok(rounySource.includes('ariaLabel="로운이 일정 요일 선택"'));
   assert.ok(!rounySource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>'));
   assert.ok(!rounySource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">|</span>'));
   assert.equal((rounySource.match(/className="familyCalendarPickerButton familyRounyTimePickerButton"/g) || []).length, 2);
-  assert.ok(rounySource.includes('aria-label="로운이 일정 시작 시간 선택"'));
-  assert.ok(rounySource.includes('aria-label="로운이 일정 끝 시간 선택"'));
+  assert.ok(rounySource.includes('ariaLabel="로운이 일정 시작 시간 선택"'));
+  assert.ok(rounySource.includes('ariaLabel="로운이 일정 끝 시간 선택"'));
   assert.ok(!rounySource.includes('<input type="time" value={draft.startTime}'));
   assert.ok(!rounySource.includes('<input type="time" value={draft.endTime}'));
   assert.ok(!rounySource.includes('<select value={draft.dayOfWeek}'));
+  assert.ok(!rounySource.includes("familyCalendarNativePickerInput"));
+  assert.ok(pickerSource.includes("buildFamilyTimeOptions"));
+  assert.ok(pickerSource.includes("familyCalendarPickerFallbackSelect"));
   assert.ok(!rounySource.includes("FAMILY_TIMETABLE_FONT_PRESETS"));
   assert.ok(!rounySource.includes("<span>글씨체</span>"));
   assert.ok(globalsCss.includes("family-timetable-add.css"));
