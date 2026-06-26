@@ -740,6 +740,31 @@ def send_fax_from_file(payload: dict):
     return {"ok": ok, "status": status, "id": fax_id, "kind": "fax"}
 
 
+@app.post("/fax/send-upload")
+async def send_fax_from_upload(request: Request):
+    content = await request.body()
+    fax_number = str(request.headers.get("x-fax-number") or "").strip()
+    original_filename = resolve_upload_filename(request.headers)
+    mime_type = str(request.headers.get("x-file-type") or request.headers.get("content-type") or "").strip()
+    if not fax_number:
+        return {"ok": False, "error": "fax number is required"}
+    if not content:
+        return {"ok": False, "error": ApiText.FILE_BODY_EMPTY}
+
+    source_path = fax_service.create_temp_fax_source(
+        content=content,
+        original_filename=original_filename,
+        mime_type=mime_type or "application/octet-stream",
+    )
+    ok, status, fax_id = fax_service.send_source_as_fax(
+        source_file_path=source_path,
+        fax_number=fax_number,
+        original_filename=original_filename,
+        original_mime_type=mime_type or "application/octet-stream",
+    )
+    return {"ok": ok, "status": status, "id": fax_id, "kind": "fax"}
+
+
 @app.post("/fax/incoming")
 def receive_incoming_fax(payload: dict):
     source_file_path = str(payload.get("source_file_path") or "").strip()

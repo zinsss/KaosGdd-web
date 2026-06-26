@@ -131,6 +131,41 @@ class FaxService:
         source_path = str(file_detail.get("stored_path") or "")
         original_filename = str(file_detail.get("original_filename") or "fax-source")
         original_mime_type = str(file_detail.get("mime_type") or "application/octet-stream")
+        ok, status, fax_id = self.send_source_as_fax(
+            source_file_path=source_path,
+            fax_number=clean_number,
+            original_filename=original_filename,
+            original_mime_type=original_mime_type,
+        )
+        self._remove_source_file_item(file_id)
+        return ok, status, fax_id
+
+    def create_temp_fax_source(self, *, content: bytes, original_filename: str, mime_type: str) -> str:
+        if not content:
+            raise ValueError("fax source is empty")
+        source_path = self._safe_fax_storage_path(original_filename or "fax-source")
+        with open(source_path, "wb") as handle:
+            handle.write(content)
+        return source_path
+
+    def send_source_as_fax(
+        self,
+        *,
+        source_file_path: str,
+        fax_number: str,
+        original_filename: str,
+        original_mime_type: str,
+    ) -> tuple[bool, str, str | None]:
+        clean_number = str(fax_number or "").strip()
+        if not clean_number:
+            return False, "fax number is required", None
+
+        source_path = str(source_file_path or "").strip()
+        if not source_path or not os.path.isfile(source_path):
+            return False, "not found", None
+
+        original_filename = str(original_filename or "fax-source")
+        original_mime_type = str(original_mime_type or "application/octet-stream")
         title = f"Fax to {clean_number}"
 
         try:
@@ -149,7 +184,6 @@ class FaxService:
                 source_file_path=source_path,
                 error_message=str(exc),
             )
-            self._remove_source_file_item(file_id)
             return False, str(exc), fax_id
 
         fax_id = self._create_outgoing_record(
@@ -161,7 +195,6 @@ class FaxService:
             pdf_file_path=pdf_path,
             source_file_path=source_path,
         )
-        self._remove_source_file_item(file_id)
 
         if self.send_enabled:
             sent_ok, error = self._submit_sendfax(fax_number=clean_number, pdf_path=pdf_path)
@@ -291,6 +324,18 @@ class FaxService:
         path = os.path.abspath(os.path.join(root, generated_name))
         if not path.startswith(root + os.sep):
             raise ValueError("unsafe storage path")
+        return path
+
+    def _safe_fax_storage_path(self, original_filename: str) -> str:
+        root = os.path.abspath(SETTINGS.FAX_STORAGE_DIR)
+        os.makedirs(root, exist_ok=True)
+
+        suffix = Path(str(original_filename or "")).suffix.lower()
+        safe_suffix = suffix if suffix and len(suffix) <= 10 and suffix.replace(".", "").isalnum() else ".bin"
+        generated_name = f"{uuid4().hex}{safe_suffix}"
+        path = os.path.abspath(os.path.join(root, generated_name))
+        if not path.startswith(root + os.sep):
+            raise ValueError("unsafe fax storage path")
         return path
 
     def _fax_file_name(self, original_filename: str) -> str:

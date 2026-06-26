@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { File } from "node:buffer";
+import { readFile } from "node:fs/promises";
 
 import { nextCaptureAttachmentState } from "../lib/capture-file-attach.js";
 import { UI_STRINGS } from "../lib/strings.js";
@@ -52,3 +53,22 @@ test("file picker and drag-drop share the same attach behavior", () => {
   );
 });
 
+test("attached fax grammar uses transient fax upload instead of File save", async () => {
+  const topCaptureSource = await readFile(new URL("../components/TopCaptureBar.js", import.meta.url), "utf8");
+  const sendUploadRouteSource = await readFile(new URL("../app/api/fax/send-upload/route.js", import.meta.url), "utf8");
+
+  assert.ok(topCaptureSource.includes('fetch("/api/fax/send-upload"'), "fax: attachment path should use the fax upload route");
+  assert.ok(topCaptureSource.includes('"x-fax-number": faxNormalized.faxNumber'));
+  assert.ok(topCaptureSource.includes("UI_STRINGS.FAX_QUEUED"));
+  assert.ok(topCaptureSource.includes("UI_STRINGS.FAX_SEND_FAILED"));
+  assert.ok(topCaptureSource.includes("UI_STRINGS.FAX_SELECT_FILE_FIRST"));
+  assert.ok(topCaptureSource.includes("UI_STRINGS.FAX_NUMBER_REQUIRED"));
+
+  const faxBranchIndex = topCaptureSource.indexOf('fetch("/api/fax/send-upload"');
+  const fileUploadIndex = topCaptureSource.indexOf('fetch("/api/files"', faxBranchIndex);
+  assert.ok(faxBranchIndex > 0);
+  assert.ok(fileUploadIndex > faxBranchIndex, "File save upload should only appear after the quick fax branch");
+
+  assert.ok(sendUploadRouteSource.includes('base + "/fax/send-upload"'));
+  assert.ok(sendUploadRouteSource.includes('"x-fax-number": request.headers.get("x-fax-number") || ""'));
+});

@@ -446,6 +446,32 @@ def test_fax_number_creates_fax_record_but_no_permanent_file_item(main_module, t
     assert fax["remote_number"] == "02-1234-5678"
 
 
+def test_uploaded_fax_source_creates_fax_without_file_item(main_module, tmp_path: Path) -> None:
+    main_module.fax_service = _service_with_converter(main_module, FakeConverter(tmp_path / "upload-send.pdf"))
+    source_path = main_module.fax_service.create_temp_fax_source(
+        content=b"%PDF-1.7\nsource\n",
+        original_filename="quick-send.pdf",
+        mime_type="application/pdf",
+    )
+
+    ok, status, fax_id = main_module.fax_service.send_source_as_fax(
+        source_file_path=source_path,
+        fax_number="02-1234-5678",
+        original_filename="quick-send.pdf",
+        original_mime_type="application/pdf",
+    )
+
+    assert ok is True
+    assert status == "queued"
+    fax = main_module.get_fax(fax_id)["item"]
+    assert fax["item_type"] == "fax"
+    assert fax["remote_number"] == "02-1234-5678"
+    assert fax["source_file_path"] == source_path
+    with main_module.engine.begin() as conn:
+        file_count = conn.execute(text(f"SELECT COUNT(*) FROM {DbTables.ITEMS} WHERE item_type = 'file'")).scalar_one()
+    assert file_count == 0
+
+
 def test_received_fax_alert_is_created_only_after_pdf_path_exists(main_module, tmp_path: Path) -> None:
     raw = tmp_path / "recv.tif"
     raw.write_bytes(b"raw")
