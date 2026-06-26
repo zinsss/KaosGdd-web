@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import FamilyHeader from "../../FamilyHeader";
+import { FamilyDatePickerButton, FamilyTimePickerButton } from "../FamilyPickerButton";
 import {
   FAMILY_CALENDAR_COLOR_KEYS,
   FAMILY_CALENDAR_COLOR_LABELS,
@@ -212,42 +213,36 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
               <div className="familyCalendarDateTimeSection">
                 <span className="familyCalendarDateTimeTitle">날짜/시간</span>
                 <div className="familyCalendarDateTimeRow">
-                  <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton familyCalendarDatePickerPill">
+                  <FamilyDatePickerButton
+                    ariaLabel="날짜 선택"
+                    className="familyCalendarPickerButton familyCalendarDateTimeValueButton familyCalendarDatePickerPill"
+                    value={draft.date}
+                    onChange={(value) => updateDraft("date", value)}
+                  >
                     {formatKoreanDate(draft.date)}
-                    <input
-                      aria-label="날짜 선택"
-                      className="familyCalendarNativePickerInput"
-                      type="date"
-                      value={draft.date}
-                      onChange={(event) => updateDraft("date", event.target.value)}
-                    />
-                  </label>
+                  </FamilyDatePickerButton>
                   {draft.allDay ? null : (
                     <>
                       <span className="familyCalendarDateTimeCluster">
-                        <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton familyCalendarTimePickerPill">
+                        <FamilyTimePickerButton
+                          ariaLabel="시작 시간 선택"
+                          className="familyCalendarPickerButton familyCalendarDateTimeValueButton familyCalendarTimePickerPill"
+                          value={draft.startTime}
+                          onChange={(value) => updateDraft("startTime", value)}
+                        >
                           {draft.startTime}
-                          <input
-                            aria-label="시작 시간 선택"
-                            className="familyCalendarNativePickerInput"
-                            type="time"
-                            value={draft.startTime}
-                            onChange={(event) => updateDraft("startTime", event.target.value)}
-                          />
-                        </label>
+                        </FamilyTimePickerButton>
                       </span>
                       <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
                       <span className="familyCalendarDateTimeCluster">
-                        <label className="familyCalendarPickerButton familyCalendarDateTimeValueButton familyCalendarTimePickerPill">
+                        <FamilyTimePickerButton
+                          ariaLabel="끝 시간 선택"
+                          className="familyCalendarPickerButton familyCalendarDateTimeValueButton familyCalendarTimePickerPill"
+                          value={draft.endTime}
+                          onChange={(value) => updateDraft("endTime", value)}
+                        >
                           {draft.endTime}
-                          <input
-                            aria-label="끝 시간 선택"
-                            className="familyCalendarNativePickerInput"
-                            type="time"
-                            value={draft.endTime}
-                            onChange={(event) => updateDraft("endTime", event.target.value)}
-                          />
-                        </label>
+                        </FamilyTimePickerButton>
                       </span>
                     </>
                   )}

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import FamilyHeader from "../../FamilyHeader";
+import { FamilySelectPickerButton, FamilyTimePickerButton } from "../FamilyPickerButton.js";
 import {
   FAMILY_SCHEDULE_DRAG_MOVE_LIMIT,
   familyScheduleSlotMinutesFromPoint,
@@ -827,42 +828,35 @@ export default function FamilyRounyClient() {
                   <span className="familyRounySessionListLabel">시간</span>
                   {(draft.sessions?.length ? draft.sessions : rounySessions(draft)).map((session, sessionIndex) => (
                     <div className="familyRounyTimePickerRow" key={sessionIndex}>
-                      <label className="familyCalendarPickerButton familyRounyWeekdayPickerButton">
+                      <FamilySelectPickerButton
+                        ariaLabel="로운이 일정 요일 선택"
+                        className="familyCalendarPickerButton familyRounyWeekdayPickerButton"
+                        options={FAMILY_CALENDAR_WEEKDAY_OPTIONS.map((option) => ({
+                          value: String(option.dayOfWeek),
+                          label: option.label,
+                        }))}
+                        value={session.dayOfWeek}
+                        onChange={(value) => updateDraftSession(sessionIndex, "dayOfWeek", value)}
+                      >
                         {shortWeekdayLabel(session.dayOfWeek)}
-                        <select
-                          aria-label="로운이 일정 요일 선택"
-                          className="familyCalendarNativePickerInput"
-                          value={session.dayOfWeek}
-                          onChange={(event) => updateDraftSession(sessionIndex, "dayOfWeek", event.target.value)}
-                        >
-                          {FAMILY_CALENDAR_WEEKDAY_OPTIONS.map((option) => (
-                            <option value={option.dayOfWeek} key={option.dayOfWeek}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <label className="familyCalendarPickerButton familyRounyTimePickerButton">
+                      </FamilySelectPickerButton>
+                      <FamilyTimePickerButton
+                        ariaLabel="로운이 일정 시작 시간 선택"
+                        className="familyCalendarPickerButton familyRounyTimePickerButton"
+                        value={session.startTime}
+                        onChange={(value) => updateDraftSession(sessionIndex, "startTime", value)}
+                      >
                         {session.startTime}
-                        <input
-                          aria-label="로운이 일정 시작 시간 선택"
-                          className="familyCalendarNativePickerInput"
-                          type="time"
-                          value={session.startTime}
-                          onChange={(event) => updateDraftSession(sessionIndex, "startTime", event.target.value)}
-                        />
-                      </label>
+                      </FamilyTimePickerButton>
                       <span className="familyCalendarFormTimeSeparator" aria-hidden="true">~</span>
-                      <label className="familyCalendarPickerButton familyRounyTimePickerButton">
+                      <FamilyTimePickerButton
+                        ariaLabel="로운이 일정 끝 시간 선택"
+                        className="familyCalendarPickerButton familyRounyTimePickerButton"
+                        value={session.endTime}
+                        onChange={(value) => updateDraftSession(sessionIndex, "endTime", value)}
+                      >
                         {session.endTime}
-                        <input
-                          aria-label="로운이 일정 끝 시간 선택"
-                          className="familyCalendarNativePickerInput"
-                          type="time"
-                          value={session.endTime}
-                          onChange={(event) => updateDraftSession(sessionIndex, "endTime", event.target.value)}
-                        />
-                      </label>
+                      </FamilyTimePickerButton>
                       <button
                         className="familyRounySessionRemove"
                         disabled={(draft.sessions || []).length <= 1}
