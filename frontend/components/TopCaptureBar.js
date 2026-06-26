@@ -136,14 +136,14 @@ function normalizeAttachedFaxGrammar(rawText, filename) {
 
   const faxNumber = firstLine.slice(4).trim();
   if (!faxNumber) {
-    return { ok: false, error: UI_STRINGS.FILE_GRAMMAR_INVALID_LINE };
+    return { ok: false, error: UI_STRINGS.FAX_NUMBER_REQUIRED };
   }
 
   return {
     ok: true,
     kind: "fax",
     faxNumber,
-    normalizedRaw: `++ ${deriveTitleFromFilename(filename || "")}\nx:${faxNumber}`,
+    filename: filename || "",
   };
 }
 
@@ -760,14 +760,14 @@ export default function TopCaptureBar() {
     return activeRequestIdRef.current === requestId;
   }
 
-  async function finalizeCreateSuccess({ requestId, clearInput = true, createdTypes, response, navigate }) {
+  async function finalizeCreateSuccess({ requestId, clearInput = true, createdTypes, response, navigate, successText = UI_STRINGS.SAVED }) {
     if (!isActiveCaptureRequest(requestId)) return;
 
     if (clearInput) {
       setRaw("");
     }
     setError("");
-    setSuccess(UI_STRINGS.SAVED);
+    setSuccess(successText);
 
     try {
       dispatchCaptureCreated(createdTypes, response);
@@ -847,6 +847,49 @@ export default function TopCaptureBar() {
     const shortcutKind = attachedFileShortcutKind(cleanRaw);
     const shouldAutoCreateLinkedItem = Boolean(shortcutKind);
     const faxNormalized = normalizeAttachedFaxGrammar(cleanRaw, attachedFile?.name || "");
+    if (faxNormalized?.kind === "fax") {
+      if (!faxNormalized.ok) {
+        setError(faxNormalized.error || UI_STRINGS.FAX_SEND_FAILED);
+        return true;
+      }
+
+      let faxRes;
+      try {
+        faxRes = await fetch("/api/fax/send-upload", {
+          method: "POST",
+          body: attachedFile,
+          headers: {
+            "x-fax-number": faxNormalized.faxNumber,
+            "x-file-name-url": encodeURIComponent(attachedFile.name || "uploaded-file"),
+            "x-file-type": attachedFile.type || "application/octet-stream",
+            "content-type": attachedFile.type || "application/octet-stream",
+          },
+        });
+      } catch {
+        setError(UI_STRINGS.FAX_SEND_FAILED);
+        return true;
+      }
+
+      const faxData = await faxRes.json().catch(() => null);
+      if (!faxRes.ok || !faxData?.ok) {
+        if (faxData?.id) {
+          dispatchAppStatusChanged({ source: "fax", action: "send-failed", faxId: faxData.id });
+        }
+        setError((faxData && (faxData.status || faxData.error)) || UI_STRINGS.FAX_SEND_FAILED);
+        return true;
+      }
+
+      const queuedMessage = `${attachedFile.name || UI_STRINGS.FILE_SELECTED_FALLBACK} · ${UI_STRINGS.FAX_QUEUED}`;
+      clearAttachment();
+      await finalizeCreateSuccess({
+        requestId,
+        createdTypes: ["fax"],
+        response: faxData,
+        successText: queuedMessage,
+      });
+      return true;
+    }
+
     const normalized = shouldAutoCreateLinkedItem
       ? { ok: true, normalizedRaw: `++ ${deriveTitleFromFilename(attachedFile?.name || "")}` }
       : faxNormalized || normalizeAttachedFileGrammar(cleanRaw);
@@ -888,7 +931,7 @@ export default function TopCaptureBar() {
         });
       } catch {
         await fetch(`/api/files/${uploadData.id}/hard`, { method: "DELETE" }).catch(() => null);
-        setError(UI_STRINGS.SAVE_FAILED);
+        setError(UI_STRINGS.FAX_SEND_FAILED);
         return true;
       }
 
@@ -897,7 +940,7 @@ export default function TopCaptureBar() {
         if (faxData?.id) {
           dispatchAppStatusChanged({ source: "fax", action: "send-failed", faxId: faxData.id });
         }
-        setError((faxData && (faxData.status || faxData.error)) || UI_STRINGS.SAVE_FAILED);
+        setError((faxData && (faxData.status || faxData.error)) || UI_STRINGS.FAX_SEND_FAILED);
         return true;
       }
 
@@ -1036,6 +1079,11 @@ export default function TopCaptureBar() {
     if (!clean) {
       setScribblePromptRaw("");
       setError(editState ? UI_STRINGS.REMINDER_EMPTY : UI_STRINGS.CAPTURE_EMPTY);
+      setSuccess("");
+      return;
+    }
+    if (!attachedFile && clean.toLowerCase().startsWith("fax:")) {
+      setError(clean.slice(4).trim() ? UI_STRINGS.FAX_SELECT_FILE_FIRST : UI_STRINGS.FAX_NUMBER_REQUIRED);
       setSuccess("");
       return;
     }
