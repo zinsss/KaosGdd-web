@@ -1,15 +1,17 @@
 import { NextResponse } from "next/server";
 
-export async function GET(_request, { params }) {
+export async function GET(_request, context) {
+  const { id } = await context.params;
   const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
-  const res = await fetch(base + "/files/" + params.id, { cache: "no-store" });
+  const res = await fetch(base + "/files/" + id, { cache: "no-store" });
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
 }
 
-export async function DELETE(_request, { params }) {
+export async function DELETE(_request, context) {
+  const { id } = await context.params;
   const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
-  const res = await fetch(base + "/files/" + params.id, { method: "DELETE", cache: "no-store" });
+  const res = await fetch(base + "/files/" + id, { method: "DELETE", cache: "no-store" });
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
 }

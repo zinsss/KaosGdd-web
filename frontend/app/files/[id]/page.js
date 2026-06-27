@@ -23,8 +23,9 @@ async function getFileRaw(id) {
 }
 
 export default async function FileDetailPage({ params }) {
-  const result = await getFile(params.id);
-  const rawResult = result.ok ? await getFileRaw(params.id) : { ok: false, raw: "" };
+  const { id } = await params;
+  const result = await getFile(id);
+  const rawResult = result.ok ? await getFileRaw(id) : { ok: false, raw: "" };
 
   return (
     <main className="page">

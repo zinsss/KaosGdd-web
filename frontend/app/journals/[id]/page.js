@@ -13,7 +13,8 @@ async function getJournal(id) {
 }
 
 export default async function JournalDetailPage({ params }) {
-  const result = await getJournal(params.id);
+  const { id } = await params;
+  const result = await getJournal(id);
 
   return (
     <main className="page">
