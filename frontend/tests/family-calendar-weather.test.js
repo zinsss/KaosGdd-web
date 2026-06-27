@@ -71,6 +71,7 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.ok(timedIndex > allDayIndex, "timed rows should render after all-day rows");
 
   assert.match(weatherCss, /\.familyCalendarWeatherSummaryRow/);
+  assert.match(weatherCss, /\.familyCalendarWeatherSummaryRow \+ \.familyCalendarWeatherRow\s*\{[\s\S]*?border-top:\s*0;/);
   assert.match(weatherCss, /\.familyCalendarWeatherToggle/);
   assert.match(weatherCss, /\.familyCalendarWeatherToggleLabel/);
   assert.doesNotMatch(weatherCss, /familyCalendarWeatherToggleGlyph/);

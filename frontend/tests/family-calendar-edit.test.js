@@ -500,12 +500,13 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarSource.includes("family/calendar/caregiver?month="));
   assert.ok(calendarSource.indexOf("<FamilyCalendarWeatherRows") < calendarSource.indexOf("<FamilyCaregiverHoursRow"));
   assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("familyCalendarAllDayRow"));
+  assert.ok(calendarSource.indexOf('className="familyCalendarTimeRow familyCalendarAllDayRow"') < calendarSource.indexOf("hasSelectedWeekContent ? ("));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverRow {"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverReviewGutter {"));
   assert.match(calendarCss, /\.familyCalendarCaregiverReviewGutter\s*\{[\s\S]*?background:\s*rgba\(255, 216, 229, 0\.44\);[\s\S]*?color:\s*rgba\(180, 120, 190, 0\.72\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(214, 128, 157, 0\.12\);/);
   assert.match(calendarCss, /\.familyCalendarCaregiverLabel,\s*\n\.familyCalendarCaregiverPickerLabel\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?min-height:\s*20px;/);
-  assert.match(calendarCss, /\.familyCalendarCaregiverSlot\s*\{[\s\S]*?min-height:\s*19px;[\s\S]*?background:\s*#f2f3ff;[\s\S]*?color:\s*#6c63ff;[\s\S]*?box-shadow:\s*inset 0 0 0 1px #d9d6ff;/);
-  assert.match(calendarCss, /\.familyCalendarCaregiverSlotActive\s*\{[\s\S]*?background:\s*#e8eaff;[\s\S]*?color:\s*#5b54d9;[\s\S]*?box-shadow:\s*inset 0 0 0 2px rgba\(153, 145, 255, 0\.46\);/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverSlot\s*\{[\s\S]*?min-height:\s*19px;[\s\S]*?background:\s*#f4f4f4;[\s\S]*?color:\s*#666;[\s\S]*?box-shadow:\s*inset 0 0 0 1px #dedede;/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverSlotActive\s*\{[\s\S]*?background:\s*#ededed;[\s\S]*?color:\s*#4f4f4f;[\s\S]*?box-shadow:\s*inset 0 0 0 2px rgba\(150, 150, 150, 0\.36\);/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverPicker {"));
   assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverEditorGrid {"));
@@ -633,7 +634,7 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarCss.includes(".familyCalendarAllDaySlotDropTarget {"));
   assert.match(calendarCss, /\.familyCalendarExpandedWeekEditing\s*\{[\s\S]*?border:\s*0;[\s\S]*?padding:\s*0;[\s\S]*?background:\s*rgba\(230, 220, 255, 0\.22\);[\s\S]*?box-shadow:\s*none;/);
   assert.ok(!calendarCss.includes("border: 1px dashed rgba(180, 120, 190, 0.45);"));
-  assert.match(calendarCss, /\.familyCalendarSectionSeparated,\s*\n\.familyCalendarCaregiverRow,\s*\n\.familyCalendarAllDayRow\s*\{[\s\S]*?box-shadow:\s*inset 0 -1px 0 rgba\(180, 120, 190, 0\.13\);/);
+  assert.match(calendarCss, /\.familyCalendarSectionSeparated,\s*\n\.familyCalendarCaregiverRow,\s*\n\.familyCalendarAllDayRow\s*\{[\s\S]*?box-shadow:\s*none;/);
   assert.match(calendarCss, /\.familyCalendarEditModeBadge\s*\{[\s\S]*?background:\s*rgba\(245, 235, 255, 0\.82\);[\s\S]*?color:\s*rgba\(110, 75, 145, 0\.88\);/);
   assert.match(calendarCss, /\.familyCalendarEditItem::before,\s*\n\.familyCalendarAllDayItemEditable::before\s*\{[\s\S]*?content:\s*"⋮";[\s\S]*?position:\s*absolute;[\s\S]*?pointer-events:\s*none;/);
   assert.ok(!calendarCss.includes(".familyCalendarTimedItem::before"));
