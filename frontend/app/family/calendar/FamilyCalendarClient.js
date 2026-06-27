@@ -1620,20 +1620,18 @@ export default function FamilyCalendarClient() {
                     onToggleDate={setActiveCaregiverDate}
                     selectedWeekDates={selectedWeekDates}
                   />
+                  <div className="familyCalendarTimeRow familyCalendarAllDayRow">
+                    <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
+                    {selectedWeekAllDayItems.map((items, dayIndex) => (
+                      <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
+                        {items.map((item) => (
+                          <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${normalizedCalendarItemType(item)}-${item.id}`} />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
                   {hasSelectedWeekContent ? (
                     <>
-                      {hasSelectedWeekAllDayItems ? (
-                        <div className="familyCalendarTimeRow familyCalendarAllDayRow">
-                          <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
-                          {selectedWeekAllDayItems.map((items, dayIndex) => (
-                            <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
-                              {items.map((item) => (
-                                <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${normalizedCalendarItemType(item)}-${item.id}`} />
-                              ))}
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
                       {selectedWeekTimedSegments.map((segment) => (
                         <FamilyCalendarTimedArea
                           key={`${segment.startMinutes}-${segment.endMinutes}`}

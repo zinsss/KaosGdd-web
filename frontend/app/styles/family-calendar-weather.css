@@ -39,7 +39,7 @@
 .familyCalendarWeatherSummaryRow + .familyCalendarWeatherRow {
   margin-top: 3px;
   padding-top: 4px;
-  border-top: 1px solid rgba(214, 128, 157, 0.12);
+  border-top: 0;
 }
 
 .familyCalendarWeatherToggle,
