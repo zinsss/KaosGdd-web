@@ -242,6 +242,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarFormActions\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormActions > \*\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormActions \.familyTaskDelete\s*\{[\s\S]*?grid-column:\s*1 \/ -1;/);
+  assert.match(polishCss, /\.familyCalendarForm \.familyTaskSongField\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?flex-direction:\s*row;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?min-height:\s*42px;/);
+  assert.match(polishCss, /\.familyCalendarForm \.familyTaskSongField input\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?width:\s*auto;[\s\S]*?margin:\s*0;/);
   assert.match(polishCss, /\.familyCalendarItemRouny\.familyTimetableEntryPink\s*\{\s*background:\s*#ffc6dc;\s*\}/);
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPink\s*\{[\s\S]*?--family-calendar-event-outline:\s*#ffc6dc;[\s\S]*?--family-calendar-event-fill-soft:\s*rgba\(255, 198, 220, 0\.28\);/);
   assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?box-shadow:\s*inset 0 0 0 1px var\(--family-calendar-event-outline, #ffc6dc\);/);
@@ -505,8 +507,8 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarCss.includes(".familyCalendarCaregiverReviewGutter {"));
   assert.match(calendarCss, /\.familyCalendarCaregiverReviewGutter\s*\{[\s\S]*?background:\s*rgba\(255, 216, 229, 0\.44\);[\s\S]*?color:\s*rgba\(180, 120, 190, 0\.72\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(214, 128, 157, 0\.12\);/);
   assert.match(calendarCss, /\.familyCalendarCaregiverLabel,\s*\n\.familyCalendarCaregiverPickerLabel\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?min-height:\s*20px;/);
-  assert.match(calendarCss, /\.familyCalendarCaregiverSlot\s*\{[\s\S]*?min-height:\s*19px;[\s\S]*?background:\s*#f4f4f4;[\s\S]*?color:\s*#666;[\s\S]*?box-shadow:\s*inset 0 0 0 1px #dedede;/);
-  assert.match(calendarCss, /\.familyCalendarCaregiverSlotActive\s*\{[\s\S]*?background:\s*#ededed;[\s\S]*?color:\s*#4f4f4f;[\s\S]*?box-shadow:\s*inset 0 0 0 2px rgba\(150, 150, 150, 0\.36\);/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverSlot\s*\{[\s\S]*?min-height:\s*19px;[\s\S]*?background:\s*#f8f1f4;[\s\S]*?color:\s*rgba\(78, 37, 54, 0\.66\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(214, 128, 157, 0\.16\);/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverSlotActive\s*\{[\s\S]*?background:\s*#f3e9ee;[\s\S]*?color:\s*rgba\(78, 37, 54, 0\.72\);[\s\S]*?box-shadow:\s*inset 0 0 0 2px rgba\(214, 128, 157, 0\.2\);/);
   assert.ok(calendarCss.includes(".familyCalendarCaregiverPicker {"));
   assert.ok(calendarCss.includes("grid-column: 2 / -1;"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverEditorGrid {"));

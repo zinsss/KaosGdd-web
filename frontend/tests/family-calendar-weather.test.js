@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import {
+  fetchWeatherDaily,
+  fetchWeatherDayparts,
+  normalizeSharedWeatherPayload,
+} from "../app/lib/weather-client.js";
 
 async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
@@ -19,6 +24,7 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.match(weatherClient, /fetchWeatherDaily/);
   assert.match(weatherClient, /fetchWeatherDayparts/);
   assert.match(weatherClient, /fetchSharedWeather/);
+  assert.match(weatherClient, /normalizeSharedWeatherPayload/);
   assert.match(weatherClient, /fetch\("\/api\/weather"\)/);
   assert.doesNotMatch(weatherClient, /\/api\/weather\/daily/);
   assert.doesNotMatch(weatherClient, /\/api\/weather\/dayparts/);
@@ -40,6 +46,72 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.match(weatherSettings, /fetchSharedWeather/);
   assert.match(weatherSettings, /normalizeWeatherLocations/);
   assert.doesNotMatch(weatherSettings, /DEFAULT_WEATHER_LOCATIONS\.map/);
+});
+
+test("shared weather helper slices backend cache payload for Family calendar weather", async () => {
+  const sharedPayload = {
+    ok: true,
+    locations: [
+      {
+        id: "yeongdeok",
+        label: "영덕",
+        weather: {
+          daily: [],
+          dayparts: {},
+        },
+      },
+      {
+        id: "pohang",
+        label: "포항",
+        weather: {
+          daily: [
+            { date: "2026-06-21", glyph: "☁", condition: "cloudy", min_c: 17, max_c: 28 },
+            { date: "2026-06-22", glyph: "🌧", condition: "rain", min_c: 21, max_c: 26 },
+          ],
+          dayparts: {
+            "2026-06-22": [
+              { label: "Morning", temp_min_c: 21, temp_max_c: 23 },
+              { label: "Afternoon", temp_min_c: 24, temp_max_c: 26 },
+            ],
+          },
+        },
+      },
+      {
+        id: "daegu",
+        label: "대구",
+        weather: {
+          daily: [],
+          dayparts: {},
+        },
+      },
+    ],
+  };
+  const normalized = normalizeSharedWeatherPayload(sharedPayload);
+  assert.equal(normalized.ok, true);
+  assert.deepEqual(normalized.locations.map((location) => location.id), ["yeongdeok", "pohang", "daegu"]);
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url) => {
+    assert.equal(url, "/api/weather");
+    return { json: async () => sharedPayload };
+  };
+
+  try {
+    const daily = await fetchWeatherDaily({ location: "pohang", startDate: "2026-06-22", endDate: "2026-06-22" });
+    assert.equal(daily.ok, true);
+    assert.equal(daily.locations.length, 3);
+    assert.deepEqual(daily.items, [{ date: "2026-06-22", glyph: "🌧", condition: "rain", min_c: 21, max_c: 26 }]);
+
+    const dayparts = await fetchWeatherDayparts({ location: "pohang", date: "2026-06-22" });
+    assert.equal(dayparts.ok, true);
+    assert.equal(dayparts.weather_dayparts_available, true);
+    assert.deepEqual(dayparts.weather_dayparts, [
+      { label: "Morning", temp_min_c: 21, temp_max_c: 23 },
+      { label: "Afternoon", temp_min_c: 24, temp_max_c: 26 },
+    ]);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("family calendar expanded week keeps weather compact by default and renders it before all-day rows", async () => {
