@@ -2,6 +2,8 @@
 
 KaosGdd uses one backend-owned weather cache for application weather. Frontend pages should request KaosGdd weather only; they should not call an external weather provider directly.
 
+See also [Architecture](architecture.md) for the broader backend/frontend relationship.
+
 ## SQLite Tables
 
 `weather_locations`

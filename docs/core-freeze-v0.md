@@ -1,214 +1,128 @@
-# KaosGdd Web Core Freeze v0
+# KaosGdd Core Freeze
 
-## 1. Product identity
-- KaosGdd is web-only.
+This file records the architectural invariants that should not drift during feature work. `list` is not a product module and is not planned.
+
+## 1. Product Identity
+
+- KaosGdd is web-first.
 - Single-user.
 - Private.
-- Accessed through Tailscale only.
-- Hosted on a Debian server with systemd.
+- Tailscale-oriented.
+- Hosted on Debian with systemd.
+- SQLite remains the production database for now.
 - No Telegram support.
 - No Discord support.
 
-## 2. Core architecture
-- SQLite is the source of truth.
+## 2. Core Architecture
+
 - DB > Engine > UI.
-- Backend owns validation, parsing, scheduling, state transitions, sorting, and reminder dispatch.
-- Frontend is a client surface and must not invent business truth.
+- Backend owns validation, parsing, scheduling, state transitions, sorting, notification dispatch, weather cache, and durable shared records.
+- Frontend is a client surface and must not invent shared business truth.
+- Family localStorage features are allowed only where explicitly scoped as Family-local behavior.
 
-## 3. Module order
-1. Tasks + Reminders
-2. Events
-3. Notes
+## 3. Current Shared Modules
 
-## 4. Navigation
-- One main list.
-- Back button returns to main.
-- Main list is tasks.
-- Reminders affect tasks and alerts, but reminders are not the home screen object.
+- Dashboard
+- Tasks
+- Events
+- Reminders
+- Journals
+- Notes
+- Files
+- Fax
+- Supplies
+- Scribble
+- Settings
+- Weather cache
 
-## 5. Capture model
-- Hybrid.
-- Fast capture input is important.
-- Structured forms are used where helpful.
-- The product is not a fake chat app.
+There is no `list` module. Old parser references to `==` are legacy/deprecated and should not be expanded into product work.
 
-## 6. Notification routing
-- Reminder transport is not the web page itself.
-- App-wise/item-wise workflow notifications are delivered by Web Push and should deep-link into the app where possible.
-- Web Push app events include reminder fired, reminder missed, task became overdue, fax received, and item-level fax send failed.
-- Pushover is reserved for system-wise/admin/out-of-band alarms such as backend startup failure, scheduler crashes, reminder scan crashes, backup or migration failure, disk pressure, repeated Web Push delivery-system failure, fax modem offline, fax daemon crashes, fax temp-file cleanup failure, and other server maintenance alerts.
-- Do not send both Web Push and Pushover for the same ordinary app item event.
-- Backend scheduler reads due reminders and dispatches Web Push notifications.
+## 4. Family Module Boundary
 
-## 7. Schema direction
-The temporary scaffold schema in KaosGdd-web is disposable.
-The real v0 direction is:
-- items
-- task_items
-- task_subtasks
-- reminder_items
-- item_reminders
-- item_tags
-- reminder_events
+Family UI is intentionally softer and local-first. Current Family features are:
 
-The current kaoticgdd shape is a useful base, but bot-facing tables are not part of KaosGdd.
+- Calendar
+- Tasks
+- 로운이 timetable templates
+- Memo
+- Caregiver hours/review
 
-## 8. Canonical entities
-### items
-Purpose:
-- canonical identity
-- item type
-- title
-- lifecycle timestamps/status
+Family calendar/timetable/caregiver data is currently localStorage-owned. Do not migrate it into backend storage without an explicit migration PR and compatibility plan.
 
-Frozen direction:
-- id
-- item_type
-- title
-- status
-- created_at
-- updated_at
-- archived_at
-- deleted_at
+## 5. Capture Model
 
-Allowed item_type for v0:
-- task
-- reminder
+- Hybrid capture remains core.
+- Prefix grammar is the stable contract.
+- Structured forms are used where they reduce mistakes.
+- Capture is not a fake chat app.
+- Module pages can imply grammar for unprefixed input, but explicit prefixes always win.
 
-Later:
-- event
-- note
+## 6. Notification Routing
 
-Allowed status for v0:
-- active
-- removed
-- archived
-- deleted
+- Reminder transport is backend-owned.
+- Web Push handles normal app workflow events.
+- Pushover handles admin/system alarms and specific escalation flows.
+- Do not send both Web Push and Pushover for the same ordinary workflow event unless explicitly designed.
 
-### task_items
-Frozen direction:
-- item_id
-- due_at
-- memo
-- is_done
-- done_at
+## 7. Canonical Backend Data
 
-### task_subtasks
-Frozen direction:
-- id
-- task_item_id
-- content
-- position
-- is_done
-- done_at
-- removed_at
-- created_at
-- updated_at
+Backend durable records are built around:
 
-### reminder_items
-Frozen direction:
-- item_id
-- remind_at
-- state
-- alert_policy
-- last_fired_at
-- acked_at
-- snoozed_until
+- `items`
+- task tables
+- reminder tables
+- event tables
+- journal/note/file/fax/supply/scribble tables
+- push/notification tables
+- weather tables
 
-Allowed state:
-- scheduled
-- fired
-- acked
-- missed
-- cancelled
-- snoozed
+The current schema evolves through startup-safe SQLite migrations in `backend/app/db/schema_v0.py`.
 
-### item_reminders
-Frozen direction:
-- a reminder belongs to one parent item
-- a parent item can have multiple reminders over time
+## 8. Behavioral Rules
 
-### item_tags
-Frozen direction:
-- tags are independent from the task row
-- tags are normalized lowercase text links for v0
+Tasks:
 
-### reminder_events
-Frozen direction:
-- reminder history is preserved
-- event rows record created, fired, snoozed, acked, missed, and cancelled transitions
+- Task lifecycle and completion are separate concepts.
+- Done tasks are still tasks.
+- Reminders may attach to tasks but are independent records.
 
-## 9. Behavioral rules
-### task lifecycle
-- A task has separate concepts of lifecycle status and completion.
-- Main list shows active tasks.
-- Done tasks are still tasks, not a different entity.
+Events:
 
-### reminder ownership
-- Reminders are independent items targeting tasks.
-- Tasks do not embed reminders as blobs.
-- Reminder state changes are recorded in DB.
+- Events may be dated, ranged, recurring, classified, and linked with reminders.
+- Public holidays are synchronized backend-side.
 
-### scheduler model
-- Scheduler is backend-side.
-- Dispatcher reads due reminders.
-- Dispatcher sends ordinary app item events through Web Push with app deep links.
-- Pushover Emergency is an escalation channel for missed reminders and fax-send-failed events only; ordinary reminder, task-overdue, and fax-received workflow events use Web Push.
-- UI reflects DB state; it does not define it.
+Files/Fax:
 
-### main list behavior
-- Main list is tasks.
-- Task rows may show done/active state, due, reminder presence, missed state, subtask progress, and tags.
-- Reminder rows are not the main operational surface.
+- Files are durable records.
+- Fax send records are durable fax records.
+- Quick outgoing fax with a selected attachment is transient fax send behavior and must not be routed through File save grammar.
 
-## 10. What is explicitly excluded from the inherited design
-Do not carry over from kaoticgdd as architecture:
-- bot_messages
-- ui_state
-- channel/message-id driven UI assumptions
-- slash-command index resolution as the core interaction model
-- Discord bootstrap/panel/message-ops shell
+Weather:
 
-## 11. What remains open
-Not frozen yet:
-- exact main-list sorting rules
-- whether tasks done today stay in active list or move immediately
-- exact quick-capture grammar for the web command bar
-- event schema
-- note schema
-- whether tags become global normalized entities later
-- search schema
+- Backend owns weather locations, provider fetching, cache, stale handling, and endpoint response.
+- Frontend consumes app weather only.
 
-## 12. Immediate implementation consequence
-KaosGdd-web should stop deepening the temporary simple tasks table.
-The next real backend refactor should move toward:
-- items
-- task_items
-- task_subtasks
-- reminder_items
-- item_reminders
-- item_tags
-- reminder_events
+Scribble:
 
-The frontend can continue to evolve, but backend/domain work should follow this freeze.
+- Scribble is a transient workspace, not a Journal subtype.
+- Scribbles may later be converted or copied into durable modules.
 
-## 9. Scribble architecture freeze
-Scribble is an independent transient workspace object, not a Journal subtype, Journal alias, lightweight Journal entry, or permanent canonical history item.
+## 9. Excluded Inherited Concepts
 
-Frozen direction:
-- Scribble supports "capture chaos first, classify later".
-- Scribbles are temporary, mutable, disposable staging objects.
-- A Scribble may later convert into or spawn Tasks, Events, Reminders, Journal entries, Notes, Files, or be deleted after use.
-- Journal remains permanent, chronological, reflective/history-oriented, and semantically separate from Scribble.
+Do not carry over:
 
-Post-create navigation priority:
-1. Task
-2. Event
-3. Reminder
-4. Scribble
-5. Journal
-6. Note
-7. File
-8. Fax
+- Discord/bot message architecture
+- channel/message-id driven UI
+- slash-command index addressing
+- Telegram/Discord bootstrap assumptions
+- a generic `list` module
 
-Scribble creation must navigate to `/scribble`, not `/journals` or `/`.
+## 10. Open But Constrained
+
+Open decisions must still respect the freeze:
+
+- Exact sorting of module pages.
+- Future backend migration for selected Family local data.
+- Search/indexing.
+- More precise auth beyond Tailscale.
+- Scheduler expansion.
