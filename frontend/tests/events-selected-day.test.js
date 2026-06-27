@@ -63,7 +63,9 @@ test("selected-day weather dayparts render available and unavailable states", as
   const weatherClient = await readFile(new URL("../app/lib/weather-client.js", import.meta.url), "utf8");
 
   assert.match(source, /fetchWeatherDayparts\(\{ location: weatherLocation, date: selectedDate \}\)/);
-  assert.match(weatherClient, /\/api\/weather\/dayparts\?location=/);
+  assert.match(weatherClient, /fetchSharedWeather/);
+  assert.match(weatherClient, /fetch\("\/api\/weather"\)/);
+  assert.doesNotMatch(weatherClient, /\/api\/weather\/dayparts\?location=/);
   assert.match(source, /weatherDaypartsAvailable && weatherDayparts\.length > 0/);
   assert.match(source, /eventDaypartRow/);
   assert.match(source, /weatherDaypartsReason/);
@@ -75,7 +77,9 @@ test("daily month-cell weather remains in calendar cell rendering", async () => 
   const weatherClient = await readFile(new URL("../app/lib/weather-client.js", import.meta.url), "utf8");
 
   assert.match(source, /fetchWeatherDaily\(\{ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd \}\)/);
-  assert.match(weatherClient, /\/api\/weather\/daily\?location=/);
+  assert.match(weatherClient, /fetchSharedWeather/);
+  assert.match(weatherClient, /fetch\("\/api\/weather"\)/);
+  assert.doesNotMatch(weatherClient, /\/api\/weather\/daily\?location=/);
   assert.match(source, /calendarDayWeatherGlyph/);
   assert.match(source, /calendarDayWeatherTemp/);
 });

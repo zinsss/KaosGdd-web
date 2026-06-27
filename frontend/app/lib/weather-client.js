@@ -203,17 +203,59 @@ export function listenWeatherLocationChange(onChange) {
 }
 
 export async function fetchWeatherDaily({ location, startDate, endDate }) {
-  const res = await fetch(
-    `/api/weather/daily?location=${encodeURIComponent(location)}&start_date=${encodeURIComponent(startDate)}&end_date=${encodeURIComponent(endDate)}`,
-  );
-  return res.json();
+  const data = await fetchSharedWeather();
+  const normalizedLocation = normalizeWeatherLocation(location);
+  const locationWeather = findSharedWeatherLocation(data, normalizedLocation);
+  if (!locationWeather) {
+    return {
+      ok: false,
+      error: "weather unavailable",
+      location: { id: normalizedLocation, label: normalizedLocation },
+      locations: normalizeWeatherLocations(data?.locations),
+      items: [],
+    };
+  }
+
+  const items = Array.isArray(locationWeather.weather?.daily)
+    ? locationWeather.weather.daily.filter((item) => {
+      const date = String(item?.date || "");
+      return date >= startDate && date <= endDate;
+    })
+    : [];
+  return {
+    ok: true,
+    location: { id: locationWeather.id, label: locationWeather.label },
+    locations: normalizeWeatherLocations(data?.locations),
+    stale: Boolean(locationWeather.stale),
+    items,
+  };
 }
 
 export async function fetchWeatherDayparts({ location, date }) {
-  const res = await fetch(
-    `/api/weather/dayparts?location=${encodeURIComponent(location)}&date=${encodeURIComponent(date)}`,
-  );
+  const data = await fetchSharedWeather();
+  const normalizedLocation = normalizeWeatherLocation(location);
+  const locationWeather = findSharedWeatherLocation(data, normalizedLocation);
+  const weatherDayparts = locationWeather?.weather?.dayparts?.[date] || [];
+  return {
+    ok: Boolean(locationWeather),
+    date,
+    location: locationWeather ? { id: locationWeather.id, label: locationWeather.label } : { id: normalizedLocation, label: normalizedLocation },
+    locations: normalizeWeatherLocations(data?.locations),
+    stale: Boolean(locationWeather?.stale),
+    weather_dayparts_available: Array.isArray(weatherDayparts) && weatherDayparts.length > 0,
+    weather_unavailable_reason: Array.isArray(weatherDayparts) && weatherDayparts.length > 0 ? "" : "Weather info not available by time of day.",
+    weather_dayparts: Array.isArray(weatherDayparts) ? weatherDayparts : [],
+  };
+}
+
+export async function fetchSharedWeather() {
+  const res = await fetch("/api/weather");
   return res.json();
+}
+
+function findSharedWeatherLocation(data, location) {
+  const locations = Array.isArray(data?.locations) ? data.locations : [];
+  return locations.find((item) => item?.id === location) || null;
 }
 
 export function normalizeFamilyWeatherDayparts(payload) {

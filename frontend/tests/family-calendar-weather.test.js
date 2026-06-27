@@ -10,6 +10,7 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   const weatherClient = await readSource("../app/lib/weather-client.js");
   const eventsSource = await readSource("../app/events/EventsPageClient.js");
   const familyCalendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const sharedWeatherRoute = await readSource("../app/api/weather/route.js");
   const settingsPage = await readSource("../app/settings/page.js");
   const weatherSettings = await readSource("../components/settings/WeatherLocationSettings.js");
 
@@ -17,17 +18,28 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.match(weatherClient, /kaosgdd\.weather\.location\.v1/);
   assert.match(weatherClient, /fetchWeatherDaily/);
   assert.match(weatherClient, /fetchWeatherDayparts/);
+  assert.match(weatherClient, /fetchSharedWeather/);
+  assert.match(weatherClient, /fetch\("\/api\/weather"\)/);
+  assert.doesNotMatch(weatherClient, /\/api\/weather\/daily/);
+  assert.doesNotMatch(weatherClient, /\/api\/weather\/dayparts/);
   assert.match(weatherClient, /FAMILY_CALENDAR_DAYPART_LABELS\s*=\s*\["오전",\s*"오후",\s*"저녁",\s*"밤"\]/);
 
   assert.match(eventsSource, /from\s+"\.\.\/lib\/weather-client"/);
+  assert.match(eventsSource, /fetchWeatherDaily/);
+  assert.match(eventsSource, /fetchWeatherDayparts/);
   assert.match(familyCalendarSource, /from\s+"\.\.\/\.\.\/lib\/weather-client"/);
+  assert.match(familyCalendarSource, /fetchWeatherDaily/);
+  assert.match(familyCalendarSource, /fetchWeatherDayparts/);
   assert.match(familyCalendarSource, /getStoredWeatherLocation/);
   assert.match(familyCalendarSource, /listenWeatherLocationChange/);
+  assert.match(sharedWeatherRoute, /base \+ "\/api\/weather"/);
 
   assert.match(settingsPage, /날씨 지역/);
   assert.match(settingsPage, /WeatherLocationSettings/);
   assert.match(weatherSettings, /aria-label="날씨 지역"/);
-  assert.match(weatherSettings, /DEFAULT_WEATHER_LOCATIONS\.map/);
+  assert.match(weatherSettings, /fetchSharedWeather/);
+  assert.match(weatherSettings, /normalizeWeatherLocations/);
+  assert.doesNotMatch(weatherSettings, /DEFAULT_WEATHER_LOCATIONS\.map/);
 });
 
 test("family calendar expanded week keeps weather compact by default and renders it before all-day rows", async () => {

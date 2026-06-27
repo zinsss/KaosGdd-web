@@ -28,6 +28,12 @@ class FakeWeatherProvider:
         return self.rows
 
 
+class FailingWeatherProvider(FakeWeatherProvider):
+    def fetch_daily(self, location: dict) -> list[dict]:
+        self.calls += 1
+        raise RuntimeError("offline")
+
+
 class FakeHourlyWeatherProvider(FakeWeatherProvider):
     def __init__(self, rows: list[dict], hourly_rows: list[dict]) -> None:
         super().__init__(rows)
@@ -57,6 +63,17 @@ def test_configured_weather_locations_include_expected_korean_labels() -> None:
 def test_default_weather_location_is_pohang() -> None:
     assert DEFAULT_WEATHER_LOCATION_ID == "pohang"
     assert get_weather_location(None)["label"] == "포항"
+
+
+def test_weather_locations_are_seeded_into_sqlite(tmp_path) -> None:
+    engine, repo, _, service = make_weather_service(tmp_path, [])
+    service.get_shared_weather()
+    rows = repo.list_locations(enabled_only=True)
+
+    assert [row["id"] for row in rows] == ["yeongdeok", "pohang", "daegu"]
+    with engine.begin() as conn:
+        count = conn.execute(text("SELECT COUNT(*) FROM weather_locations")).scalar_one()
+    assert count == 3
 
 
 def test_invalid_weather_location_returns_clear_error(tmp_path) -> None:
@@ -154,6 +171,88 @@ def test_fresh_cached_data_avoids_provider_call(tmp_path) -> None:
     service.get_daily(location_id="daegu", start_date="2026-05-31", end_date="2026-06-01")
     service.get_daily(location_id="daegu", start_date="2026-05-31", end_date="2026-06-01")
     assert provider.calls == 1
+
+
+def test_shared_weather_cache_miss_fetches_and_stores_enabled_locations(tmp_path) -> None:
+    engine, _, provider, service = make_weather_service(
+        tmp_path,
+        [{"date": "2026-05-31", "weather_code": 0, "min_c": 10, "max_c": 20}],
+    )
+
+    result = service.get_shared_weather()
+
+    assert result["ok"] is True
+    assert provider.calls == 3
+    assert [item["id"] for item in result["locations"]] == ["yeongdeok", "pohang", "daegu"]
+    assert result["locations"][0]["weather"]["daily"][0]["condition"] == "clear"
+    with engine.begin() as conn:
+        count = conn.execute(text("SELECT COUNT(*) FROM weather_cache")).scalar_one()
+    assert count == 3
+
+
+def test_shared_weather_fresh_cache_skips_fetch(tmp_path) -> None:
+    _, _, provider, service = make_weather_service(
+        tmp_path,
+        [{"date": "2026-05-31", "weather_code": 0, "min_c": 10, "max_c": 20}],
+    )
+
+    service.get_shared_weather()
+    service.get_shared_weather()
+
+    assert provider.calls == 3
+
+
+def test_shared_weather_expired_cache_refreshes(tmp_path) -> None:
+    _, _, provider, service = make_weather_service(
+        tmp_path,
+        [{"date": "2026-05-31", "weather_code": 0, "min_c": 10, "max_c": 20}],
+    )
+    service.get_shared_weather()
+    provider.rows = [{"date": "2026-05-31", "weather_code": 61, "min_c": 12, "max_c": 21}]
+    service._now = lambda: datetime(2026, 5, 31, 14, 0, tzinfo=timezone.utc)
+
+    result = service.get_shared_weather()
+
+    assert provider.calls == 6
+    assert result["locations"][0]["stale"] is False
+    assert result["locations"][0]["weather"]["daily"][0]["condition"] == "rain"
+
+
+def test_shared_weather_provider_failure_returns_stale_cached_data(tmp_path) -> None:
+    _, repo, provider, service = make_weather_service(
+        tmp_path,
+        [{"date": "2026-05-31", "weather_code": 3, "min_c": 10, "max_c": 20}],
+    )
+    service.get_shared_weather()
+    service.provider = FailingWeatherProvider([])
+    service._now = lambda: datetime(2026, 5, 31, 14, 0, tzinfo=timezone.utc)
+
+    result = service.get_shared_weather()
+
+    assert service.provider.calls == 3
+    assert result["locations"][0]["stale"] is True
+    assert result["locations"][0]["weather"]["daily"][0]["condition"] == "cloudy"
+    assert repo.get_cache(location_id="pohang") is not None
+
+
+def test_shared_weather_provider_failure_without_cache_returns_location_error(tmp_path) -> None:
+    engine = create_engine(f"sqlite:///{tmp_path / 'weather.db'}")
+    init_schema_v0(engine)
+    repo = WeatherRepo(engine)
+    provider = FailingWeatherProvider([])
+    service = WeatherService(repo, provider=provider)
+    service._now = lambda: datetime(2026, 5, 31, 12, 0, tzinfo=timezone.utc)
+
+    result = service.get_shared_weather()
+
+    assert result["ok"] is True
+    assert provider.calls == 3
+    assert result["locations"][0]["stale"] is True
+    assert result["locations"][0]["error"] == "weather unavailable"
+    assert result["locations"][0]["weather"]["daily"] == []
+    with engine.begin() as conn:
+        count = conn.execute(text("SELECT COUNT(*) FROM weather_cache")).scalar_one()
+    assert count == 0
 
 
 def test_past_saved_snapshot_can_be_read_back_without_provider_call(tmp_path) -> None:
