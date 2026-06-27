@@ -475,6 +475,11 @@ def get_weather_dayparts(location: str = DEFAULT_WEATHER_LOCATION_ID, date: str 
     return weather_service.get_dayparts(location_id=location, target_date=date)
 
 
+@app.get("/api/weather")
+def get_shared_weather():
+    return weather_service.get_shared_weather()
+
+
 @app.get("/events/{event_id}")
 def get_event(event_id: str):
     item = event_service.get_event(event_id)

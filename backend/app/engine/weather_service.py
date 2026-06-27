@@ -10,9 +10,9 @@ from app.config import SETTINGS
 
 
 WEATHER_LOCATIONS = [
-    {"id": "yeongdeok", "label": "영덕", "latitude": 36.4151, "longitude": 129.3650},
-    {"id": "pohang", "label": "포항", "latitude": 36.0190, "longitude": 129.3435},
-    {"id": "daegu", "label": "대구", "latitude": 35.8714, "longitude": 128.6014},
+    {"id": "yeongdeok", "label": "영덕", "latitude": 36.4151, "longitude": 129.3650, "provider": "open-meteo", "enabled": True, "display_order": 0},
+    {"id": "pohang", "label": "포항", "latitude": 36.0190, "longitude": 129.3435, "provider": "open-meteo", "enabled": True, "display_order": 1},
+    {"id": "daegu", "label": "대구", "latitude": 35.8714, "longitude": 128.6014, "provider": "open-meteo", "enabled": True, "display_order": 2},
 ]
 DEFAULT_WEATHER_LOCATION_ID = "pohang"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
@@ -163,6 +163,15 @@ class WeatherService:
         self.weather_repo = weather_repo
         self.provider = provider or OpenMeteoWeatherProvider()
 
+    def get_shared_weather(self) -> dict:
+        self.weather_repo.ensure_locations(WEATHER_LOCATIONS)
+        locations = self.weather_repo.list_locations(enabled_only=True)
+        return {
+            "ok": True,
+            "ttl_seconds": WEATHER_CACHE_TTL_MINUTES * 60,
+            "locations": [self._location_weather(location) for location in locations],
+        }
+
     def get_daily(self, *, location_id: str | None, start_date: str, end_date: str) -> dict:
         location = get_weather_location(location_id)
         if location is None:
@@ -249,6 +258,123 @@ class WeatherService:
             "weather_dayparts_available": True,
             "weather_dayparts": dayparts,
         }
+
+    def _location_weather(self, location: dict) -> dict:
+        now = self._now()
+        cache = self.weather_repo.get_cache(location_id=location["id"])
+        if cache and self._cache_row_is_fresh(cache, now):
+            return self._cached_location_response(location=location, cache=cache, stale=False)
+
+        try:
+            payload, fetched_at = self._fetch_shared_payload(location=location)
+        except Exception:
+            if cache:
+                return self._cached_location_response(location=location, cache=cache, stale=True)
+            return {
+                "id": location["id"],
+                "label": location["label"],
+                "provider": location.get("provider") or "open-meteo",
+                "stale": True,
+                "error": "weather unavailable",
+                "fetched_at": None,
+                "expires_at": None,
+                "weather": {
+                    "daily": [],
+                    "dayparts": {},
+                },
+            }
+
+        expires_at = (now + timedelta(minutes=WEATHER_CACHE_TTL_MINUTES)).isoformat(timespec="seconds")
+        self.weather_repo.upsert_cache(
+            location_id=location["id"],
+            payload_json=json.dumps(payload, ensure_ascii=False, sort_keys=True),
+            fetched_at=fetched_at,
+            expires_at=expires_at,
+        )
+        return {
+            "id": location["id"],
+            "label": location["label"],
+            "provider": location.get("provider") or "open-meteo",
+            "stale": False,
+            "fetched_at": fetched_at,
+            "expires_at": expires_at,
+            "weather": payload,
+        }
+
+    def _cached_location_response(self, *, location: dict, cache: dict, stale: bool) -> dict:
+        try:
+            payload = json.loads(cache.get("payload_json") or "{}")
+        except (TypeError, ValueError):
+            payload = {}
+        if not isinstance(payload, dict):
+            payload = {}
+        payload.setdefault("daily", [])
+        payload.setdefault("dayparts", {})
+        return {
+            "id": location["id"],
+            "label": location["label"],
+            "provider": location.get("provider") or "open-meteo",
+            "stale": stale,
+            "fetched_at": cache.get("fetched_at"),
+            "expires_at": cache.get("expires_at"),
+            "weather": payload,
+        }
+
+    def _cache_row_is_fresh(self, cache: dict, now: datetime) -> bool:
+        try:
+            expires_at = datetime.fromisoformat(str(cache.get("expires_at") or ""))
+        except ValueError:
+            return False
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=now.tzinfo)
+        return expires_at > now
+
+    def _fetch_shared_payload(self, *, location: dict) -> tuple[dict, str]:
+        now = self._now()
+        fetched_at = now.isoformat(timespec="seconds")
+        daily_items = []
+        snapshots = []
+        dayparts_by_date = {}
+        fetch_hourly = getattr(self.provider, "fetch_hourly", None)
+
+        for row in self.provider.fetch_daily(location):
+            condition = weather_code_to_condition(row.get("weather_code"))
+            item = {
+                "date": str(row["date"]),
+                "condition": condition,
+                "glyph": weather_glyph_for_condition(condition),
+                "weather_code": int(row["weather_code"]),
+                "min_c": round_celsius(row["min_c"]),
+                "max_c": round_celsius(row["max_c"]),
+                "fetched_at": fetched_at,
+            }
+            daily_items.append(item)
+            snapshots.append(
+                {
+                    "id": f"{location['id']}:{item['date']}",
+                    "location_id": location["id"],
+                    "location_label": location["label"],
+                    "date": item["date"],
+                    "condition_bucket": condition,
+                    "weather_glyph": item["glyph"],
+                    "weather_code": item["weather_code"],
+                    "min_c": item["min_c"],
+                    "max_c": item["max_c"],
+                    "source": location.get("provider") or "open-meteo",
+                    "fetched_at": fetched_at,
+                }
+            )
+            if callable(fetch_hourly):
+                try:
+                    dayparts_by_date[item["date"]] = self._hourly_rows_to_dayparts(fetch_hourly(location, item["date"]))
+                except Exception:
+                    dayparts_by_date[item["date"]] = []
+
+        self.weather_repo.upsert_snapshots(snapshots)
+        return {
+            "daily": daily_items,
+            "dayparts": dayparts_by_date,
+        }, fetched_at
 
     def _refresh_forecast_if_needed(self, *, location: dict, end_date: str) -> None:
         today = self._today()

@@ -131,4 +131,6 @@ class DbTables:
     # Supplies/weather
     SUPPLY_ITEMS = "supply_items"
     SUPPLY_PRESETS = "supply_presets"
+    WEATHER_LOCATIONS = "weather_locations"
+    WEATHER_CACHE = "weather_cache"
     WEATHER_DAILY_SNAPSHOTS = "weather_daily_snapshots"

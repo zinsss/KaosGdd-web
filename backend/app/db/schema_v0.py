@@ -197,6 +197,28 @@ CREATE TABLE IF NOT EXISTS {scribbles} (
     sort_order INTEGER NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS {weather_locations} (
+    id TEXT PRIMARY KEY,
+    label TEXT NOT NULL,
+    latitude REAL NOT NULL,
+    longitude REAL NOT NULL,
+    provider TEXT NOT NULL,
+    enabled INTEGER NOT NULL DEFAULT 1,
+    display_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    CHECK (enabled IN (0, 1))
+);
+
+CREATE TABLE IF NOT EXISTS {weather_cache} (
+    location_id TEXT PRIMARY KEY,
+    payload_json TEXT NOT NULL,
+    fetched_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    FOREIGN KEY (location_id) REFERENCES {weather_locations}(id) ON DELETE CASCADE
+);
+
 CREATE TABLE IF NOT EXISTS {weather_daily_snapshots} (
     id TEXT PRIMARY KEY,
     location_id TEXT NOT NULL,
@@ -340,6 +362,12 @@ ON {scribbles}(sort_order DESC, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_scribbles_updated_at
 ON {scribbles}(updated_at);
 
+CREATE INDEX IF NOT EXISTS idx_weather_locations_enabled_order
+ON {weather_locations}(enabled, display_order);
+
+CREATE INDEX IF NOT EXISTS idx_weather_cache_expires
+ON {weather_cache}(expires_at);
+
 CREATE INDEX IF NOT EXISTS idx_weather_daily_snapshots_location_date
 ON {weather_daily_snapshots}(location_id, date);
 
@@ -369,6 +397,8 @@ ON {weather_daily_snapshots}(location_id, fetched_at);
     push_event_dedupe=DbTables.PUSH_EVENT_DEDUPE,
     notification_preferences=DbTables.NOTIFICATION_PREFERENCES,
     scribbles=DbTables.SCRIBBLES,
+    weather_locations=DbTables.WEATHER_LOCATIONS,
+    weather_cache=DbTables.WEATHER_CACHE,
     weather_daily_snapshots=DbTables.WEATHER_DAILY_SNAPSHOTS,
 )
 
