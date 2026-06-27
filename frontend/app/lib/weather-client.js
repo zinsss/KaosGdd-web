@@ -250,11 +250,42 @@ export async function fetchWeatherDayparts({ location, date }) {
 
 export async function fetchSharedWeather() {
   const res = await fetch("/api/weather");
-  return res.json();
+  return normalizeSharedWeatherPayload(await res.json());
+}
+
+export function normalizeSharedWeatherPayload(data) {
+  const locations = Array.isArray(data) ? data : data?.locations;
+  return {
+    ...(data && typeof data === "object" && !Array.isArray(data) ? data : {}),
+    ok: data?.ok !== false,
+    locations: normalizeSharedWeatherLocationEntries(locations),
+  };
+}
+
+function normalizeSharedWeatherLocationEntries(locations) {
+  if (!Array.isArray(locations)) return [];
+  return locations
+    .map((location) => {
+      const id = String(location?.id || "").trim();
+      const label = String(location?.label || id).trim();
+      if (!id) return null;
+      const weather = location?.weather && typeof location.weather === "object" ? location.weather : {};
+      return {
+        ...location,
+        id,
+        label,
+        weather: {
+          ...weather,
+          daily: Array.isArray(weather.daily) ? weather.daily : [],
+          dayparts: weather.dayparts && typeof weather.dayparts === "object" ? weather.dayparts : {},
+        },
+      };
+    })
+    .filter(Boolean);
 }
 
 function findSharedWeatherLocation(data, location) {
-  const locations = Array.isArray(data?.locations) ? data.locations : [];
+  const locations = normalizeSharedWeatherPayload(data).locations;
   return locations.find((item) => item?.id === location) || null;
 }
 
