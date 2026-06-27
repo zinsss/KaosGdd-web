@@ -12,7 +12,8 @@ async function getReminder(id) {
 }
 
 export default async function ReminderDetailPage({ params }) {
-  const result = await getReminder(params.id);
+  const { id } = await params;
+  const result = await getReminder(id);
 
   return (
     <main className="page">

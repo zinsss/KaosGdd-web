@@ -4,15 +4,17 @@ import { deletePendingShare, readPendingShareMetadata } from "../../../../lib/pe
 
 const MISSING_ERROR = "shared file expired or missing";
 
-export async function GET(_request, { params }) {
-  const metadata = await readPendingShareMetadata(params.id);
+export async function GET(_request, context) {
+  const { id } = await context.params;
+  const metadata = await readPendingShareMetadata(id);
   if (!metadata) {
     return NextResponse.json({ ok: false, error: MISSING_ERROR }, { status: 404 });
   }
   return NextResponse.json({ ok: true, item: metadata });
 }
 
-export async function DELETE(_request, { params }) {
-  await deletePendingShare(params.id);
+export async function DELETE(_request, context) {
+  const { id } = await context.params;
+  await deletePendingShare(id);
   return NextResponse.json({ ok: true });
 }

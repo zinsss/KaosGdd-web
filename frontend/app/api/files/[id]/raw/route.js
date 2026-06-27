@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET(_request, context) {
-  const id = context.params.id;
+  const { id } = await context.params;
   const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
   const res = await fetch(base + "/files/" + id + "/raw", { cache: "no-store" });
   const data = await res.json();
@@ -9,7 +9,7 @@ export async function GET(_request, context) {
 }
 
 export async function PATCH(request, context) {
-  const id = context.params.id;
+  const { id } = await context.params;
   const payload = await request.json();
   const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
   const res = await fetch(base + "/files/" + id + "/raw", {
