@@ -1442,8 +1442,18 @@
 }
 
 .familyCalendarFormToggle {
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: inline-flex !important;
+  flex-direction: row-reverse;
   align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: auto !important;
+  min-width: 92px;
+  min-height: 42px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 14px;
+  white-space: nowrap;
 }
 
 .familyCalendarFormMeta {
@@ -1465,11 +1475,7 @@
 }
 
 .familyCalendarFormAllDayInline {
-  display: inline-grid;
-  grid-template-columns: auto auto;
   justify-self: end;
-  width: auto !important;
-  white-space: nowrap;
 }
 
 .familyCalendarFormToggleControl {
@@ -1483,7 +1489,7 @@
   padding: 0 !important;
   border-radius: 4px !important;
   accent-color: #d86f98;
-  justify-self: end;
+  flex: 0 0 auto;
   box-shadow: none !important;
 }
 

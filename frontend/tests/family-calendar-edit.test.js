@@ -115,6 +115,7 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes('type="checkbox"'));
   assert.ok(eventFormSource.includes('{draft.allDay ? null : ('));
   assert.ok(eventFormSource.includes('familyCalendarFormGridAllDay'));
+  assert.ok(eventFormSource.includes('className="familyCalendarFormToggle familyCalendarFormAllDayInline"'));
   assert.ok(eventFormSource.includes('className="familyCalendarDateTimeSection"'));
   assert.ok(eventFormSource.includes('className="familyCalendarDateTimeTitle">날짜/시간</span>'));
   assert.ok(eventFormSource.includes('className="familyCalendarDateTimeRow"'));
@@ -211,7 +212,7 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarForm input,\s*\n\.familyCalendarForm select,\s*\n\.familyCalendarForm textarea,\s*\n\.familyCalendarForm button\s*\{[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(calendarCss, /\.familyCalendarForm input,\s*\n\.familyCalendarForm select,\s*\n\.familyCalendarForm textarea\s*\{[\s\S]*?width:\s*100%;[\s\S]*?inline-size:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?max-inline-size:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?min-inline-size:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormMetaRow\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
-  assert.match(calendarCss, /\.familyCalendarFormAllDayInline\s*\{[\s\S]*?display:\s*inline-grid;[\s\S]*?grid-template-columns:\s*auto auto;[\s\S]*?width:\s*auto !important;[\s\S]*?white-space:\s*nowrap;/);
+  assert.match(calendarCss, /\.familyCalendarFormToggle\s*\{[\s\S]*?display:\s*inline-flex !important;[\s\S]*?flex-direction:\s*row-reverse;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?gap:\s*8px;[\s\S]*?width:\s*auto !important;[\s\S]*?white-space:\s*nowrap;/);
   assert.match(calendarCss, /\.familyCalendarFormGrid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\);[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(calendarCss, /\.familyCalendarFormGrid > label,\s*\n\.familyCalendarFormGrid > \.familyCalendarPickerRow,\s*\n\.familyCalendarFormGrid > \.familyCalendarFormTimeRow,\s*\n\.familyCalendarFormGrid > \.familyCalendarDateTimeSection\s*\{[\s\S]*?width:\s*auto;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(calendarCss, /\.familyCalendarFormGrid input\s*\{[\s\S]*?display:\s*block;[\s\S]*?width:\s*100%;[\s\S]*?inline-size:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?max-inline-size:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?min-inline-size:\s*0;[\s\S]*?box-sizing:\s*border-box;/);
@@ -242,6 +243,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarFormActions\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*repeat\(2, minmax\(0, 1fr\)\);[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormActions > \*\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormActions \.familyTaskDelete\s*\{[\s\S]*?grid-column:\s*1 \/ -1;/);
+  assert.match(calendarCss, /\.familyCalendarFormToggle\s*\{[\s\S]*?display:\s*inline-flex !important;[\s\S]*?flex-direction:\s*row-reverse;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?gap:\s*8px;[\s\S]*?min-height:\s*42px;/);
+  assert.match(calendarCss, /\.familyCalendarFormToggleControl\s*\{[\s\S]*?width:\s*20px !important;[\s\S]*?margin:\s*0;[\s\S]*?flex:\s*0 0 auto;/);
   assert.match(polishCss, /\.familyCalendarForm \.familyTaskSongField\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?flex-direction:\s*row;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?min-height:\s*42px;/);
   assert.match(polishCss, /\.familyCalendarForm \.familyTaskSongField input\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?width:\s*auto;[\s\S]*?margin:\s*0;/);
   assert.match(polishCss, /\.familyCalendarItemRouny\.familyTimetableEntryPink\s*\{\s*background:\s*#ffc6dc;\s*\}/);
