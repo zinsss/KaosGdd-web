@@ -204,6 +204,10 @@ export function listenWeatherLocationChange(onChange) {
 
 export async function fetchWeatherDaily({ location, startDate, endDate }) {
   const data = await fetchSharedWeather();
+  return sharedWeatherDailyFromPayload(data, { location, startDate, endDate });
+}
+
+export function sharedWeatherDailyFromPayload(data, { location, startDate, endDate }) {
   const normalizedLocation = normalizeWeatherLocation(location);
   const locationWeather = findSharedWeatherLocation(data, normalizedLocation);
   if (!locationWeather) {
@@ -233,6 +237,10 @@ export async function fetchWeatherDaily({ location, startDate, endDate }) {
 
 export async function fetchWeatherDayparts({ location, date }) {
   const data = await fetchSharedWeather();
+  return sharedWeatherDaypartsFromPayload(data, { location, date });
+}
+
+export function sharedWeatherDaypartsFromPayload(data, { location, date }) {
   const normalizedLocation = normalizeWeatherLocation(location);
   const locationWeather = findSharedWeatherLocation(data, normalizedLocation);
   const weatherDayparts = locationWeather?.weather?.dayparts?.[date] || [];
