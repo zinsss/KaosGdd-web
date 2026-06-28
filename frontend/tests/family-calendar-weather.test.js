@@ -24,6 +24,8 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.match(weatherClient, /fetchWeatherDaily/);
   assert.match(weatherClient, /fetchWeatherDayparts/);
   assert.match(weatherClient, /fetchSharedWeather/);
+  assert.match(weatherClient, /sharedWeatherDailyFromPayload/);
+  assert.match(weatherClient, /sharedWeatherDaypartsFromPayload/);
   assert.match(weatherClient, /normalizeSharedWeatherPayload/);
   assert.match(weatherClient, /fetch\("\/api\/weather"\)/);
   assert.doesNotMatch(weatherClient, /\/api\/weather\/daily/);
@@ -31,8 +33,11 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.match(weatherClient, /FAMILY_CALENDAR_DAYPART_LABELS\s*=\s*\["오전",\s*"오후",\s*"저녁",\s*"밤"\]/);
 
   assert.match(eventsSource, /from\s+"\.\.\/lib\/weather-client"/);
-  assert.match(eventsSource, /fetchWeatherDaily/);
-  assert.match(eventsSource, /fetchWeatherDayparts/);
+  assert.match(eventsSource, /fetchSharedWeather/);
+  assert.match(eventsSource, /sharedWeatherDailyFromPayload/);
+  assert.match(eventsSource, /sharedWeatherDaypartsFromPayload/);
+  assert.doesNotMatch(eventsSource, /fetchWeatherDaily\(\{ location: weatherLocation/);
+  assert.doesNotMatch(eventsSource, /fetchWeatherDayparts\(\{ location: weatherLocation/);
   assert.match(familyCalendarSource, /from\s+"\.\.\/\.\.\/lib\/weather-client"/);
   assert.match(familyCalendarSource, /fetchWeatherDaily/);
   assert.match(familyCalendarSource, /fetchWeatherDayparts/);

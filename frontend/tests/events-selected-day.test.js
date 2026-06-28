@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import {
+  sharedWeatherDailyFromPayload,
+  sharedWeatherDaypartsFromPayload,
+} from "../app/lib/weather-client.js";
 
 test("events page defaults selected date from date query or today", async () => {
   const source = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
@@ -62,9 +66,11 @@ test("selected-day weather dayparts render available and unavailable states", as
   const source = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
   const weatherClient = await readFile(new URL("../app/lib/weather-client.js", import.meta.url), "utf8");
 
-  assert.match(source, /fetchWeatherDayparts\(\{ location: weatherLocation, date: selectedDate \}\)/);
+  assert.match(source, /fetchSharedWeather\(\)/);
+  assert.match(source, /sharedWeatherDaypartsFromPayload\(sharedWeather, \{ location: weatherLocation, date: selectedDate \}\)/);
   assert.match(weatherClient, /fetchSharedWeather/);
   assert.match(weatherClient, /fetch\("\/api\/weather"\)/);
+  assert.doesNotMatch(source, /fetchWeatherDayparts\(\{ location: weatherLocation, date: selectedDate \}\)/);
   assert.doesNotMatch(weatherClient, /\/api\/weather\/dayparts\?location=/);
   assert.match(source, /weatherDaypartsAvailable && weatherDayparts\.length > 0/);
   assert.match(source, /eventDaypartRow/);
@@ -76,10 +82,54 @@ test("daily month-cell weather remains in calendar cell rendering", async () => 
   const source = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
   const weatherClient = await readFile(new URL("../app/lib/weather-client.js", import.meta.url), "utf8");
 
-  assert.match(source, /fetchWeatherDaily\(\{ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd \}\)/);
+  assert.match(source, /fetchSharedWeather\(\)/);
+  assert.match(source, /sharedWeatherDailyFromPayload\(sharedWeather, \{ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd \}\)/);
   assert.match(weatherClient, /fetchSharedWeather/);
   assert.match(weatherClient, /fetch\("\/api\/weather"\)/);
+  assert.doesNotMatch(source, /fetchWeatherDaily\(\{ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd \}\)/);
   assert.doesNotMatch(weatherClient, /\/api\/weather\/daily\?location=/);
   assert.match(source, /calendarDayWeatherGlyph/);
   assert.match(source, /calendarDayWeatherTemp/);
+});
+
+test("main events can slice cold shared weather payload without Family calendar priming", async () => {
+  const sharedPayload = {
+    ok: true,
+    locations: [
+      {
+        id: "pohang",
+        label: "포항",
+        stale: false,
+        weather: {
+          daily: [
+            { date: "2026-06-01", glyph: "☀", min_c: 18, max_c: 27 },
+            { date: "2026-06-02", glyph: "🌧", min_c: 19, max_c: 24 },
+          ],
+          dayparts: {
+            "2026-06-02": [
+              { label: "Morning", glyph: "🌧", temp_min_c: 19, temp_max_c: 21 },
+            ],
+          },
+        },
+      },
+    ],
+  };
+
+  const daily = sharedWeatherDailyFromPayload(sharedPayload, {
+    location: "pohang",
+    startDate: "2026-06-02",
+    endDate: "2026-06-02",
+  });
+  assert.equal(daily.ok, true);
+  assert.deepEqual(daily.items, [{ date: "2026-06-02", glyph: "🌧", min_c: 19, max_c: 24 }]);
+
+  const dayparts = sharedWeatherDaypartsFromPayload(sharedPayload, {
+    location: "pohang",
+    date: "2026-06-02",
+  });
+  assert.equal(dayparts.ok, true);
+  assert.equal(dayparts.weather_dayparts_available, true);
+  assert.deepEqual(dayparts.weather_dayparts, [
+    { label: "Morning", glyph: "🌧", temp_min_c: 19, temp_max_c: 21 },
+  ]);
 });

@@ -9,12 +9,13 @@ import { UI_STRINGS } from "../../lib/strings";
 import {
   DEFAULT_WEATHER_LOCATION,
   DEFAULT_WEATHER_LOCATIONS,
-  fetchWeatherDaily,
-  fetchWeatherDayparts,
+  fetchSharedWeather,
   getStoredWeatherLocation,
   listenWeatherLocationChange,
   normalizeWeatherLocations,
   setStoredWeatherLocation,
+  sharedWeatherDailyFromPayload,
+  sharedWeatherDaypartsFromPayload,
 } from "../lib/weather-client";
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
@@ -128,8 +129,9 @@ export default function EventsPageClient() {
   function loadWeather() {
     if (!weatherStart || !weatherEnd || !weatherLocation) return;
 
-    fetchWeatherDaily({ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd })
-      .then((data) => {
+    fetchSharedWeather()
+      .then((sharedWeather) => {
+        const data = sharedWeatherDailyFromPayload(sharedWeather, { location: weatherLocation, startDate: weatherStart, endDate: weatherEnd });
         if (!data?.ok) {
           setWeatherError("weather unavailable");
           setWeatherItems([]);
@@ -153,8 +155,9 @@ export default function EventsPageClient() {
   function loadWeatherDayparts() {
     if (!selectedDate || !weatherLocation) return;
 
-    fetchWeatherDayparts({ location: weatherLocation, date: selectedDate })
-      .then((data) => {
+    fetchSharedWeather()
+      .then((sharedWeather) => {
+        const data = sharedWeatherDaypartsFromPayload(sharedWeather, { location: weatherLocation, date: selectedDate });
         const available = Boolean(data?.weather_dayparts_available);
         setWeatherDaypartsAvailable(available);
         setWeatherDayparts(Array.isArray(data?.weather_dayparts) ? data.weather_dayparts : []);
