@@ -345,7 +345,10 @@ Important tables:
 - `weather_cache`
 - `weather_daily_snapshots`
 
-SQLite startup migration is the current schema evolution mechanism.
+The v0 bootstrap is dialect-aware. SQLite keeps startup-safe legacy repair
+migrations; PostgreSQL uses `DATABASE_SCHEMA` (default `main`) via the backend
+connection search path so repository SQL can stay schema-unqualified during the
+migration.
 
 ## Operational Services
 

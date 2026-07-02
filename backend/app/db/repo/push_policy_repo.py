@@ -84,8 +84,9 @@ class PushPolicyRepo:
             result = conn.execute(
                 text(
                     """
-                    INSERT OR IGNORE INTO {table}(event_key, event_type, created_at)
+                    INSERT INTO {table}(event_key, event_type, created_at)
                     VALUES (:event_key, :event_type, :created_at)
+                    ON CONFLICT(event_key) DO NOTHING
                     """.format(table=DbTables.PUSH_EVENT_DEDUPE)
                 ),
                 {"event_key": event_key, "event_type": event_type, "created_at": now_iso()},
