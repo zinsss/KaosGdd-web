@@ -1,10 +1,11 @@
+import os
+import re
+
 from sqlalchemy import text
 
 from app.config import DbTables
 
 SCHEMA_SQL = """
-PRAGMA foreign_keys = ON;
-
 -- Current live item types intentionally stay narrow.
 -- Parser roadmap includes more kinds, but persisted types remain task/reminder for now.
 CREATE TABLE IF NOT EXISTS {items} (
@@ -403,6 +404,25 @@ ON {weather_daily_snapshots}(location_id, fetched_at);
 )
 
 
+def _database_schema() -> str:
+    schema = os.getenv("DATABASE_SCHEMA", "main").strip() or "main"
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", schema):
+        raise ValueError("DATABASE_SCHEMA must be a simple SQL identifier")
+    return schema
+
+
+def _dialect_setup_statements(dialect_name: str) -> list[str]:
+    if dialect_name == "sqlite":
+        return ["PRAGMA foreign_keys = ON"]
+    if dialect_name.startswith("postgresql"):
+        schema = _database_schema()
+        return [
+            f"CREATE SCHEMA IF NOT EXISTS {schema}",
+            f"SET search_path TO {schema}, public",
+        ]
+    return []
+
+
 def _sqlite_items_table_allows_supported_types(conn) -> bool:
     row = conn.execute(
         text("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = :name"),
@@ -706,9 +726,12 @@ def _migrate_sqlite_scribbles_to_cards(conn) -> None:
 
 def init_schema_v0(engine) -> None:
     with engine.begin() as conn:
-        if engine.dialect.name == "sqlite" and not _sqlite_items_table_allows_supported_types(conn):
+        dialect_name = engine.dialect.name
+        for setup_sql in _dialect_setup_statements(dialect_name):
+            conn.execute(text(setup_sql))
+        if dialect_name == "sqlite" and not _sqlite_items_table_allows_supported_types(conn):
             _migrate_sqlite_items_table_add_supported_types(conn)
-        if engine.dialect.name == "sqlite":
+        if dialect_name == "sqlite":
             _migrate_sqlite_legacy_task_reminder_tables(conn)
             if not _sqlite_reminder_items_allows_completed_state(conn):
                 _migrate_sqlite_reminder_items_add_completed_state(conn)

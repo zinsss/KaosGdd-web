@@ -190,9 +190,13 @@ class SupplyRepo:
                     DELETE FROM {supply_presets}
                     WHERE normalized_name IN (
                         SELECT normalized_name
-                        FROM {supply_presets}
-                        ORDER BY last_used_at DESC
-                        LIMIT -1 OFFSET 15
+                        FROM (
+                            SELECT
+                                normalized_name,
+                                ROW_NUMBER() OVER (ORDER BY last_used_at DESC) AS preset_rank
+                            FROM {supply_presets}
+                        ) ranked_presets
+                        WHERE preset_rank > 15
                     )
                     """.format(supply_presets=DbTables.SUPPLY_PRESETS)
                 )

@@ -6,7 +6,30 @@ import os
 
 from sqlalchemy import create_engine, text
 
-from app.db.schema_v0 import init_schema_v0
+from app.db.schema_v0 import SCHEMA_SQL, _dialect_setup_statements, init_schema_v0
+
+
+def test_schema_bootstrap_uses_dialect_specific_setup(monkeypatch) -> None:
+    assert _dialect_setup_statements("sqlite") == ["PRAGMA foreign_keys = ON"]
+
+    monkeypatch.setenv("DATABASE_SCHEMA", "main")
+    postgres_setup = _dialect_setup_statements("postgresql")
+    assert postgres_setup == [
+        "CREATE SCHEMA IF NOT EXISTS main",
+        "SET search_path TO main, public",
+    ]
+    assert "PRAGMA" not in SCHEMA_SQL
+
+
+def test_schema_bootstrap_rejects_unsafe_database_schema(monkeypatch) -> None:
+    monkeypatch.setenv("DATABASE_SCHEMA", "main; DROP TABLE items")
+
+    try:
+        _dialect_setup_statements("postgresql")
+    except ValueError as exc:
+        assert "DATABASE_SCHEMA" in str(exc)
+    else:
+        raise AssertionError("unsafe DATABASE_SCHEMA was accepted")
 
 
 def test_init_schema_migrates_items_check_to_include_event_and_journal(tmp_path) -> None:
@@ -312,7 +335,7 @@ def test_init_schema_migrates_legacy_task_reminder_tables_for_multiline_capture(
     importlib.reload(main_module)
     main_module.init_schema_v0(main_module.engine)
 
-    raw = '-- 테스팅 테스팅\nd:2026-06-29 13:40\nr:2026-06-30 13:40\n--- something must be done\n--- 귀찮아\n"""\n아이고!!!\n"""'
+    raw = '-- 테스팅 테스팅\nd:2099-06-29 13:40\nr:2099-06-30 13:40\n--- something must be done\n--- 귀찮아\n"""\n아이고!!!\n"""'
     payload = main_module.capture_item({"raw": raw})
     assert payload["ok"] is True
     assert payload["kind"] == "task"
@@ -320,11 +343,11 @@ def test_init_schema_migrates_legacy_task_reminder_tables_for_multiline_capture(
     detail = main_module.get_task(payload["id"])
     assert detail["ok"] is True
     assert detail["item"]["title"] == "테스팅 테스팅"
-    assert detail["item"]["due_at"] == "2026-06-29T04:40:00+00:00"
+    assert detail["item"]["due_at"] == "2099-06-29T04:40:00+00:00"
     assert len(detail["item"]["subtasks"]) == 2
     assert {subtask["content"] for subtask in detail["item"]["subtasks"]} == {"something must be done", "귀찮아"}
     assert len(detail["item"]["reminders"]) == 1
-    assert detail["item"]["reminders"][0]["remind_at"] == "2026-06-30T04:40:00+00:00"
+    assert detail["item"]["reminders"][0]["remind_at"] == "2099-06-30T04:40:00+00:00"
 
 
 def test_init_schema_migrates_reminder_state_check_to_allow_completed(tmp_path) -> None:
