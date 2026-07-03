@@ -5,6 +5,8 @@ import {
   fetchWeatherDaily,
   fetchWeatherDayparts,
   normalizeSharedWeatherPayload,
+  sharedWeatherDailyFromPayload,
+  sharedWeatherDaypartsFromPayload,
 } from "../app/lib/weather-client.js";
 
 async function readSource(path) {
@@ -39,8 +41,11 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.doesNotMatch(eventsSource, /fetchWeatherDaily\(\{ location: weatherLocation/);
   assert.doesNotMatch(eventsSource, /fetchWeatherDayparts\(\{ location: weatherLocation/);
   assert.match(familyCalendarSource, /from\s+"\.\.\/\.\.\/lib\/weather-client"/);
-  assert.match(familyCalendarSource, /fetchWeatherDaily/);
-  assert.match(familyCalendarSource, /fetchWeatherDayparts/);
+  assert.match(familyCalendarSource, /fetchSharedWeather/);
+  assert.match(familyCalendarSource, /sharedWeatherDailyFromPayload/);
+  assert.match(familyCalendarSource, /sharedWeatherDaypartsFromPayload/);
+  assert.doesNotMatch(familyCalendarSource, /fetchWeatherDaily\(\{ location: weatherLocation/);
+  assert.doesNotMatch(familyCalendarSource, /fetchWeatherDayparts\(\{ location: weatherLocation/);
   assert.match(familyCalendarSource, /getStoredWeatherLocation/);
   assert.match(familyCalendarSource, /listenWeatherLocationChange/);
   assert.match(sharedWeatherRoute, /base \+ "\/api\/weather"/);
@@ -51,6 +56,55 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.match(weatherSettings, /fetchSharedWeather/);
   assert.match(weatherSettings, /normalizeWeatherLocations/);
   assert.doesNotMatch(weatherSettings, /DEFAULT_WEATHER_LOCATIONS\.map/);
+});
+
+test("family calendar slices selected-week weather from one shared cache payload", async () => {
+  const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const sharedPayload = {
+    ok: true,
+    locations: [
+      {
+        id: "pohang",
+        label: "포항",
+        stale: false,
+        weather: {
+          daily: [
+            { date: "2026-06-21", glyph: "☁", condition: "cloudy", min_c: 17, max_c: 28 },
+            { date: "2026-06-22", glyph: "🌧", condition: "rain", min_c: 21, max_c: 26 },
+          ],
+          dayparts: {
+            "2026-06-22": [
+              { label: "Morning", temp_min_c: 21, temp_max_c: 23 },
+              { label: "Afternoon", temp_min_c: 24, temp_max_c: 26 },
+            ],
+          },
+        },
+      },
+    ],
+  };
+
+  assert.match(calendarSource, /fetchSharedWeather\(\)/);
+  assert.match(calendarSource, /sharedWeatherDailyFromPayload\(sharedWeather, \{ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd \}\)/);
+  assert.match(calendarSource, /sharedWeatherDaypartsFromPayload\(sharedWeather, \{ location: weatherLocation, date \}\)/);
+
+  const daily = sharedWeatherDailyFromPayload(sharedPayload, {
+    location: "pohang",
+    startDate: "2026-06-22",
+    endDate: "2026-06-22",
+  });
+  assert.equal(daily.ok, true);
+  assert.deepEqual(daily.items, [{ date: "2026-06-22", glyph: "🌧", condition: "rain", min_c: 21, max_c: 26 }]);
+
+  const dayparts = sharedWeatherDaypartsFromPayload(sharedPayload, {
+    location: "pohang",
+    date: "2026-06-22",
+  });
+  assert.equal(dayparts.ok, true);
+  assert.equal(dayparts.weather_dayparts_available, true);
+  assert.deepEqual(dayparts.weather_dayparts, [
+    { label: "Morning", temp_min_c: 21, temp_max_c: 23 },
+    { label: "Afternoon", temp_min_c: 24, temp_max_c: 26 },
+  ]);
 });
 
 test("shared weather helper slices backend cache payload for Family calendar weather", async () => {
