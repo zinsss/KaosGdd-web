@@ -91,13 +91,14 @@ function formatDailyExtraNotes(value) {
 function buildReviewText(monthDate, caregiverHoursByDate) {
   const weeks = buildReviewWeeks(monthDate, caregiverHoursByDate);
   const calendarIndent = "     ";
+  const separatorIndent = "   ";
   const weekdayHeader = FAMILY_CALENDAR_DAY_LABELS.map((label) => padCell(label)).join("");
   const separator = "-".repeat(FAMILY_CALENDAR_DAY_LABELS.length * REVIEW_CALENDAR_CELL_WIDTH);
   const lines = [
     formatReviewMonth(monthDate),
     "",
     `${calendarIndent}${weekdayHeader}`,
-    `${calendarIndent}${separator}`,
+    `${separatorIndent}${separator}`,
   ];
 
   weeks.forEach((week, index) => {
