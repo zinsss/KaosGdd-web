@@ -157,10 +157,14 @@ export default function FamilyTaskFormClient({ taskId = null }) {
                   ))}
                 </select>
               </label>
-              <label className="familyTaskSongField">
-                <input type="checkbox" checked={sharedWithSong} onChange={(event) => updateSongShared(event.target.checked)} />
-                <span>쏭</span>
-              </label>
+              <button
+                aria-pressed={sharedWithSong}
+                className={`familyTaskSongToggle${sharedWithSong ? " familyTaskSongToggleActive" : ""}`}
+                type="button"
+                onClick={() => updateSongShared(!sharedWithSong)}
+              >
+                쏭
+              </button>
             </div>
 
             <label>

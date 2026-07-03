@@ -52,8 +52,10 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(!formSource.includes("<span>담당자</span>"), "task form should not render the assignee label");
   assert.ok(!formSource.includes("FAMILY_TASK_ASSIGNEES.map"), "task form should not render the assignee combobox");
   assert.ok(formSource.includes('className="familyTaskPriorityShareRow"'), "priority and 쏭 controls should share one row");
-  assert.ok(formSource.includes('className="familyTaskSongField"'), "task form should render the 쏭 checkbox field");
-  assert.ok(formSource.includes('type="checkbox"'), "쏭 should be a checkbox");
+  assert.ok(formSource.includes('className={`familyTaskSongToggle${sharedWithSong ? " familyTaskSongToggleActive" : ""}`}'), "task form should render the 쏭 toggle button");
+  assert.ok(formSource.includes("aria-pressed={sharedWithSong}"), "쏭 toggle should expose pressed state");
+  assert.ok(formSource.includes("onClick={() => updateSongShared(!sharedWithSong)}"), "쏭 toggle should flip the same shared assignee state");
+  assert.ok(!formSource.includes('type="checkbox"'), "쏭 should not use a native checkbox");
   assert.ok(formSource.includes("priority: FAMILY_TASK_DEFAULT_PRIORITY"), "new task default priority should be 보통");
   assert.ok(taskCss.includes(".familyTaskRowToggle"));
   assert.ok(taskCss.includes(".familyTaskRowActions"));
@@ -63,8 +65,8 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.match(taskCss, /\.familyTaskMetaBadges\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?flex-wrap:\s*wrap;/);
   assert.match(taskCss, /\.familyTaskDateBadge\s*\{[\s\S]*?margin-left:\s*auto;[\s\S]*?background:\s*transparent;[\s\S]*?color:\s*rgba\(78, 37, 54, 0\.46\);/);
   assert.match(taskCss, /\.familyTaskPriorityShareRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;[\s\S]*?align-items:\s*end;/);
-  assert.match(taskCss, /\.familyTaskSongField\s*\{[\s\S]*?gap:\s*8px;[\s\S]*?min-width:\s*96px;[\s\S]*?min-height:\s*42px;[\s\S]*?padding:\s*0 14px;/);
-  assert.match(taskCss, /\.familyTaskSongField input\s*\{[\s\S]*?width:\s*auto;[\s\S]*?accent-color:\s*#d86f98;/);
+  assert.match(taskCss, /\.familyTaskSongToggle\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?min-width:\s*72px;[\s\S]*?min-height:\s*42px;[\s\S]*?padding:\s*0 14px;/);
+  assert.match(taskCss, /\.familyTaskSongToggleActive\s*\{[\s\S]*?background:\s*rgba\(255,\s*232,\s*241,\s*0\.92\);[\s\S]*?color:\s*#9d3657;/);
   assert.match(taskCss, /\.familyTaskHeaderActions\s*\{[\s\S]*?flex-wrap:\s*nowrap;/);
   assert.match(taskCss, /\.familyTaskRowActions\s*\{[\s\S]*?flex-wrap:\s*nowrap;/);
   assert.match(taskCss, /\.familyTaskActionButtonDone\s*\{[\s\S]*?background:\s*rgba\(245,\s*235,\s*255,\s*0\.86\);[\s\S]*?color:\s*rgba\(110,\s*75,\s*145,\s*0\.9\);/);
