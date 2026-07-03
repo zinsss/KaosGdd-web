@@ -6,12 +6,13 @@ import { useRouter } from "next/navigation";
 
 import {
   DEFAULT_WEATHER_LOCATION,
-  fetchWeatherDaily,
-  fetchWeatherDayparts,
+  fetchSharedWeather,
   getStoredWeatherLocation,
   listenWeatherLocationChange,
   normalizeFamilyWeatherDailyItems,
   normalizeFamilyWeatherDayparts,
+  sharedWeatherDailyFromPayload,
+  sharedWeatherDaypartsFromPayload,
 } from "../../lib/weather-client";
 import FamilyCalendarWeatherRows from "./FamilyCalendarWeatherRows";
 import FamilyCalendarWeatherDebugPanel from "./FamilyCalendarWeatherDebugPanel";
@@ -1264,9 +1265,10 @@ export default function FamilyCalendarClient() {
     let cancelled = false;
     if (!weatherLocation || !weatherStart || !weatherEnd) return () => {};
 
-    fetchWeatherDaily({ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd })
-      .then((data) => {
+    fetchSharedWeather()
+      .then((sharedWeather) => {
         if (cancelled) return;
+        const data = sharedWeatherDailyFromPayload(sharedWeather, { location: weatherLocation, startDate: weatherStart, endDate: weatherEnd });
         if (!data?.ok) {
           setWeatherItems([]);
           return;
@@ -1286,19 +1288,22 @@ export default function FamilyCalendarClient() {
     let cancelled = false;
     if (!weatherLocation || !selectedWeekDates.length) return () => {};
 
-    Promise.all(
-      selectedWeekDates.map(async (date) => {
-        try {
-          const payload = await fetchWeatherDayparts({ location: weatherLocation, date });
+    fetchSharedWeather()
+      .then((sharedWeather) => {
+        if (cancelled) return;
+        const entries = selectedWeekDates.map((date) => {
+          const payload = sharedWeatherDaypartsFromPayload(sharedWeather, { location: weatherLocation, date });
           return [date, normalizeFamilyWeatherDayparts(payload)];
-        } catch {
-          return [date, normalizeFamilyWeatherDayparts(null)];
+        });
+        setSelectedWeekWeatherDayparts(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSelectedWeekWeatherDayparts(
+            Object.fromEntries(selectedWeekDates.map((date) => [date, normalizeFamilyWeatherDayparts(null)])),
+          );
         }
-      }),
-    ).then((entries) => {
-      if (cancelled) return;
-      setSelectedWeekWeatherDayparts(Object.fromEntries(entries));
-    });
+      });
 
     return () => {
       cancelled = true;
