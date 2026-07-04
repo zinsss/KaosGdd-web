@@ -43,8 +43,12 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(taskHelperSource.includes("return `${year}-${month}-${day}(${weekday})까지`;"));
   assert.ok(dashboardSource.includes("<h3><span aria-hidden=\"true\">•</span>{task.title}</h3>"), "task title should render as primary bullet line");
   assert.ok(dashboardSource.includes('className="familyTaskMetaBadges"'), "priority and 쏭 badges should render inline beside the title");
+  assert.ok(dashboardSource.includes('label: priority.split(" ")[0] || priority'), "task list priority should render emoji only");
+  assert.ok(dashboardSource.includes('className: "familyTaskPriorityEmoji"'), "task list priority should use a plain emoji marker");
   assert.ok(dashboardSource.includes('className="familyTaskDateBadge"'), "due date should render as a right-aligned inline value");
   assert.ok(dashboardSource.includes('familyTaskBadgeSong'), "쏭 badge should render only for shared tasks");
+  assert.ok(!dashboardSource.includes('className: "familyTaskBadgePriority"'), "task list priority should not render as a badge");
+  assert.ok(!dashboardSource.includes('label: priority, title: priority'), "task list priority should not show the full priority title");
   assert.doesNotMatch(dashboardSource, /FAMILY_TASK_PRIORITIES\.map/);
   assert.ok(!dashboardSource.includes("우선순위:"), "task list should not render a priority label prefix");
   assert.ok(!dashboardSource.includes("familyCalendarDashboardCard"), "Family task page should not render a calendar dashboard card");
@@ -63,6 +67,7 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.match(taskCss, /\.familyTaskCard h3\s*\{[\s\S]*?flex:\s*1 1 12rem;[\s\S]*?min-width:\s*0;[\s\S]*?text-overflow:\s*ellipsis;/);
   assert.match(taskCss, /\.familyTaskMeta\s*\{[\s\S]*?display:\s*contents;/);
   assert.match(taskCss, /\.familyTaskMetaBadges\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?flex-wrap:\s*wrap;/);
+  assert.match(taskCss, /\.familyTaskPriorityEmoji\s*\{[\s\S]*?padding:\s*0;[\s\S]*?background:\s*transparent;[\s\S]*?border-radius:\s*0;[\s\S]*?box-shadow:\s*none;/);
   assert.match(taskCss, /\.familyTaskDateBadge\s*\{[\s\S]*?margin-left:\s*auto;[\s\S]*?background:\s*transparent;[\s\S]*?color:\s*rgba\(78, 37, 54, 0\.46\);/);
   assert.match(taskCss, /\.familyTaskPriorityShareRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;[\s\S]*?align-items:\s*end;/);
   assert.match(taskCss, /\.familyTaskSongToggle\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?min-width:\s*72px;[\s\S]*?min-height:\s*42px;[\s\S]*?padding:\s*0 14px;/);

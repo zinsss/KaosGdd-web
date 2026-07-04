@@ -29,10 +29,10 @@ function moveTaskId(taskIds, sourceId, targetId) {
 function getTaskCardBadges(task) {
   const assignee = task.assignee || FAMILY_TASK_DEFAULT_ASSIGNEE;
   const priority = FAMILY_TASK_PRIORITIES.includes(task.priority) ? task.priority : FAMILY_TASK_DEFAULT_PRIORITY;
-  const badges = [{ className: "familyTaskBadgePriority", label: priority, title: priority }];
+  const badges = [{ className: "familyTaskPriorityEmoji", label: priority.split(" ")[0] || priority, title: priority.split(" ")[0] || priority }];
 
   if (assignee === FAMILY_TASK_PRIORITY_ASSIGNEE) {
-    badges.push({ className: "familyTaskBadgeSong", label: "쏭", title: "쏭" });
+    badges.push({ className: "familyTaskBadge familyTaskBadgeSong", label: "쏭", title: "쏭" });
   }
 
   return badges;
@@ -177,7 +177,7 @@ export default function FamilyDashboardClient() {
                           <div className="familyTaskMeta">
                             <span className="familyTaskMetaBadges">
                               {taskBadges.map((badge) => (
-                                <span className={`familyTaskBadge ${badge.className}`} title={badge.title} key={badge.className}>
+                                <span className={badge.className} title={badge.title} key={badge.className}>
                                   {badge.label}
                                 </span>
                               ))}
