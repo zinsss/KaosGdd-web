@@ -1,7 +1,7 @@
 import FamilyCalendarEventFormClient from "../FamilyCalendarEventFormClient";
 
 export const metadata = {
-  title: "뭔날이고 - KaosGdd",
+  title: "일정 추가 - KaosGdd",
 };
 
 export default function FamilyNewCalendarEventPage() {

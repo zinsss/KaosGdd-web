@@ -1,7 +1,7 @@
 import FamilyDashboardClient from "./FamilyDashboardClient";
 
 export const metadata = {
-  title: "우짜노우짤꼬 - KaosGdd",
+  title: "로운이와 나 - KaosGdd",
 };
 
 export default function FamilyPage() {

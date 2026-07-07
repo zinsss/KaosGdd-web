@@ -12,4 +12,8 @@ data/*.db
 data/*.sqlite
 data/*.sqlite3
 data/
+backups/*
+!backups/
+!backups/postgres/
+!backups/postgres/.gitkeep
 *.pem

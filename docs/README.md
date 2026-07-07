@@ -11,6 +11,7 @@ Start here when changing architecture, capture behavior, or module boundaries.
 - [Development Plan](development-plan.md): checkbox-based implementation plan.
 - [Shared Weather Cache](weather-cache.md): backend-owned weather cache design and frontend consumption.
 - [Systemd](systemd.md): service/timer deployment notes.
+- [Postgres Migration Notes](postgres-migration-32gb.md): exploratory notes only; SQLite remains current production.
 
 ## Current Product Direction
 

@@ -222,7 +222,8 @@ class ItemsRepo:
             normalized.append(clean)
 
         now = now_iso()
-        self.validate_item_links(source_item_id, normalized)
+        if normalized:
+            self.validate_item_links(source_item_id, normalized)
 
         with self.engine.begin() as conn:
 

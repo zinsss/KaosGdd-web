@@ -226,6 +226,9 @@ class ReminderService:
         except ValueError as exc:
             return False, str(exc)
 
+        if parsed.get("linked_item_ids"):
+            return False, "standalone reminder does not support l:"
+
         self.reminder_repo.reschedule_reminder_item(
             reminder_item_id,
             title=parsed["title"],
@@ -365,7 +368,7 @@ class ReminderService:
         cutoff = (
             datetime.now(timezone.utc)
             - timedelta(hours=SETTINGS.REMINDER_MISSED_SCAN_LOOKBACK_HOURS)
-        ).isoformat(timespec="seconds")
+        ).isoformat(timespec="microseconds")
         rows = self.reminder_repo.list_missed_candidates(cutoff_iso_value=cutoff)
 
         missed: list[dict] = []

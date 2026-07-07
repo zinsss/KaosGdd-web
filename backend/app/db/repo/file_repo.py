@@ -44,7 +44,7 @@ class FileRepo:
                     FROM {items} i
                     INNER JOIN {file_items} f ON f.item_id = i.id
                     WHERE i.item_type = 'file' AND i.status = :status
-                    ORDER BY i.created_at DESC, i.rowid DESC
+                    ORDER BY i.created_at DESC, i.id DESC
                     """.format(items=DbTables.ITEMS, file_items=DbTables.FILE_ITEMS)
                 ),
                 {"status": mode},

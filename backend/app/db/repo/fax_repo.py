@@ -71,7 +71,7 @@ class FaxRepo:
                     FROM {items} i
                     INNER JOIN {fax_items} f ON f.item_id = i.id
                     WHERE i.item_type = 'fax' AND i.status = :status
-                    ORDER BY i.created_at DESC, i.rowid DESC
+                    ORDER BY i.created_at DESC, i.id DESC
                     """.format(items=DbTables.ITEMS, fax_items=DbTables.FAX_ITEMS)
                 ),
                 {"status": mode},
@@ -169,7 +169,7 @@ class FaxRepo:
                       AND f.fax_status = 'received'
                       AND f.saved_file_id IS NULL
                       AND COALESCE(f.received_at, i.created_at) < :cutoff_iso
-                    ORDER BY i.created_at ASC, i.rowid ASC
+                    ORDER BY i.created_at ASC, i.id ASC
                     """.format(items=DbTables.ITEMS, fax_items=DbTables.FAX_ITEMS)
                 ),
                 {"cutoff_iso": cutoff_iso},

@@ -2,17 +2,21 @@ from __future__ import annotations
 
 import importlib
 import os
+from datetime import datetime
 from pathlib import Path
 
 import pytest
 
+from app.utils import datetime_parse
 from app.utils.task_raw import REPEAT_TAG_PREFIX
 
 
 @pytest.fixture()
-def main_module(tmp_path: Path):
+def main_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     db_path = tmp_path / "task-recurrence-edit-v0-test.db"
     os.environ["DATABASE_URL"] = f"sqlite:///{db_path}"
+    fixed_now = datetime.fromisoformat("2026-06-01T00:00:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
 
     import app.core.db as db_module
     import app.main as main_module

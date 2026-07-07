@@ -61,6 +61,7 @@ def _setup_push(main_module):
 
 
 def test_fired_to_missed_transition_sends_second_web_push(main_module) -> None:
+    main_module.update_notification_preferences({"mode": "web_push_only"})
     task = main_module.create_task({"title": "Pay electricity bill"})
     create_result = main_module.create_task_reminder(task["id"], {"remind_at": "2020-01-01T00:00:00+00:00"})
     assert create_result["ok"] is True
@@ -79,6 +80,7 @@ def test_fired_to_missed_transition_sends_second_web_push(main_module) -> None:
 
 
 def test_missed_push_uses_expected_title_and_deep_link(main_module) -> None:
+    main_module.update_notification_preferences({"mode": "web_push_only"})
     task = main_module.create_task({"title": "Dentist check-in"})
     reminder = main_module.create_task_reminder(task["id"], {"remind_at": "2020-01-01T00:00:00+00:00"})
     assert reminder["ok"] is True
@@ -97,6 +99,7 @@ def test_missed_push_uses_expected_title_and_deep_link(main_module) -> None:
 
 
 def test_missed_scan_does_not_resend_for_already_missed_reminder(main_module) -> None:
+    main_module.update_notification_preferences({"mode": "web_push_only"})
     ok, _status, reminder_id = main_module.reminder_service.create_standalone_reminder(
         title="File taxes",
         remind_at="2020-01-01T00:00:00+00:00",

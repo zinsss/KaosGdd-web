@@ -11,6 +11,10 @@ test("family page uses Seoul Namsan Condensed without changing global fonts", as
   const fontPresetSource = await readFile(new URL("../app/family/familyTimetableFonts.js", import.meta.url), "utf8");
 
   assert.ok(globalsCss.includes('family-fonts.css'));
+  assert.ok(
+    globalsCss.indexOf('family-polish.css') < globalsCss.indexOf('family-fonts.css'),
+    "Family font guard should load after module polish CSS so editable controls stay at 16px",
+  );
   assert.match(familyFontsCss, /@font-face\s*\{[\s\S]*?font-family:\s*"Seoul Namsan Condensed";/);
   assert.match(familyFontsCss, /SeoulNamsanCondensed-Medium\.woff2/);
   assert.match(familyFontsCss, /SeoulNamsanCondensed-Medium\.woff/);
@@ -25,7 +29,19 @@ test("family page uses Seoul Namsan Condensed without changing global fonts", as
   assert.match(familyFontsCss, /\.familyPage input/);
   assert.match(familyFontsCss, /\.familyPage textarea/);
   assert.match(familyFontsCss, /\.familyPage select/);
+  assert.match(familyFontsCss, /\.familyPage \[contenteditable="true"\]/);
+  assert.match(
+    familyFontsCss,
+    /\.familyPage input,\s*\n\.familyPage textarea,\s*\n\.familyPage select,\s*\n\.familyPage \[contenteditable="true"\]\s*\{[\s\S]*?font-size:\s*16px;/,
+  );
   assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?font-size:\s*14px;/);
+
+  for (const source of [familyFontsCss, polishCss]) {
+    assert.doesNotMatch(
+      source,
+      /\.(?:familyTimetableEditor|familyTaskForm)[\s\S]{0,160}(?:input|select|textarea)[\s\S]{0,220}font-size:\s*(?:1[0-5]px|0\.[0-9]+rem)/,
+    );
+  }
 
   assert.match(fontPresetSource, /FAMILY_TIMETABLE_FONT_PRESETS/);
   assert.match(fontPresetSource, /SeoulNamsanCondensed/);

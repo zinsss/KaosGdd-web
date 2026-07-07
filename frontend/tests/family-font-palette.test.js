@@ -33,6 +33,11 @@ test("family page uses Seoul Namsan font sizing without affecting global UI", as
   assert.match(familyFontsCss, /\.familyPage input/);
   assert.match(familyFontsCss, /\.familyPage textarea/);
   assert.match(familyFontsCss, /\.familyPage select/);
+  assert.match(familyFontsCss, /\.familyPage \[contenteditable="true"\]/);
+  assert.match(
+    familyFontsCss,
+    /\.familyPage input,\s*\n\.familyPage textarea,\s*\n\.familyPage select,\s*\n\.familyPage \[contenteditable="true"\]\s*\{[\s\S]*?font-size:\s*16px;/,
+  );
   assert.match(familyCss, /\.familyInput[\s\S]*?font-size:\s*16px;/);
   assert.match(fontPresetSource, /SeoulNamsanCondensed/);
   assert.match(fontPresetSource, /서울남산/);

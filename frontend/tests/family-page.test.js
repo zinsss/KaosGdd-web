@@ -35,6 +35,31 @@ test("family shared header uses polished tab wording and routes", async () => {
   }
 });
 
+test("family page metadata uses standard Korean titles", async () => {
+  const pageSources = [
+    await readSource("../app/family/page.js"),
+    await readSource("../app/family/memo/page.js"),
+    await readSource("../app/family/timetable/page.js"),
+    await readSource("../app/family/calendar/rouny/page.js"),
+    await readSource("../app/family/calendar/events/new/page.js"),
+    await readSource("../app/family/calendar/events/[id]/edit/page.js"),
+  ].join("\n");
+
+  for (const title of [
+    "로운이와 나 - KaosGdd",
+    "메모장 - KaosGdd",
+    "로운이 시간표 - KaosGdd",
+    "일정 추가 - KaosGdd",
+    "일정 수정 - KaosGdd",
+  ]) {
+    assert.ok(pageSources.includes(title), `${title} should be used as a Family page title`);
+  }
+
+  for (const oldTitle of ["우짜노우짤꼬", "모라노", "뭔날이고", "로니 - KaosGdd"]) {
+    assert.ok(!pageSources.includes(oldTitle), `${oldTitle} should not remain in Family page metadata`);
+  }
+});
+
 test("family memo page uses finalized title and checklist glyph", async () => {
   const memoSource = await readSource("../app/family/FamilyPageClient.js");
 

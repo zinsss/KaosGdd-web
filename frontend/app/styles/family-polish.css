@@ -124,18 +124,18 @@
 .familyBubbleTitle,
 .familyChecklistRow,
 .familyTimetableIntro p,
-.familyTimetableEditor input,
-.familyTimetableEditor select,
-.familyTimetableEditor textarea,
 .familyTaskCard h3,
-.familyTaskForm input,
-.familyTaskForm select,
-.familyTaskForm textarea,
 .familyDoneTaskRow h2 {
   font-size: 14px;
 }
 
-.familyInput {
+.familyInput,
+.familyTimetableEditor input,
+.familyTimetableEditor select,
+.familyTimetableEditor textarea,
+.familyTaskForm input,
+.familyTaskForm select,
+.familyTaskForm textarea {
   font-size: 16px;
 }
 
@@ -442,14 +442,14 @@
   .familyBubbleTitle,
   .familyChecklistRow,
   .familyTaskCard h3,
-  .familyTaskForm input,
-  .familyTaskForm select,
-  .familyTaskForm textarea,
   .familyDoneTaskRow h2 {
     font-size: 14px;
   }
 
-  .familyInput {
+  .familyInput,
+  .familyTaskForm input,
+  .familyTaskForm select,
+  .familyTaskForm textarea {
     font-size: 16px;
   }
 }

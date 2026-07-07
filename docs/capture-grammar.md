@@ -52,20 +52,20 @@ Rules:
 Prefix:
 
 ```text
--- 
+--
 ```
 
 Done task prefix:
 
 ```text
--x 
+-x
 ```
 
 Subtasks:
 
 ```text
---- 
---x 
+---
+--x
 ```
 
 Example:
@@ -125,7 +125,7 @@ Reason: `dr:` cannot be combined with `d:`.
 Prefix:
 
 ```text
-^^ 
+^^
 ```
 
 Single-date inline example:
@@ -182,7 +182,7 @@ Reason: missing title.
 Prefix:
 
 ```text
-!! 
+!!
 ```
 
 Example:
@@ -209,7 +209,7 @@ Rules:
 Prefix:
 
 ```text
-// 
+//
 ```
 
 Example:
@@ -240,7 +240,7 @@ Reason: Journal does not support reminder metadata.
 Prefix:
 
 ```text
-... 
+...
 ```
 
 Example:
@@ -259,7 +259,7 @@ Behavior:
 Prefix:
 
 ```text
-$$ 
+$$
 ```
 
 Example:

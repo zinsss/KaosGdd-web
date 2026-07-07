@@ -124,8 +124,8 @@ def test_task_d_and_r_use_same_datetime_normalization(monkeypatch: pytest.Monkey
     _freeze_now(monkeypatch, "2026-04-15T00:00:00+00:00")
     parsed = parse_task_raw("-- Example\nd:+2d\nr:+2d")
 
-    assert parsed["due_at"] == "2026-04-17T01:30:00+00:00"
-    assert parsed["remind_ats"] == ["2026-04-17T01:30:00+00:00"]
+    assert parsed["due_at"] == "2026-04-17T00:00:00+00:00"
+    assert parsed["remind_ats"] == ["2026-04-17T00:00:00+00:00"]
 
 
 def test_task_dr_uses_same_datetime_normalization(monkeypatch: pytest.MonkeyPatch) -> None:

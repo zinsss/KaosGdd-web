@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-kaosgdd}
+      POSTGRES_USER: ${POSTGRES_USER:-kaosgdd}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      TZ: ${APP_TIMEZONE:-Asia/Seoul}
+      PGTZ: ${APP_TIMEZONE:-Asia/Seoul}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - kaosgdd_postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Seoul}
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////data/kaosgdd.db}
+      FILE_STORAGE_DIR: ${FILE_STORAGE_DIR:-/data/uploads}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./data:/data
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
+    environment:
+      TZ: ${APP_TIMEZONE:-Asia/Seoul}
+      NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://127.0.0.1:8000}
+      NEXT_PUBLIC_APP_TIMEZONE: ${NEXT_PUBLIC_APP_TIMEZONE:-Asia/Seoul}
+    depends_on:
+      - backend
+    ports:
+      - "127.0.0.1:3000:3000"
+
+volumes:
+  kaosgdd_postgres_data:

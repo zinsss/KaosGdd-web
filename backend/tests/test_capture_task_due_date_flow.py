@@ -11,9 +11,11 @@ from app.utils import datetime_parse
 
 
 @pytest.fixture()
-def main_module(tmp_path: Path):
+def main_module(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     db_path = tmp_path / "capture-task-due-test.db"
     os.environ["DATABASE_URL"] = f"sqlite:///{db_path}"
+    fixed_now = datetime.fromisoformat("2026-06-08T06:20:00+00:00")
+    monkeypatch.setattr(datetime_parse, "_current_utc_now", lambda: fixed_now)
 
     import app.core.db as db_module
     import app.main as main_module
