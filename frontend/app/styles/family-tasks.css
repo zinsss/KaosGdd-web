@@ -174,7 +174,8 @@
     0 8px 18px rgba(151, 69, 98, 0.12);
 }
 
-.familyTaskRowToggle {
+.familyTaskRowToggle,
+.familyTaskTitleToggle {
   appearance: none;
   border: 0;
   display: flex;
@@ -190,6 +191,12 @@
 }
 
 .familyTaskRowToggle:focus-visible {
+  border-radius: 6px;
+  outline: 2px solid rgba(216, 111, 152, 0.32);
+  outline-offset: 3px;
+}
+
+.familyTaskTitleToggle:focus-visible {
   border-radius: 6px;
   outline: 2px solid rgba(216, 111, 152, 0.32);
   outline-offset: 3px;
