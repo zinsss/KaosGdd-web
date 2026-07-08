@@ -1199,6 +1199,21 @@
   transform: scale(0.98);
 }
 
+body.kaosDragging,
+body.kaosDragging * {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+body.kaosDragging {
+  cursor: grabbing;
+}
+
+.familyCalendarItem,
+.familyRounBlock {
+  -webkit-touch-callout: none;
+}
+
 .familyCalendarDragGhost {
   position: fixed;
   z-index: 1000;

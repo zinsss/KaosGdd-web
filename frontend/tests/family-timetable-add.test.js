@@ -278,6 +278,8 @@ test("family Roun weekly grid editor supports add edit copy delete and drag", as
     "minutesToFamilyScheduleTime",
     "parseFamilyScheduleTimeMinutes",
     "snapFamilyScheduleMinutes",
+    "beginFamilyScheduleDragSelectionLock",
+    "endFamilyScheduleDragSelectionLock",
   ]) {
     assert.ok(rounySource.includes(value), `${value} should be reused from the shared Family schedule drag helpers`);
   }
@@ -288,6 +290,9 @@ test("family Roun weekly grid editor supports add edit copy delete and drag", as
     "formatFamilyScheduleDragTimeLabel",
     "formatFamilyScheduleDragRangeLabel",
     "familyScheduleSlotMinutesFromPoint",
+    'FAMILY_SCHEDULE_DRAGGING_CLASS = "kaosDragging"',
+    "function beginFamilyScheduleDragSelectionLock()",
+    "function endFamilyScheduleDragSelectionLock()",
   ]) {
     assert.ok(dragSource.includes(value), `${value} should exist in the shared drag helper`);
   }
@@ -312,6 +317,9 @@ test("family Roun weekly grid editor supports add edit copy delete and drag", as
   assert.match(rounyCss, /\.familyRounBlock span\s*\{[\s\S]*?width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*hidden;[\s\S]*?text-overflow:\s*ellipsis;[\s\S]*?white-space:\s*nowrap;/);
   assert.ok(rounySource.includes('if (event.pointerType === "mouse" && event.button !== 0) return;'));
   assert.ok(rounySource.includes("event.currentTarget.setPointerCapture?.(event.pointerId);"));
+  assert.ok(rounySource.includes("beginFamilyScheduleDragSelectionLock();"));
+  assert.ok(rounySource.includes("endFamilyScheduleDragSelectionLock();"));
+  assert.ok(rounySource.includes("function cancelBlockDrag(event)"));
   assert.ok(rounySource.includes("dragState.dragElement?.releasePointerCapture?.(event.pointerId);"));
   assert.ok(rounySource.includes("draggable={false}"));
   assert.ok(rounySource.includes("onDragStart={(event) => event.preventDefault()}"));

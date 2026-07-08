@@ -2,6 +2,17 @@ import { FAMILY_CALENDAR_DAY_LABELS } from "./familyCalendarData.js";
 
 export const FAMILY_SCHEDULE_DRAG_SLOT_MINUTES = 10;
 export const FAMILY_SCHEDULE_DRAG_MOVE_LIMIT = 8;
+export const FAMILY_SCHEDULE_DRAGGING_CLASS = "kaosDragging";
+
+export function beginFamilyScheduleDragSelectionLock() {
+  if (typeof document === "undefined") return;
+  document.body?.classList.add(FAMILY_SCHEDULE_DRAGGING_CLASS);
+}
+
+export function endFamilyScheduleDragSelectionLock() {
+  if (typeof document === "undefined") return;
+  document.body?.classList.remove(FAMILY_SCHEDULE_DRAGGING_CLASS);
+}
 
 export function minutesToFamilyScheduleTime(totalMinutes) {
   const minutesInDay = 24 * 60;

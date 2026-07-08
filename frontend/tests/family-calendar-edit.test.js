@@ -532,6 +532,7 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
 test("family calendar edit mode drag moves dated items and creates Roun overrides", async () => {
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const dataSource = await readSource("../app/family/calendar/familyCalendarData.js");
+  const dragSource = await readSource("../app/family/calendar/familyCalendarDrag.js");
   const calendarCss = await readSource("../app/styles/family-calendar.css");
 
   for (const value of [
@@ -586,6 +587,8 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("onDragStart={dragEnabledItem ? (event) => event.preventDefault() : undefined}"));
   assert.ok(calendarSource.includes('if (event.pointerType === "mouse" && event.button !== 0) return;'));
   assert.ok(calendarSource.includes("event.currentTarget.setPointerCapture?.(event.pointerId);"));
+  assert.ok(calendarSource.includes("beginFamilyScheduleDragSelectionLock();"));
+  assert.ok(calendarSource.includes("endFamilyScheduleDragSelectionLock();"));
   assert.ok(calendarSource.includes("onClick={dragging || suppressRounyNavigation ? (event) => event.preventDefault() : undefined}"));
   assert.ok(calendarSource.includes("pending?.dragElement?.releasePointerCapture?.(event.pointerId);"));
   assert.ok(calendarSource.includes("onMoveDatedItem(pending.item.id, currentDragState.target);"));
@@ -648,6 +651,14 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarCss.includes(".familyCalendarWeekDragTargetPrev {"));
   assert.ok(calendarCss.includes(".familyCalendarWeekDragTargetNext {"));
   assert.ok(calendarCss.includes(".familyCalendarWeekDragTargetActive {"));
+  assert.ok(dragSource.includes('FAMILY_SCHEDULE_DRAGGING_CLASS = "kaosDragging"'));
+  assert.ok(dragSource.includes("function beginFamilyScheduleDragSelectionLock()"));
+  assert.ok(dragSource.includes("document.body?.classList.add(FAMILY_SCHEDULE_DRAGGING_CLASS);"));
+  assert.ok(dragSource.includes("function endFamilyScheduleDragSelectionLock()"));
+  assert.ok(dragSource.includes("document.body?.classList.remove(FAMILY_SCHEDULE_DRAGGING_CLASS);"));
+  assert.match(calendarCss, /body\.kaosDragging,\s*\nbody\.kaosDragging \*\s*\{[\s\S]*?user-select:\s*none;[\s\S]*?-webkit-user-select:\s*none;/);
+  assert.match(calendarCss, /body\.kaosDragging\s*\{[\s\S]*?cursor:\s*grabbing;/);
+  assert.match(calendarCss, /\.familyCalendarItem,\s*\n\.familyRounBlock\s*\{[\s\S]*?-webkit-touch-callout:\s*none;/);
   assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?position:\s*fixed;[\s\S]*?z-index:\s*9999;[\s\S]*?pointer-events:\s*none;/);
   assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?padding:\s*5px 10px;[\s\S]*?font-size:\s*14px;/);
   assert.match(calendarCss, /\.familyCalendarDragReadout\s*\{[\s\S]*?transform:\s*translate\(-50%, -100%\);[\s\S]*?white-space:\s*nowrap;/);

@@ -7,6 +7,8 @@ import FamilyHeader from "../../FamilyHeader";
 import { FamilySelectPickerButton, FamilyTimePickerButton } from "../FamilyPickerButton.js";
 import {
   FAMILY_SCHEDULE_DRAG_MOVE_LIMIT,
+  beginFamilyScheduleDragSelectionLock,
+  endFamilyScheduleDragSelectionLock,
   familyScheduleSlotMinutesFromPoint,
   formatFamilyScheduleDragRangeLabel,
   minutesToFamilyScheduleTime,
@@ -187,6 +189,7 @@ export default function FamilyRounyClient() {
     setRounState(loadedState);
     setExpandedPlanId(loadedState.plans[0]?.id || "");
     setLoaded(true);
+    return () => endFamilyScheduleDragSelectionLock();
   }, []);
 
   const openedPlan = useMemo(() => {
@@ -549,6 +552,7 @@ export default function FamilyRounyClient() {
     if (event.pointerType === "mouse" && event.button !== 0) return;
     if (event.button !== undefined && event.button !== 0) return;
     event.stopPropagation();
+    beginFamilyScheduleDragSelectionLock();
     event.currentTarget.setPointerCapture?.(event.pointerId);
     setDragState({
       block,
@@ -574,6 +578,7 @@ export default function FamilyRounyClient() {
   function finishBlockDrag(event) {
     if (!dragState) return;
     event.preventDefault();
+    endFamilyScheduleDragSelectionLock();
     dragState.dragElement?.releasePointerCapture?.(event.pointerId);
     if (dragState.moved && dragState.target) {
       updateBlockTime(dragState.block, dragState.target.dayOfWeek, dragState.target.startMinutes);
@@ -584,6 +589,12 @@ export default function FamilyRounyClient() {
         suppressBlockClickRef.current = false;
       }, 0);
     }
+    setDragState(null);
+  }
+
+  function cancelBlockDrag(event) {
+    if (event) dragState?.dragElement?.releasePointerCapture?.(event.pointerId);
+    endFamilyScheduleDragSelectionLock();
     setDragState(null);
   }
 
@@ -706,7 +717,7 @@ export default function FamilyRounyClient() {
                 aria-label="주간시간표 템플릿"
                 onPointerMove={moveBlockDrag}
                 onPointerUp={finishBlockDrag}
-                onPointerCancel={() => setDragState(null)}
+                onPointerCancel={cancelBlockDrag}
                 style={{ "--family-roun-body-height": `${ROUN_TIMETABLE_BODY_HEIGHT}px` }}
               >
                 <span className="familyRounGridCorner" aria-hidden="true" />

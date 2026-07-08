@@ -18,6 +18,8 @@ import FamilyCalendarWeatherRows from "./FamilyCalendarWeatherRows";
 import FamilyCalendarWeatherDebugPanel from "./FamilyCalendarWeatherDebugPanel";
 import {
   FAMILY_SCHEDULE_DRAG_MOVE_LIMIT,
+  beginFamilyScheduleDragSelectionLock,
+  endFamilyScheduleDragSelectionLock,
   familyScheduleSlotMinutesFromPoint,
   familyScheduleSlotMinutesFromRowPoint,
   formatFamilyScheduleDragTimeLabel,
@@ -816,6 +818,7 @@ function FamilyCalendarEditWeek({
       longPressStartRef.current = null;
       rounyChoiceTimerRef.current = null;
       stopAutoScroll();
+      endFamilyScheduleDragSelectionLock();
     };
   }, []);
 
@@ -942,9 +945,11 @@ function FamilyCalendarEditWeek({
   }
 
   function startCalendarItemDrag(event, item) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
     if (event.button !== undefined && event.button !== 0) return;
     clearPendingLongPress();
     clearRounyChoiceTimer();
+    beginFamilyScheduleDragSelectionLock();
     event.currentTarget.setPointerCapture?.(event.pointerId);
     const itemType = normalizedCalendarItemType(item);
     const sourceItem = itemType === "dated" ? datedItems.find((candidate) => candidate.id === item.id) || item : item;
@@ -1004,6 +1009,7 @@ function FamilyCalendarEditWeek({
     const pending = dragStartRef.current;
     const currentDragState = dragState;
     stopAutoScroll();
+    endFamilyScheduleDragSelectionLock();
     dragStartRef.current = null;
     setDragState(null);
     pending?.dragElement?.releasePointerCapture?.(event.pointerId);

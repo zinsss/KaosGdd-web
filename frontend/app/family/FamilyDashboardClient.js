@@ -29,10 +29,11 @@ function moveTaskId(taskIds, sourceId, targetId) {
 function getTaskCardBadges(task) {
   const assignee = task.assignee || FAMILY_TASK_DEFAULT_ASSIGNEE;
   const priority = FAMILY_TASK_PRIORITIES.includes(task.priority) ? task.priority : FAMILY_TASK_DEFAULT_PRIORITY;
-  const badges = [{ className: "familyTaskPriorityEmoji", label: priority.split(" ")[0] || priority, title: priority.split(" ")[0] || priority }];
+  const priorityEmoji = String(priority).trim().split(/\s+/)[0] || priority;
+  const badges = [{ className: "familyTaskPriorityEmoji", label: priorityEmoji, title: priority }];
 
   if (assignee === FAMILY_TASK_PRIORITY_ASSIGNEE) {
-    badges.push({ className: "familyTaskBadge familyTaskBadgeSong", label: "쏭", title: "쏭" });
+    badges.push({ className: "familyTaskSongText", label: "쏭", title: "쏭" });
   }
 
   return badges;
@@ -166,14 +167,24 @@ export default function FamilyDashboardClient() {
                       onDragOver={(event) => enterTaskDropTarget(event, task.id)}
                       onDrop={(event) => dropTaskOnTarget(event, task.id)}
                     >
-                      <button
-                        className="familyTaskRowToggle"
-                        type="button"
-                        aria-expanded={expanded}
-                        onClick={() => toggleTask(task.id)}
-                      >
-                        <div className="familyTaskCardBody">
+                      <div className="familyTaskCardBody">
+                        <button
+                          className="familyTaskTitleToggle"
+                          type="button"
+                          aria-expanded={expanded}
+                          onClick={() => toggleTask(task.id)}
+                        >
                           <h3><span aria-hidden="true">•</span>{task.title}</h3>
+                        </button>
+                        <div className="familyTaskChecklistLine">
+                          <button
+                            className="familyTaskInlineCheck"
+                            type="button"
+                            aria-label={`${task.title} 완료`}
+                            onClick={() => completeTask(task.id)}
+                          >
+                            <span aria-hidden="true" />
+                          </button>
                           <div className="familyTaskMeta">
                             <span className="familyTaskMetaBadges">
                               {taskBadges.map((badge) => (
@@ -185,7 +196,7 @@ export default function FamilyDashboardClient() {
                             {task.due_date ? <span className="familyTaskDateBadge">{formatFamilyTaskDueDate(task.due_date)}</span> : null}
                           </div>
                         </div>
-                      </button>
+                      </div>
                       {expanded ? (
                         <div className="familyTaskRowActions">
                           <Link className="familyTaskActionButton" href={`/family/tasks/${task.id}/edit`}>
