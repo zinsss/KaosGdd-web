@@ -95,6 +95,35 @@ export function saveFamilyTasks(tasks) {
   }
 }
 
+export async function fetchFamilyTasks() {
+  try {
+    const response = await fetch("/api/family/tasks", { cache: "no-store" });
+    if (!response.ok) throw new Error("family task fetch failed");
+    const parsed = await response.json();
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map(normalizeFamilyTask).filter(Boolean);
+  } catch {
+    return loadFamilyTasks();
+  }
+}
+
+export async function persistFamilyTasks(tasks) {
+  const normalizedTasks = Array.isArray(tasks) ? tasks.map(normalizeFamilyTask).filter(Boolean) : [];
+  try {
+    const response = await fetch("/api/family/tasks", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tasks: normalizedTasks }),
+    });
+    if (!response.ok) throw new Error("family task save failed");
+    saveFamilyTasks(normalizedTasks);
+    return true;
+  } catch {
+    saveFamilyTasks(normalizedTasks);
+    return false;
+  }
+}
+
 export function formatFamilyDate(dateValue) {
   if (!dateValue) return "";
   const date = new Date(`${dateValue}T00:00:00`);

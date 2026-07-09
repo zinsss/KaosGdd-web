@@ -11,9 +11,9 @@ import {
   FAMILY_TASK_PRIORITIES,
   FAMILY_TASK_PRIORITY_ASSIGNEE,
   createFamilyTaskId,
-  loadFamilyTasks,
+  fetchFamilyTasks,
   normalizeFamilyTask,
-  saveFamilyTasks,
+  persistFamilyTasks,
 } from "../familyTasks";
 
 const EMPTY_DRAFT = {
@@ -34,26 +34,32 @@ export default function FamilyTaskFormClient({ taskId = null }) {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const loadedTasks = loadFamilyTasks();
-    setTasks(loadedTasks);
-    setLoaded(true);
+    let cancelled = false;
+    fetchFamilyTasks().then((loadedTasks) => {
+      if (cancelled) return;
+      setTasks(loadedTasks);
+      setLoaded(true);
 
-    if (!taskId) return;
-    const task = loadedTasks.find((candidate) => candidate.id === taskId);
-    if (!task) {
-      setError("할 일을 찾을 수 없어요.");
-      return;
-    }
+      if (!taskId) return;
+      const task = loadedTasks.find((candidate) => candidate.id === taskId);
+      if (!task) {
+        setError("할 일을 찾을 수 없어요.");
+        return;
+      }
 
-    const assignee = task.assignee || FAMILY_TASK_DEFAULT_ASSIGNEE;
-    setDraft({
-      title: task.title,
-      description: task.description,
-      memo_checks: Array.isArray(task.memo_checks) ? task.memo_checks : [],
-      assignee,
-      priority: task.priority || FAMILY_TASK_DEFAULT_PRIORITY,
-      due_date: task.due_date,
+      const assignee = task.assignee || FAMILY_TASK_DEFAULT_ASSIGNEE;
+      setDraft({
+        title: task.title,
+        description: task.description,
+        memo_checks: Array.isArray(task.memo_checks) ? task.memo_checks : [],
+        assignee,
+        priority: task.priority || FAMILY_TASK_DEFAULT_PRIORITY,
+        due_date: task.due_date,
+      });
     });
+    return () => {
+      cancelled = true;
+    };
   }, [taskId]);
 
   const pageTitle = useMemo(() => (isEditing ? "할 일 수정" : "할 일 추가"), [isEditing]);
@@ -75,7 +81,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
     router.push("/family");
   }
 
-  function saveTask(event) {
+  async function saveTask(event) {
     event.preventDefault();
     if (!loaded) return;
 
@@ -98,7 +104,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
             })
           : task,
       ).filter(Boolean);
-      saveFamilyTasks(nextTasks);
+      await persistFamilyTasks(nextTasks);
       goDashboard();
       return;
     }
@@ -116,13 +122,13 @@ export default function FamilyTaskFormClient({ taskId = null }) {
       updated_at: now,
     });
 
-    saveFamilyTasks([...tasks, nextTask].filter(Boolean));
+    await persistFamilyTasks([...tasks, nextTask].filter(Boolean));
     goDashboard();
   }
 
-  function deleteTask() {
+  async function deleteTask() {
     if (!isEditing || !loaded) return;
-    saveFamilyTasks(tasks.filter((task) => task.id !== taskId));
+    await persistFamilyTasks(tasks.filter((task) => task.id !== taskId));
     goDashboard();
   }
 

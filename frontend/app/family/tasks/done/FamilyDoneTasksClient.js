@@ -3,20 +3,27 @@
 import { useEffect, useMemo, useState } from "react";
 
 import FamilyHeader from "../../FamilyHeader";
-import { formatFamilyDateTime, loadFamilyTasks, saveFamilyTasks, sortDoneFamilyTasks } from "../../familyTasks";
+import { fetchFamilyTasks, formatFamilyDateTime, persistFamilyTasks, sortDoneFamilyTasks } from "../../familyTasks";
 
 export default function FamilyDoneTasksClient() {
   const [tasks, setTasks] = useState([]);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setTasks(loadFamilyTasks());
-    setLoaded(true);
+    let cancelled = false;
+    fetchFamilyTasks().then((loadedTasks) => {
+      if (cancelled) return;
+      setTasks(loadedTasks);
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (!loaded) return;
-    saveFamilyTasks(tasks);
+    persistFamilyTasks(tasks);
   }, [loaded, tasks]);
 
   const doneTasks = useMemo(() => sortDoneFamilyTasks(tasks.filter((task) => task.done)), [tasks]);

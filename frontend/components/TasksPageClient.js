@@ -10,6 +10,7 @@ import { captureCreatedEventHasType } from "../lib/post-create-navigation";
 import { localYmd, splitActiveTasksForRoutineBox } from "../lib/tasks/routine-grouping";
 
 const TASK_MODES = ["active", "done", "removed", "archived"];
+const SONG_TASK_TAGS = new Set(["쏭", "song", "ssong", "family-song", "family:song"]);
 
 function buildTaskModeHref(mode) {
   return mode === "active" ? "/tasks" : `/tasks?mode=${mode}`;
@@ -19,10 +20,24 @@ function taskModeLabel(mode) {
   return mode === "done" ? "Done" : mode === "removed" ? "Removed" : mode === "archived" ? "Archived" : "Active";
 }
 
+function getTaskTags(task) {
+  return Array.isArray(task?.tags) ? task.tags.map((tag) => String(tag || "").trim()).filter(Boolean) : [];
+}
+
+function isSongTaskTag(tag) {
+  return SONG_TASK_TAGS.has(String(tag || "").trim().toLowerCase());
+}
+
+function isSongTask(task) {
+  return getTaskTags(task).some(isSongTaskTag);
+}
+
 function getTaskAuxMetaTag(task) {
   const parts = [];
+  const tags = getTaskTags(task);
+  const hasNonSongTags = tags.some((tag) => !isSongTaskTag(tag));
   if (task.has_reminders) parts.push("R");
-  if (task.has_tags) parts.push("#");
+  if (hasNonSongTags || (task.has_tags && tags.length === 0)) parts.push("#");
   return parts.join("");
 }
 
@@ -67,6 +82,7 @@ function TaskRow({
 }) {
   const auxMetatag = getTaskAuxMetaTag(task);
   const dueMetatag = String(task.metatag_due || "").trim();
+  const songTask = isSongTask(task);
   const hasSubtasks = Number(task.subtask_total || 0) > 0;
   const showPrefixToggle = mode === "active";
   const isRepeating = Boolean(task.repeat_rule);
@@ -118,6 +134,7 @@ function TaskRow({
             </Link>
 
             {isRepeating ? <span className="taskListRepeatMarker">↻</span> : null}
+            {songTask ? <span className="taskListSongMarker">쏭</span> : null}
             {dueMetatag || auxMetatag ? (
               <span className="taskListMetaTag">{dueMetatag}{auxMetatag}</span>
             ) : null}

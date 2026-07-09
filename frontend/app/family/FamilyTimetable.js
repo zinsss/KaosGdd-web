@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { fetchFamilyRecord, persistFamilyRecord } from "./familyBackendStore";
 
 export const FAMILY_TIMETABLE_STORAGE_KEY = "kaosgdd.family.defaultTimetable.v1";
+const FAMILY_TIMETABLE_RECORD_KEY = "legacy-timetable";
 export const TIMETABLE_START_HOUR = 8;
 export const TIMETABLE_END_HOUR = 22;
 export const TIMETABLE_SLOT_MINUTES = 10;
@@ -290,6 +292,20 @@ function saveTimetableEntries(entries) {
   }
 }
 
+async function fetchTimetableEntries() {
+  const fallback = loadTimetableEntries();
+  const payload = await fetchFamilyRecord(FAMILY_TIMETABLE_RECORD_KEY, fallback);
+  const normalized = Array.isArray(payload) ? payload.map(normalizeTimetableEntry).filter(Boolean) : [];
+  saveTimetableEntries(normalized);
+  return normalized;
+}
+
+async function persistTimetableEntries(entries) {
+  const normalized = entries.map(normalizeTimetableEntry).filter(Boolean);
+  saveTimetableEntries(normalized);
+  await persistFamilyRecord(FAMILY_TIMETABLE_RECORD_KEY, normalized);
+}
+
 function sortTimetableEntries(entries) {
   return [...entries].sort((a, b) => {
     const firstSlotA = a.slots[0];
@@ -401,13 +417,20 @@ export default function FamilyTimetable() {
   const titleInputRef = useRef(null);
 
   useEffect(() => {
-    setEntries(loadTimetableEntries());
-    setLoaded(true);
+    let cancelled = false;
+    fetchTimetableEntries().then((loadedEntries) => {
+      if (cancelled) return;
+      setEntries(loadedEntries);
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (!loaded) return;
-    saveTimetableEntries(entries);
+    persistTimetableEntries(entries);
   }, [entries, loaded]);
 
   const visibleEntries = useMemo(

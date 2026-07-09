@@ -7,18 +7,18 @@ import {
   calculateFamilyCaregiverExtraTotal,
   calculateFamilyCaregiverHours,
   FAMILY_CALENDAR_DAY_LABELS,
+  fetchFamilyCaregiverHourlyWage,
+  fetchFamilyCaregiverHours,
+  fetchFamilyCaregiverMonthlySettings,
   formatFamilyCaregiverWon,
   formatFamilyCaregiverHours,
   formatFamilyDateKey,
-  loadFamilyCaregiverHourlyWage,
-  loadFamilyCaregiverHours,
-  loadFamilyCaregiverMonthlySettings,
   normalizeFamilyCaregiverDayRecord,
   normalizeFamilyCaregiverHourlyWage,
   normalizeFamilyCaregiverMonthlySettingsMap,
   padFamilyDatePart,
+  persistFamilyCaregiverMonthlySettings,
   resolveFamilyCaregiverMonthlySetting,
-  saveFamilyCaregiverMonthlySettings,
 } from "../familyCalendarData";
 
 function monthFromSearchParam(month) {
@@ -154,9 +154,20 @@ export default function FamilyCaregiverMonthlyReviewClient({ month }) {
   const [dailyBreakdownExpanded, setDailyBreakdownExpanded] = useState(false);
 
   useEffect(() => {
-    setCaregiverHoursByDate(loadFamilyCaregiverHours());
-    setMonthlySettingsByKey(loadFamilyCaregiverMonthlySettings());
-    setFallbackHourlyWage(loadFamilyCaregiverHourlyWage());
+    let cancelled = false;
+    Promise.all([
+      fetchFamilyCaregiverHours(),
+      fetchFamilyCaregiverMonthlySettings(),
+      fetchFamilyCaregiverHourlyWage(),
+    ]).then(([hours, settings, wage]) => {
+      if (cancelled) return;
+      setCaregiverHoursByDate(hours);
+      setMonthlySettingsByKey(settings);
+      setFallbackHourlyWage(wage);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const reviewText = useMemo(
@@ -197,7 +208,7 @@ export default function FamilyCaregiverMonthlyReviewClient({ month }) {
         ...normalizedCurrent,
         [monthKey]: nextSetting,
       };
-      saveFamilyCaregiverMonthlySettings(nextSettings);
+      persistFamilyCaregiverMonthlySettings(nextSettings);
       return nextSettings;
     });
   }

@@ -3,8 +3,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import FamilyHeader from "./FamilyHeader";
+import { fetchFamilyRecord, persistFamilyRecord } from "./familyBackendStore";
 
 const STORAGE_KEY = "kaosgdd:family-quick-pad-v0";
+const MEMO_RECORD_KEY = "memo-messages";
 
 const INITIAL_MESSAGES = [
   {
@@ -102,6 +104,21 @@ function loadMessages() {
   }
 }
 
+async function fetchMessages() {
+  const fallback = loadMessages();
+  const payload = await fetchFamilyRecord(MEMO_RECORD_KEY, fallback);
+  return Array.isArray(payload) && payload.length ? payload : fallback;
+}
+
+async function persistMessages(messages) {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+  } catch {
+    // local mirror is best-effort only
+  }
+  await persistFamilyRecord(MEMO_RECORD_KEY, messages);
+}
+
 function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onToggleChecklistItem }) {
   const isChecklist = message.type === "checklist";
   const deleteLabel = isChecklist ? "체크리스트 삭제" : "메모 삭제";
@@ -158,6 +175,7 @@ function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onT
 export default function FamilyPageClient() {
   const inputRef = useRef(null);
   const [messages, setMessages] = useState(INITIAL_MESSAGES);
+  const [messagesLoaded, setMessagesLoaded] = useState(false);
   const [draft, setDraft] = useState("");
   const [checklistMode, setChecklistMode] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState(null);
@@ -168,16 +186,21 @@ export default function FamilyPageClient() {
   }, [checklistMode, draft]);
 
   useEffect(() => {
-    setMessages(loadMessages());
+    let cancelled = false;
+    fetchMessages().then((loadedMessages) => {
+      if (cancelled) return;
+      setMessages(loadedMessages);
+      setMessagesLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-    } catch {
-      return;
-    }
-  }, [messages]);
+    if (!messagesLoaded) return;
+    persistMessages(messages);
+  }, [messages, messagesLoaded]);
 
   useEffect(() => {
     requestAnimationFrame(resetInputHeight);

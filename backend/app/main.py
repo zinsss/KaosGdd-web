@@ -22,6 +22,7 @@ from app.db.repo.note_repo import NoteRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.file_repo import FileRepo
 from app.db.repo.fax_repo import FaxRepo
+from app.db.repo.family_repo import FamilyRepo
 from app.db.repo.task_repo import TaskRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.push_subscription_repo import PushSubscriptionRepo
@@ -74,6 +75,7 @@ push_policy_repo = PushPolicyRepo(engine)
 supply_repo = SupplyRepo(engine)
 scribble_repo = ScribbleRepo(engine)
 weather_repo = WeatherRepo(engine)
+family_repo = FamilyRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
 holiday_sync_service = HolidaySyncService(items_repo, event_repo)
@@ -402,6 +404,34 @@ def delete_scribble(scribble_id: str):
 @app.get("/tasks")
 def list_tasks(mode: str = "active"):
     return {"items": task_service.list_tasks(mode=mode)}
+
+
+@app.get("/family/tasks")
+def list_family_tasks():
+    payload = family_repo.get_record("family", "tasks")
+    return payload if isinstance(payload, list) else []
+
+
+@app.put("/family/tasks")
+def save_family_tasks(payload: dict):
+    tasks = payload.get("tasks") if isinstance(payload, dict) else None
+    if not isinstance(tasks, list):
+        return {"ok": False, "error": "tasks must be a list"}
+    family_repo.put_record("family", "tasks", tasks)
+    return {"ok": True, "tasks": tasks}
+
+
+@app.get("/family/records/{record_key}")
+def get_family_record(record_key: str):
+    payload = family_repo.get_record("family", record_key)
+    return {"ok": True, "payload": payload}
+
+
+@app.put("/family/records/{record_key}")
+def put_family_record(record_key: str, payload: dict):
+    value = payload.get("payload") if isinstance(payload, dict) else None
+    family_repo.put_record("family", record_key, value)
+    return {"ok": True, "payload": value}
 
 
 @app.get("/supplies")

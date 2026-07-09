@@ -6,6 +6,7 @@ __pycache__/
 .venv/
 node_modules/
 .next/
+.next.root-stale/
 dist/
 build/
 data/*.db

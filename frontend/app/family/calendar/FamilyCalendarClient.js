@@ -36,13 +36,13 @@ import {
   formatFamilyCaregiverHours,
   formatFamilyCaregiverWon,
   formatFamilyDateKey,
+  fetchFamilyCaregiverHours,
+  fetchFamilyCalendarItems,
+  fetchFamilyRounState,
+  fetchFamilyRounyOverrides,
   getDefaultSelectedWeekKeyForMonth,
   getFamilyMonthWeeks,
   getFamilyWeekStart,
-  loadFamilyCaregiverHours,
-  loadFamilyCalendarItems,
-  loadFamilyRounyOverrides,
-  loadFamilyRounState,
   minutesToFamilyCaregiverTime,
   normalizeFamilyCaregiverDayRecord,
   normalizeFamilyCaregiverExtras,
@@ -51,9 +51,9 @@ import {
   parseFamilyDateKey,
   padFamilyDatePart,
   resolveFamilyRounPlanForDate,
-  saveFamilyCaregiverHours,
-  saveFamilyCalendarItems,
-  saveFamilyRounyOverrides,
+  persistFamilyCaregiverHours,
+  persistFamilyCalendarItems,
+  persistFamilyRounyOverrides,
 } from "./familyCalendarData";
 
 const FAMILY_CALENDAR_MODE_VIEW = "view";
@@ -1179,10 +1179,22 @@ export default function FamilyCalendarClient() {
   const [pressedDateKey, setPressedDateKey] = useState("");
 
   useEffect(() => {
-    setDatedItems(loadFamilyCalendarItems());
-    setRounState(loadFamilyRounState());
-    setRounyOverrides(loadFamilyRounyOverrides());
-    setCaregiverHoursByDate(loadFamilyCaregiverHours());
+    let cancelled = false;
+    Promise.all([
+      fetchFamilyCalendarItems(),
+      fetchFamilyRounState(),
+      fetchFamilyRounyOverrides(),
+      fetchFamilyCaregiverHours(),
+    ]).then(([loadedDatedItems, loadedRounState, loadedOverrides, loadedCaregiverHours]) => {
+      if (cancelled) return;
+      setDatedItems(loadedDatedItems);
+      setRounState(loadedRounState);
+      setRounyOverrides(loadedOverrides);
+      setCaregiverHoursByDate(loadedCaregiverHours);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -1410,7 +1422,7 @@ export default function FamilyCalendarClient() {
           endTime: moved.endTime,
         };
       });
-      saveFamilyCalendarItems(nextItems);
+      persistFamilyCalendarItems(nextItems);
       return nextItems;
     });
   }
@@ -1432,7 +1444,7 @@ export default function FamilyCalendarClient() {
         .filter((override) => override.id !== rounyItem.overrideId)
         .filter((override) => rounyOverrideKey(override.sourceRounyId, override.date) !== rounyOverrideKey(sourceRounyId, values.date))
         .concat(nextOverride);
-      saveFamilyRounyOverrides(nextOverrides);
+      persistFamilyRounyOverrides(nextOverrides);
       return nextOverrides;
     });
   }
@@ -1465,7 +1477,7 @@ export default function FamilyCalendarClient() {
   function restoreRounyOverride(overrideId) {
     setRounyOverrides((current) => {
       const nextOverrides = current.filter((override) => override.id !== overrideId);
-      saveFamilyRounyOverrides(nextOverrides);
+      persistFamilyRounyOverrides(nextOverrides);
       return nextOverrides;
     });
   }
@@ -1482,7 +1494,7 @@ export default function FamilyCalendarClient() {
           extras: normalized.extras,
         };
       }
-      saveFamilyCaregiverHours(nextHours);
+      persistFamilyCaregiverHours(nextHours);
       return nextHours;
     });
     setActiveCaregiverDate("");

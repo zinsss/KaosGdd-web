@@ -501,8 +501,8 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(!calendarSource.includes("<select"));
   assert.ok(!calendarSource.includes("openCaregiverTimePicker"));
   assert.ok(!calendarSource.includes("timeInputRefs"));
-  assert.ok(calendarSource.includes("setCaregiverHoursByDate(loadFamilyCaregiverHours());"));
-  assert.ok(calendarSource.includes("saveFamilyCaregiverHours(nextHours);"));
+  assert.ok(calendarSource.includes("fetchFamilyCaregiverHours()"));
+  assert.ok(calendarSource.includes("persistFamilyCaregiverHours(nextHours);"));
   assert.ok(calendarSource.includes("family/calendar/caregiver?month="));
   assert.ok(calendarSource.indexOf("<FamilyCalendarWeatherRows") < calendarSource.indexOf("<FamilyCaregiverHoursRow"));
   assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("familyCalendarAllDayRow"));
@@ -604,11 +604,11 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("if (moved.allDay) {"));
   assert.ok(calendarSource.includes("delete nextItem.startTime;"));
   assert.ok(calendarSource.includes("delete nextItem.endTime;"));
-  assert.ok(calendarSource.includes("saveFamilyCalendarItems(nextItems);"));
+  assert.ok(calendarSource.includes("persistFamilyCalendarItems(nextItems);"));
   assert.ok(calendarSource.includes("function upsertRounyOverride(rounyItem, values)"));
   assert.ok(calendarSource.includes('overrideType: values.deleted === true ? "deleted" : "moved",'));
   assert.ok(calendarSource.includes("override.id !== rounyItem.overrideId"));
-  assert.ok(calendarSource.includes("saveFamilyRounyOverrides(nextOverrides);"));
+  assert.ok(calendarSource.includes("persistFamilyRounyOverrides(nextOverrides);"));
   assert.ok(dataSource.includes('overrideType: override.overrideType === "deleted" || override.deleted === true ? "deleted" : "moved",'));
 
   assert.ok(calendarSource.includes("familyCalendarEditItem familyCalendarEditItemInline"));
@@ -803,7 +803,7 @@ test("family caregiver monthly review renders fixed-width calendar and wage summ
   assert.ok(reviewSource.includes("summary.extras += day.extras;"));
   assert.ok(reviewSource.includes("const baseWage = summary.hours * monthSetting.hourlyWage;"));
   assert.ok(reviewSource.includes("const totalWage = baseWage + summary.extras + monthSetting.transportFee;"));
-  assert.ok(reviewSource.includes("saveFamilyCaregiverMonthlySettings(nextSettings);"));
+  assert.ok(reviewSource.includes("persistFamilyCaregiverMonthlySettings(nextSettings);"));
   assert.ok(reviewSource.includes('aria-label="시급"'));
   assert.ok(reviewSource.includes('aria-label="교통비"'));
   assert.ok(reviewSource.includes('type="text"'));

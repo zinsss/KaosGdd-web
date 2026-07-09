@@ -9,9 +9,9 @@ import {
   FAMILY_TASK_DEFAULT_PRIORITY,
   FAMILY_TASK_PRIORITIES,
   FAMILY_TASK_PRIORITY_ASSIGNEE,
+  fetchFamilyTasks,
   formatFamilyTaskDueDate,
-  loadFamilyTasks,
-  saveFamilyTasks,
+  persistFamilyTasks,
   sortActiveFamilyTasks,
 } from "./familyTasks";
 
@@ -73,13 +73,20 @@ export default function FamilyDashboardClient() {
   const [expandedTaskId, setExpandedTaskId] = useState("");
 
   useEffect(() => {
-    setTasks(loadFamilyTasks());
-    setLoaded(true);
+    let cancelled = false;
+    fetchFamilyTasks().then((loadedTasks) => {
+      if (cancelled) return;
+      setTasks(loadedTasks);
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
     if (!loaded) return;
-    saveFamilyTasks(tasks);
+    persistFamilyTasks(tasks);
   }, [loaded, tasks]);
 
   const activeTasks = useMemo(() => sortActiveFamilyTasks(tasks.filter((task) => !task.done)), [tasks]);

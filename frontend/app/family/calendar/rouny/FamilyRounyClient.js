@@ -26,12 +26,12 @@ import {
   createFamilyCalendarId,
   createFamilyRounPlan,
   familyCalendarColorClassName,
+  fetchFamilyRounState,
   formatFamilyDateKey,
-  loadFamilyRounState,
   normalizeFamilyRounyItem,
+  persistFamilyRounState,
   parseFamilyDateKey,
   resolveFamilyRounPlanForDate,
-  saveFamilyRounState,
   updateFamilyRounPlanItems,
 } from "../familyCalendarData.js";
 import {
@@ -185,11 +185,17 @@ export default function FamilyRounyClient() {
   const suppressBlockClickRef = useRef(false);
 
   useEffect(() => {
-    const loadedState = loadFamilyRounState();
-    setRounState(loadedState);
-    setExpandedPlanId(loadedState.plans[0]?.id || "");
-    setLoaded(true);
-    return () => endFamilyScheduleDragSelectionLock();
+    let cancelled = false;
+    fetchFamilyRounState().then((loadedState) => {
+      if (cancelled) return;
+      setRounState(loadedState);
+      setExpandedPlanId(loadedState.plans[0]?.id || "");
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+      endFamilyScheduleDragSelectionLock();
+    };
   }, []);
 
   const openedPlan = useMemo(() => {
@@ -231,7 +237,7 @@ export default function FamilyRounyClient() {
   }, [rounState]);
 
   function persistRounState(nextState) {
-    const savedState = saveFamilyRounState(nextState);
+    const savedState = persistFamilyRounState(nextState);
     setRounState(savedState);
     return savedState;
   }

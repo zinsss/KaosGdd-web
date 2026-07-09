@@ -10,9 +10,9 @@ import {
   FAMILY_CALENDAR_COLOR_LABELS,
   createDefaultFamilyCalendarItem,
   familyCalendarColorClassName,
-  loadFamilyCalendarItems,
+  fetchFamilyCalendarItems,
   normalizeFamilyCalendarItem,
-  saveFamilyCalendarItems,
+  persistFamilyCalendarItems,
 } from "../familyCalendarData";
 
 const FAMILY_CALENDAR_EVENT_DEFAULT_DURATION_MINUTES = 40;
@@ -84,20 +84,26 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
   const editing = Boolean(eventId);
 
   useEffect(() => {
-    const loadedItems = loadFamilyCalendarItems();
-    setItems(loadedItems);
-    if (editing) {
-      const existing = loadedItems.find((item) => item.id === eventId);
-      if (existing) setDraft(eventToDraft(existing));
-    } else {
-      setDraft((current) => ({ ...current, ...eventPrefillFromLocation() }));
-    }
-    setLoaded(true);
+    let cancelled = false;
+    fetchFamilyCalendarItems().then((loadedItems) => {
+      if (cancelled) return;
+      setItems(loadedItems);
+      if (editing) {
+        const existing = loadedItems.find((item) => item.id === eventId);
+        if (existing) setDraft(eventToDraft(existing));
+      } else {
+        setDraft((current) => ({ ...current, ...eventPrefillFromLocation() }));
+      }
+      setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [editing, eventId]);
 
   useEffect(() => {
     if (!loaded) return;
-    saveFamilyCalendarItems(items);
+    persistFamilyCalendarItems(items);
   }, [items, loaded]);
 
   const pageTitle = useMemo(() => (editing ? "일정 수정" : "일정 추가"), [editing]);

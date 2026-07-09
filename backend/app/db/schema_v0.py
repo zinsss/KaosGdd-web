@@ -220,6 +220,16 @@ CREATE TABLE IF NOT EXISTS {weather_cache} (
     FOREIGN KEY (location_id) REFERENCES {weather_locations}(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS {family_records} (
+    id TEXT PRIMARY KEY,
+    namespace TEXT NOT NULL,
+    record_key TEXT NOT NULL,
+    payload_json TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    UNIQUE (namespace, record_key)
+);
+
 CREATE TABLE IF NOT EXISTS {weather_daily_snapshots} (
     id TEXT PRIMARY KEY,
     location_id TEXT NOT NULL,
@@ -369,6 +379,9 @@ ON {weather_locations}(enabled, display_order);
 CREATE INDEX IF NOT EXISTS idx_weather_cache_expires
 ON {weather_cache}(expires_at);
 
+CREATE INDEX IF NOT EXISTS idx_family_records_namespace_key
+ON {family_records}(namespace, record_key);
+
 CREATE INDEX IF NOT EXISTS idx_weather_daily_snapshots_location_date
 ON {weather_daily_snapshots}(location_id, date);
 
@@ -400,6 +413,7 @@ ON {weather_daily_snapshots}(location_id, fetched_at);
     scribbles=DbTables.SCRIBBLES,
     weather_locations=DbTables.WEATHER_LOCATIONS,
     weather_cache=DbTables.WEATHER_CACHE,
+    family_records=DbTables.FAMILY_RECORDS,
     weather_daily_snapshots=DbTables.WEATHER_DAILY_SNAPSHOTS,
 )
 
