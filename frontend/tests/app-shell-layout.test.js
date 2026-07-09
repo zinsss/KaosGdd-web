@@ -10,12 +10,15 @@ function cssBlock(source, selector) {
 
 test("top shell stays in flow so page controls are not covered", async () => {
   const layoutSource = await readFile(new URL("../app/layout.js", import.meta.url), "utf8");
+  const shellFrameSource = await readFile(new URL("../components/AppShellFrame.js", import.meta.url), "utf8");
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
   const topShellCss = cssBlock(shellCss, ".appShellTop");
   const mainCss = cssBlock(shellCss, ".appShellMain");
   const modeNavCss = cssBlock(shellCss, ".modeTextLinks");
 
   assert.doesNotMatch(layoutSource, /appShellTopSpacer/);
+  assert.match(layoutSource, /<AppShellFrame>\{children\}<\/AppShellFrame>/);
+  assert.match(shellFrameSource, /<header className="appShellTop">/);
   assert.match(topShellCss, /position:\s*sticky;/);
   assert.doesNotMatch(mainCss, /position:\s*fixed;/);
   assert.doesNotMatch(mainCss, /padding-top:\s*var\(--app-shell-content-offset\);/);
@@ -53,15 +56,17 @@ test("debug tap panel is gated by debugTap query parameter", async () => {
 
 test("attention box is mounted as a standalone card below capture shell", async () => {
   const layoutSource = await readFile(new URL("../app/layout.js", import.meta.url), "utf8");
+  const shellFrameSource = await readFile(new URL("../components/AppShellFrame.js", import.meta.url), "utf8");
   const observerSource = await readFile(new URL("../components/AppShellHeightObserver.js", import.meta.url), "utf8");
   const attentionBoxSource = await readFile(new URL("../components/AttentionBox.js", import.meta.url), "utf8");
   const globalsCss = await readFile(new URL("../app/globals.css", import.meta.url), "utf8");
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
   const attentionBoxCss = await readFile(new URL("../app/styles/attention-box.css", import.meta.url), "utf8");
 
-  assert.match(layoutSource, /<TopNav \/>\s*<TopCaptureBar \/>/);
-  assert.doesNotMatch(layoutSource, /<TopNav \/>\s*<AttentionBox \/>\s*<TopCaptureBar \/>/);
-  assert.match(layoutSource, /<\/header>\s*<div className="appShellAttentionSlot">\s*<AttentionBox \/>\s*<\/div>\s*<main className="appShellMain">/);
+  assert.match(shellFrameSource, /<TopNav \/>\s*<TopCaptureBar \/>/);
+  assert.doesNotMatch(shellFrameSource, /<TopNav \/>\s*<AttentionBox \/>\s*<TopCaptureBar \/>/);
+  assert.match(shellFrameSource, /<\/header>\s*<div className="appShellAttentionSlot">\s*<AttentionBox \/>\s*<\/div>/);
+  assert.match(shellFrameSource, /<main className=\{`appShellMain\$\{familySurface \? " appShellMainFamily" : ""\}`\}>/);
   assert.match(observerSource, /\.appShellAttentionSlot/);
   assert.match(observerSource, /shellHeight \+ attentionHeight/);
   assert.match(attentionBoxSource, /DISMISSED_SIGNATURE_KEY/);
@@ -70,6 +75,28 @@ test("attention box is mounted as a standalone card below capture shell", async 
   assert.match(shellCss, /\.appShellAttentionSlot\s*\{/);
   assert.match(attentionBoxCss, /max-width:\s*var\(--app-column-max-width\);/);
   assert.match(attentionBoxCss, /\.attentionBoxClose\s*\{/);
+});
+
+test("Family surface uses independent shell without main navigation", async () => {
+  const shellFrameSource = await readFile(new URL("../components/AppShellFrame.js", import.meta.url), "utf8");
+  const familyHeaderSource = await readFile(new URL("../app/family/FamilyHeader.js", import.meta.url), "utf8");
+  const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
+
+  assert.match(shellFrameSource, /String\(pathname \|\| ""\)\.startsWith\("\/family"\)/);
+  assert.match(shellFrameSource, /familySurface \? null :/);
+  assert.match(shellFrameSource, /<TopNav \/>/);
+  assert.match(shellFrameSource, /<TopCaptureBar \/>/);
+  assert.match(shellFrameSource, /<AttentionBox \/>/);
+  assert.match(shellFrameSource, /appShellMainFamily/);
+  assert.match(shellCss, /\.appShellMainFamily\s*\{[\s\S]*?height:\s*auto;[\s\S]*?overflow-y:\s*visible;/);
+
+  for (const label of ["달력", "할일", "로운이", "메모장"]) {
+    assert.ok(familyHeaderSource.includes(label), `${label} should remain in the Family shell`);
+  }
+
+  for (const mainLabel of ["Tasks", "Notes", "Files", "Fax", "Events"]) {
+    assert.ok(!familyHeaderSource.includes(mainLabel), `${mainLabel} should not be part of Family navigation`);
+  }
 });
 
 test("major app card spacing uses the shared spacing token", async () => {

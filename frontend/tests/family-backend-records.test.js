@@ -19,6 +19,7 @@ test("Family modules use backend records instead of browser-only storage", async
   const backendSource = await readSource("../../backend/app/main.py");
 
   assert.ok(storeSource.includes("/api/family/records/"));
+  assert.ok(storeSource.includes("persistFamilyRecord(recordKey, fallbackValue);"), "missing backend records should migrate local fallback data once");
   assert.ok(routeSource.includes("/family/records/"));
   assert.ok(backendSource.includes('@app.get("/family/records/{record_key}")'));
   assert.ok(backendSource.includes('@app.put("/family/records/{record_key}")'));

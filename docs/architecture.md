@@ -353,6 +353,8 @@ Family subdomain boundary:
 - `family.kaosgdd.net/` rewrites to `/family`.
 - `family.kaosgdd.net/calendar`, `/tasks`, `/roun`, and `/memo` rewrite to the matching `/family/...` routes.
 - `/api/*`, `/_next/*`, manifest, icon, and screenshot paths pass through unchanged.
+- Family routes use the Family shell only. The main KaosGdd top navigation, global capture bar, and attention card are not mounted on `/family/*` or the Family subdomain.
+- Allowed bridges between Family and the main app are deliberately small: the shared backend weather cache, explicit Family task sharing to main tasks, and explicit Family event sharing to main events.
 
 ## Database
 
