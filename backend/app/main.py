@@ -13,9 +13,10 @@ from zoneinfo import ZoneInfo
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse
+from sqlalchemy import text
 
 from app.config import SETTINGS
-from app.core.db import engine
+from app.core.db import DATABASE_SCHEMA, engine
 from app.db.repo.event_repo import EventRepo
 from app.db.repo.journal_repo import JournalRepo
 from app.db.repo.note_repo import NoteRepo
@@ -181,6 +182,27 @@ app = FastAPI(title=SETTINGS.APP_NAME, lifespan=lifespan)
 
 
 DAILY_SUMMARY_SLOTS = SETTINGS.DAILY_SUMMARY_SLOTS
+
+
+def database_diagnostic() -> dict:
+    url = engine.url
+    dialect = url.get_backend_name()
+    database = url.database or ""
+    location = database
+    if dialect.startswith("postgresql"):
+        location = f"{url.host or ''}/{database}".strip("/")
+    with engine.begin() as conn:
+        task_count = conn.execute(
+            text("SELECT COUNT(*) FROM items WHERE item_type = 'task'")
+        ).scalar_one()
+        family_record_count = conn.execute(text("SELECT COUNT(*) FROM family_records")).scalar_one()
+    return {
+        "dialect": dialect,
+        "database": location,
+        "schema": DATABASE_SCHEMA if dialect.startswith("postgresql") else "",
+        "task_count": int(task_count),
+        "family_record_count": int(family_record_count),
+    }
 
 
 def _daily_summary_local_date() -> str:
@@ -351,6 +373,7 @@ def health():
         "app": SETTINGS.APP_NAME,
         "mode": SETTINGS.APP_HEALTH_MODE,
         "timezone": SETTINGS.APP_TIMEZONE,
+        "database": database_diagnostic(),
     }
 
 

@@ -61,3 +61,18 @@ def test_listed_active_task_with_subtasks_id_can_detail_and_toggle(main_module) 
 
     done_items = main_module.list_tasks(mode="done")["items"]
     assert any(item["id"] == task_id for item in done_items)
+
+
+def test_health_database_diagnostic_reports_counts_without_secrets(main_module) -> None:
+    created = main_module.capture_item({"raw": "-- Health diagnostic task"})
+    assert created["ok"] is True
+    main_module.family_repo.put_record("family", "tasks", [{"id": "family-task-1"}])
+
+    response = main_module.health()
+    diagnostic = response["database"]
+
+    assert diagnostic["dialect"] == "sqlite"
+    assert diagnostic["task_count"] == 1
+    assert diagnostic["family_record_count"] == 1
+    assert "password" not in str(diagnostic).lower()
+    assert "://" not in str(diagnostic)

@@ -296,7 +296,7 @@ ${compactCss}`;
   assert.ok(compactCss.includes('color: rgba(92, 50, 68, 0.42);'));
   assert.ok(compactCss.includes('.familyCalendarWeekSelected .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before {'));
   assert.ok(compactCss.includes('content: "•";'));
-  assert.ok(compactCss.includes('color: rgba(180, 120, 190, 0.72);'));
+  assert.ok(compactCss.includes('color: rgba(216, 72, 132, 0.9);'));
   assert.doesNotMatch(compactCss, /Symbols Nerd Font|\uf460|\uf47c/);
   assert.match(
     compactCss,
@@ -521,10 +521,10 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarSource.indexOf('className="familyCalendarTimeRow familyCalendarAllDayRow"') < calendarSource.indexOf("hasSelectedWeekContent ? ("));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverRow {"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverReviewGutter {"));
-  assert.match(calendarCss, /\.familyCalendarCaregiverReviewGutter\s*\{[\s\S]*?background:\s*rgba\(255, 216, 229, 0\.44\);[\s\S]*?color:\s*rgba\(180, 120, 190, 0\.72\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(214, 128, 157, 0\.12\);/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverReviewGutter\s*\{[\s\S]*?background:\s*rgba\(255, 216, 229, 0\.44\);[\s\S]*?color:\s*rgba\(216, 72, 132, 0\.92\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(214, 128, 157, 0\.12\);/);
   assert.match(calendarCss, /\.familyCalendarCaregiverLabel,\s*\n\.familyCalendarCaregiverPickerLabel\s*\{[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?min-height:\s*20px;/);
-  assert.match(calendarCss, /\.familyCalendarCaregiverSlot\s*\{[\s\S]*?min-height:\s*17px;[\s\S]*?background:\s*#fff9fb;[\s\S]*?color:\s*rgba\(78, 37, 54, 0\.44\);[\s\S]*?box-shadow:\s*none;/);
-  assert.match(calendarCss, /\.familyCalendarCaregiverSlotActive\s*\{[\s\S]*?background:\s*#fff9fb;[\s\S]*?color:\s*rgba\(180, 120, 190, 0\.78\);[\s\S]*?box-shadow:\s*none;/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverSlot\s*\{[\s\S]*?min-height:\s*17px;[\s\S]*?background:\s*#fff9fb;[\s\S]*?color:\s*rgba\(216, 72, 132, 0\.72\);[\s\S]*?box-shadow:\s*none;/);
+  assert.match(calendarCss, /\.familyCalendarCaregiverSlotActive\s*\{[\s\S]*?background:\s*#fff9fb;[\s\S]*?color:\s*rgba\(216, 72, 132, 0\.96\);[\s\S]*?box-shadow:\s*none;/);
   assert.match(calendarCss, /\.familyCalendarRounyWeekToggleRow\s*\{[\s\S]*?align-items:\s*center;/);
   assert.match(calendarCss, /\.familyCalendarRounyWeekToggleRail\s*\{[\s\S]*?flex-direction:\s*row;[\s\S]*?align-items:\s*center;/);
   assert.match(calendarCss, /\.familyCalendarRounyWeekToggleText\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?box-shadow:\s*none;/);

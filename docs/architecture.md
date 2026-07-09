@@ -386,6 +386,10 @@ Current caution:
 - `docker-compose.yml` includes a `postgres` service.
 - `.env.example` now shows the Postgres URL as the primary example and the SQLite URL as fallback.
 - Production cutover is not automatic from the docs; it depends on the deployed `.env` and verified data migration state.
+- Production must not be pointed at a fresh/empty Postgres schema while a
+  populated SQLite database still exists. Check `/health` after every DB config
+  change; it reports the active dialect, schema, task count, and Family record
+  count without exposing database passwords.
 - More information is still needed before final cutover: exact production `DATABASE_URL`, backup/restore cadence, SQLite-to-Postgres data migration run, and rollback criteria.
 
 ## Operational Services

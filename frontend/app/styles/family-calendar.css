@@ -482,7 +482,7 @@
   min-height: 24px;
   border-radius: 8px;
   background: rgba(255, 216, 229, 0.44);
-  color: rgba(180, 120, 190, 0.72);
+  color: rgba(216, 72, 132, 0.92);
   font-size: 13px;
   font-weight: 950;
   line-height: 1;
@@ -508,7 +508,7 @@
   border-radius: 8px;
   padding: 0 2px;
   background: #fff9fb;
-  color: rgba(78, 37, 54, 0.44);
+  color: rgba(216, 72, 132, 0.72);
   font: inherit;
   font-size: 12px;
   font-weight: 950;
@@ -524,7 +524,7 @@
 
 .familyCalendarCaregiverSlotActive {
   background: #fff9fb;
-  color: rgba(180, 120, 190, 0.78);
+  color: rgba(216, 72, 132, 0.96);
   box-shadow: none;
 }
 
@@ -557,7 +557,7 @@
   padding: 0;
   background: transparent;
   box-shadow: none;
-  color: rgba(150, 130, 190, 0.58);
+  color: rgba(216, 72, 132, 0.82);
   text-align: center;
 }
 

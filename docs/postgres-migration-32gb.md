@@ -62,6 +62,20 @@ SQLite fallback remains valid for local or rollback use:
 DATABASE_URL=sqlite:////data/kaosgdd.db
 ```
 
+Production must not switch from SQLite to Postgres merely by copying
+`.env.example`. A Postgres URL can start a valid but empty schema, which makes
+the app look like tasks/events disappeared even when the populated SQLite file is
+still intact. Before setting production `DATABASE_URL` to Postgres, verify:
+
+- the populated SQLite database has a timestamped backup,
+- the intended Postgres schema is explicit through `DATABASE_SCHEMA`,
+- row counts for `items` and `task_items` match the SQLite source,
+- Family records exist in the same schema/search path the backend will use,
+- `/health` reports the expected dialect/schema and non-zero task count.
+
+An empty Postgres schema must never silently replace a populated SQLite
+production database.
+
 ## Start Postgres only
 
 ```bash
@@ -136,6 +150,8 @@ Review the target host and backup file before restore. Restore is destructive wh
 ## What remains before actual migration
 
 - Confirm the live deployed `DATABASE_URL` and `DATABASE_SCHEMA`.
+- Confirm `/health` reports the expected database dialect, schema, task count,
+  and Family record count.
 - Migrate existing SQLite data from `data/kaosgdd.db`.
 - Verify row counts and critical records after migration.
 - Run frontend/backend smoke tests against Postgres-backed app data.
