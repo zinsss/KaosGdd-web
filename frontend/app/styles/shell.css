@@ -121,6 +121,7 @@
 .appShellMainFamily {
   height: auto;
   min-height: 100dvh;
+  background: #fff8fb;
   overflow-y: visible;
   overscroll-behavior: auto;
 }

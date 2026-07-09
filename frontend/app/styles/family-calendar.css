@@ -219,8 +219,8 @@
 }
 
 .familyCalendarTimeRailSpacer {
-  background: rgba(255, 248, 251, 0.72);
-  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.14);
+  background: transparent;
+  box-shadow: none;
   pointer-events: none;
 }
 
@@ -307,13 +307,21 @@
 
 .familyCalendarSectionSeparated,
 .familyCalendarCaregiverRow,
+.familyCalendarRounyWeekToggleRow,
 .familyCalendarAllDayRow {
   box-shadow: none;
 }
 
+.familyCalendarWeekSelected .familyCalendarCaregiverRow,
+.familyCalendarWeekSelected .familyCalendarRounyWeekToggleRow,
+.familyCalendarWeekSelected .familyCalendarAllDayRow {
+  border-top: 1px solid rgba(214, 128, 157, 0.055);
+  padding-top: 3px;
+}
+
 .familyCalendarTimeLabel {
-  background: rgba(255, 248, 251, 0.72);
-  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.14);
+  background: transparent;
+  box-shadow: none;
   min-width: 0;
   box-sizing: border-box;
   padding-right: 4px;
@@ -440,6 +448,10 @@
   padding-top: 1px;
 }
 
+.familyCalendarWeekSelected .familyCalendarAllDaySlot {
+  margin-inline: 1px;
+}
+
 .familyCalendarCaregiverRow {
   align-items: center;
 }
@@ -492,24 +504,89 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
-  min-height: 19px;
+  min-height: 17px;
   border-radius: 8px;
   padding: 0 2px;
-  background: #f8f1f4;
-  color: rgba(78, 37, 54, 0.66);
+  background: #fff9fb;
+  color: rgba(78, 37, 54, 0.44);
   font: inherit;
   font-size: 12px;
   font-weight: 950;
   line-height: 1;
   text-align: center;
-  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.16);
+  box-shadow: none;
   cursor: pointer;
 }
 
+.familyCalendarWeekSelected .familyCalendarCaregiverSlot {
+  margin-inline: 1px;
+}
+
 .familyCalendarCaregiverSlotActive {
-  background: #f3e9ee;
-  color: rgba(78, 37, 54, 0.72);
-  box-shadow: inset 0 0 0 2px rgba(214, 128, 157, 0.2);
+  background: #fff9fb;
+  color: rgba(180, 120, 190, 0.78);
+  box-shadow: none;
+}
+
+.familyCalendarRounyWeekToggleRow {
+  appearance: none;
+  border: 0;
+  border-radius: 8px;
+  align-items: center;
+  padding: 0;
+  background: transparent;
+  color: rgba(78, 37, 54, 0.66);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.familyCalendarRounyWeekToggleRow[aria-expanded="true"] {
+  background: transparent;
+  color: rgba(78, 37, 54, 0.76);
+  box-shadow: none;
+}
+
+.familyCalendarRounyWeekToggleRail {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+  color: rgba(150, 130, 190, 0.58);
+  text-align: center;
+}
+
+.familyCalendarRounyWeekToggleText {
+  grid-column: 2 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 28px;
+  margin-inline: 1px;
+  border-radius: 8px;
+  padding: 0 8px;
+  background: transparent;
+  box-shadow: none;
+  overflow: hidden;
+  color: inherit;
+  font-size: 13px;
+  font-weight: 850;
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.familyCalendarRounyWeekToggleRow[aria-expanded="true"] .familyCalendarRounyWeekToggleText {
+  background: transparent;
+  box-shadow: none;
 }
 
 .familyCalendarCaregiverPicker {
@@ -519,8 +596,8 @@
   min-width: 0;
   border-radius: 8px;
   padding: 7px;
-  background: rgba(248, 241, 244, 0.72);
-  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.16);
+  background: transparent;
+  box-shadow: none;
 }
 
 .familyCalendarCaregiverEditorGrid {
@@ -542,10 +619,10 @@
   pointer-events: none;
   background: linear-gradient(
     to bottom,
-    rgba(214, 128, 157, 0),
-    rgba(214, 128, 157, 0.18) 14%,
-    rgba(214, 128, 157, 0.18) 86%,
-    rgba(214, 128, 157, 0)
+    rgba(150, 130, 190, 0),
+    rgba(150, 130, 190, 0.2) 14%,
+    rgba(150, 130, 190, 0.2) 86%,
+    rgba(150, 130, 190, 0)
   );
 }
 
@@ -561,7 +638,7 @@
 .familyCalendarCaregiverExtraTotal,
 .familyCalendarCaregiverError {
   min-width: 0;
-  color: rgba(70, 82, 150, 0.84);
+  color: rgba(120, 85, 150, 0.84);
   font-size: 13px;
   font-weight: 950;
   line-height: 1.2;
@@ -591,14 +668,14 @@
 .familyCalendarCaregiverSessionNumber {
   flex: 0 0 auto;
   min-width: 10px;
-  color: rgba(70, 82, 150, 0.58);
+  color: rgba(120, 85, 150, 0.58);
   font-size: 11px;
   font-weight: 950;
   text-align: center;
 }
 
 .familyCalendarCaregiverSessionLabel {
-  color: rgba(78, 37, 54, 0.62);
+  color: rgba(120, 85, 150, 0.64);
   font-size: 12px;
   font-weight: 950;
   white-space: nowrap;
@@ -607,7 +684,7 @@
 .familyCalendarCaregiverSessionValue {
   min-width: 0;
   overflow: hidden;
-  color: #4b2536;
+  color: rgba(120, 85, 150, 0.82);
   font-size: 13px;
   font-weight: 950;
   text-align: center;
@@ -616,14 +693,14 @@
 }
 
 .familyCalendarCaregiverSessionSeparator {
-  color: rgba(78, 37, 54, 0.5);
+  color: rgba(120, 85, 150, 0.5);
   font-size: 14px;
   font-weight: 950;
 }
 
 .familyCalendarCaregiverSessionHours {
   flex: 0 0 auto;
-  color: rgba(78, 37, 54, 0.62);
+  color: rgba(120, 85, 150, 0.64);
   font-size: 11px;
   font-weight: 950;
   white-space: nowrap;
@@ -642,12 +719,12 @@
   min-height: 26px;
   border-radius: 999px;
   padding: 0 8px;
-  background: #f8f1f4;
-  color: rgba(78, 37, 54, 0.66);
+  background: rgba(245, 235, 255, 0.56);
+  color: rgba(120, 85, 150, 0.82);
   font: inherit;
   font-size: 12px;
   font-weight: 950;
-  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.16);
+  box-shadow: inset 0 0 0 1px rgba(150, 130, 190, 0.18);
 }
 
 .familyCalendarCaregiverTimeButton {
@@ -678,12 +755,12 @@
   border: 0;
   border-radius: 999px;
   padding: 0 8px;
-  background: #fffafd;
-  color: #4b2536;
+  background: rgba(255, 250, 253, 0.78);
+  color: rgba(120, 85, 150, 0.82);
   font: inherit;
   font-size: 12px;
   font-weight: 900;
-  box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(150, 130, 190, 0.16);
 }
 
 .familyCalendarCaregiverExtraAmountInput {
@@ -695,11 +772,11 @@
   flex: 0 0 auto;
   width: 26px;
   padding: 0;
-  color: #9d3657;
+  color: rgba(120, 85, 150, 0.78);
 }
 
 .familyCalendarCaregiverError {
-  color: #9d3657;
+  color: rgba(120, 85, 150, 0.86);
 }
 
 .familyCalendarCaregiverPickerFooter,
@@ -720,14 +797,14 @@
 }
 
 .familyCalendarCaregiverSave {
-  background: #eadde3;
+  background: rgba(150, 130, 190, 0.72);
   color: #fff;
   box-shadow: none;
 }
 
 .familyCalendarCaregiverCancel {
-  background: rgba(255, 250, 253, 0.9);
-  color: rgba(78, 37, 54, 0.72);
+  background: rgba(245, 235, 255, 0.56);
+  color: rgba(120, 85, 150, 0.82);
 }
 
 .familyCaregiverReviewPage {

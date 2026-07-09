@@ -13,6 +13,7 @@ WEATHER_LOCATIONS = [
     {"id": "yeongdeok", "label": "영덕", "latitude": 36.4151, "longitude": 129.3650, "provider": "open-meteo", "enabled": True, "display_order": 0},
     {"id": "pohang", "label": "포항", "latitude": 36.0190, "longitude": 129.3435, "provider": "open-meteo", "enabled": True, "display_order": 1},
     {"id": "daegu", "label": "대구", "latitude": 35.8714, "longitude": 128.6014, "provider": "open-meteo", "enabled": True, "display_order": 2},
+    {"id": "yeongcheon", "label": "영천", "latitude": 35.9733, "longitude": 128.9386, "provider": "open-meteo", "enabled": True, "display_order": 3},
 ]
 DEFAULT_WEATHER_LOCATION_ID = "pohang"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"

@@ -3,6 +3,7 @@ export const DEFAULT_WEATHER_LOCATIONS = [
   { id: "yeongdeok", label: "영덕" },
   { id: DEFAULT_WEATHER_LOCATION, label: "포항" },
   { id: "daegu", label: "대구" },
+  { id: "yeongcheon", label: "영천" },
 ];
 export const WEATHER_LOCATION_STORAGE_KEY = "kaosgdd.weather.location.v1";
 export const FAMILY_CALENDAR_DAYPART_LABELS = ["오전", "오후", "저녁", "밤"];

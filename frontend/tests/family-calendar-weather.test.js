@@ -143,11 +143,19 @@ test("shared weather helper slices backend cache payload for Family calendar wea
           dayparts: {},
         },
       },
+      {
+        id: "yeongcheon",
+        label: "영천",
+        weather: {
+          daily: [],
+          dayparts: {},
+        },
+      },
     ],
   };
   const normalized = normalizeSharedWeatherPayload(sharedPayload);
   assert.equal(normalized.ok, true);
-  assert.deepEqual(normalized.locations.map((location) => location.id), ["yeongdeok", "pohang", "daegu"]);
+  assert.deepEqual(normalized.locations.map((location) => location.id), ["yeongdeok", "pohang", "daegu", "yeongcheon"]);
 
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (url) => {
@@ -158,7 +166,7 @@ test("shared weather helper slices backend cache payload for Family calendar wea
   try {
     const daily = await fetchWeatherDaily({ location: "pohang", startDate: "2026-06-22", endDate: "2026-06-22" });
     assert.equal(daily.ok, true);
-    assert.equal(daily.locations.length, 3);
+    assert.equal(daily.locations.length, 4);
     assert.deepEqual(daily.items, [{ date: "2026-06-22", glyph: "🌧", condition: "rain", min_c: 21, max_c: 26 }]);
 
     const dayparts = await fetchWeatherDayparts({ location: "pohang", date: "2026-06-22" });

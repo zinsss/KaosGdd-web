@@ -57,7 +57,7 @@ def make_weather_service(tmp_path, rows: list[dict]):
 
 def test_configured_weather_locations_include_expected_korean_labels() -> None:
     labels = {location["label"] for location in weather_locations_public()}
-    assert {"영덕", "포항", "대구"}.issubset(labels)
+    assert {"영덕", "포항", "대구", "영천"}.issubset(labels)
 
 
 def test_default_weather_location_is_pohang() -> None:
@@ -70,10 +70,10 @@ def test_weather_locations_are_seeded_into_sqlite(tmp_path) -> None:
     service.get_shared_weather()
     rows = repo.list_locations(enabled_only=True)
 
-    assert [row["id"] for row in rows] == ["yeongdeok", "pohang", "daegu"]
+    assert [row["id"] for row in rows] == ["yeongdeok", "pohang", "daegu", "yeongcheon"]
     with engine.begin() as conn:
         count = conn.execute(text("SELECT COUNT(*) FROM weather_locations")).scalar_one()
-    assert count == 3
+    assert count == 4
 
 
 def test_invalid_weather_location_returns_clear_error(tmp_path) -> None:
@@ -182,12 +182,12 @@ def test_shared_weather_cache_miss_fetches_and_stores_enabled_locations(tmp_path
     result = service.get_shared_weather()
 
     assert result["ok"] is True
-    assert provider.calls == 3
-    assert [item["id"] for item in result["locations"]] == ["yeongdeok", "pohang", "daegu"]
+    assert provider.calls == 4
+    assert [item["id"] for item in result["locations"]] == ["yeongdeok", "pohang", "daegu", "yeongcheon"]
     assert result["locations"][0]["weather"]["daily"][0]["condition"] == "clear"
     with engine.begin() as conn:
         count = conn.execute(text("SELECT COUNT(*) FROM weather_cache")).scalar_one()
-    assert count == 3
+    assert count == 4
 
 
 def test_shared_weather_fresh_cache_skips_fetch(tmp_path) -> None:
@@ -199,7 +199,7 @@ def test_shared_weather_fresh_cache_skips_fetch(tmp_path) -> None:
     service.get_shared_weather()
     service.get_shared_weather()
 
-    assert provider.calls == 3
+    assert provider.calls == 4
 
 
 def test_shared_weather_expired_cache_refreshes(tmp_path) -> None:
@@ -213,7 +213,7 @@ def test_shared_weather_expired_cache_refreshes(tmp_path) -> None:
 
     result = service.get_shared_weather()
 
-    assert provider.calls == 6
+    assert provider.calls == 8
     assert result["locations"][0]["stale"] is False
     assert result["locations"][0]["weather"]["daily"][0]["condition"] == "rain"
 
@@ -229,7 +229,7 @@ def test_shared_weather_provider_failure_returns_stale_cached_data(tmp_path) -> 
 
     result = service.get_shared_weather()
 
-    assert service.provider.calls == 3
+    assert service.provider.calls == 4
     assert result["locations"][0]["stale"] is True
     assert result["locations"][0]["weather"]["daily"][0]["condition"] == "cloudy"
     assert repo.get_cache(location_id="pohang") is not None
@@ -246,7 +246,7 @@ def test_shared_weather_provider_failure_without_cache_returns_location_error(tm
     result = service.get_shared_weather()
 
     assert result["ok"] is True
-    assert provider.calls == 3
+    assert provider.calls == 4
     assert result["locations"][0]["stale"] is True
     assert result["locations"][0]["error"] == "weather unavailable"
     assert result["locations"][0]["weather"]["daily"] == []

@@ -1,10 +1,23 @@
 .familyPage {
   --family-page-max: var(--app-column-max-width);
-  width: min(calc(100% - (var(--app-column-edge-padding) * 2)), var(--family-page-max));
-  max-width: var(--family-page-max);
+  width: 100%;
+  max-width: none;
+  min-height: 100dvh;
   box-sizing: border-box;
   overflow-x: hidden;
+  background: #fff8fb;
   font-size: 14px;
+}
+
+.familyCard {
+  width: min(calc(100% - (var(--app-column-edge-padding) * 2)), var(--family-page-max));
+  max-width: var(--family-page-max);
+  min-height: 100dvh;
+  margin: 0 auto;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .familyCard,
@@ -366,6 +379,11 @@
 
 @media (max-width: 640px) {
   .familyPage {
+    width: 100%;
+    max-width: none;
+  }
+
+  .familyCard {
     width: min(calc(100% - 16px), var(--family-page-max));
     max-width: var(--family-page-max);
   }

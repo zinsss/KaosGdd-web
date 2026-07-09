@@ -88,7 +88,7 @@ test("Family surface uses independent shell without main navigation", async () =
   assert.match(shellFrameSource, /<TopCaptureBar \/>/);
   assert.match(shellFrameSource, /<AttentionBox \/>/);
   assert.match(shellFrameSource, /appShellMainFamily/);
-  assert.match(shellCss, /\.appShellMainFamily\s*\{[\s\S]*?height:\s*auto;[\s\S]*?overflow-y:\s*visible;/);
+  assert.match(shellCss, /\.appShellMainFamily\s*\{[\s\S]*?height:\s*auto;[\s\S]*?min-height:\s*100dvh;[\s\S]*?background:\s*#fff8fb;[\s\S]*?overflow-y:\s*visible;/);
 
   for (const label of ["달력", "할일", "로운이", "메모장"]) {
     assert.ok(familyHeaderSource.includes(label), `${label} should remain in the Family shell`);

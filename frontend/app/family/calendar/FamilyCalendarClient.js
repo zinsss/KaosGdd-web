@@ -512,7 +512,7 @@ function FamilyCaregiverHoursRow({
               type="button"
               onClick={() => onToggleDate(activeDate === date ? "" : date)}
             >
-              {displayValue}
+              {displayValue || "이모"}
             </button>
           );
         })}
@@ -616,6 +616,20 @@ function FamilyCaregiverHoursRow({
         </div>
       ) : null}
     </>
+  );
+}
+
+function FamilyCalendarRounyWeekToggle({ expanded, onToggle }) {
+  return (
+    <button
+      className="familyCalendarTimeRow familyCalendarRounyWeekToggleRow"
+      type="button"
+      onClick={onToggle}
+      aria-expanded={expanded}
+    >
+      <span className="familyCalendarTimeLabel familyCalendarRounyWeekToggleRail">•</span>
+      <span className="familyCalendarRounyWeekToggleText">이 주의 로운이 시간표.</span>
+    </button>
   );
 }
 
@@ -757,8 +771,10 @@ function FamilyCalendarEditWeek({
   onMoveDatedItem,
   onRestoreRounyOverride,
   onSelectDragWeek,
+  onToggleRounyTimetable,
   onToggleCaregiverDate,
   onToggleWeather,
+  rounyTimetableExpanded,
   selectedWeekDates,
   selectedWeekItems,
   selectedWeekStart,
@@ -1074,7 +1090,11 @@ function FamilyCalendarEditWeek({
         onToggleDate={onToggleCaregiverDate}
         selectedWeekDates={selectedWeekDates}
       />
-      {hasAllDayItems ? (
+      <FamilyCalendarRounyWeekToggle
+        expanded={rounyTimetableExpanded}
+        onToggle={onToggleRounyTimetable}
+      />
+      {rounyTimetableExpanded && hasAllDayItems ? (
         <div className="familyCalendarTimeRow familyCalendarAllDayRow" key="all-day">
           <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
           {allDayItems.map((items, dayIndex) => (
@@ -1097,7 +1117,7 @@ function FamilyCalendarEditWeek({
           ))}
         </div>
       ) : null}
-      {editSegments.map((segment) => (
+      {rounyTimetableExpanded ? editSegments.map((segment) => (
         <FamilyCalendarTimedArea
           clearPendingLongPress={clearPendingLongPress}
           deletedRounyOverridesByDate={deletedRounyOverridesByDate}
@@ -1116,7 +1136,7 @@ function FamilyCalendarEditWeek({
           selectedWeekStart={selectedWeekStart}
           startSlotLongPress={startSlotLongPress}
         />
-      ))}
+      )) : null}
       {dragState ? (
         <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
           {dragState.title}
@@ -1174,6 +1194,7 @@ export default function FamilyCalendarClient() {
   const [weatherItems, setWeatherItems] = useState([]);
   const [selectedWeekWeatherDayparts, setSelectedWeekWeatherDayparts] = useState({});
   const [weatherExpanded, setWeatherExpanded] = useState(false);
+  const [rounyTimetableExpanded, setRounyTimetableExpanded] = useState(false);
   const [caregiverHoursByDate, setCaregiverHoursByDate] = useState({});
   const [activeCaregiverDate, setActiveCaregiverDate] = useState("");
   const [pressedDateKey, setPressedDateKey] = useState("");
@@ -1263,6 +1284,7 @@ export default function FamilyCalendarClient() {
 
   useEffect(() => {
     setWeatherExpanded(false);
+    setRounyTimetableExpanded(false);
     setActiveCaregiverDate("");
   }, [selectedWeekKey, calendarMode, monthDate]);
 
@@ -1616,8 +1638,10 @@ export default function FamilyCalendarClient() {
                   onMoveDatedItem={moveDatedItem}
                   onRestoreRounyOverride={restoreRounyOverride}
                   onSelectDragWeek={selectDragWeek}
+                  onToggleRounyTimetable={() => setRounyTimetableExpanded((current) => !current)}
                   onToggleCaregiverDate={setActiveCaregiverDate}
                   onToggleWeather={() => setWeatherExpanded((current) => !current)}
+                  rounyTimetableExpanded={rounyTimetableExpanded}
                   selectedWeekDates={selectedWeekDates}
                   selectedWeekItems={selectedWeekItems}
                   selectedWeekStart={selectedWeekStart}
@@ -1643,29 +1667,35 @@ export default function FamilyCalendarClient() {
                     onToggleDate={setActiveCaregiverDate}
                     selectedWeekDates={selectedWeekDates}
                   />
-                  <div className="familyCalendarTimeRow familyCalendarAllDayRow">
-                    <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
-                    {selectedWeekAllDayItems.map((items, dayIndex) => (
-                      <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
-                        {items.map((item) => (
-                          <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${normalizedCalendarItemType(item)}-${item.id}`} />
+                  <FamilyCalendarRounyWeekToggle
+                    expanded={rounyTimetableExpanded}
+                    onToggle={() => setRounyTimetableExpanded((current) => !current)}
+                  />
+                  {rounyTimetableExpanded ? (
+                    <>
+                      <div className="familyCalendarTimeRow familyCalendarAllDayRow">
+                        <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
+                        {selectedWeekAllDayItems.map((items, dayIndex) => (
+                          <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
+                            {items.map((item) => (
+                              <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${normalizedCalendarItemType(item)}-${item.id}`} />
+                            ))}
+                          </div>
                         ))}
                       </div>
-                    ))}
-                  </div>
-                  {hasSelectedWeekContent ? (
-                    <>
-                      {selectedWeekTimedSegments.map((segment) => (
-                        <FamilyCalendarTimedArea
-                          key={`${segment.startMinutes}-${segment.endMinutes}`}
-                          segment={segment}
-                          selectedWeekStart={selectedWeekStart}
-                        />
-                      ))}
+                      {hasSelectedWeekContent ? (
+                        selectedWeekTimedSegments.map((segment) => (
+                          <FamilyCalendarTimedArea
+                            key={`${segment.startMinutes}-${segment.endMinutes}`}
+                            segment={segment}
+                            selectedWeekStart={selectedWeekStart}
+                          />
+                        ))
+                      ) : (
+                        <p className="familyCalendarEmptyWeek">이번 주에는 아직 적힌 일정이 없어요.</p>
+                      )}
                     </>
-                  ) : (
-                    <p className="familyCalendarEmptyWeek">이번 주에는 아직 적힌 일정이 없어요.</p>
-                  )}
+                  ) : null}
                 </div>
               )}
             </section>

@@ -30,6 +30,13 @@ See also [Architecture](architecture.md) for the broader backend/frontend relati
 
 The legacy `weather_daily_snapshots` table remains for compatibility with existing backend daily-weather code, but new frontend consumers should use the shared cache endpoint.
 
+Seeded enabled locations are:
+
+- 영덕 (`yeongdeok`)
+- 포항 (`pohang`)
+- 대구 (`daegu`)
+- 영천 (`yeongcheon`)
+
 ## Endpoint
 
 Use:
@@ -65,7 +72,7 @@ The response contains all enabled weather locations:
 
 Default TTL: 1 hour.
 
-For each enabled location:
+For each enabled location, currently 영덕, 포항, 대구, and 영천:
 
 1. If cache is missing, fetch from the provider and store `payload_json`.
 2. If cache is expired, fetch from the provider and update `payload_json`.

@@ -26,24 +26,22 @@
 }
 
 .familyCalendarWeek {
+  position: relative;
   isolation: auto;
+  padding: 0;
 }
 
 .familyCalendarWeekSelected {
   border: 0;
   border-radius: 8px;
   background: #fffafd;
-  padding: 8px 0 6px;
-  box-shadow:
-    inset 2px 0 0 rgba(214, 128, 157, 0.26),
-    inset -2px 0 0 rgba(214, 128, 157, 0.26);
+  padding: 0;
+  box-shadow: none;
 }
 
 .familyCalendarWeekEditingSelected {
   background: rgba(230, 220, 255, 0.22);
-  box-shadow:
-    inset 2px 0 0 rgba(180, 120, 190, 0.4),
-    inset -2px 0 0 rgba(180, 120, 190, 0.4);
+  box-shadow: none;
 }
 
 .familyCalendarWeekEditingSelected .familyCalendarWeekDates,
@@ -65,6 +63,21 @@
 .familyCalendarWeek::before,
 .familyCalendarWeek::after {
   content: none;
+}
+
+.familyCalendarWeekSelected::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  box-sizing: border-box;
+  border: 1px solid rgba(214, 128, 157, 0.32);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.familyCalendarWeekEditingSelected::after {
+  border-color: rgba(180, 120, 190, 0.42);
 }
 
 .familyCalendarWeekHeader span,
@@ -104,9 +117,9 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 14px;
-  min-width: 14px;
-  min-height: 14px;
+  width: var(--family-calendar-expanded-rail-width, 20px);
+  min-width: var(--family-calendar-expanded-rail-width, 20px);
+  min-height: 20px;
   color: rgba(92, 50, 68, 0.42);
   background: transparent;
   box-shadow: none;
@@ -195,8 +208,8 @@
   box-sizing: border-box;
   padding: 2px 0;
   overflow: hidden;
-  background: rgba(255, 248, 251, 0.72);
-  box-shadow: inset -1px 0 rgba(214, 128, 157, 0.1);
+  background: transparent;
+  box-shadow: none;
   color: rgba(120, 95, 160, 0.72);
   font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding", "SFMono-Regular", "Menlo", "Consolas", monospace;
   font-size: 10px;
@@ -225,6 +238,7 @@
 .familyCalendarWeatherToggle::after,
 .familyCalendarCaregiverLabel::after,
 .familyCalendarCaregiverPickerLabel::after,
+.familyCalendarRounyWeekToggleRail::after,
 .familyCalendarAllDayLabel::after {
   content: none;
 }
@@ -246,13 +260,13 @@
   }
 
   .familyCalendarWeekSelected {
-    padding: 8px 0 5px;
+    padding: 0;
   }
 
   .familyCalendarWeekToggle .familyCalendarTimeRailSpacer {
-    width: 12px;
-    min-width: 12px;
-    min-height: 12px;
+    width: var(--family-calendar-expanded-rail-width, 20px);
+    min-width: var(--family-calendar-expanded-rail-width, 20px);
+    min-height: 20px;
   }
 
   .familyCalendarWeekDates .familyCalendarTimeRailSpacer::before,
