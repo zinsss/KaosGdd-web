@@ -36,8 +36,9 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(dashboardSource.includes("aria-expanded={expanded}"), "collapsed task rows should expose expansion state");
   assert.ok(dashboardSource.includes("className=\"familyTaskRowToggle\""), "task row should be the compact one-line toggle");
   assert.ok(!dashboardSource.includes("className=\"familyTaskChecklistLine\""), "task list should no longer render a second checklist line");
-  assert.ok(dashboardSource.includes('className="familyTaskInlineCheck"'), "task row should include a compact clickable completion checkbox beside the title");
-  assert.ok(dashboardSource.includes("onClick={() => completeTask(task.id)}"), "task row checkbox should complete the task");
+  assert.ok(dashboardSource.includes('className="prefixToggleButton familyTaskInlineCheck"'), "task row should reuse the main task circle/check completion control");
+  assert.ok(dashboardSource.includes("onClick={() => completeTask(task.id)}"), "task row completion control should complete the task");
+  assert.match(dashboardSource, /familyTaskInlineCheck[\s\S]*?>\s*○\s*<\/button>/, "active task completion control should render the main task open circle");
   assert.ok(dashboardSource.includes("className=\"familyTaskRowActions\""), "task actions should appear only in expanded rows");
   assert.ok(dashboardSource.includes("familyTaskActionButtonDone"), "done action should have a lavender action style hook");
   assert.ok(dashboardSource.includes("familyTaskActionButtonDanger"), "delete action should have a darker pink action style hook");
@@ -95,8 +96,10 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.match(taskCss, /\.familyTaskSongText\s*\{[\s\S]*?color:\s*#d86f98;[\s\S]*?font-weight:\s*950;/);
   assert.match(taskCss, /\.familyTaskMemoChecklist\s*\{[\s\S]*?display:\s*grid;[\s\S]*?gap:\s*6px;/);
   assert.match(taskCss, /\.familyTaskMemoCheckItem\s*\{[\s\S]*?display:\s*flex;[\s\S]*?align-items:\s*center;[\s\S]*?text-align:\s*left;/);
-  assert.match(taskCss, /\.familyTaskMemoCheckBox\s*\{[\s\S]*?width:\s*17px;[\s\S]*?height:\s*17px;[\s\S]*?box-shadow:\s*inset 0 0 0 1\.5px rgba\(216, 111, 152, 0\.42\);/);
-  assert.match(taskCss, /\.familyTaskInlineCheck\s*\{[\s\S]*?width:\s*19px;[\s\S]*?height:\s*19px;[\s\S]*?box-shadow:\s*inset 0 0 0 1\.5px rgba\(216, 111, 152, 0\.48\);/);
+  assert.ok(dashboardSource.includes('prefixToggleButton familyTaskMemoCheckBox'), "memo subtasks should reuse the main task circle/check visual");
+  assert.ok(dashboardSource.includes('{checked ? "✓" : "○"}'), "memo subtasks should render check or open circle");
+  assert.match(taskCss, /\.familyTaskMemoCheckBox\s*\{[\s\S]*?width:\s*20px;[\s\S]*?height:\s*20px;[\s\S]*?color:\s*rgba\(216, 111, 152, 0\.58\);/);
+  assert.match(taskCss, /\.familyTaskInlineCheck\s*\{[\s\S]*?width:\s*22px;[\s\S]*?height:\s*22px;[\s\S]*?color:\s*rgba\(216, 111, 152, 0\.58\);/);
   assert.match(taskCss, /\.familyTaskMemoHint\s*\{[\s\S]*?font-size:\s*12px;/);
   assert.ok(!taskCss.includes(".familyTaskMemoChecklistToggle"), "old memo checklist toggle CSS should be removed");
   assert.match(taskCss, /\.familyTaskCardExpanded \.familyTaskRowToggle h3\s*\{[\s\S]*?text-decoration-line:\s*underline;[\s\S]*?text-decoration-color:\s*rgba\(180, 120, 190, 0\.32\);/);

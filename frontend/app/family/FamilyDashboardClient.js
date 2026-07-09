@@ -220,11 +220,13 @@ export default function FamilyDashboardClient() {
                     >
                       <div className="familyTaskCardBody">
                         <button
-                          className="familyTaskInlineCheck"
+                          className="prefixToggleButton familyTaskInlineCheck"
                           type="button"
                           aria-label={`${task.title} 완료`}
                           onClick={() => completeTask(task.id)}
-                        />
+                        >
+                          ○
+                        </button>
                         <button
                           className="familyTaskRowToggle"
                           type="button"
@@ -257,8 +259,8 @@ export default function FamilyDashboardClient() {
                                     onClick={() => toggleTaskSubtaskLine(task.id, lineIndex)}
                                     key={`${task.id}-${lineIndex}`}
                                   >
-                                    <span className="familyTaskMemoCheckBox" aria-hidden="true">
-                                      {checked ? "✓" : ""}
+                                    <span className={`prefixToggleButton familyTaskMemoCheckBox${checked ? " isDone" : " isUndone"}`} aria-hidden="true">
+                                      {checked ? "✓" : "○"}
                                     </span>
                                     <span>{line}</span>
                                   </button>
