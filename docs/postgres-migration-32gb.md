@@ -1,20 +1,23 @@
 # 32GB Odroid Postgres preparation
 
 This is preparation for KaosGdd Postgres migration on the 32GB Odroid Docker host.
-It does not migrate production data yet.
+It does not by itself prove that production data has been migrated.
 
 Orthanc is intentionally out of scope. Do not share an Orthanc database, schema, or
 Postgres volume with KaosGdd. Orthanc remains separate on the 64GB host.
 
 ## Current state
 
-- Backend persistence is still the existing SQLAlchemy/SQLite v0 schema.
+- Backend persistence can run against SQLite or Postgres depending on `DATABASE_URL`.
 - Family UI data is still browser `localStorage`.
 - Postgres is prepared as a separate Docker service and volume.
+- `.env.example` now shows Postgres as the primary example and keeps SQLite as the documented fallback.
+- `docker-compose.yml` starts the `postgres` service and makes the backend wait for it to be healthy.
 - Fresh Postgres init creates schemas:
   - `main`
   - `family`
-- Full app data migration and backend schema porting are still future work.
+- Backend schema bootstrap is Postgres-aware through `DATABASE_SCHEMA`/search path.
+- Full existing SQLite data migration still requires an explicit runbook and verification.
 
 ## Services and volume
 
@@ -47,10 +50,17 @@ APP_TIMEZONE=Asia/Seoul
 POSTGRES_DB=kaosgdd
 POSTGRES_USER=kaosgdd
 POSTGRES_PASSWORD=change_me
-DATABASE_URL=postgresql://kaosgdd:change_me@postgres:5432/kaosgdd
+DATABASE_URL=postgresql://kaosgdd:change_me@kaosgdd-postgres:5432/kaosgdd
+DATABASE_SCHEMA=main
 ```
 
 Do not commit real secrets.
+
+SQLite fallback remains valid for local or rollback use:
+
+```bash
+DATABASE_URL=sqlite:////data/kaosgdd.db
+```
 
 ## Start Postgres only
 
@@ -90,9 +100,9 @@ schemas=family,main
 docker compose up -d
 ```
 
-The backend still contains the current SQLite-oriented v0 table bootstrap. Do not
-switch production traffic to Postgres-backed app data until the backend schema/data
-migration patch is ready and tested.
+The backend schema bootstrap can create v0 tables under Postgres. Do not treat
+that as a completed data migration. Existing SQLite data still needs a verified
+copy/check process before production cutover.
 
 ## Backup Postgres
 
@@ -125,9 +135,21 @@ Review the target host and backup file before restore. Restore is destructive wh
 
 ## What remains before actual migration
 
-- Port or replace the SQLite v0 table bootstrap for Postgres.
-- Decide table/schema placement under `main` and `family`.
+- Confirm the live deployed `DATABASE_URL` and `DATABASE_SCHEMA`.
 - Migrate existing SQLite data from `data/kaosgdd.db`.
+- Verify row counts and critical records after migration.
+- Run frontend/backend smoke tests against Postgres-backed app data.
+- Define rollback: whether to switch `DATABASE_URL` back to SQLite or restore Postgres backup.
 - Migrate Family browser `localStorage` data only after a separate product/data plan.
 - Add production backup/restore runbooks and timers once data is actually in Postgres.
 - Keep Orthanc separate from this KaosGdd database.
+
+## Needs More Information
+
+Before flipping production permanently, collect:
+
+- current production SQLite database path and backup location,
+- exact Docker service name used by production compose (`postgres` vs `kaosgdd-postgres` host alias),
+- target backup cadence for Postgres dumps,
+- acceptable downtime window for migration,
+- validation checklist for fax records, files, reminders, weather cache, and task/event counts.

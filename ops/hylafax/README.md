@@ -6,7 +6,7 @@ incoming fax
 → HylaFAX receives TIFF
 → /var/spool/hylafax/bin/faxrcvd
 → /var/spool/hylafax/bin/kaosgdd-faxrcvd
-→ /srv/KaosGdd-web/backend/scripts/hylafax_recv_hook.py
+→ /srv/kaos-stack/kaosgdd/repo/backend/scripts/hylafax_recv_hook.py
 → KaosGdd converts TIFF to PDF
 → Fax item created
 
@@ -14,13 +14,18 @@ incoming fax
 
 - /var/spool/hylafax/bin/faxrcvd
 - /var/spool/hylafax/bin/kaosgdd-faxrcvd
-- /srv/KaosGdd-web/backend/scripts/hylafax_recv_hook.py
+- /srv/kaos-stack/kaosgdd/repo/backend/scripts/hylafax_recv_hook.py
+
+For host/container send settings, outgoing `sendfax`, doneq status sync, and
+verification commands, see:
+
+- `docs/fax-settings.md`
 
 ## Restore after package update
 
 Run:
 
-    sudo /srv/KaosGdd-web/ops/hylafax/install-kaosgdd-hylafax-hooks.sh
+    sudo /srv/kaos-stack/kaosgdd/repo/ops/hylafax/install-kaosgdd-hylafax-hooks.sh
 
 ## Logs
 
@@ -32,4 +37,5 @@ Run:
 ## Health check
 
     faxstat -s
-    curl -s http://127.0.0.1:8000/fax | jq
+    faxstat -d
+    curl -s http://127.0.0.1:18000/fax | jq

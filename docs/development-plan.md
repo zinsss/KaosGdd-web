@@ -23,6 +23,7 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 - [x] Pushover system/admin notification path.
 - [x] Korean public holiday sync.
 - [x] Shared backend weather cache.
+- [x] Postgres service prepared in Docker Compose.
 - [x] Family UI section.
 - [x] Family calendar local event model.
 - [x] Family all-day event support.
@@ -30,6 +31,11 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 - [x] Family caregiver hour entry and monthly review.
 - [x] 로운이 timetable templates and date-based assignments.
 - [x] Family local drag/drop for calendar and timetable where implemented.
+- [x] Family subdomain rewrite for `family.kaosgdd.net`.
+- [x] Family task memo-as-checklist option.
+- [x] Selected-file transient outgoing fax send path.
+- [x] Fax inbox expandable rows with Open/Download/Delete hidden behind expansion.
+- [x] Outgoing HylaFAX status reconciliation from `doneq`.
 
 ## Near-Term Stabilization
 
@@ -41,16 +47,19 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 - [ ] Keep Family localStorage compatibility tests for renamed concepts such as `roni` -> `rouny`.
 - [ ] Keep selected-file fax grammar separate from File save grammar.
 - [ ] Confirm desktop Firefox date/time picker fallbacks remain usable.
+- [ ] Confirm production `DATABASE_URL` before declaring the app cut over to Postgres.
+- [ ] Confirm `FAX_DONEQ_DIR` mount/path on each deployment host.
 
 ## Backend Plans
 
-- [ ] Continue SQLite-first schema evolution.
+- [ ] Continue database-agnostic schema evolution while SQLite fallback remains supported.
 - [ ] Keep repositories SQL-only and services behavior-focused.
 - [ ] Add backend tests for each new service behavior.
 - [ ] Make weather cache provider easier to swap without frontend changes.
 - [ ] Improve observability for internal scheduled endpoints.
 - [ ] Keep Pushover reserved for system/admin alarms unless explicitly escalated.
 - [ ] Harden fax temp-file retention and cleanup reporting.
+- [ ] Add a user-visible fax progress refresh strategy beyond read-triggered `doneq` sync.
 - [ ] Add migration notes when local or durable storage keys change.
 
 ## Frontend Plans
@@ -62,6 +71,7 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 - [ ] Keep weather reads centralized in `frontend/app/lib/weather-client.js`.
 - [ ] Keep Family font/color conventions centralized in Family CSS.
 - [ ] Avoid horizontal overflow on mobile forms and calendars.
+- [ ] Keep Family subdomain proxy path allow-list current when adding Family routes.
 
 ## Family Plans
 
@@ -71,6 +81,7 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 - [ ] Keep Family calendar weather compact and optional in expanded week rows.
 - [ ] Keep drag/drop behavior consistent across Family calendar and 로운이 timetable.
 - [ ] Consider backend migration only with explicit scope, migration, and rollback plan.
+- [ ] Decide whether Family task memo check states should remain local-only or eventually sync through backend task fields.
 
 ## Capture Grammar Plans
 
@@ -87,5 +98,5 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 - [ ] Discord bot architecture.
 - [ ] Telegram bot architecture.
 - [ ] Frontend direct weather-provider calls.
-- [ ] Postgres requirement for current deployment.
+- [ ] Mandatory Postgres-only deployment before verified migration.
 - [ ] A separate Family weather backend.

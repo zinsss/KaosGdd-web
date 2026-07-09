@@ -9,7 +9,7 @@ This file records the architectural invariants that should not drift during feat
 - Private.
 - Tailscale-oriented.
 - Hosted on Debian with systemd.
-- SQLite remains the production database for now.
+- SQLite remains the safe fallback database. Postgres support may be prepared, but app data cutover must be explicit and reversible.
 - No Telegram support.
 - No Discord support.
 
@@ -96,6 +96,7 @@ Files/Fax:
 - Files are durable records.
 - Fax send records are durable fax records.
 - Quick outgoing fax with a selected attachment is transient fax send behavior and must not be routed through File save grammar.
+- Fax transport is HylaFAX-owned. App records may sync status from HylaFAX queue/doneq state, but HylaFAX remains the modem/send authority.
 
 Weather:
 
@@ -123,6 +124,7 @@ Open decisions must still respect the freeze:
 
 - Exact sorting of module pages.
 - Future backend migration for selected Family local data.
+- Final Postgres cutover sequence and rollback criteria.
 - Search/indexing.
 - More precise auth beyond Tailscale.
 - Scheduler expansion.

@@ -82,3 +82,16 @@ Use `frontend/app/lib/weather-client.js`.
 Main Events and Family Calendar call helper functions there. Those helpers fetch `/api/weather` and slice the shared cached payload into the page-specific daily/daypart shapes.
 
 New pages should reuse the same helper or call `/api/weather` directly through the application frontend route. Do not create module-specific weather endpoints such as `/family/weather`, and do not call external weather providers from frontend code.
+
+## Current Consumers
+
+- Main Events: loads shared weather directly and should be able to prime the cache on a cold app start.
+- Family Calendar: loads the same shared weather payload and renders compact weather in the expanded week.
+
+Neither page should depend on the other page being opened first.
+
+## Needs More Information
+
+- Confirm production weather rows are reading from `weather_cache` after each deploy, not legacy snapshot-only paths.
+- Decide whether a background refresh timer is needed or request-triggered refresh remains enough.
+- Decide whether weather location editing belongs in Settings only or should eventually have a dedicated admin surface.

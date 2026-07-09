@@ -13,7 +13,7 @@ This document is the short product spec. For implementation details, see:
 
 - Backend owns shared data truth: validation, parsing, state transitions, scheduling, notifications, weather cache, and durable records.
 - Frontend owns presentation, browser interaction, local page state, and explicitly local Family-only storage.
-- SQLite remains the production database for now.
+- SQLite remains the safe fallback. Postgres support is prepared; the active production database is selected by deployed `DATABASE_URL`.
 - The app is private and Tailscale-oriented.
 - Mobile-first behavior matters, but desktop validation should keep working.
 - `list` is not a product module and is not planned.
@@ -102,10 +102,24 @@ For full grammar details and examples, see [Capture Grammar](capture-grammar.md)
 
 Weather is one shared backend subsystem. Frontend pages request KaosGdd weather through `/api/weather`; frontend code must not call the external provider directly. Main Events and Family Calendar use the same cached payload.
 
+## Fax
+
+Fax is a durable backend module with HylaFAX as the transport. Incoming and outgoing records live in the app, while HylaFAX owns modem send/receive queues.
+
+- Selected-file `fax:{number}` is a transient fax send. It creates a Fax record, not a permanent File record.
+- File grammar with `x:{number}` creates/saves a File and may send a linked fax.
+- The app stores a PDF preview artifact, submits a temporary fax-ready TIFF to HylaFAX, and removes that temporary TIFF after `sendfax` returns.
+- Outgoing status can be reconciled from HylaFAX `doneq` when fax lists/details are read.
+- Fax inbox rows are collapsed by default; expanded rows expose Details, Open, Download, Save to Files, and Delete.
+
+## Family Subdomain
+
+`family.kaosgdd.net` is a short Family entry point. The frontend proxy rewrites `/`, `/calendar`, `/tasks`, `/roun`, and `/memo` to the corresponding `/family/...` routes. API and static asset paths pass through unchanged.
+
 ## Explicit Non-Goals
 
 - No `list` module.
 - No Telegram or Discord integration.
-- No Postgres requirement for current production.
+- No mandatory Postgres-only deployment before verified migration and rollback.
 - No separate Family weather backend.
 - No frontend-owned external weather fetching.

@@ -271,8 +271,29 @@ Frontend:
 - `frontend/app/fax`
 - `frontend/app/api/files`
 - `frontend/app/api/fax`
+- `frontend/components/FaxInboxList`
+- `frontend/components/FaxInboxActions`
 
 Selected-file `fax:{number}` quick send is fax-only and must not call File save grammar.
+
+Outgoing fax send path:
+
+```text
+selected file + fax:{number}
+  -> frontend /api/fax/send-upload
+  -> backend creates outgoing Fax record
+  -> source is converted to PDF for app preview/storage
+  -> PDF is converted to temporary HylaFAX-ready TIFF
+  -> sendfax submits TIFF to host HylaFAX
+  -> backend removes temporary TIFF
+```
+
+Outgoing status reconciliation:
+
+- HylaFAX owns send queue state.
+- The backend can read `FAX_DONEQ_DIR` and match completed jobs back to queued outgoing fax records.
+- `FaxService.list_faxes()` and `FaxService.get_fax()` trigger lightweight sync before returning data.
+- The frontend fax inbox is collapsed by default. Expanding a row reveals Details, Open, Download, Save to Files, and Delete. Status appears as a secondary pill beside Incoming/Outgoing, with green for `sent` and red for `failed`.
 
 ### Supplies
 
@@ -315,16 +336,23 @@ Shared Family UI:
 - `FamilyHeader`
 - Family CSS under `frontend/app/styles/family*.css`
 - Family font handling under `family-fonts.css`
+- `frontend/proxy.js` rewrites `family.kaosgdd.net` short paths to `/family/...`.
 
 Family local features:
 
 - Calendar: date/week UI, local events, all-day events, weather display via backend cache, caregiver row.
-- Tasks: Family-specific task UI and local ordering/presentation.
+- Tasks: Family-specific task UI, local ordering/presentation, and optional memo-as-checklist rendering.
 - 로운이: local timetable templates, assignments, multi-session editor, calendar overrides.
 - Memo: local memo/checklist behavior.
 - Caregiver review: fixed-width monthly report from local caregiver hour data.
 
 Family localStorage keys remain local contracts. Do not rename or migrate them without compatibility code.
+
+Family subdomain boundary:
+
+- `family.kaosgdd.net/` rewrites to `/family`.
+- `family.kaosgdd.net/calendar`, `/tasks`, `/roun`, and `/memo` rewrite to the matching `/family/...` routes.
+- `/api/*`, `/_next/*`, manifest, icon, and screenshot paths pass through unchanged.
 
 ## Database
 
@@ -346,9 +374,17 @@ Important tables:
 - `weather_daily_snapshots`
 
 The v0 bootstrap is dialect-aware. SQLite keeps startup-safe legacy repair
-migrations; PostgreSQL uses `DATABASE_SCHEMA` (default `main`) via the backend
+migrations. PostgreSQL support is prepared: when `DATABASE_URL` points at
+Postgres, `DATABASE_SCHEMA` (default `main`) is used through the backend
 connection search path so repository SQL can stay schema-unqualified during the
 migration.
+
+Current caution:
+
+- `docker-compose.yml` includes a `postgres` service.
+- `.env.example` now shows the Postgres URL as the primary example and the SQLite URL as fallback.
+- Production cutover is not automatic from the docs; it depends on the deployed `.env` and verified data migration state.
+- More information is still needed before final cutover: exact production `DATABASE_URL`, backup/restore cadence, SQLite-to-Postgres data migration run, and rollback criteria.
 
 ## Operational Services
 

@@ -8,6 +8,7 @@ The app owns:
 - upload and file routing
 - PDF conversion before send
 - outgoing send status/error handling
+- outgoing HylaFAX done-queue status reconciliation
 - incoming receive hook ingestion
 
 HylaFAX owns:
@@ -54,6 +55,7 @@ FAXSERVER=host.docker.internal
 FAX_SEND_TIMEOUT_SECONDS=30
 FAX_STORAGE_DIR=/data/uploads/fax
 FAX_RECV_DIR=/var/spool/hylafax/recvq
+FAX_DONEQ_DIR=/var/spool/hylafax/doneq
 FAX_INBOX_RETENTION_DAYS=90
 ```
 
@@ -63,6 +65,9 @@ client at the host HylaFAX daemon. The compose service must also include:
 ```yaml
 extra_hosts:
   - "host.docker.internal:host-gateway"
+volumes:
+  - /var/spool/hylafax/recvq:/var/spool/hylafax/recvq:ro
+  - /var/spool/hylafax/doneq:/var/spool/hylafax/doneq:ro
 ```
 
 The backend image must include the HylaFAX client package:
@@ -89,6 +94,22 @@ Last OS error: Permission denied
 
 The PDF remains the canonical artifact for app viewing; the TIFF is only a
 temporary send artifact.
+
+## Fax Inbox UI
+
+The fax inbox is intentionally quiet:
+
+- Rows are collapsed by default.
+- Pressing one row expands it and collapses the previous row.
+- Expanded rows show Details, Open, Download, Save to Files when applicable, and Delete.
+- Delete is hidden until the row is expanded.
+- Direction appears as the first pill: Incoming or Outgoing.
+- Fax status appears as the second pill:
+  - `sent`: green
+  - `failed`: red
+  - other states: neutral
+
+The detail page still shows the full record and PDF actions.
 
 ## Host HylaFAX Access
 
@@ -202,6 +223,21 @@ faxstat -s
 faxstat -d
 ```
 
+HylaFAX queue states seen in practice:
+
+- `D`: completed/done in HylaFAX queue output.
+- `F`: failed in HylaFAX queue output.
+
+KaosGdd reconciles outgoing statuses by reading `FAX_DONEQ_DIR`. This sync is
+currently triggered when fax lists or fax details are read, not by a background
+poller. If HylaFAX already shows a job done but the app still shows queued,
+open or refresh `/fax` once. If it still stays queued, check that the backend
+container can read the mounted `doneq` directory:
+
+```bash
+docker exec kaosgdd-backend sh -lc 'echo "$FAX_DONEQ_DIR"; ls -la "$FAX_DONEQ_DIR" | tail'
+```
+
 If a job appears in `doneq` with `/undefinedfilename` from `docq/*.pdf.*`,
 HylaFAX attempted host-side PDF conversion. Current KaosGdd backend builds
 should submit `.tif` documents instead.
@@ -215,6 +251,16 @@ The backend returns fax-specific failures instead of crashing:
 - provider/send failure: the outgoing Fax record is marked `failed`
 
 The selected file should remain selected on quick fax send failure so the user can fix the number or retry.
+
+## Needs More Information
+
+Before treating fax status as fully automated, confirm:
+
+- exact HylaFAX `doneq` path on each host,
+- whether the Docker deployment mounts that path read-only into the backend,
+- whether a timer/background sync should update queued faxes without a user opening `/fax`,
+- retention policy for app PDF artifacts vs temporary send TIFFs,
+- whether failed HylaFAX jobs should expose raw HylaFAX status text in the UI.
 
 ## Incoming Fax Hooks
 
