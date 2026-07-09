@@ -178,11 +178,20 @@
     0 8px 18px rgba(151, 69, 98, 0.08);
 }
 
-.familyTaskCardExpanded .familyTaskRowToggle h3 {
-  text-decoration-line: underline;
-  text-decoration-color: rgba(180, 120, 190, 0.32);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 4px;
+.familyTaskCardExpanded .familyTaskCardBody {
+  position: relative;
+  padding-bottom: 8px;
+}
+
+.familyTaskCardExpanded .familyTaskCardBody::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  border-radius: 999px;
+  background: rgba(180, 120, 190, 0.22);
 }
 
 .familyTaskCardDragging {

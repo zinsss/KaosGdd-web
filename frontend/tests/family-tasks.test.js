@@ -102,7 +102,8 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.match(taskCss, /\.familyTaskInlineCheck\s*\{[\s\S]*?width:\s*22px;[\s\S]*?height:\s*22px;[\s\S]*?color:\s*rgba\(216, 111, 152, 0\.58\);/);
   assert.match(taskCss, /\.familyTaskMemoHint\s*\{[\s\S]*?font-size:\s*12px;/);
   assert.ok(!taskCss.includes(".familyTaskMemoChecklistToggle"), "old memo checklist toggle CSS should be removed");
-  assert.match(taskCss, /\.familyTaskCardExpanded \.familyTaskRowToggle h3\s*\{[\s\S]*?text-decoration-line:\s*underline;[\s\S]*?text-decoration-color:\s*rgba\(180, 120, 190, 0\.32\);/);
+  assert.ok(!taskCss.includes("text-decoration-line: underline"), "expanded task title should not use a literal underline");
+  assert.match(taskCss, /\.familyTaskCardExpanded \.familyTaskCardBody::after\s*\{[\s\S]*?height:\s*1px;[\s\S]*?background:\s*rgba\(180, 120, 190, 0\.22\);/);
   assert.match(taskCss, /\.familyTaskActionButtonSong\s*\{[\s\S]*?background:\s*rgba\(245,\s*235,\s*255,\s*0\.68\);[\s\S]*?color:\s*rgba\(120,\s*84,\s*166,\s*0\.88\);/);
   assert.match(taskCss, /\.familyTaskActionButtonSongActive\s*\{[\s\S]*?background:\s*rgba\(224,\s*207,\s*255,\s*0\.9\);[\s\S]*?color:\s*rgba\(91,\s*56,\s*142,\s*0\.98\);/);
   assert.ok(!taskCss.includes(".familyTaskBadgeSong"), "쏭 list display should not have badge styling");
