@@ -19,7 +19,6 @@ import {
 const EMPTY_DRAFT = {
   title: "",
   description: "",
-  memo_checklist: false,
   memo_checks: [],
   assignee: FAMILY_TASK_DEFAULT_ASSIGNEE,
   priority: FAMILY_TASK_DEFAULT_PRIORITY,
@@ -50,7 +49,6 @@ export default function FamilyTaskFormClient({ taskId = null }) {
     setDraft({
       title: task.title,
       description: task.description,
-      memo_checklist: Boolean(task.memo_checklist),
       memo_checks: Array.isArray(task.memo_checks) ? task.memo_checks : [],
       assignee,
       priority: task.priority || FAMILY_TASK_DEFAULT_PRIORITY,
@@ -109,7 +107,6 @@ export default function FamilyTaskFormClient({ taskId = null }) {
       id: createFamilyTaskId(),
       title,
       description: draft.description,
-      memo_checklist: draft.memo_checklist,
       memo_checks: draft.memo_checks,
       assignee: draft.assignee,
       priority: draft.priority,
@@ -147,23 +144,14 @@ export default function FamilyTaskFormClient({ taskId = null }) {
           ) : null}
 
           <div className="familyTaskMemoField">
-            <div className="familyTaskMemoLabelRow">
-              <label htmlFor="familyTaskMemo">메모</label>
-              <label className="familyTaskMemoChecklistToggle">
-                <input
-                  type="checkbox"
-                  checked={Boolean(draft.memo_checklist)}
-                  onChange={(event) => updateDraft("memo_checklist", event.target.checked)}
-                />
-                <span>체크리스트</span>
-              </label>
-            </div>
+            <label htmlFor="familyTaskMemo">메모</label>
             <textarea
               id="familyTaskMemo"
               rows={4}
               value={draft.description}
               onChange={(event) => updateDraft("description", event.target.value)}
             />
+            <p className="familyTaskMemoHint">- 로 시작하는 줄은 하위 할일로 보여요.</p>
           </div>
 
           <div className="familyTaskFormGrid">

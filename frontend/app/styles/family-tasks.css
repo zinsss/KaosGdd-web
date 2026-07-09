@@ -139,6 +139,20 @@
   box-shadow: inset 0 0 0 1px rgba(214, 128, 157, 0.3);
 }
 
+.familyTaskActionButtonSong {
+  background: rgba(245, 235, 255, 0.68);
+  color: rgba(120, 84, 166, 0.88);
+  box-shadow: inset 0 0 0 1px rgba(180, 120, 190, 0.24);
+}
+
+.familyTaskActionButtonSongActive {
+  background: rgba(224, 207, 255, 0.9);
+  color: rgba(91, 56, 142, 0.98);
+  box-shadow:
+    inset 0 0 0 1px rgba(150, 105, 205, 0.42),
+    0 5px 12px rgba(150, 105, 205, 0.12);
+}
+
 .familyTaskActionButtonMuted {
   opacity: 0.64;
 }
@@ -164,6 +178,13 @@
     0 8px 18px rgba(151, 69, 98, 0.08);
 }
 
+.familyTaskCardExpanded .familyTaskRowToggle h3 {
+  text-decoration-line: underline;
+  text-decoration-color: rgba(180, 120, 190, 0.32);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
 .familyTaskCardDragging {
   opacity: 0.58;
 }
@@ -181,7 +202,7 @@
   align-items: center;
   justify-content: flex-start;
   min-width: 0;
-  width: 100%;
+  flex: 1 1 auto;
   padding: 0;
   background: transparent;
   color: inherit;
@@ -262,7 +283,7 @@
   display: flex;
   align-items: center;
   gap: 6px 8px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   width: 100%;
   min-width: 0;
 }
@@ -271,7 +292,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 1 1 12rem;
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   color: #4b2536;
@@ -291,6 +312,29 @@
   color: rgba(78, 37, 54, 0.58);
   font-size: 13px;
   font-weight: 800;
+}
+
+.familyTaskInlineCheck {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 19px;
+  height: 19px;
+  border: 0;
+  border-radius: 5px;
+  background: #fff;
+  box-shadow: inset 0 0 0 1.5px rgba(216, 111, 152, 0.48);
+  cursor: pointer;
+}
+
+.familyTaskInlineCheck:hover,
+.familyTaskInlineCheck:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1.5px rgba(216, 111, 152, 0.78),
+    0 0 0 3px rgba(255, 216, 229, 0.62);
 }
 
 .familyTaskMetaBadges {
@@ -353,6 +397,13 @@
   font-weight: 800;
   line-height: 1.45;
   white-space: pre-wrap;
+}
+
+.familyTaskMemoHint {
+  margin: -2px 0 0;
+  color: rgba(78, 37, 54, 0.48);
+  font-size: 12px;
+  font-weight: 850;
 }
 
 .familyTaskMemoChecklist {
@@ -459,26 +510,6 @@
   font-weight: 900;
 }
 
-.familyTaskMemoLabelRow {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  min-width: 0;
-}
-
-.familyTaskForm .familyTaskMemoChecklistToggle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  min-width: 0;
-  color: rgba(78, 37, 54, 0.62);
-  font-size: 13px;
-  font-weight: 900;
-  white-space: nowrap;
-}
-
 .familyTaskForm input,
 .familyTaskForm select,
 .familyTaskForm textarea {
@@ -494,18 +525,6 @@
   color: #4b2536;
   font-size: 16px;
   outline: none;
-}
-
-.familyTaskForm .familyTaskMemoChecklistToggle input {
-  flex: 0 0 auto;
-  width: 16px;
-  max-width: 16px;
-  min-width: 16px;
-  min-height: 16px;
-  height: 16px;
-  padding: 0;
-  margin: 0;
-  accent-color: #d86f98;
 }
 
 .familyTaskForm textarea {

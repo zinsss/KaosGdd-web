@@ -42,8 +42,27 @@ function getTaskCardBadges(task) {
 function getTaskMemoLines(task) {
   return String(task.description || "")
     .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
+    .map((line) => line.trim());
+}
+
+function parseTaskMemo(task) {
+  const subtaskLines = [];
+  const memoLines = [];
+
+  for (const line of getTaskMemoLines(task)) {
+    if (!line) continue;
+    if (line.startsWith("-")) {
+      const text = line.replace(/^-+\s*/, "").trim();
+      if (text) subtaskLines.push(text);
+      continue;
+    }
+    memoLines.push(line);
+  }
+
+  return {
+    subtaskLines,
+    memoText: memoLines.join("\n"),
+  };
 }
 
 export default function FamilyDashboardClient() {
@@ -87,7 +106,7 @@ export default function FamilyDashboardClient() {
     setExpandedTaskId((current) => (current === taskId ? "" : current));
   }
 
-  function toggleTaskMemoLine(taskId, lineIndex) {
+  function toggleTaskSubtaskLine(taskId, lineIndex) {
     const now = new Date().toISOString();
     setTasks((current) =>
       current.map((task) => {
@@ -181,7 +200,8 @@ export default function FamilyDashboardClient() {
                 activeTasks.map((task) => {
                   const taskBadges = getTaskCardBadges(task);
                   const expanded = expandedTaskId === task.id;
-                  const memoLines = getTaskMemoLines(task);
+                  const memoData = parseTaskMemo(task);
+                  const sharedWithSong = task.assignee === FAMILY_TASK_PRIORITY_ASSIGNEE;
 
                   return (
                     <article
@@ -191,14 +211,20 @@ export default function FamilyDashboardClient() {
                       onDragOver={(event) => enterTaskDropTarget(event, task.id)}
                       onDrop={(event) => dropTaskOnTarget(event, task.id)}
                     >
-                      <button
-                        className="familyTaskRowToggle"
-                        type="button"
-                        aria-expanded={expanded}
-                        onClick={() => toggleTask(task.id)}
-                      >
-                        <div className="familyTaskCardBody">
-                          <h3><span aria-hidden="true">•</span>{task.title}</h3>
+                      <div className="familyTaskCardBody">
+                        <button
+                          className="familyTaskInlineCheck"
+                          type="button"
+                          aria-label={`${task.title} 완료`}
+                          onClick={() => completeTask(task.id)}
+                        />
+                        <button
+                          className="familyTaskRowToggle"
+                          type="button"
+                          aria-expanded={expanded}
+                          onClick={() => toggleTask(task.id)}
+                        >
+                          <h3>{task.title}</h3>
                           <div className="familyTaskMeta">
                             <span className="familyTaskMetaBadges">
                               {taskBadges.map((badge) => (
@@ -209,45 +235,64 @@ export default function FamilyDashboardClient() {
                             </span>
                             {task.due_date ? <span className="familyTaskDateBadge">{formatFamilyTaskDueDate(task.due_date)}</span> : null}
                           </div>
-                        </div>
-                      </button>
+                        </button>
+                      </div>
                       {expanded ? (
                         <div className="familyTaskExpandedContent">
-                          {memoLines.length ? (
-                            task.memo_checklist ? (
-                              <div className="familyTaskMemoChecklist" aria-label={`${task.title} 메모 체크리스트`}>
-                                {memoLines.map((line, lineIndex) => {
-                                  const checked = Boolean(task.memo_checks?.[lineIndex]);
-                                  return (
-                                    <button
-                                      className={`familyTaskMemoCheckItem${checked ? " familyTaskMemoCheckItemDone" : ""}`}
-                                      type="button"
-                                      onClick={() => toggleTaskMemoLine(task.id, lineIndex)}
-                                      key={`${task.id}-${lineIndex}`}
-                                    >
-                                      <span className="familyTaskMemoCheckBox" aria-hidden="true">
-                                        {checked ? "✓" : ""}
-                                      </span>
-                                      <span>{line}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            ) : (
-                              <p className="familyTaskMemoText">{task.description}</p>
-                            )
+                          {memoData.subtaskLines.length ? (
+                            <div className="familyTaskMemoChecklist" aria-label={`${task.title} 하위 할일`}>
+                              {memoData.subtaskLines.map((line, lineIndex) => {
+                                const checked = Boolean(task.memo_checks?.[lineIndex]);
+                                return (
+                                  <button
+                                    className={`familyTaskMemoCheckItem${checked ? " familyTaskMemoCheckItemDone" : ""}`}
+                                    type="button"
+                                    onClick={() => toggleTaskSubtaskLine(task.id, lineIndex)}
+                                    key={`${task.id}-${lineIndex}`}
+                                  >
+                                    <span className="familyTaskMemoCheckBox" aria-hidden="true">
+                                      {checked ? "✓" : ""}
+                                    </span>
+                                    <span>{line}</span>
+                                  </button>
+                                );
+                              })}
+                            </div>
                           ) : null}
 
+                          {memoData.memoText ? <p className="familyTaskMemoText">{memoData.memoText}</p> : null}
+
                           <div className="familyTaskRowActions">
-                            <Link className="familyTaskActionButton" href={`/family/tasks/${task.id}/edit`}>
-                              수정
-                            </Link>
                             <button className="familyTaskActionButton familyTaskActionButtonDone" type="button" onClick={() => completeTask(task.id)}>
-                              완료
+                              완 료
                             </button>
                             <button className="familyTaskActionButton familyTaskActionButtonDanger" type="button" onClick={() => deleteTask(task.id)}>
-                              삭제
+                              삭 제
                             </button>
+                            <button
+                              className={`familyTaskActionButton familyTaskActionButtonSong${sharedWithSong ? " familyTaskActionButtonSongActive" : ""}`}
+                              type="button"
+                              aria-pressed={sharedWithSong}
+                              onClick={() => {
+                                const now = new Date().toISOString();
+                                setTasks((current) =>
+                                  current.map((candidate) =>
+                                    candidate.id === task.id
+                                      ? {
+                                          ...candidate,
+                                          assignee: sharedWithSong ? FAMILY_TASK_DEFAULT_ASSIGNEE : FAMILY_TASK_PRIORITY_ASSIGNEE,
+                                          updated_at: now,
+                                        }
+                                      : candidate,
+                                  ),
+                                );
+                              }}
+                            >
+                              쏭
+                            </button>
+                            <Link className="familyTaskActionButton" href={`/family/tasks/${task.id}/edit`}>
+                              수 정
+                            </Link>
                             <button
                               className="familyTaskDragHandle"
                               type="button"
