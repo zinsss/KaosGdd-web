@@ -1,7 +1,7 @@
 FROM python:3.12-slim
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libtiff-tools ghostscript \
+    && apt-get install -y --no-install-recommends libtiff-tools ghostscript hylafax-client \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONDONTWRITEBYTECODE=1

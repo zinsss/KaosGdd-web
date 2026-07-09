@@ -77,6 +77,44 @@ class FaxPdfConversionService:
 
         raise FaxConversionError("Unsupported fax document format.")
 
+    def convert_pdf_to_fax_tiff(self, *, pdf_path: str) -> str:
+        source = Path(pdf_path)
+        if not source.is_file():
+            raise FaxConversionError("Fax PDF does not exist.")
+        self._verify_pdf(source)
+        gs_bin = shutil.which("gs")
+        if not gs_bin:
+            raise FaxConversionError("PDF to fax TIFF conversion requires Ghostscript.")
+
+        os.makedirs(self.storage_dir, exist_ok=True)
+        output_path = Path(self.storage_dir) / f"{uuid4().hex}.tif"
+        result = self.run_command(
+            [
+                gs_bin,
+                "-q",
+                "-sDEVICE=tiffg3",
+                "-dNOPAUSE",
+                "-dSAFER=true",
+                "-sPAPERSIZE=a4",
+                "-dFIXEDMEDIA",
+                "-dMaxStripSize=0",
+                "-dBATCH",
+                "-r204x98",
+                f"-sOutputFile={output_path}",
+                str(source),
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False,
+        )
+        if result.returncode != 0:
+            self._remove_partial(output_path)
+            reason = (result.stderr or result.stdout or "").strip()
+            raise FaxConversionError(reason or "PDF to fax TIFF conversion failed.")
+        self._verify_tiff(output_path)
+        return str(output_path)
+
     def _run_tiff_to_pdf(self, source: Path, output_path: Path) -> None:
         if not shutil.which("tiff2pdf"):
             raise FaxConversionError("TIFF to PDF conversion is not available on this server.")
@@ -350,6 +388,16 @@ class FaxPdfConversionService:
         if header != b"%PDF-":
             self._remove_partial(path)
             raise FaxConversionError("Converted fax document is not a valid PDF.")
+
+    def _verify_tiff(self, path: Path) -> None:
+        if not path.is_file() or path.stat().st_size <= 0:
+            self._remove_partial(path)
+            raise FaxConversionError("Converted fax TIFF is empty.")
+        with path.open("rb") as handle:
+            header = handle.read(4)
+        if header not in {b"II*\x00", b"MM\x00*"}:
+            self._remove_partial(path)
+            raise FaxConversionError("Converted fax document is not a valid TIFF.")
 
     def _remove_partial(self, path: Path) -> None:
         try:

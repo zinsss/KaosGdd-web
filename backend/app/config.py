@@ -71,7 +71,10 @@ class Settings:
     FILE_STORAGE_DIR = _env_str("FILE_STORAGE_DIR", "/data/uploads")
     FAX_STORAGE_DIR = _env_str("FAX_STORAGE_DIR", os.path.join(FILE_STORAGE_DIR, "fax"))
     FAX_SEND_ENABLED = _env_bool("FAX_SEND_ENABLED", True)
+    FAXSERVER = _env_str("FAXSERVER", "")
+    FAX_SEND_TIMEOUT_SECONDS = _env_int("FAX_SEND_TIMEOUT_SECONDS", 30, min_value=1)
     FAX_RECV_DIR = _env_str("FAX_RECV_DIR", "/var/spool/hylafax/recvq")
+    FAX_DONEQ_DIR = _env_str("FAX_DONEQ_DIR", "/var/spool/hylafax/doneq")
     FAX_INBOX_RETENTION_DAYS = _env_int("FAX_INBOX_RETENTION_DAYS", 90, min_value=1)
 
     # Push / Web Push

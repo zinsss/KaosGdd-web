@@ -19,6 +19,8 @@ import {
 const EMPTY_DRAFT = {
   title: "",
   description: "",
+  memo_checklist: false,
+  memo_checks: [],
   assignee: FAMILY_TASK_DEFAULT_ASSIGNEE,
   priority: FAMILY_TASK_DEFAULT_PRIORITY,
   due_date: "",
@@ -48,6 +50,8 @@ export default function FamilyTaskFormClient({ taskId = null }) {
     setDraft({
       title: task.title,
       description: task.description,
+      memo_checklist: Boolean(task.memo_checklist),
+      memo_checks: Array.isArray(task.memo_checks) ? task.memo_checks : [],
       assignee,
       priority: task.priority || FAMILY_TASK_DEFAULT_PRIORITY,
       due_date: task.due_date,
@@ -105,6 +109,8 @@ export default function FamilyTaskFormClient({ taskId = null }) {
       id: createFamilyTaskId(),
       title,
       description: draft.description,
+      memo_checklist: draft.memo_checklist,
+      memo_checks: draft.memo_checks,
       assignee: draft.assignee,
       priority: draft.priority,
       due_date: draft.due_date,
@@ -140,10 +146,25 @@ export default function FamilyTaskFormClient({ taskId = null }) {
             </p>
           ) : null}
 
-          <label>
-            <span>설명</span>
-            <textarea rows={4} value={draft.description} onChange={(event) => updateDraft("description", event.target.value)} />
-          </label>
+          <div className="familyTaskMemoField">
+            <div className="familyTaskMemoLabelRow">
+              <label htmlFor="familyTaskMemo">메모</label>
+              <label className="familyTaskMemoChecklistToggle">
+                <input
+                  type="checkbox"
+                  checked={Boolean(draft.memo_checklist)}
+                  onChange={(event) => updateDraft("memo_checklist", event.target.checked)}
+                />
+                <span>체크리스트</span>
+              </label>
+            </div>
+            <textarea
+              id="familyTaskMemo"
+              rows={4}
+              value={draft.description}
+              onChange={(event) => updateDraft("description", event.target.value)}
+            />
+          </div>
 
           <div className="familyTaskFormGrid">
             <div className="familyTaskPriorityShareRow">

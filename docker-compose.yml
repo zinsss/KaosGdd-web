@@ -28,6 +28,11 @@ services:
       APP_TIMEZONE: ${APP_TIMEZONE:-Asia/Seoul}
       DATABASE_URL: ${DATABASE_URL:-sqlite:////data/kaosgdd.db}
       FILE_STORAGE_DIR: ${FILE_STORAGE_DIR:-/data/uploads}
+      FAXSERVER: ${FAXSERVER:-host.docker.internal}
+      FAX_SEND_TIMEOUT_SECONDS: ${FAX_SEND_TIMEOUT_SECONDS:-30}
+      FAX_DONEQ_DIR: ${FAX_DONEQ_DIR:-/var/spool/hylafax/doneq}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       postgres:
         condition: service_healthy

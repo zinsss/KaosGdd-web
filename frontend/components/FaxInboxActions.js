@@ -5,7 +5,14 @@ import { useState } from "react";
 
 import { dispatchAppStatusChanged } from "../lib/app-status-events";
 
-export default function FaxInboxActions({ faxId, canSave = false, savedFileId = null, compact = false }) {
+export default function FaxInboxActions({
+  faxId,
+  canSave = false,
+  savedFileId = null,
+  compact = false,
+  showOpenDownload = false,
+  pdfAvailable = false,
+}) {
   const router = useRouter();
   const [busyAction, setBusyAction] = useState("");
   const [error, setError] = useState("");
@@ -52,6 +59,12 @@ export default function FaxInboxActions({ faxId, canSave = false, savedFileId = 
 
   return (
     <div className={compact ? "faxInboxActions faxInboxActionsCompact" : "faxInboxActions"}>
+      {showOpenDownload && pdfAvailable ? (
+        <>
+          <a className="button buttonToneNeutral" href={`/api/fax/${faxId}/open`}>Open</a>
+          <a className="button buttonToneCopy" href={`/api/fax/${faxId}/open?download=1`}>Download</a>
+        </>
+      ) : null}
       {canSave ? (
         <button className="button buttonToneCopy" type="button" onClick={saveToFiles} disabled={Boolean(busyAction)}>
           {busyAction === "save" ? "Saving..." : "Save to Files"}

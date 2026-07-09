@@ -47,6 +47,7 @@ class FakeConverter:
         self.output_pdf = output_pdf
         self.error = error
         self.calls = []
+        self.tiff_calls = []
 
     def convert_to_pdf(self, **kwargs) -> str:
         self.calls.append(kwargs)
@@ -57,6 +58,13 @@ class FakeConverter:
         assert self.output_pdf is not None
         self.output_pdf.write_bytes(b"%PDF-1.7\nfake fax pdf\n")
         return str(self.output_pdf)
+
+    def convert_pdf_to_fax_tiff(self, **kwargs) -> str:
+        self.tiff_calls.append(kwargs)
+        assert self.output_pdf is not None
+        output_tiff = self.output_pdf.with_suffix(".tif")
+        output_tiff.write_bytes(b"II*\x00fake fax tiff\n")
+        return str(output_tiff)
 
 
 class FakeReminderService:
@@ -156,6 +164,158 @@ def test_image_input_converts_to_pdf_before_send(main_module, tmp_path: Path) ->
     fax = fax_service.get_fax(fax_id)
     assert fax["pdf_available"] is True
     assert Path(fax["pdf_file_path"]).read_bytes().startswith(b"%PDF-")
+
+
+def test_missing_sendfax_command_marks_outgoing_fax_failed(main_module, tmp_path: Path) -> None:
+    file_id = _upload(main_module, "scan.png", _minimal_png(), "image/png")
+    converter = FaxPdfConversionService(storage_dir=str(tmp_path / "fax"))
+    reminder = FakeReminderService()
+
+    def missing_sendfax(*_args, **_kwargs):
+        raise FileNotFoundError("sendfax")
+
+    fax_service = FaxService(
+        items_repo=main_module.items_repo,
+        fax_repo=main_module.fax_repo,
+        file_repo=main_module.file_repo,
+        conversion_service=converter,
+        reminder_service=reminder,
+        send_command=missing_sendfax,
+        send_enabled=True,
+    )
+
+    ok, status, fax_id = fax_service.send_file_as_fax(file_id=file_id, fax_number="02-1234-5678")
+
+    assert ok is False
+    assert status == "sendfax command not found"
+    fax = fax_service.get_fax(fax_id)
+    assert fax["fax_status"] == "failed"
+    assert fax["error_message"] == "sendfax command not found"
+    assert reminder.failed
+
+
+def test_sendfax_uses_configured_faxserver(main_module, tmp_path: Path, monkeypatch) -> None:
+    file_id = _upload(main_module, "scan.png", _minimal_png(), "image/png")
+    converter = FaxPdfConversionService(storage_dir=str(tmp_path / "fax"))
+    calls = []
+
+    import app.engine.fax_service as fax_service_module
+
+    monkeypatch.setattr(fax_service_module.SETTINGS, "FAXSERVER", "host.docker.internal")
+
+    def fake_sendfax(args, **_kwargs):
+        calls.append(args)
+        return subprocess.CompletedProcess(args=args, returncode=0, stdout="", stderr="")
+
+    fax_service = FaxService(
+        items_repo=main_module.items_repo,
+        fax_repo=main_module.fax_repo,
+        file_repo=main_module.file_repo,
+        conversion_service=converter,
+        send_command=fake_sendfax,
+        send_enabled=True,
+    )
+
+    ok, status, fax_id = fax_service.send_file_as_fax(file_id=file_id, fax_number="02-1234-5678")
+
+    assert ok is True
+    assert status == "queued"
+    fax = fax_service.get_fax(fax_id)
+    assert fax["fax_status"] == "queued"
+    assert calls
+    assert calls[0][:5] == ["sendfax", "-n", "-h", "host.docker.internal", "-d"]
+    assert calls[0][5] == "02-1234-5678"
+    assert calls[0][6].endswith(".tif")
+    assert calls[0][6] != fax["pdf_file_path"]
+
+
+def test_sendfax_timeout_marks_outgoing_fax_failed(main_module, tmp_path: Path) -> None:
+    file_id = _upload(main_module, "scan.png", _minimal_png(), "image/png")
+    converter = FaxPdfConversionService(storage_dir=str(tmp_path / "fax"))
+
+    def timed_out(args, **kwargs):
+        raise subprocess.TimeoutExpired(cmd=args, timeout=kwargs.get("timeout"))
+
+    fax_service = FaxService(
+        items_repo=main_module.items_repo,
+        fax_repo=main_module.fax_repo,
+        file_repo=main_module.file_repo,
+        conversion_service=converter,
+        send_command=timed_out,
+        send_enabled=True,
+    )
+
+    ok, status, fax_id = fax_service.send_file_as_fax(file_id=file_id, fax_number="02-1234-5678")
+
+    assert ok is False
+    assert status == "sendfax command timed out"
+    fax = fax_service.get_fax(fax_id)
+    assert fax["fax_status"] == "failed"
+    assert fax["error_message"] == "sendfax command timed out"
+
+
+def test_queued_outgoing_fax_syncs_sent_from_hylafax_doneq(main_module, tmp_path: Path, monkeypatch) -> None:
+    file_id = _upload(main_module, "scan.png", _minimal_png(), "image/png")
+    fax_service = _service_with_converter(main_module, FakeConverter(tmp_path / "sent.pdf"))
+    ok, _status, fax_id = fax_service.send_file_as_fax(file_id=file_id, fax_number="0548209762")
+    assert ok is True
+
+    doneq = tmp_path / "doneq"
+    doneq.mkdir()
+    (doneq / "q42").write_text(
+        "\n".join(
+            [
+                "state:7",
+                "number:0548209762",
+                "jobid:42",
+                "status:",
+                "statuscode:0",
+                "returned:2",
+            ]
+        )
+    )
+
+    import app.engine.fax_service as fax_service_module
+
+    monkeypatch.setattr(fax_service_module.SETTINGS, "FAX_DONEQ_DIR", str(doneq))
+
+    synced = {item["id"]: item for item in fax_service.list_faxes()}
+
+    assert synced[fax_id]["fax_status"] == "sent"
+    assert synced[fax_id]["sent_at"] is not None
+    assert synced[fax_id]["error_message"] is None
+
+
+def test_queued_outgoing_fax_syncs_failed_from_hylafax_doneq(main_module, tmp_path: Path, monkeypatch) -> None:
+    file_id = _upload(main_module, "scan.png", _minimal_png(), "image/png")
+    fax_service = _service_with_converter(main_module, FakeConverter(tmp_path / "failed.pdf"))
+    ok, _status, fax_id = fax_service.send_file_as_fax(file_id=file_id, fax_number="0548209762")
+    assert ok is True
+
+    doneq = tmp_path / "doneq"
+    doneq.mkdir()
+    (doneq / "q43").write_text(
+        "\n".join(
+            [
+                "state:8",
+                "number:0548209762",
+                "jobid:43",
+                "status:Error: /undefinedfilename",
+                "statuscode:347",
+                "returned:7",
+            ]
+        )
+    )
+
+    import app.engine.fax_service as fax_service_module
+
+    monkeypatch.setattr(fax_service_module.SETTINGS, "FAX_DONEQ_DIR", str(doneq))
+
+    synced = {item["id"]: item for item in fax_service.list_faxes()}
+
+    assert synced[fax_id]["fax_status"] == "failed"
+    assert synced[fax_id]["failed_at"] is not None
+    assert synced[fax_id]["error_message"] == "Error: /undefinedfilename"
 
 
 def test_docx_odt_txt_conversion_uses_libreoffice_or_fails_clearly(main_module, tmp_path: Path, monkeypatch) -> None:

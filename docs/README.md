@@ -10,6 +10,7 @@ Start here when changing architecture, capture behavior, or module boundaries.
 - [Capture Grammar](capture-grammar.md): separate capture grammars with examples.
 - [Development Plan](development-plan.md): checkbox-based implementation plan.
 - [Shared Weather Cache](weather-cache.md): backend-owned weather cache design and frontend consumption.
+- [Fax Settings](fax-settings.md): HylaFAX host/container setup, outgoing send settings, and verification.
 - [Systemd](systemd.md): service/timer deployment notes.
 - [Postgres Migration Notes](postgres-migration-32gb.md): exploratory notes only; SQLite remains current production.
 

@@ -38,11 +38,18 @@ export function normalizeFamilyTask(task) {
   const priorityValue = FAMILY_TASK_PRIORITY_ALIASES[task.priority] || task.priority;
   const priority = FAMILY_TASK_PRIORITIES.includes(priorityValue) ? priorityValue : FAMILY_TASK_DEFAULT_PRIORITY;
   const sortOrder = Number.isFinite(Number(task.sort_order)) ? Number(task.sort_order) : fallbackSortOrder(task);
+  const memoChecks = Array.isArray(task.memo_checks)
+    ? task.memo_checks.map(Boolean)
+    : Array.isArray(task.description_checks)
+      ? task.description_checks.map(Boolean)
+      : [];
 
   return {
     id: String(task.id || createFamilyTaskId()),
     title,
     description: String(task.description || ""),
+    memo_checklist: Boolean(task.memo_checklist || task.description_checklist),
+    memo_checks: memoChecks,
     assignee,
     priority,
     due_date: String(task.due_date || ""),

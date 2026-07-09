@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import shutil
 import subprocess
 from datetime import datetime, timedelta, timezone
@@ -37,11 +38,43 @@ class FaxService:
         self.send_enabled = SETTINGS.FAX_SEND_ENABLED if send_enabled is None else bool(send_enabled)
 
     def list_faxes(self, mode: str = "active") -> list[dict]:
+        self.sync_outgoing_statuses()
         return [self._decorate_fax(row) for row in self.fax_repo.list_faxes(mode=mode)]
 
     def get_fax(self, item_id: str) -> dict | None:
+        self.sync_outgoing_statuses()
         row = self.fax_repo.get_fax_detail(item_id)
         return self._decorate_fax(row) if row else None
+
+    def sync_outgoing_statuses(self) -> None:
+        queued = [
+            row
+            for row in self.fax_repo.list_faxes(mode="active")
+            if str(row.get("direction") or "").lower() == "outgoing"
+            and str(row.get("fax_status") or "").lower() in {"queued", "sending"}
+        ]
+        if not queued:
+            return
+        done_jobs = self._read_hylafax_done_jobs()
+        if not done_jobs:
+            return
+
+        used_jobs: set[str] = set()
+        for fax in sorted(queued, key=lambda row: str(row.get("created_at") or "")):
+            match = self._match_done_job(fax, done_jobs, used_jobs)
+            if match is None:
+                continue
+            used_jobs.add(str(match["jobid"]))
+            completed_at = match["completed_at"].isoformat(timespec="seconds")
+            if match["sent"]:
+                self.fax_repo.update_status(fax["id"], fax_status="sent", sent_at=completed_at, error_message=None)
+            else:
+                self.fax_repo.update_status(
+                    fax["id"],
+                    fax_status="failed",
+                    failed_at=completed_at,
+                    error_message=match["status"] or "Fax send failed",
+                )
 
     def get_fax_pdf(self, item_id: str) -> tuple[dict, str] | None:
         detail = self.fax_repo.get_fax_detail(item_id)
@@ -186,6 +219,21 @@ class FaxService:
             )
             return False, str(exc), fax_id
 
+        try:
+            submit_path = self.conversion_service.convert_pdf_to_fax_tiff(pdf_path=pdf_path)
+        except FaxConversionError as exc:
+            fax_id = self._create_outgoing_record(
+                title=title,
+                status="conversion_failed",
+                remote_number=clean_number,
+                original_filename=original_filename,
+                original_mime_type=original_mime_type,
+                source_file_path=source_path,
+                pdf_file_path=pdf_path,
+                error_message=str(exc),
+            )
+            return False, str(exc), fax_id
+
         fax_id = self._create_outgoing_record(
             title=title,
             status="queued",
@@ -197,13 +245,18 @@ class FaxService:
         )
 
         if self.send_enabled:
-            sent_ok, error = self._submit_sendfax(fax_number=clean_number, pdf_path=pdf_path)
+            try:
+                sent_ok, error = self._submit_sendfax(fax_number=clean_number, document_path=submit_path)
+            finally:
+                self._remove_temp_file(submit_path)
             if not sent_ok:
                 now = now_iso()
                 self.fax_repo.update_status(fax_id, fax_status="failed", failed_at=now, error_message=error)
                 if self.reminder_service is not None:
                     self.reminder_service.notify_fax_send_failed(fax_id=fax_id, title=title, error_message=error)
                 return False, error or "Fax send failed", fax_id
+        else:
+            self._remove_temp_file(submit_path)
 
         return True, "queued", fax_id
 
@@ -290,17 +343,111 @@ class FaxService:
         )
         return fax_id
 
-    def _submit_sendfax(self, *, fax_number: str, pdf_path: str) -> tuple[bool, str | None]:
-        result = self.send_command(
-            ["sendfax", "-n", "-d", fax_number, pdf_path],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            check=False,
-        )
+    def _submit_sendfax(self, *, fax_number: str, document_path: str) -> tuple[bool, str | None]:
+        command = ["sendfax", "-n"]
+        if SETTINGS.FAXSERVER:
+            command.extend(["-h", SETTINGS.FAXSERVER])
+        command.extend(["-d", fax_number, document_path])
+        try:
+            result = self.send_command(
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=False,
+                timeout=SETTINGS.FAX_SEND_TIMEOUT_SECONDS,
+            )
+        except FileNotFoundError:
+            return False, "sendfax command not found"
+        except subprocess.TimeoutExpired:
+            return False, "sendfax command timed out"
         if result.returncode == 0:
             return True, None
         return False, (result.stderr or result.stdout or "Fax send failed").strip()
+
+    def _remove_temp_file(self, path: str) -> None:
+        value = str(path or "").strip()
+        if not value:
+            return
+        try:
+            os.remove(value)
+        except OSError:
+            pass
+
+    def _read_hylafax_done_jobs(self) -> list[dict]:
+        doneq = Path(SETTINGS.FAX_DONEQ_DIR)
+        if not doneq.is_dir():
+            return []
+        jobs: list[dict] = []
+        for path in doneq.glob("q*"):
+            if not path.is_file():
+                continue
+            values = self._parse_hylafax_job_file(path)
+            jobid = str(values.get("jobid") or path.name.removeprefix("q")).strip()
+            number = str(values.get("number") or values.get("external") or "").strip()
+            if not jobid or not number:
+                continue
+            status = str(values.get("status") or "").strip()
+            statuscode = str(values.get("statuscode") or "").strip()
+            state = str(values.get("state") or "").strip()
+            returned = str(values.get("returned") or "").strip()
+            completed_at = datetime.fromtimestamp(path.stat().st_mtime, timezone.utc)
+            jobs.append(
+                {
+                    "jobid": jobid,
+                    "number": number,
+                    "status": status,
+                    "statuscode": statuscode,
+                    "state": state,
+                    "returned": returned,
+                    "sent": statuscode == "0" or (state == "7" and returned == "2" and not status),
+                    "completed_at": completed_at,
+                }
+            )
+        return sorted(jobs, key=lambda job: job["completed_at"])
+
+    def _parse_hylafax_job_file(self, path: Path) -> dict[str, str]:
+        values: dict[str, str] = {}
+        current_key: str | None = None
+        for raw_line in path.read_text(errors="replace").splitlines():
+            if current_key and raw_line.endswith("\\"):
+                values[current_key] = f"{values[current_key]}\n{raw_line[:-1]}"
+                continue
+            current_key = None
+            if ":" not in raw_line:
+                continue
+            key, value = raw_line.split(":", 1)
+            values[key] = value[:-1] if value.endswith("\\") else value
+            if value.endswith("\\"):
+                current_key = key
+        return values
+
+    def _match_done_job(self, fax: dict, jobs: list[dict], used_jobs: set[str]) -> dict | None:
+        created_at = self._parse_iso_datetime(str(fax.get("created_at") or ""))
+        remote_number = self._digits(str(fax.get("remote_number") or ""))
+        candidates = [
+            job
+            for job in jobs
+            if str(job["jobid"]) not in used_jobs
+            and self._digits(str(job["number"])) == remote_number
+            and job["completed_at"] >= created_at - timedelta(minutes=10)
+        ]
+        if not candidates:
+            return None
+        after_created = [job for job in candidates if job["completed_at"] >= created_at]
+        return min(after_created or candidates, key=lambda job: abs((job["completed_at"] - created_at).total_seconds()))
+
+    def _parse_iso_datetime(self, value: str) -> datetime:
+        try:
+            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+        except ValueError:
+            return datetime.now(timezone.utc)
+        if parsed.tzinfo is None:
+            return parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+
+    def _digits(self, value: str) -> str:
+        return re.sub(r"\D+", "", value)
 
     def _remove_source_file_item(self, file_id: str) -> None:
         detail = self.file_repo.get_file_detail(file_id)

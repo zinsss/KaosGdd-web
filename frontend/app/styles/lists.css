@@ -324,3 +324,54 @@
 .faxInboxActionsCompact {
   margin-top: 8px;
 }
+
+.faxInboxItemSummary {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  text-align: left;
+}
+
+.faxStatusPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: rgba(186, 194, 222, 0.12);
+  color: var(--ctp-subtext0);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.2;
+  vertical-align: middle;
+}
+
+.faxStatusPillSent {
+  background: rgba(166, 227, 161, 0.18);
+  color: #6fb06a;
+  box-shadow: inset 0 0 0 1px rgba(166, 227, 161, 0.34);
+}
+
+.faxStatusPillFailed {
+  background: rgba(243, 139, 168, 0.16);
+  color: #d05f78;
+  box-shadow: inset 0 0 0 1px rgba(243, 139, 168, 0.32);
+}
+
+.faxInboxExpandedActions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.faxInboxExpandedActions .faxInboxActionsCompact {
+  margin-top: 0;
+}
