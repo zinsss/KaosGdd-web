@@ -118,6 +118,13 @@
   scrollbar-width: thin;
 }
 
+.appShellMainFamily {
+  height: auto;
+  min-height: 100dvh;
+  overflow-y: visible;
+  overscroll-behavior: auto;
+}
+
 .appShellMain::-webkit-scrollbar {
   width: 10px;
 }

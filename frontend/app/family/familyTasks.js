@@ -96,14 +96,23 @@ export function saveFamilyTasks(tasks) {
 }
 
 export async function fetchFamilyTasks() {
+  const localTasks = loadFamilyTasks();
   try {
     const response = await fetch("/api/family/tasks", { cache: "no-store" });
     if (!response.ok) throw new Error("family task fetch failed");
     const parsed = await response.json();
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map(normalizeFamilyTask).filter(Boolean);
+    const hasBackendRecord = parsed?.hasRecord === true || Array.isArray(parsed);
+    const taskPayload = Array.isArray(parsed) ? parsed : parsed?.tasks;
+    if (!Array.isArray(taskPayload)) return [];
+    const normalizedTasks = taskPayload.map(normalizeFamilyTask).filter(Boolean);
+    if (!hasBackendRecord && localTasks.length) {
+      persistFamilyTasks(localTasks);
+      return localTasks;
+    }
+    saveFamilyTasks(normalizedTasks);
+    return normalizedTasks;
   } catch {
-    return loadFamilyTasks();
+    return localTasks;
   }
 }
 

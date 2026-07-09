@@ -409,7 +409,8 @@ def list_tasks(mode: str = "active"):
 @app.get("/family/tasks")
 def list_family_tasks():
     payload = family_repo.get_record("family", "tasks")
-    return payload if isinstance(payload, list) else []
+    has_record = isinstance(payload, list)
+    return {"ok": True, "tasks": payload if has_record else [], "hasRecord": has_record}
 
 
 @app.put("/family/tasks")

@@ -3,7 +3,13 @@ export async function fetchFamilyRecord(recordKey, fallbackValue = null) {
     const response = await fetch(`/api/family/records/${encodeURIComponent(recordKey)}`, { cache: "no-store" });
     if (!response.ok) throw new Error("family record fetch failed");
     const parsed = await response.json();
-    return parsed?.payload ?? fallbackValue;
+    if (parsed?.payload === null || typeof parsed?.payload === "undefined") {
+      if (fallbackValue !== null && typeof fallbackValue !== "undefined") {
+        persistFamilyRecord(recordKey, fallbackValue);
+      }
+      return fallbackValue;
+    }
+    return parsed.payload;
   } catch {
     return fallbackValue;
   }
