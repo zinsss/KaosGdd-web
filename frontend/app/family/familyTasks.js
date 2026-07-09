@@ -4,6 +4,8 @@ export const FAMILY_TASK_DEFAULT_ASSIGNEE = "내 할 일";
 export const FAMILY_TASK_PRIORITY_ASSIGNEE = "쏭 할 일";
 export const FAMILY_TASK_PRIORITIES = ["💤 언젠가는", "😄 보통", "⭐️ 중요", "‼️ 꼭 하기"];
 export const FAMILY_TASK_DEFAULT_PRIORITY = "😄 보통";
+export const FAMILY_TASK_CANONICAL_UNCHECKED_SUBTASK_PREFIX = "--- ";
+export const FAMILY_TASK_CANONICAL_CHECKED_SUBTASK_PREFIX = "--x ";
 const FAMILY_TASK_PRIORITY_ALIASES = {
   ["💤 언젠가는" + "..."]: "💤 언젠가는",
   ["⭐️ 중요! " + "늦지않기"]: "⭐️ 중요",
@@ -12,6 +14,85 @@ const FAMILY_TASK_PRIORITY_ALIASES = {
   ["⭐️ " + "\uc65c\ub9cc\ud558\uba74 \ube68\ub9ac\ud574\ub77c"]: "⭐️ 중요",
   ["⭐️ " + "\uc575\uac04\ud558\uba74 \ube68\ub9ac\ud574\ub77c\uc774"]: "⭐️ 중요",
 };
+
+function trimBlankEdges(lines) {
+  const next = [...lines];
+  while (next.length && !String(next[0] || "").trim()) next.shift();
+  while (next.length && !String(next[next.length - 1] || "").trim()) next.pop();
+  return next;
+}
+
+export function extractFamilyTaskChecklist(description) {
+  const subtasks = [];
+  const memoFragments = [];
+  let currentMemoLines = [];
+
+  function flushMemoFragment() {
+    const trimmed = trimBlankEdges(currentMemoLines);
+    if (trimmed.length) memoFragments.push(trimmed.join("\n"));
+    currentMemoLines = [];
+  }
+
+  for (const rawLine of String(description || "").split("\n")) {
+    if (rawLine.startsWith("- ") || rawLine.startsWith("+ ")) {
+      const content = rawLine.slice(2).trim();
+      if (content) {
+        flushMemoFragment();
+        subtasks.push({
+          content,
+          is_done: rawLine.startsWith("+ "),
+          position: subtasks.length,
+        });
+      }
+      continue;
+    }
+
+    currentMemoLines.push(rawLine);
+  }
+
+  flushMemoFragment();
+
+  return {
+    memo: memoFragments.join("\n\n"),
+    subtasks,
+  };
+}
+
+export function buildFamilyTaskCanonicalRaw(task) {
+  const normalized = normalizeFamilyTask(task);
+  if (!normalized) return "";
+  const checklist = extractFamilyTaskChecklist(normalized.description);
+  const lines = [`-- ${normalized.title}`];
+
+  for (const subtask of checklist.subtasks) {
+    lines.push(
+      `${subtask.is_done ? FAMILY_TASK_CANONICAL_CHECKED_SUBTASK_PREFIX : FAMILY_TASK_CANONICAL_UNCHECKED_SUBTASK_PREFIX}${subtask.content}`,
+    );
+  }
+
+  if (checklist.memo) {
+    lines.push('"""', checklist.memo, '"""');
+  }
+
+  return lines.join("\n");
+}
+
+export function applyLegacyFamilyTaskMemoChecks(description, memoChecks) {
+  const checks = Array.isArray(memoChecks) ? memoChecks.map(Boolean) : [];
+  if (!checks.some(Boolean)) return String(description || "");
+
+  let checklistIndex = -1;
+  return String(description || "")
+    .split("\n")
+    .map((line) => {
+      if (!line.startsWith("- ") && !line.startsWith("+ ")) return line;
+      const content = line.slice(2).trim();
+      if (!content) return line;
+      checklistIndex += 1;
+      return `${checks[checklistIndex] ? "+ " : "- "}${line.slice(2)}`;
+    })
+    .join("\n");
+}
 
 export function createFamilyTaskId() {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -43,11 +124,12 @@ export function normalizeFamilyTask(task) {
     : Array.isArray(task.description_checks)
       ? task.description_checks.map(Boolean)
       : [];
+  const description = applyLegacyFamilyTaskMemoChecks(task.description, memoChecks);
 
   return {
     id: String(task.id || createFamilyTaskId()),
     title,
-    description: String(task.description || ""),
+    description,
     memo_checklist: Boolean(task.memo_checklist || task.description_checklist),
     memo_checks: memoChecks,
     assignee,

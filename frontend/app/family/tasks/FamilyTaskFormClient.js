@@ -157,7 +157,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
               value={draft.description}
               onChange={(event) => updateDraft("description", event.target.value)}
             />
-            <p className="familyTaskMemoHint">- 로 시작하는 줄은 하위 할일로 보여요.</p>
+            <p className="familyTaskMemoHint">- 는 미완료, + 는 완료 하위 할일로 보여요.</p>
           </div>
 
           <div className="familyTaskFormGrid">

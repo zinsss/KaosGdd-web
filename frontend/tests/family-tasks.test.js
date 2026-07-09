@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
+import {
+  buildFamilyTaskCanonicalRaw,
+  extractFamilyTaskChecklist,
+} from "../app/family/familyTasks.js";
 
 async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
@@ -49,8 +53,10 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(dashboardSource.includes('className="familyTaskMetaBadges"'), "priority and 쏭 meta should render inline beside the title");
   assert.ok(dashboardSource.includes('className="familyTaskDateBadge"'), "due date should render as a right-aligned inline value");
   assert.ok(dashboardSource.includes("function parseTaskMemo(task)"), "task memo should be parsed into subtasks and memo text");
-  assert.ok(dashboardSource.includes('line.startsWith("-")'), "memo lines starting with - should become subtasks");
+  assert.ok(dashboardSource.includes("extractFamilyTaskChecklist(task.description)"), "memo checklist parsing should use the shared Family parser");
+  assert.ok(taskHelperSource.includes('rawLine.startsWith("- ") || rawLine.startsWith("+ ")'), "only exact -/+ checklist markers should become subtasks");
   assert.ok(dashboardSource.includes("function toggleTaskSubtaskLine(taskId, lineIndex)"), "subtask lines should be individually checkable");
+  assert.ok(dashboardSource.includes("toggleChecklistMarker(task.description, lineIndex)"), "subtask toggles should rewrite -/+ memo markers");
   assert.ok(dashboardSource.includes('className="familyTaskMemoChecklist"'), "dash-prefixed memo lines should render as subtasks");
   assert.ok(dashboardSource.includes("familyTaskMemoCheckItemDone"), "checked subtask lines should have a completed style hook");
   assert.ok(dashboardSource.includes("onClick={() => toggleTaskSubtaskLine(task.id, lineIndex)}"), "subtask lines should toggle in place");
@@ -68,9 +74,10 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(!formSource.includes("FAMILY_TASK_ASSIGNEES.map"), "task form should not render the assignee combobox");
   assert.ok(!formSource.includes('className="familyTaskMemoChecklistToggle"'), "task form should not use a separate checklist toggle");
   assert.ok(!formSource.includes('checked={Boolean(draft.memo_checklist)}'), "task form should not bind a separate memo checklist checkbox");
-  assert.ok(formSource.includes("- 로 시작하는 줄은 하위 할일로 보여요."), "task form should explain dash-prefixed memo subtasks");
+  assert.ok(formSource.includes("- 는 미완료, + 는 완료 하위 할일로 보여요."), "task form should explain Family memo checklist markers");
   assert.ok(taskHelperSource.includes("memo_checklist"), "task normalization should persist the memo checklist flag");
   assert.ok(taskHelperSource.includes("memo_checks"), "task normalization should persist per-line memo check state");
+  assert.ok(taskHelperSource.includes("applyLegacyFamilyTaskMemoChecks"), "old memo_checks data should be normalized into + checklist markers");
   assert.ok(dashboardSource.includes("완 료"), "expanded task actions should use the requested spaced complete label");
   assert.ok(dashboardSource.includes("삭 제"), "expanded task actions should use the requested spaced delete label");
   assert.ok(dashboardSource.includes('aria-pressed={sharedWithSong}'), "expanded task song action should behave as a toggle");
@@ -136,4 +143,66 @@ test("family tasks use finalized standard Korean labels", async () => {
   for (const oldString of ["고치까", "치아라", "다했데이", "도로묵이다", "고마하자", "안하면 죽는다", "왠만하면 빨리해라", "니가 해라", "내가 하께", "아무나 하자"]) {
     assert.ok(!combinedSource.includes(oldString), `${oldString} should not remain in Family task UI`);
   }
+});
+
+test("family memo checklist parser extracts checklist lines and preserves memo fragments", () => {
+  assert.deepEqual(extractFamilyTaskChecklist("plain memo"), {
+    memo: "plain memo",
+    subtasks: [],
+  });
+
+  assert.deepEqual(extractFamilyTaskChecklist("- 우유\n+ 계란\n- 빵"), {
+    memo: "",
+    subtasks: [
+      { content: "우유", is_done: false, position: 0 },
+      { content: "계란", is_done: true, position: 1 },
+      { content: "빵", is_done: false, position: 2 },
+    ],
+  });
+
+  assert.deepEqual(
+    extractFamilyTaskChecklist("장보기\n\n- 우유\nblah blah\n+ 계란\n\n- 빵\n끝"),
+    {
+      memo: "장보기\n\nblah blah\n\n끝",
+      subtasks: [
+        { content: "우유", is_done: false, position: 0 },
+        { content: "계란", is_done: true, position: 1 },
+        { content: "빵", is_done: false, position: 2 },
+      ],
+    },
+  );
+
+  assert.deepEqual(extractFamilyTaskChecklist("- 우유\nmemo"), {
+    memo: "memo",
+    subtasks: [{ content: "우유", is_done: false, position: 0 }],
+  });
+
+  assert.deepEqual(extractFamilyTaskChecklist("memo\n+ 계란"), {
+    memo: "memo",
+    subtasks: [{ content: "계란", is_done: true, position: 0 }],
+  });
+
+  assert.deepEqual(extractFamilyTaskChecklist("- 우유\n\n+ 계란\n- 빵"), {
+    memo: "",
+    subtasks: [
+      { content: "우유", is_done: false, position: 0 },
+      { content: "계란", is_done: true, position: 1 },
+      { content: "빵", is_done: false, position: 2 },
+    ],
+  });
+
+  assert.deepEqual(extractFamilyTaskChecklist("- \n+ \nA - not checklist\nB + not checklist"), {
+    memo: "A - not checklist\nB + not checklist",
+    subtasks: [],
+  });
+});
+
+test("family task canonical raw uses main task grammar for extracted checklist", () => {
+  const raw = buildFamilyTaskCanonicalRaw({
+    id: "family-1",
+    title: "장보기",
+    description: "앞 메모\n- 우유\n+ 계란\n뒤 메모",
+  });
+
+  assert.equal(raw, '-- 장보기\n--- 우유\n--x 계란\n"""\n앞 메모\n\n뒤 메모\n"""');
 });

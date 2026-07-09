@@ -50,6 +50,7 @@ from app.engine.note_service import NoteService
 from app.engine.file_service import FileService
 from app.engine.fax_pdf_conversion_service import FaxPdfConversionService
 from app.engine.fax_service import FaxService
+from app.engine.family_task_sync_service import FamilyTaskSyncService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
 from app.engine.supply_service import SupplyService
@@ -78,6 +79,7 @@ scribble_repo = ScribbleRepo(engine)
 weather_repo = WeatherRepo(engine)
 family_repo = FamilyRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
+family_task_sync_service = FamilyTaskSyncService(items_repo, task_repo, task_service)
 event_service = EventService(items_repo, event_repo, reminder_repo)
 holiday_sync_service = HolidaySyncService(items_repo, event_repo)
 journal_service = JournalService(items_repo, journal_repo)
@@ -441,8 +443,9 @@ def save_family_tasks(payload: dict):
     tasks = payload.get("tasks") if isinstance(payload, dict) else None
     if not isinstance(tasks, list):
         return {"ok": False, "error": "tasks must be a list"}
-    family_repo.put_record("family", "tasks", tasks)
-    return {"ok": True, "tasks": tasks}
+    normalized_tasks = family_task_sync_service.sync(tasks)
+    family_repo.put_record("family", "tasks", normalized_tasks)
+    return {"ok": True, "tasks": normalized_tasks}
 
 
 @app.get("/family/records/{record_key}")

@@ -174,6 +174,26 @@ class ItemsRepo:
             ).fetchall()
         return [row[0] for row in rows]
 
+    def list_items_by_tag_prefix(self, tag_prefix: str) -> list[dict]:
+        prefix = str(tag_prefix or "").strip().lower()
+        if not prefix:
+            return []
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT DISTINCT i.id, i.item_type, i.title, i.status, i.created_at, i.updated_at
+                    FROM {items} i
+                    JOIN {item_tags} it ON it.item_id = i.id
+                    WHERE it.tag LIKE :tag_prefix
+                    ORDER BY i.updated_at DESC, i.created_at DESC
+                    """
+                    .format(items=DbTables.ITEMS, item_tags=DbTables.ITEM_TAGS)
+                ),
+                {"tag_prefix": f"{prefix}%"},
+            ).mappings().all()
+        return [dict(row) for row in rows]
+
     def replace_item_tags(self, item_id: str, tags: list[str]) -> None:
         normalized = []
         seen = set()

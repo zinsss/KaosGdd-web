@@ -9,6 +9,7 @@ import {
   FAMILY_TASK_DEFAULT_PRIORITY,
   FAMILY_TASK_PRIORITIES,
   FAMILY_TASK_PRIORITY_ASSIGNEE,
+  extractFamilyTaskChecklist,
   fetchFamilyTasks,
   formatFamilyTaskDueDate,
   persistFamilyTasks,
@@ -39,30 +40,27 @@ function getTaskCardBadges(task) {
   return badges;
 }
 
-function getTaskMemoLines(task) {
-  return String(task.description || "")
-    .split("\n")
-    .map((line) => line.trim());
+function parseTaskMemo(task) {
+  const checklist = extractFamilyTaskChecklist(task.description);
+  return {
+    subtaskLines: checklist.subtasks,
+    memoText: checklist.memo,
+  };
 }
 
-function parseTaskMemo(task) {
-  const subtaskLines = [];
-  const memoLines = [];
-
-  for (const line of getTaskMemoLines(task)) {
-    if (!line) continue;
-    if (line.startsWith("-")) {
-      const text = line.replace(/^-+\s*/, "").trim();
-      if (text) subtaskLines.push(text);
-      continue;
-    }
-    memoLines.push(line);
-  }
-
-  return {
-    subtaskLines,
-    memoText: memoLines.join("\n"),
-  };
+function toggleChecklistMarker(description, targetIndex) {
+  let checklistIndex = -1;
+  return String(description || "")
+    .split("\n")
+    .map((line) => {
+      if (!line.startsWith("- ") && !line.startsWith("+ ")) return line;
+      const content = line.slice(2).trim();
+      if (!content) return line;
+      checklistIndex += 1;
+      if (checklistIndex !== targetIndex) return line;
+      return `${line.startsWith("+ ") ? "- " : "+ "}${line.slice(2)}`;
+    })
+    .join("\n");
 }
 
 export default function FamilyDashboardClient() {
@@ -118,11 +116,9 @@ export default function FamilyDashboardClient() {
     setTasks((current) =>
       current.map((task) => {
         if (task.id !== taskId) return task;
-        const memoChecks = Array.isArray(task.memo_checks) ? [...task.memo_checks] : [];
-        memoChecks[lineIndex] = !memoChecks[lineIndex];
         return {
           ...task,
-          memo_checks: memoChecks,
+          description: toggleChecklistMarker(task.description, lineIndex),
           updated_at: now,
         };
       }),
@@ -251,7 +247,7 @@ export default function FamilyDashboardClient() {
                           {memoData.subtaskLines.length ? (
                             <div className="familyTaskMemoChecklist" aria-label={`${task.title} 하위 할일`}>
                               {memoData.subtaskLines.map((line, lineIndex) => {
-                                const checked = Boolean(task.memo_checks?.[lineIndex]);
+                                const checked = Boolean(line.is_done);
                                 return (
                                   <button
                                     className={`familyTaskMemoCheckItem${checked ? " familyTaskMemoCheckItemDone" : ""}`}
@@ -262,7 +258,7 @@ export default function FamilyDashboardClient() {
                                     <span className={`prefixToggleButton familyTaskMemoCheckBox${checked ? " isDone" : " isUndone"}`} aria-hidden="true">
                                       {checked ? "✓" : "○"}
                                     </span>
-                                    <span>{line}</span>
+                                    <span>{line.content}</span>
                                   </button>
                                 );
                               })}
