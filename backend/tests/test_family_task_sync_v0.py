@@ -214,3 +214,48 @@ def test_missing_family_task_removes_stale_mirror_without_affecting_unrelated_ta
 
     assert task_repo.get_task_detail(mirror_id)["status"] == "removed"
     assert task_repo.get_task_detail(unrelated_id)["status"] == "active"
+
+
+def test_main_mirror_done_state_reconciles_back_to_family_task(tmp_path) -> None:
+    sync_service, items_repo, _, task_service = make_sync_service(tmp_path)
+    family_tasks = [
+        {
+            "id": "family-1",
+            "title": "장보기",
+            "description": "- 우유",
+            "assignee": FAMILY_TASK_SHARED_ASSIGNEE,
+            "done": False,
+        }
+    ]
+    sync_service.sync(family_tasks)
+    mirror_id = mirrored_task_id(items_repo, "family-1")
+
+    assert task_service.toggle_task(mirror_id) is True
+
+    reconciled, changed = sync_service.reconcile_from_mirrors(family_tasks)
+    assert changed is True
+    assert reconciled[0]["done"] is True
+    assert reconciled[0]["completed_at"]
+
+
+def test_main_mirror_subtask_done_state_reconciles_back_to_family_markers(tmp_path) -> None:
+    sync_service, items_repo, task_repo, task_service = make_sync_service(tmp_path)
+    family_tasks = [
+        {
+            "id": "family-1",
+            "title": "장보기",
+            "description": "메모 앞\n- 우유\n+ 계란\n- 빵\n메모 뒤",
+            "assignee": FAMILY_TASK_SHARED_ASSIGNEE,
+            "done": False,
+        }
+    ]
+    sync_service.sync(family_tasks)
+    mirror_id = mirrored_task_id(items_repo, "family-1")
+    subtasks = task_repo.list_subtasks(mirror_id)
+
+    assert task_service.toggle_subtask(mirror_id, subtasks[0]["id"]) is True
+    assert task_service.toggle_subtask(mirror_id, subtasks[1]["id"]) is False
+
+    reconciled, changed = sync_service.reconcile_from_mirrors(family_tasks)
+    assert changed is True
+    assert reconciled[0]["description"] == "메모 앞\n+ 우유\n- 계란\n- 빵\n메모 뒤"

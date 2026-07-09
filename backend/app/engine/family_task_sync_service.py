@@ -146,8 +146,75 @@ class FamilyTaskSyncService:
         self._remove_stale_mirrors(active_family_ids)
         return normalized_tasks
 
+    def reconcile_from_mirrors(self, tasks: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], bool]:
+        normalized_tasks = [task for task in (normalize_family_task(task) for task in tasks) if task]
+        changed = False
+        reconciled = []
+
+        for task in normalized_tasks:
+            if task["assignee"] != FAMILY_TASK_SHARED_ASSIGNEE:
+                reconciled.append(task)
+                continue
+
+            mirrors = [mirror for mirror in self._find_mirrors(task["id"]) if mirror.get("status") != "removed"]
+            if not mirrors:
+                reconciled.append(task)
+                continue
+
+            mirror_id = mirrors[0]["id"]
+            detail = self.task_repo.get_task_detail(mirror_id)
+            if detail is None:
+                reconciled.append(task)
+                continue
+
+            next_task = dict(task)
+            mirror_done = bool(detail.get("is_done"))
+            if bool(next_task.get("done")) != mirror_done:
+                next_task["done"] = mirror_done
+                if mirror_done:
+                    next_task["completed_at"] = str(detail.get("done_at") or next_task.get("updated_at") or "")
+                else:
+                    next_task["completed_at"] = ""
+                changed = True
+
+            next_description = self._reconcile_description_subtask_state(
+                str(next_task.get("description") or ""),
+                self.task_repo.list_subtasks(mirror_id),
+            )
+            if next_description != next_task.get("description"):
+                next_task["description"] = next_description
+                changed = True
+
+            reconciled.append(next_task)
+
+        return reconciled, changed
+
     def _mirror_tag(self, family_task_id: str) -> str:
         return f"{FAMILY_TASK_MIRROR_TAG_PREFIX}{str(family_task_id).strip().lower()}"
+
+    def _reconcile_description_subtask_state(self, description: str, mirror_subtasks: list[dict[str, Any]]) -> str:
+        checklist_index = -1
+        lines = []
+
+        for line in str(description or "").split("\n"):
+            if not line.startswith("- ") and not line.startswith("+ "):
+                lines.append(line)
+                continue
+
+            content = line[2:].strip()
+            if not content:
+                lines.append(line)
+                continue
+
+            checklist_index += 1
+            if checklist_index >= len(mirror_subtasks):
+                lines.append(line)
+                continue
+
+            mirror_done = bool(mirror_subtasks[checklist_index].get("is_done"))
+            lines.append(f"{'+ ' if mirror_done else '- '}{line[2:]}")
+
+        return "\n".join(lines)
 
     def _find_mirrors(self, family_task_id: str) -> list[dict[str, Any]]:
         mirror_tag = self._mirror_tag(family_task_id)

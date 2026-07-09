@@ -435,7 +435,12 @@ def list_tasks(mode: str = "active"):
 def list_family_tasks():
     payload = family_repo.get_record("family", "tasks")
     has_record = isinstance(payload, list)
-    return {"ok": True, "tasks": payload if has_record else [], "hasRecord": has_record}
+    if not has_record:
+        return {"ok": True, "tasks": [], "hasRecord": has_record}
+    reconciled_tasks, changed = family_task_sync_service.reconcile_from_mirrors(payload)
+    if changed:
+        family_repo.put_record("family", "tasks", reconciled_tasks)
+    return {"ok": True, "tasks": reconciled_tasks, "hasRecord": has_record}
 
 
 @app.put("/family/tasks")
