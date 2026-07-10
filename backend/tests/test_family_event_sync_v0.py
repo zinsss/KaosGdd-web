@@ -242,6 +242,42 @@ def test_main_mirror_edit_reconciles_time_memo_back_to_family_event(tmp_path) ->
     assert family_repo.get_record("family", FAMILY_CALENDAR_RECORD_KEY) == loaded
 
 
+def test_main_mirror_reconcile_preserves_family_event_color(tmp_path) -> None:
+    sync_service, items_repo, event_repo, event_service, family_repo = make_sync_service(tmp_path)
+    synced = sync_service.save_calendar_items(
+        [
+            {
+                "id": "family-event-1",
+                "title": "병원",
+                "date": "2026-07-10",
+                "allDay": False,
+                "startTime": "10:00",
+                "endTime": "11:00",
+                "memo": "",
+                "color": "blue",
+                "sharedWithSong": True,
+            }
+        ]
+    )
+    mirror_id = mirrored_event_id(items_repo, "family-event-1")
+
+    event_service.update_event(
+        mirror_id,
+        title="병원 변경",
+        start_date="2026-07-10",
+        end_date="2026-07-10",
+        memo="시간: 10:20–11:20\n\n#family",
+    )
+    loaded = sync_service.load_calendar_items()
+
+    assert synced[0]["color"] == "blue"
+    assert loaded[0]["title"] == "병원 변경"
+    assert loaded[0]["startTime"] == "10:20"
+    assert loaded[0]["endTime"] == "11:20"
+    assert loaded[0]["color"] == "blue"
+    assert family_repo.get_record("family", FAMILY_CALENDAR_RECORD_KEY)[0]["color"] == "blue"
+
+
 def test_removing_family_song_tag_from_adopted_main_event_disconnects_projection(tmp_path) -> None:
     sync_service, items_repo, event_repo, event_service, family_repo = make_sync_service(tmp_path)
     main_id = event_service.create_event(

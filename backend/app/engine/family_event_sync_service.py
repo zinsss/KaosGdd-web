@@ -186,7 +186,14 @@ class FamilyEventSyncService:
             if not adopted:
                 next_items.append(item)
                 continue
-            next_item = {**item, **adopted, "id": item["id"], "mainItemId": mirrors[0]["id"], "sharedWithSong": True}
+            next_item = {
+                **item,
+                **adopted,
+                "id": item["id"],
+                "color": item.get("color") or adopted.get("color") or "pink",
+                "mainItemId": mirrors[0]["id"],
+                "sharedWithSong": True,
+            }
             if next_item != item:
                 changed = True
             next_items.append(next_item)
