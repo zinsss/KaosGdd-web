@@ -368,16 +368,18 @@
 
 .familyCalendarItemDated {
   background: #fffafd;
+  border: 1px solid var(--family-calendar-event-outline, #ffc6dc);
   border-color: var(--family-calendar-event-outline, #ffc6dc);
-  box-shadow: inset 0 0 0 1px var(--family-calendar-event-outline, #ffc6dc);
+  box-shadow: none;
   color: rgba(78, 37, 54, 0.82);
   opacity: 1;
 }
 
 .familyCalendarAllDayItem.familyCalendarItemDated {
   background: var(--family-calendar-event-fill-soft, rgba(255, 198, 220, 0.28));
+  border: 1px solid var(--family-calendar-event-outline, #ffc6dc);
   border-color: var(--family-calendar-event-outline, #ffc6dc);
-  box-shadow: inset 0 0 0 1px var(--family-calendar-event-outline, #ffc6dc);
+  box-shadow: none;
 }
 
 @media (max-width: 640px) {

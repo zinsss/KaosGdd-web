@@ -157,6 +157,7 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes("FAMILY_CALENDAR_COLOR_LABELS[color]"));
   assert.ok(eventFormSource.includes("familyTimetableColorChip"));
   assert.ok(eventFormSource.includes("const [colorPickerOpen, setColorPickerOpen] = useState(false);"));
+  assert.ok(eventFormSource.includes("const [saving, setSaving] = useState(false);"));
   assert.ok(eventFormSource.includes("className=\"familyCalendarColorPickerToggle\""));
   assert.ok(eventFormSource.includes("aria-expanded={colorPickerOpen}"));
   assert.ok(eventFormSource.includes("familyCalendarColorPickerSwatch"));
@@ -165,6 +166,9 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes('aria-pressed={sharedWithSong}'));
   assert.ok(eventFormSource.includes('className={`familyTaskSongToggle${sharedWithSong ? " familyTaskSongToggleActive" : ""}`}'));
   assert.ok(eventFormSource.includes('onClick={() => updateDraft("sharedWithSong", !sharedWithSong)}'));
+  assert.ok(eventFormSource.includes("async function saveEvent(event)"));
+  assert.ok(eventFormSource.includes("await persistFamilyCalendarItems(nextItems);"));
+  assert.ok(eventFormSource.includes('{saving ? "저장 중" : "저장"}'));
   assert.ok(calendarSource.includes("function formatTimedCalendarItemTitle(item, itemType)"));
   assert.ok(calendarSource.includes('return `${item.startTime} ${title}`;'));
   assert.ok(calendarSource.includes("const displayTitle = formatTimedCalendarItemTitle(item, itemType);"));
@@ -257,8 +261,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.doesNotMatch(polishCss, /\.familyCalendarForm \.familyTaskSongField/);
   assert.match(polishCss, /\.familyCalendarItemRouny\.familyTimetableEntryPink\s*\{\s*background:\s*#ffc6dc;\s*\}/);
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPink\s*\{[\s\S]*?--family-calendar-event-outline:\s*#ffc6dc;[\s\S]*?--family-calendar-event-fill-soft:\s*rgba\(255, 198, 220, 0\.28\);/);
-  assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?box-shadow:\s*inset 0 0 0 1px var\(--family-calendar-event-outline, #ffc6dc\);/);
-  assert.match(polishCss, /\.familyCalendarAllDayItem\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*var\(--family-calendar-event-fill-soft, rgba\(255, 198, 220, 0\.28\)\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px var\(--family-calendar-event-outline, #ffc6dc\);/);
+  assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?border:\s*1px solid var\(--family-calendar-event-outline, #ffc6dc\);[\s\S]*?box-shadow:\s*none;/);
+  assert.match(polishCss, /\.familyCalendarAllDayItem\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*var\(--family-calendar-event-fill-soft, rgba\(255, 198, 220, 0\.28\)\);[\s\S]*?border:\s*1px solid var\(--family-calendar-event-outline, #ffc6dc\);[\s\S]*?box-shadow:\s*none;/);
 });
 
 test("family calendar uses one shared 8-column gutter grid with clean weekend text styling", async () => {
@@ -753,8 +757,8 @@ test("family calendar timed items render by duration across hour boundaries", as
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryBlue\s*\{[\s\S]*?--family-calendar-event-outline:\s*#b8c8ff;/);
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryLavender\s*\{[\s\S]*?--family-calendar-event-outline:\s*#d4ccff;/);
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPurple\s*\{[\s\S]*?--family-calendar-event-outline:\s*#f0b2e8;/);
-  assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?border-color:\s*var\(--family-calendar-event-outline, #ffc6dc\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px var\(--family-calendar-event-outline, #ffc6dc\);/);
-  assert.match(polishCss, /\.familyCalendarAllDayItem\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*var\(--family-calendar-event-fill-soft, rgba\(255, 198, 220, 0\.28\)\);[\s\S]*?border-color:\s*var\(--family-calendar-event-outline, #ffc6dc\);/);
+  assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?border:\s*1px solid var\(--family-calendar-event-outline, #ffc6dc\);[\s\S]*?box-shadow:\s*none;/);
+  assert.match(polishCss, /\.familyCalendarAllDayItem\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*var\(--family-calendar-event-fill-soft, rgba\(255, 198, 220, 0\.28\)\);[\s\S]*?border:\s*1px solid var\(--family-calendar-event-outline, #ffc6dc\);[\s\S]*?box-shadow:\s*none;/);
 });
 
 test("family caregiver monthly review renders fixed-width calendar and wage summary", async () => {

@@ -84,6 +84,7 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState("");
   const [colorPickerOpen, setColorPickerOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
   const editing = Boolean(eventId);
 
   useEffect(() => {
@@ -132,7 +133,7 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
     router.push("/family/calendar");
   }
 
-  function saveEvent(event) {
+  async function saveEvent(event) {
     event.preventDefault();
     const normalized = normalizeFamilyCalendarItem({ ...draft, title: draft.title.trim() });
     if (!normalized) {
@@ -140,20 +141,32 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
       return;
     }
 
-    setItems((current) => {
-      if (editing) {
-        return current.map((item) => (item.id === eventId ? { ...normalized, id: eventId } : item));
-      }
-
-      return [...current, normalized];
-    });
-    router.push("/family/calendar");
+    const nextItems = editing
+      ? items.map((item) => (item.id === eventId ? { ...normalized, id: eventId } : item))
+      : [...items, normalized];
+    setSaving(true);
+    setItems(nextItems);
+    try {
+      await persistFamilyCalendarItems(nextItems);
+      router.push("/family/calendar");
+    } catch {
+      setError("일정을 저장하지 못했어요.");
+      setSaving(false);
+    }
   }
 
-  function deleteEvent() {
+  async function deleteEvent() {
     if (!editing) return;
-    setItems((current) => current.filter((item) => item.id !== eventId));
-    router.push("/family/calendar");
+    const nextItems = items.filter((item) => item.id !== eventId);
+    setSaving(true);
+    setItems(nextItems);
+    try {
+      await persistFamilyCalendarItems(nextItems);
+      router.push("/family/calendar");
+    } catch {
+      setError("일정을 삭제하지 못했어요.");
+      setSaving(false);
+    }
   }
 
   return (
@@ -275,7 +288,7 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
 
             <div className="familyCalendarFormActions">
               <button className="familyTaskSave" type="submit">
-                저장
+                {saving ? "저장 중" : "저장"}
               </button>
               <button className="familyTaskCancel" type="button" onClick={goBack}>
                 취소
