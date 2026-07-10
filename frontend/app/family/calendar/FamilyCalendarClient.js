@@ -952,9 +952,16 @@ function FamilyCalendarEditWeek({
   }
 
   function updateAutoScroll(clientY) {
-    const container = editScrollRef.current;
+    const editContainer = editScrollRef.current;
+    const container =
+      editContainer && editContainer.scrollHeight > editContainer.clientHeight + 2
+        ? editContainer
+        : document.scrollingElement || document.documentElement;
     if (!container) return;
-    const rect = container.getBoundingClientRect();
+    const rect =
+      container === document.scrollingElement || container === document.documentElement
+        ? { top: 0, bottom: window.innerHeight }
+        : container.getBoundingClientRect();
     let direction = 0;
     if (clientY - rect.top < FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX) direction = -1;
     if (rect.bottom - clientY < FAMILY_CALENDAR_AUTO_SCROLL_EDGE_PX) direction = 1;
@@ -965,7 +972,11 @@ function FamilyCalendarEditWeek({
     autoScrollDirectionRef.current = direction;
     if (autoScrollIntervalRef.current) return;
     autoScrollIntervalRef.current = window.setInterval(() => {
-      const current = editScrollRef.current;
+      const editCurrent = editScrollRef.current;
+      const current =
+        editCurrent && editCurrent.scrollHeight > editCurrent.clientHeight + 2
+          ? editCurrent
+          : document.scrollingElement || document.documentElement;
       if (!current || !autoScrollDirectionRef.current) return;
       current.scrollTop += autoScrollDirectionRef.current * FAMILY_CALENDAR_AUTO_SCROLL_STEP_PX;
     }, 40);

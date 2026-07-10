@@ -177,12 +177,11 @@
 }
 
 .familyCalendarExpandedWeek.familyCalendarExpandedWeekEditable {
-  max-height: min(64vh, 760px);
+  max-height: none;
   overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-  padding-right: 2px;
+  overflow-y: visible;
+  overscroll-behavior: auto;
+  padding-right: 0;
 }
 
 .familyCalendarExpandedWeek.familyCalendarExpandedWeekEditing {
