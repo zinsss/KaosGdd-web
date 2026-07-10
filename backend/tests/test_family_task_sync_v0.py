@@ -109,6 +109,30 @@ def test_shared_family_task_creates_main_task_with_real_subtasks(tmp_path) -> No
     ]
 
 
+def test_family_mirror_internal_tags_are_hidden_from_main_task_output(tmp_path) -> None:
+    sync_service, items_repo, _, task_service = make_sync_service(tmp_path)
+
+    sync_service.sync(
+        [
+            {
+                "id": "family-1",
+                "title": "장보기",
+                "description": "- 우유",
+                "assignee": FAMILY_TASK_SHARED_ASSIGNEE,
+                "priority": "⭐️ 중요",
+            }
+        ]
+    )
+
+    mirror_id = mirrored_task_id(items_repo, "family-1")
+    assert items_repo.list_item_tags(mirror_id) == [
+        "family-priority:important",
+        "family-song",
+        "family-task:family-1",
+    ]
+    assert task_service.get_task(mirror_id)["tags"] == ["family-song"]
+
+
 def test_family_task_repeated_sync_does_not_duplicate_mirror_or_subtasks(tmp_path) -> None:
     sync_service, items_repo, task_repo, _ = make_sync_service(tmp_path)
     payload = [

@@ -134,7 +134,7 @@ function TaskRow({
             </Link>
 
             {isRepeating ? <span className="taskListRepeatMarker">↻</span> : null}
-            {songTask ? <span className="taskListSongMarker">쏭</span> : null}
+            {songTask ? <span className="taskListSongMarker">#family쏭</span> : null}
             {dueMetatag || auxMetatag ? (
               <span className="taskListMetaTag">{dueMetatag}{auxMetatag}</span>
             ) : null}

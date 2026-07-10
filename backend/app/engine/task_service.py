@@ -515,6 +515,8 @@ class TaskService:
                 repeat_rule = tag[len(REPEAT_TAG_PREFIX):]
             elif tag.startswith(CLAIM_DAY_TASK_DEDUPE_PREFIX):
                 continue
+            elif tag.startswith("family-task:") or tag.startswith("family-priority:"):
+                continue
             else:
                 visible_tags.append(tag)
         return repeat_rule, visible_tags
