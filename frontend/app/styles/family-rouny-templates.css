@@ -235,7 +235,7 @@
 .familyRounWeeklyGrid {
   --family-roun-body-height: 672px;
   display: grid;
-  grid-template-columns: 30px repeat(7, minmax(0, 1fr));
+  grid-template-columns: 30px repeat(6, minmax(0, 1fr));
   grid-template-rows: 30px var(--family-roun-body-height);
   min-width: 0;
   max-width: 100%;
@@ -391,7 +391,7 @@
   }
 
   .familyRounWeeklyGrid {
-    grid-template-columns: 24px repeat(7, minmax(0, 1fr));
+    grid-template-columns: 24px repeat(6, minmax(0, 1fr));
   }
 
   .familyRounDayHeader {

@@ -62,9 +62,10 @@ test("family timetable keeps local schedule editor foundations", async () => {
   }
 
   const weekdaySources = `${rounySource}\n${dataSource}`;
-  for (const day of ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]) {
+  for (const day of ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일"]) {
     assert.ok(weekdaySources.includes(day), `${day} should remain available to the Roun editor`);
   }
+  assert.ok(rounySource.includes("ROUN_WEEKDAY_INDICES = [1, 2, 3, 4, 5, 6]"), "Rouny editor should exclude Sunday");
   for (const value of ["dayOfWeek", "startTime", "endTime", "sessions", "slots", "color", "fontFamily", "normalizeFamilyRounyItem"]) {
     assert.ok(rounySource.includes(value));
   }
@@ -297,7 +298,7 @@ test("family Roun weekly grid editor supports add edit copy delete and drag", as
     assert.ok(dragSource.includes(value), `${value} should exist in the shared drag helper`);
   }
 
-  for (const label of ["일", "월", "화", "수", "목", "금", "토"]) {
+  for (const label of ["월", "화", "수", "목", "금", "토"]) {
     assert.ok(rounySource.includes(label) || rounySource.includes("FAMILY_CALENDAR_DAY_LABELS"), `${label} should be represented in the weekly editor`);
   }
   for (const value of ["수정", "복사", "삭제", "취소"]) {
@@ -305,11 +306,11 @@ test("family Roun weekly grid editor supports add edit copy delete and drag", as
   }
 
   assert.ok(rounyCss.includes(".familyRounWeeklyGrid"));
-  assert.ok(rounyCss.includes("grid-template-columns: 30px repeat(7, minmax(0, 1fr));"));
+  assert.ok(rounyCss.includes("grid-template-columns: 30px repeat(6, minmax(0, 1fr));"));
   assert.ok(rounyCss.includes("overflow-y: visible;"));
   assert.ok(rounyCss.includes("overscroll-behavior: auto;"));
   assert.ok(rounyCss.includes("overflow-x: hidden;"));
-  assert.ok(rounyCss.includes("grid-template-columns: 24px repeat(7, minmax(0, 1fr));"));
+  assert.ok(rounyCss.includes("grid-template-columns: 24px repeat(6, minmax(0, 1fr));"));
   assert.ok(rounyCss.includes(".familyRounHour span:nth-child(5) { top: 40px; }"));
   assert.ok(rounyCss.includes(".familyRounBlock"));
   assert.ok(rounyCss.includes("position: absolute;"));

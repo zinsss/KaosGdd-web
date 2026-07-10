@@ -53,6 +53,11 @@ const ROUN_TIMETABLE_HOURS = Array.from(
 const ROUN_TIMETABLE_VISIBLE_HOURS = ROUN_TIMETABLE_HOURS.slice(0, -1);
 const ROUN_TIMETABLE_BODY_HEIGHT =
   (ROUN_TIMETABLE_END_HOUR - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT;
+const ROUN_WEEKDAY_INDICES = [1, 2, 3, 4, 5, 6];
+const ROUN_WEEKDAY_LABELS = ROUN_WEEKDAY_INDICES.map((dayIndex) => FAMILY_CALENDAR_DAY_LABELS[dayIndex]);
+const ROUN_WEEKDAY_OPTIONS = FAMILY_CALENDAR_WEEKDAY_OPTIONS.filter((option) =>
+  ROUN_WEEKDAY_INDICES.includes(option.dayOfWeek),
+);
 
 const parseTimeMinutes = parseFamilyScheduleTimeMinutes;
 const minutesToFamilyTime = minutesToFamilyScheduleTime;
@@ -75,7 +80,7 @@ function rounySessions(item) {
     ? item.sessions
     : item.slots;
   return (Array.isArray(rawSessions) && rawSessions.length ? rawSessions : [item]).map((slot) => ({
-    dayOfWeek: String(slot.dayOfWeek ?? item.dayOfWeek ?? 0),
+    dayOfWeek: String(slot.dayOfWeek ?? item.dayOfWeek ?? 1),
     startTime: slot.startTime || item.startTime || "09:00",
     endTime: slot.endTime || item.endTime || "09:40",
   }));
@@ -83,7 +88,7 @@ function rounySessions(item) {
 
 function rounyToDraft(item) {
   const sessions = rounySessions(item);
-  const firstSession = sessions[0] || { dayOfWeek: "0", startTime: "09:00", endTime: "09:40" };
+  const firstSession = sessions[0] || { dayOfWeek: "1", startTime: "09:00", endTime: "09:40" };
   return {
     id: item.id || "",
     title: item.title || "",
@@ -99,7 +104,7 @@ function rounyToDraft(item) {
 }
 
 function weekdayLabel(dayOfWeek) {
-  return FAMILY_CALENDAR_WEEKDAY_OPTIONS.find((option) => option.dayOfWeek === Number(dayOfWeek))?.label || "월요일";
+  return ROUN_WEEKDAY_OPTIONS.find((option) => option.dayOfWeek === Number(dayOfWeek))?.label || "월요일";
 }
 
 function shortWeekdayLabel(dayOfWeek) {
@@ -126,7 +131,7 @@ function buildRounBlocks(items) {
       const start = parseTimeMinutes(slot.startTime || item.startTime);
       const end = parseTimeMinutes(slot.endTime || item.endTime);
       const dayOfWeek = Number(slot.dayOfWeek ?? item.dayOfWeek);
-      if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6 || start === null) return [];
+      if (!ROUN_WEEKDAY_INDICES.includes(dayOfWeek) || start === null) return [];
       const safeStart = Math.max(ROUN_TIMETABLE_START_HOUR * 60, Math.min(ROUN_TIMETABLE_END_HOUR * 60 - 10, start));
       const safeEnd = end && end > safeStart ? Math.min(ROUN_TIMETABLE_END_HOUR * 60, end) : safeStart + ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES;
       return [{
@@ -354,7 +359,7 @@ export default function FamilyRounyClient() {
     });
   }
 
-  function startNewRouny(dayOfWeek = new Date().getDay(), startMinutes = ROUN_TIMETABLE_START_HOUR * 60 + 60) {
+  function startNewRouny(dayOfWeek = 1, startMinutes = ROUN_TIMETABLE_START_HOUR * 60 + 60) {
     setDraft(draftForSlot(dayOfWeek, startMinutes));
     setActionBlock(null);
     setError("");
@@ -397,8 +402,9 @@ export default function FamilyRounyClient() {
     setDraft((current) => {
       if (!current) return current;
       const sessions = current.sessions?.length ? current.sessions : rounySessions(current);
-      const previous = sessions[sessions.length - 1] || { dayOfWeek: new Date().getDay(), startTime: "09:00", endTime: "09:40" };
-      const nextDay = (Number(previous.dayOfWeek) + 1) % 7;
+      const previous = sessions[sessions.length - 1] || { dayOfWeek: "1", startTime: "09:00", endTime: "09:40" };
+      const previousIndex = ROUN_WEEKDAY_INDICES.indexOf(Number(previous.dayOfWeek));
+      const nextDay = ROUN_WEEKDAY_INDICES[(previousIndex + 1) % ROUN_WEEKDAY_INDICES.length] || 1;
       return {
         ...current,
         sessions: [
@@ -550,7 +556,7 @@ export default function FamilyRounyClient() {
     const column = elements.find((element) => element instanceof HTMLElement && element.dataset.rounDayColumn);
     if (!column) return null;
     const dayOfWeek = Number(column.dataset.dayIndex);
-    if (!Number.isInteger(dayOfWeek) || dayOfWeek < 0 || dayOfWeek > 6) return null;
+    if (!ROUN_WEEKDAY_INDICES.includes(dayOfWeek)) return null;
     return { dayOfWeek, startMinutes: slotMinutesFromPoint(clientY, column.getBoundingClientRect()) };
   }
 
@@ -727,7 +733,7 @@ export default function FamilyRounyClient() {
                 style={{ "--family-roun-body-height": `${ROUN_TIMETABLE_BODY_HEIGHT}px` }}
               >
                 <span className="familyRounGridCorner" aria-hidden="true" />
-                {FAMILY_CALENDAR_DAY_LABELS.map((label) => (
+                {ROUN_WEEKDAY_LABELS.map((label) => (
                   <span className="familyRounDayHeader" key={label}>{label}</span>
                 ))}
                 <div className="familyRounTimeRail" aria-label="시간">
@@ -737,12 +743,12 @@ export default function FamilyRounyClient() {
                     </span>
                   ))}
                 </div>
-                {FAMILY_CALENDAR_DAY_LABELS.map((label, dayIndex) => (
+                {ROUN_WEEKDAY_INDICES.map((dayIndex) => (
                   <div
                     className={`familyRounDayColumn${dragState?.target?.dayOfWeek === dayIndex ? " familyRounDayColumnTarget" : ""}`}
                     data-day-index={dayIndex}
                     data-roun-day-column="true"
-                    key={label}
+                    key={dayIndex}
                     onClick={(event) => clickEmptySlot(event, dayIndex)}
                   >
                     {ROUN_TIMETABLE_VISIBLE_HOURS.map((hour) => (
@@ -848,7 +854,7 @@ export default function FamilyRounyClient() {
                       <FamilySelectPickerButton
                         ariaLabel="로운이 일정 요일 선택"
                         className="familyCalendarPickerButton familyRounyWeekdayPickerButton"
-                        options={FAMILY_CALENDAR_WEEKDAY_OPTIONS.map((option) => ({
+                        options={ROUN_WEEKDAY_OPTIONS.map((option) => ({
                           value: String(option.dayOfWeek),
                           label: option.label,
                         }))}
