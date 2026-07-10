@@ -100,6 +100,12 @@ function normalizedCalendarItemType(item) {
   return isRounyCalendarItem(item) ? "rouny" : item?.type;
 }
 
+function formatTimedCalendarItemTitle(item, itemType) {
+  const title = itemType === "rouny" && item.overridden ? `!${item.title}` : item.title;
+  if (item.allDay || !item.startTime) return title;
+  return `${item.startTime} ${title}`;
+}
+
 function eventDurationMinutes(item) {
   const start = parseTimeMinutes(item.startTime);
   const end = parseTimeMinutes(item.endTime);
@@ -383,6 +389,7 @@ function CalendarItemLink({
   const editableRounyItem = dragEnabledItem && itemType === "rouny";
   const suppressRounyNavigation = editableRounyItem && rounyChoiceItemId === item.id;
   const cancelRounyChoice = editableRounyItem && onCancelRounyChoice ? onCancelRounyChoice : undefined;
+  const displayTitle = formatTimedCalendarItemTitle(item, itemType);
   return (
     <Link
       className={`familyCalendarItem familyCalendarItem${itemType === "rouny" ? "Rouny" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${className ? ` ${className}` : ""}${dragging ? " familyCalendarEditItemDragging" : ""}`}
@@ -404,7 +411,7 @@ function CalendarItemLink({
       style={style ?? (editItem ? editItemStyle(item) : undefined)}
       title={item.allDay ? item.title : `${item.title} ${item.startTime}`}
     >
-      <span>{itemType === "rouny" && item.overridden ? `!${item.title}` : item.title}</span>
+      <span>{displayTitle}</span>
       {item.overridden ? <span className="familyCalendarRounyOverrideBadge">예외</span> : null}
     </Link>
   );

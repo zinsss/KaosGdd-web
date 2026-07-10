@@ -165,6 +165,10 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes('aria-pressed={sharedWithSong}'));
   assert.ok(eventFormSource.includes('className={`familyTaskSongToggle${sharedWithSong ? " familyTaskSongToggleActive" : ""}`}'));
   assert.ok(eventFormSource.includes('onClick={() => updateDraft("sharedWithSong", !sharedWithSong)}'));
+  assert.ok(calendarSource.includes("function formatTimedCalendarItemTitle(item, itemType)"));
+  assert.ok(calendarSource.includes('return `${item.startTime} ${title}`;'));
+  assert.ok(calendarSource.includes("const displayTitle = formatTimedCalendarItemTitle(item, itemType);"));
+  assert.ok(calendarSource.includes("<span>{displayTitle}</span>"));
   assert.ok(eventFormSource.includes("familyCalendarDateTimeRow"));
   assert.ok(eventFormSource.includes("familyCalendarFormTimeSeparator"));
   assert.ok(eventFormSource.includes("<span>제목</span>"));
@@ -749,7 +753,8 @@ test("family calendar timed items render by duration across hour boundaries", as
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryBlue\s*\{[\s\S]*?--family-calendar-event-outline:\s*#b8c8ff;/);
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryLavender\s*\{[\s\S]*?--family-calendar-event-outline:\s*#d4ccff;/);
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPurple\s*\{[\s\S]*?--family-calendar-event-outline:\s*#f0b2e8;/);
-  assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?box-shadow:\s*inset 0 0 0 1px var\(--family-calendar-event-outline, #ffc6dc\);/);
+  assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?border-color:\s*var\(--family-calendar-event-outline, #ffc6dc\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px var\(--family-calendar-event-outline, #ffc6dc\);/);
+  assert.match(polishCss, /\.familyCalendarAllDayItem\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*var\(--family-calendar-event-fill-soft, rgba\(255, 198, 220, 0\.28\)\);[\s\S]*?border-color:\s*var\(--family-calendar-event-outline, #ffc6dc\);/);
 });
 
 test("family caregiver monthly review renders fixed-width calendar and wage summary", async () => {

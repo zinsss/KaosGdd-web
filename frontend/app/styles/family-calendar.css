@@ -1377,6 +1377,15 @@ body.kaosDragging {
 
 .familyCalendarTimedItem,
 .familyCalendarEditItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  text-align: center;
+}
+
+.familyCalendarTimedItem,
+.familyCalendarEditItem {
   border-radius: 4px;
 }
 
