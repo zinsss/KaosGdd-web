@@ -1829,6 +1829,7 @@ body.kaosDragging {
 
 .familyCalendarPickerFallbackHost {
   isolation: isolate;
+  flex-wrap: wrap;
 }
 
 .familyCalendarPickerButtonControl {
@@ -1849,20 +1850,29 @@ body.kaosDragging {
 }
 
 .familyCalendarPickerFallbackPanel {
-  position: absolute;
   z-index: 40;
-  top: calc(100% + 6px);
-  left: 50%;
   display: block;
   min-width: 128px;
   max-width: min(240px, calc(100vw - 32px));
-  transform: translateX(-50%);
   border-radius: 10px;
   padding: 8px;
   background: rgba(255, 250, 253, 0.98);
   box-shadow:
     0 10px 24px rgba(151, 69, 98, 0.16),
     inset 0 0 0 1px rgba(214, 128, 157, 0.22);
+}
+
+.familyCalendarPickerFallbackPanelMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.familyCalendarPickerFallbackPanelDate {
+  flex: 1 1 100%;
+  margin-top: 8px;
+  max-width: 100%;
 }
 
 .familyCalendarPickerFallbackInput,

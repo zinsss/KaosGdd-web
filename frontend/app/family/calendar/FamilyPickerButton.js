@@ -46,7 +46,7 @@ function FamilyPickerButton({ ariaLabel, children, className, onChange, options 
         {children}
       </button>
       {open ? (
-        <span className="familyCalendarPickerFallbackPanel" id={controlId}>
+        <span className={`familyCalendarPickerFallbackPanel familyCalendarPickerFallbackPanel${type === "date" ? "Date" : "Menu"}`} id={controlId}>
           {type === "date" ? (
             <input
               aria-label={ariaLabel}

@@ -143,6 +143,7 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(pickerSource.includes('type="date"'));
   assert.ok(pickerSource.includes("familyCalendarPickerFallbackInput"));
   assert.ok(pickerSource.includes("familyCalendarPickerFallbackSelect"));
+  assert.ok(pickerSource.includes('type === "date" ? "Date" : "Menu"'));
   assert.ok(pickerSource.includes("onChange(nextValue);"));
   assert.ok(!eventFormSource.includes('<label className="familyCalendarPickerButton">\n                      달력'));
   assert.ok(!eventFormSource.includes(">\n                          시간\n"));
@@ -239,7 +240,9 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarPickerRow\s*\{[\s\S]*?grid-template-columns:\s*auto minmax\(0, 1fr\) auto;[\s\S]*?min-height:\s*34px;/);
   assert.match(calendarCss, /\.familyCalendarPickerButton\s*\{[\s\S]*?position:\s*relative;[\s\S]*?display:\s*inline-flex;[\s\S]*?overflow:\s*visible;[\s\S]*?border-radius:\s*999px;[\s\S]*?width:\s*auto !important;[\s\S]*?min-height:\s*28px;[\s\S]*?cursor:\s*pointer;/);
   assert.match(calendarCss, /\.familyCalendarPickerButtonControl\s*\{[\s\S]*?appearance:\s*none;[\s\S]*?background:\s*transparent;[\s\S]*?cursor:\s*pointer;/);
-  assert.match(calendarCss, /\.familyCalendarPickerFallbackPanel\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?z-index:\s*40;[\s\S]*?background:\s*rgba\(255,\s*250,\s*253,\s*0\.98\);/);
+  assert.match(calendarCss, /\.familyCalendarPickerFallbackPanel\s*\{[\s\S]*?z-index:\s*40;[\s\S]*?background:\s*rgba\(255,\s*250,\s*253,\s*0\.98\);/);
+  assert.match(calendarCss, /\.familyCalendarPickerFallbackPanelMenu\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?transform:\s*translateX\(-50%\);/);
+  assert.match(calendarCss, /\.familyCalendarPickerFallbackPanelDate\s*\{[\s\S]*?flex:\s*1 1 100%;[\s\S]*?max-width:\s*100%;/);
   assert.match(calendarCss, /\.familyCalendarPickerFallbackInput,[\s\S]*?\.familyCalendarPickerFallbackSelect\s*\{[\s\S]*?width:\s*100%;[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(calendarCss, /\.familyCalendarNativePickerInput\s*\{[\s\S]*?position:\s*absolute !important;[\s\S]*?inset:\s*0 !important;[\s\S]*?width:\s*100% !important;[\s\S]*?height:\s*100% !important;[\s\S]*?opacity:\s*0\.001;[\s\S]*?cursor:\s*pointer;/);
   assert.doesNotMatch(cssExactBlock(calendarCss, ".familyCalendarNativePickerInput"), /left:\s*-9999px/);
