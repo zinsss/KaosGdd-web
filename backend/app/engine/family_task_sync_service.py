@@ -12,8 +12,8 @@ FAMILY_TASK_DEFAULT_ASSIGNEE = "내 할 일"
 FAMILY_TASK_SHARED_ASSIGNEE = "쏭 할 일"
 FAMILY_TASK_DEFAULT_PRIORITY = "😄 보통"
 FAMILY_TASK_MIRROR_TAG_PREFIX = "family-task:"
-FAMILY_TASK_SONG_TAG = "family쏭"
-FAMILY_TASK_LEGACY_SONG_TAG = "family-song"
+FAMILY_TASK_SONG_TAG = "family"
+FAMILY_TASK_LEGACY_SONG_TAGS = {"family쏭", "family-song", "family:song"}
 FAMILY_TASK_PRIORITY_TAG_PREFIX = "family-priority:"
 FAMILY_TASK_PRIORITIES = {"💤 언젠가는", "😄 보통", "⭐️ 중요", "‼️ 꼭 하기"}
 
@@ -174,7 +174,7 @@ class FamilyTaskSyncService:
 
         candidates = [
             *self.items_repo.list_items_by_tag_prefix(FAMILY_TASK_SONG_TAG),
-            *self.items_repo.list_items_by_tag_prefix(FAMILY_TASK_LEGACY_SONG_TAG),
+            *(row for tag in FAMILY_TASK_LEGACY_SONG_TAGS for row in self.items_repo.list_items_by_tag_prefix(tag)),
         ]
         seen_rows = set()
         for row in candidates:
@@ -185,7 +185,7 @@ class FamilyTaskSyncService:
                 continue
             main_id = str(row["id"])
             tags = self.items_repo.list_item_tags(main_id)
-            if FAMILY_TASK_SONG_TAG not in tags and FAMILY_TASK_LEGACY_SONG_TAG not in tags:
+            if FAMILY_TASK_SONG_TAG not in tags and not FAMILY_TASK_LEGACY_SONG_TAGS.intersection(tags):
                 continue
             family_tags = [tag for tag in tags if tag.startswith(FAMILY_TASK_MIRROR_TAG_PREFIX)]
             if family_tags:
@@ -237,7 +237,7 @@ class FamilyTaskSyncService:
 
             mirror_id = mirrors[0]["id"]
             mirror_tags = self.items_repo.list_item_tags(mirror_id)
-            if FAMILY_TASK_SONG_TAG not in mirror_tags and FAMILY_TASK_LEGACY_SONG_TAG not in mirror_tags:
+            if FAMILY_TASK_SONG_TAG not in mirror_tags and not FAMILY_TASK_LEGACY_SONG_TAGS.intersection(mirror_tags):
                 next_task = dict(task)
                 next_task["assignee"] = FAMILY_TASK_DEFAULT_ASSIGNEE
                 next_task["mainItemId"] = ""

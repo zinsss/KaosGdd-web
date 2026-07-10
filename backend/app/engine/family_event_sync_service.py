@@ -11,8 +11,9 @@ from app.engine.event_service import EventService
 
 FAMILY_CALENDAR_RECORD_KEY = "calendar-items"
 FAMILY_EVENT_MIRROR_TAG_PREFIX = "family-event:"
-FAMILY_EVENT_SONG_TAG = "family쏭"
-FAMILY_EVENT_LEGACY_SONG_TAG = "family-song"
+FAMILY_EVENT_SONG_TAG = "family"
+FAMILY_EVENT_LEGACY_SONG_TAGS = {"family쏭", "family-song", "family:song"}
+FAMILY_EVENT_MEMO_MARKERS = {"#family", "#family쏭"}
 
 
 def _clean(value: Any) -> str:
@@ -46,13 +47,13 @@ def normalize_family_event(item: dict[str, Any] | None) -> dict[str, Any] | None
 def _family_event_time_memo(item: dict[str, Any]) -> str:
     memo = str(item.get("memo") or "").strip()
     if item.get("allDay"):
-        return f"{memo}\n\n#family쏭".strip()
+        return f"{memo}\n\n#family".strip()
     time_line = f"시간: {item.get('startTime')}–{item.get('endTime')}"
-    return "\n\n".join(part for part in [time_line, memo, "#family쏭"] if part).strip()
+    return "\n\n".join(part for part in [time_line, memo, "#family"] if part).strip()
 
 
 def _strip_family_marker_from_memo(memo: str | None) -> str:
-    lines = [line for line in str(memo or "").splitlines() if line.strip() != "#family쏭"]
+    lines = [line for line in str(memo or "").splitlines() if line.strip() not in FAMILY_EVENT_MEMO_MARKERS]
     return "\n".join(lines).strip()
 
 
@@ -127,7 +128,7 @@ class FamilyEventSyncService:
         changed = False
         candidates = [
             *self.items_repo.list_items_by_tag_prefix(FAMILY_EVENT_SONG_TAG),
-            *self.items_repo.list_items_by_tag_prefix(FAMILY_EVENT_LEGACY_SONG_TAG),
+            *(row for tag in FAMILY_EVENT_LEGACY_SONG_TAGS for row in self.items_repo.list_items_by_tag_prefix(tag)),
         ]
         seen_rows = set()
         for row in candidates:
@@ -138,7 +139,7 @@ class FamilyEventSyncService:
                 continue
             main_id = _clean(row.get("id"))
             tags = self.items_repo.list_item_tags(main_id)
-            if FAMILY_EVENT_SONG_TAG not in tags and FAMILY_EVENT_LEGACY_SONG_TAG not in tags:
+            if FAMILY_EVENT_SONG_TAG not in tags and not FAMILY_EVENT_LEGACY_SONG_TAGS.intersection(tags):
                 continue
             if any(tag.startswith(FAMILY_EVENT_MIRROR_TAG_PREFIX) for tag in tags):
                 continue
@@ -168,7 +169,7 @@ class FamilyEventSyncService:
                 continue
             detail = self.event_service.get_event(mirrors[0]["id"])
             mirror_tags = self.items_repo.list_item_tags(mirrors[0]["id"])
-            if FAMILY_EVENT_SONG_TAG not in mirror_tags and FAMILY_EVENT_LEGACY_SONG_TAG not in mirror_tags:
+            if FAMILY_EVENT_SONG_TAG not in mirror_tags and not FAMILY_EVENT_LEGACY_SONG_TAGS.intersection(mirror_tags):
                 next_item = {**item, "sharedWithSong": False, "mainItemId": ""}
                 self.items_repo.soft_delete_item(mirrors[0]["id"])
                 next_items.append(next_item)

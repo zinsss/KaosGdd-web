@@ -97,9 +97,9 @@ def test_shared_family_task_creates_main_task_with_real_subtasks(tmp_path) -> No
     assert detail["memo"] == "메모"
     assert detail["due_at"] == "2026-07-10T00:00:00+09:00"
     assert items_repo.list_item_tags(mirror_id) == [
+        "family",
         "family-priority:important",
         "family-task:family-1",
-        "family쏭",
     ]
     assert [
         {"content": row["content"], "is_done": bool(row["is_done"]), "position": row["position"]}
@@ -127,11 +127,11 @@ def test_family_mirror_internal_tags_are_hidden_from_main_task_output(tmp_path) 
 
     mirror_id = mirrored_task_id(items_repo, "family-1")
     assert items_repo.list_item_tags(mirror_id) == [
+        "family",
         "family-priority:important",
         "family-task:family-1",
-        "family쏭",
     ]
-    assert task_service.get_task(mirror_id)["tags"] == ["family쏭"]
+    assert task_service.get_task(mirror_id)["tags"] == ["family"]
     assert "family-task:family-1" not in task_service.export_task_raw(mirror_id)
     assert "family-priority:important" not in task_service.export_task_raw(mirror_id)
 
@@ -269,8 +269,8 @@ def test_main_family_tagged_task_is_adopted_once(tmp_path) -> None:
     assert adopted[0]["mainItemId"] == main_id
     assert adopted[0]["adoptedFromMain"] is True
     assert items_repo.list_item_tags(main_id) == [
+        "family",
         "family-task:main-task-" + main_id,
-        "family쏭",
     ]
 
 

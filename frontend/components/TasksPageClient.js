@@ -10,7 +10,7 @@ import { captureCreatedEventHasType } from "../lib/post-create-navigation";
 import { localYmd, splitActiveTasksForRoutineBox } from "../lib/tasks/routine-grouping";
 
 const TASK_MODES = ["active", "done", "removed", "archived"];
-const SONG_TASK_TAGS = new Set(["쏭", "song", "ssong", "family쏭", "family-song", "family:song"]);
+const SONG_TASK_TAGS = new Set(["쏭", "song", "ssong", "family", "family쏭", "family-song", "family:song"]);
 
 function buildTaskModeHref(mode) {
   return mode === "active" ? "/tasks" : `/tasks?mode=${mode}`;
@@ -134,7 +134,7 @@ function TaskRow({
             </Link>
 
             {isRepeating ? <span className="taskListRepeatMarker">↻</span> : null}
-            {songTask ? <span className="taskListSongMarker">#family쏭</span> : null}
+            {songTask ? <span className="taskListSongMarker">#family</span> : null}
             {dueMetatag || auxMetatag ? (
               <span className="taskListMetaTag">{dueMetatag}{auxMetatag}</span>
             ) : null}

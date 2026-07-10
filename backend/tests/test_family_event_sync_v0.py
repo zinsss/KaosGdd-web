@@ -66,13 +66,13 @@ def test_shared_family_all_day_event_creates_main_projection(tmp_path) -> None:
     assert detail["title"] == "학교 휴무"
     assert detail["start_date"] == "2026-07-10"
     assert detail["end_date"] == "2026-07-10"
-    assert detail["memo"] == "준비물 확인\n\n#family쏭"
+    assert detail["memo"] == "준비물 확인\n\n#family"
     assert synced[0]["mainItemId"] == mirror_id
     assert items_repo.list_item_tags(mirror_id) == [
+        "family",
         "family-event:family-event-1",
-        "family쏭",
     ]
-    assert event_service.get_event(mirror_id)["tags"] == ["family쏭"]
+    assert event_service.get_event(mirror_id)["tags"] == ["family"]
     assert "family-event:family-event-1" not in event_service.export_event_raw(mirror_id)
 
 
@@ -98,7 +98,7 @@ def test_shared_family_timed_event_projects_as_main_all_day_with_time_in_memo(tm
     detail = event_repo.get_event_detail(mirror_id)
     assert detail["start_date"] == "2026-07-10"
     assert detail["end_date"] == "2026-07-10"
-    assert detail["memo"] == "시간: 14:30–16:00\n\n카드 챙기기\n\n#family쏭"
+    assert detail["memo"] == "시간: 14:30–16:00\n\n카드 챙기기\n\n#family"
 
 
 def test_family_event_repeated_sync_does_not_duplicate_main_projection(tmp_path) -> None:
@@ -157,7 +157,7 @@ def test_main_family_tagged_event_is_adopted_once(tmp_path) -> None:
         title="메인 일정",
         start_date="2026-07-10",
         end_date="2026-07-10",
-        memo="시간: 14:30–16:00\n\n메모\n\n#family쏭",
+        memo="시간: 14:30–16:00\n\n메모\n\n#family",
     )
     items_repo.replace_item_tags(main_id, [FAMILY_EVENT_SONG_TAG])
 
@@ -176,8 +176,8 @@ def test_main_family_tagged_event_is_adopted_once(tmp_path) -> None:
     assert loaded[0]["mainItemId"] == main_id
     assert loaded[0]["adoptedFromMain"] is True
     assert items_repo.list_item_tags(main_id) == [
+        "family",
         f"family-event:{loaded[0]['id']}",
-        "family쏭",
     ]
     assert family_repo.get_record("family", FAMILY_CALENDAR_RECORD_KEY) == loaded
     assert event_repo.get_event_detail(main_id)["status"] == "active"
@@ -189,7 +189,7 @@ def test_removing_family_song_tag_from_adopted_main_event_disconnects_projection
         title="메인 일정",
         start_date="2026-07-10",
         end_date="2026-07-10",
-        memo="#family쏭",
+        memo="#family",
     )
     items_repo.replace_item_tags(main_id, [FAMILY_EVENT_SONG_TAG])
     adopted = sync_service.load_calendar_items()
