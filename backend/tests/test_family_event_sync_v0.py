@@ -183,6 +183,65 @@ def test_main_family_tagged_event_is_adopted_once(tmp_path) -> None:
     assert event_repo.get_event_detail(main_id)["status"] == "active"
 
 
+def test_main_family_tagged_event_reads_time_from_memo_with_spaced_dash(tmp_path) -> None:
+    sync_service, items_repo, _, event_service, _ = make_sync_service(tmp_path)
+    main_id = event_service.create_event(
+        title="메인 일정",
+        start_date="2026-07-10",
+        end_date="2026-07-10",
+        memo="시간: 09:10 - 10:40\n\n메모\n\n#family",
+    )
+    items_repo.replace_item_tags(main_id, [FAMILY_EVENT_SONG_TAG])
+
+    loaded = sync_service.load_calendar_items()
+
+    assert len(loaded) == 1
+    assert loaded[0]["allDay"] is False
+    assert loaded[0]["startTime"] == "09:10"
+    assert loaded[0]["endTime"] == "10:40"
+    assert loaded[0]["memo"] == "메모"
+
+
+def test_main_mirror_edit_reconciles_time_memo_back_to_family_event(tmp_path) -> None:
+    sync_service, items_repo, event_repo, event_service, family_repo = make_sync_service(tmp_path)
+    synced = sync_service.save_calendar_items(
+        [
+            {
+                "id": "family-event-1",
+                "title": "언어치료",
+                "date": "2026-07-10",
+                "allDay": False,
+                "startTime": "14:30",
+                "endTime": "16:00",
+                "memo": "카드 챙기기",
+                "sharedWithSong": True,
+            }
+        ]
+    )
+    mirror_id = mirrored_event_id(items_repo, "family-event-1")
+    assert event_repo.get_event_detail(mirror_id)["memo"] == "시간: 14:30–16:00\n\n카드 챙기기\n\n#family"
+
+    event_service.update_event(
+        mirror_id,
+        title="언어치료 변경",
+        start_date="2026-07-11",
+        end_date="2026-07-11",
+        memo="시간: 15:00 ~ 16:20\n\n다른 메모\n\n#family",
+    )
+
+    loaded = sync_service.load_calendar_items()
+
+    assert synced[0]["mainItemId"] == mirror_id
+    assert loaded[0]["id"] == "family-event-1"
+    assert loaded[0]["title"] == "언어치료 변경"
+    assert loaded[0]["date"] == "2026-07-11"
+    assert loaded[0]["allDay"] is False
+    assert loaded[0]["startTime"] == "15:00"
+    assert loaded[0]["endTime"] == "16:20"
+    assert loaded[0]["memo"] == "다른 메모"
+    assert family_repo.get_record("family", FAMILY_CALENDAR_RECORD_KEY) == loaded
+
+
 def test_removing_family_song_tag_from_adopted_main_event_disconnects_projection(tmp_path) -> None:
     sync_service, items_repo, event_repo, event_service, family_repo = make_sync_service(tmp_path)
     main_id = event_service.create_event(

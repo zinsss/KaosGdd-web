@@ -14,6 +14,10 @@ FAMILY_EVENT_MIRROR_TAG_PREFIX = "family-event:"
 FAMILY_EVENT_SONG_TAG = "family"
 FAMILY_EVENT_LEGACY_SONG_TAGS = {"family쏭", "family-song", "family:song"}
 FAMILY_EVENT_MEMO_MARKERS = {"#family", "#family쏭"}
+FAMILY_EVENT_TIME_MEMO_RE = re.compile(
+    r"^시간:\s*(\d{2}:\d{2})\s*[–~-]\s*(\d{2}:\d{2})\s*$",
+    flags=re.MULTILINE,
+)
 
 
 def _clean(value: Any) -> str:
@@ -59,12 +63,12 @@ def _strip_family_marker_from_memo(memo: str | None) -> str:
 
 def _event_from_main(detail: dict[str, Any]) -> dict[str, Any]:
     memo = _strip_family_marker_from_memo(detail.get("memo"))
-    time_match = re.search(r"^시간:\s*(\d{2}:\d{2})[–~-](\d{2}:\d{2})\s*$", memo, flags=re.MULTILINE)
+    time_match = FAMILY_EVENT_TIME_MEMO_RE.search(memo)
     all_day = time_match is None
     start_time = time_match.group(1) if time_match else ""
     end_time = time_match.group(2) if time_match else ""
     if time_match:
-        memo = re.sub(r"^시간:\s*\d{2}:\d{2}[–~-]\d{2}:\d{2}\s*\n?", "", memo, flags=re.MULTILINE).strip()
+        memo = FAMILY_EVENT_TIME_MEMO_RE.sub("", memo).strip()
     main_id = _clean(detail.get("id"))
     return normalize_family_event(
         {
