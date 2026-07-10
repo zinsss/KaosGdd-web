@@ -254,6 +254,7 @@ test("family Roun weekly grid editor supports add edit copy delete and drag", as
   for (const value of [
     "ROUN_TIMETABLE_START_HOUR = 8",
     "ROUN_TIMETABLE_END_HOUR = 22",
+    "ROUN_TIMETABLE_LABEL_HOURS = ROUN_TIMETABLE_HOURS.slice(1, -1)",
     "ROUN_TIMETABLE_SLOT_MINUTES = 10",
     "ROUN_TIMETABLE_DEFAULT_DURATION_MINUTES = 40",
     "snapRounMinutes",

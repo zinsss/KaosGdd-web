@@ -50,6 +50,7 @@ const ROUN_TIMETABLE_HOURS = Array.from(
   { length: ROUN_TIMETABLE_END_HOUR - ROUN_TIMETABLE_START_HOUR + 1 },
   (_, index) => ROUN_TIMETABLE_START_HOUR + index,
 );
+const ROUN_TIMETABLE_LABEL_HOURS = ROUN_TIMETABLE_HOURS.slice(1, -1);
 const ROUN_TIMETABLE_VISIBLE_HOURS = ROUN_TIMETABLE_HOURS.slice(0, -1);
 const ROUN_TIMETABLE_BODY_HEIGHT =
   (ROUN_TIMETABLE_END_HOUR - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT;
@@ -737,7 +738,7 @@ export default function FamilyRounyClient() {
                   <span className="familyRounDayHeader" key={label}>{label}</span>
                 ))}
                 <div className="familyRounTimeRail" aria-label="시간">
-                  {ROUN_TIMETABLE_HOURS.map((hour) => (
+                  {ROUN_TIMETABLE_LABEL_HOURS.map((hour) => (
                     <span className="familyRounHourLabel" key={hour} style={{ top: `${(hour - ROUN_TIMETABLE_START_HOUR) * ROUN_TIMETABLE_HOUR_HEIGHT}px` }}>
                       {String(hour).padStart(2, "0")}:00
                     </span>
