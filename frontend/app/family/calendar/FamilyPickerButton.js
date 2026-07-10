@@ -17,6 +17,7 @@ function FamilyPickerButton({ ariaLabel, children, className, onChange, options 
   const [open, setOpen] = useState(false);
   const controlId = useId();
   const fieldRef = useRef(null);
+  const nativePicker = type === "date" || type === "time";
 
   useEffect(() => {
     if (!open) return;
@@ -30,6 +31,30 @@ function FamilyPickerButton({ ariaLabel, children, className, onChange, options 
 
   function closeOnEscape(event) {
     if (event.key === "Escape") setOpen(false);
+  }
+
+  function openNativePicker() {
+    fieldRef.current?.focus?.();
+    fieldRef.current?.showPicker?.();
+  }
+
+  if (nativePicker) {
+    return (
+      <span className={`${className} familyCalendarPickerNativeHost`} onClick={openNativePicker}>
+        <span className="familyCalendarPickerButtonControl" aria-label={ariaLabel} role="button" tabIndex={-1}>
+          {children}
+        </span>
+        <input
+          aria-label={ariaLabel}
+          className="familyCalendarNativePickerInput"
+          onChange={(event) => onChange(event.target.value)}
+          ref={fieldRef}
+          step={type === "time" ? 600 : undefined}
+          type={type}
+          value={value}
+        />
+      </span>
+    );
   }
 
   return (
@@ -46,31 +71,20 @@ function FamilyPickerButton({ ariaLabel, children, className, onChange, options 
         {children}
       </button>
       {open ? (
-        <span className={`familyCalendarPickerFallbackPanel familyCalendarPickerFallbackPanel${type === "date" ? "Date" : "Menu"}`} id={controlId}>
-          {type === "date" ? (
-            <input
-              aria-label={ariaLabel}
-              className="familyCalendarPickerFallbackInput"
-              onChange={(event) => onChange(event.target.value)}
-              ref={fieldRef}
-              type="date"
-              value={value}
-            />
-          ) : (
-            <select
-              aria-label={ariaLabel}
-              className="familyCalendarPickerFallbackSelect"
-              onChange={(event) => selectValue(event.target.value)}
-              ref={fieldRef}
-              value={value}
-            >
-              {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          )}
+        <span className="familyCalendarPickerFallbackPanel familyCalendarPickerFallbackPanelMenu" id={controlId}>
+          <select
+            aria-label={ariaLabel}
+            className="familyCalendarPickerFallbackSelect"
+            onChange={(event) => selectValue(event.target.value)}
+            ref={fieldRef}
+            value={value}
+          >
+            {options.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </span>
       ) : null}
     </span>

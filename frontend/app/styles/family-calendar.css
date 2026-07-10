@@ -1827,7 +1827,8 @@ body.kaosDragging {
   outline-offset: 2px;
 }
 
-.familyCalendarPickerFallbackHost {
+.familyCalendarPickerFallbackHost,
+.familyCalendarPickerNativeHost {
   isolation: isolate;
   flex-wrap: wrap;
 }
@@ -1869,13 +1870,6 @@ body.kaosDragging {
   transform: translateX(-50%);
 }
 
-.familyCalendarPickerFallbackPanelDate {
-  flex: 1 1 100%;
-  margin-top: 8px;
-  max-width: 100%;
-}
-
-.familyCalendarPickerFallbackInput,
 .familyCalendarPickerFallbackSelect {
   width: 100%;
   max-width: 100%;
