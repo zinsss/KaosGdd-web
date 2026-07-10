@@ -1,4 +1,5 @@
 import "./globals.css";
+import { headers } from "next/headers";
 import AppShellFrame from "../components/AppShellFrame";
 import DebugTapPanel from "../components/DebugTapPanel";
 import PwaBootstrap from "../components/pwa/PwaBootstrap";
@@ -29,13 +30,16 @@ export const viewport = {
   themeColor: "#11111b",
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const requestHeaders = await headers();
+  const initialHost = requestHeaders.get("host") || "";
+
   return (
     <html lang="en">
       <body>
         <PwaBootstrap />
         <DebugTapPanel />
-        <AppShellFrame>{children}</AppShellFrame>
+        <AppShellFrame initialHost={initialHost}>{children}</AppShellFrame>
       </body>
     </html>
   );

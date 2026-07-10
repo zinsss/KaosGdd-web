@@ -17,7 +17,8 @@ test("top shell stays in flow so page controls are not covered", async () => {
   const modeNavCss = cssBlock(shellCss, ".modeTextLinks");
 
   assert.doesNotMatch(layoutSource, /appShellTopSpacer/);
-  assert.match(layoutSource, /<AppShellFrame>\{children\}<\/AppShellFrame>/);
+  assert.match(layoutSource, /headers\(\)/);
+  assert.match(layoutSource, /<AppShellFrame initialHost=\{initialHost\}>\{children\}<\/AppShellFrame>/);
   assert.match(shellFrameSource, /<header className="appShellTop">/);
   assert.match(topShellCss, /position:\s*sticky;/);
   assert.doesNotMatch(mainCss, /position:\s*fixed;/);
@@ -83,6 +84,7 @@ test("Family surface uses independent shell without main navigation", async () =
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
 
   assert.match(shellFrameSource, /String\(pathname \|\| ""\)\.startsWith\("\/family"\)/);
+  assert.match(shellFrameSource, /serverHost === "family\.kaosgdd\.net"/);
   assert.match(shellFrameSource, /familySurface \? null :/);
   assert.match(shellFrameSource, /<TopNav \/>/);
   assert.match(shellFrameSource, /<TopCaptureBar \/>/);

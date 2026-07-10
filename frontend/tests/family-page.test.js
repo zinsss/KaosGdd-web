@@ -11,7 +11,8 @@ test("family shared header uses polished tab wording and routes", async () => {
 
   assert.ok(!headerSource.includes('import Image from "next/image"'), "Family header should not render a logo image");
   assert.ok(headerSource.includes("familyLogoLink"), "text logo link should remain in the Family header");
-  assert.ok(headerSource.includes('href="/family"'), "text logo should navigate home to /family");
+  assert.ok(headerSource.includes('const homeHref = familyHost ? "/tasks" : "/family";'), "text logo should use short Family-domain home and local /family home");
+  assert.ok(headerSource.includes("href={homeHref}"), "text logo should navigate through the host-aware home link");
   assert.ok(headerSource.includes("familyTextLogo"), "Family header should use the dedicated text logo class");
   assert.ok(headerSource.includes("로운이와 나"), "Family header should render the text logo");
   assert.ok(!headerSource.includes("familyHeaderLogo"), "image logo class should not remain in the Family header");
@@ -29,6 +30,9 @@ test("family shared header uses polished tab wording and routes", async () => {
   assert.ok(headerSource.indexOf("로운이") < headerSource.indexOf("메모장"));
   for (const route of ["/family/calendar", "/family", "/family/roun", "/family/memo"]) {
     assert.ok(headerSource.includes(route), `${route} should remain available`);
+  }
+  for (const route of ["/calendar", "/tasks", "/roun", "/memo"]) {
+    assert.ok(headerSource.includes(route), `${route} should be available on the Family subdomain`);
   }
   for (const oldLabel of ["모하꼬?", "뭐라꼬?", "은제?", "모라노", "대시보드", "로니", "로우니"]) {
     assert.ok(!headerSource.includes(oldLabel), `${oldLabel} should not remain in the Family header`);

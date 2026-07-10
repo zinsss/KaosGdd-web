@@ -12,9 +12,16 @@ function isFamilySurface(pathname) {
   return String(pathname || "").startsWith("/family");
 }
 
-export default function AppShellFrame({ children }) {
+function isFamilyHost(initialHost) {
+  const serverHost = String(initialHost || "").split(":")[0].toLowerCase();
+  if (serverHost === "family.kaosgdd.net") return true;
+  if (typeof window === "undefined") return false;
+  return window.location.hostname.toLowerCase() === "family.kaosgdd.net";
+}
+
+export default function AppShellFrame({ children, initialHost = "" }) {
   const pathname = usePathname();
-  const familySurface = isFamilySurface(pathname);
+  const familySurface = isFamilySurface(pathname) || isFamilyHost(initialHost);
 
   return (
     <>
