@@ -119,11 +119,12 @@
 }
 
 .appShellMainFamily {
-  height: auto;
-  min-height: 100dvh;
+  height: 100dvh;
+  min-height: 0;
   background: #fff8fb;
-  overflow-y: visible;
+  overflow-y: auto;
   overscroll-behavior: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .appShellMain::-webkit-scrollbar {
