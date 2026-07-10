@@ -323,7 +323,7 @@ ${compactCss}`;
   assert.match(compactCss, /\.familyCalendarWeek\s*\{[\s\S]*?position:\s*relative;[\s\S]*?isolation:\s*auto;/);
   assert.ok(compactCss.includes(".familyCalendarWeekSelected {"));
   assert.ok(compactCss.includes("border: 0;"));
-  assert.match(compactCss, /\.familyCalendarWeekSelected\s*\{[\s\S]*?padding:\s*0;[\s\S]*?box-shadow:\s*none;/);
+  assert.match(compactCss, /\.familyCalendarWeekSelected\s*\{[\s\S]*?padding:\s*0 0 7px;[\s\S]*?box-shadow:\s*none;/);
   assert.ok(compactCss.includes("background: #fffafd;"));
   assert.match(compactCss, /\.familyCalendarWeekSelected::after\s*\{[\s\S]*?position:\s*absolute;[\s\S]*?inset:\s*0;[\s\S]*?z-index:\s*5;[\s\S]*?border:\s*1px solid rgba\(214, 128, 157, 0\.32\);[\s\S]*?pointer-events:\s*none;/);
   assert.match(compactCss, /\.familyCalendarWeekEditingSelected::after\s*\{[\s\S]*?border-color:\s*rgba\(180, 120, 190, 0\.42\);/);
