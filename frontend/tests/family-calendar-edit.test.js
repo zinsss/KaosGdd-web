@@ -194,8 +194,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(dataSource.includes('const allDay = item.allDay === true;'));
 
   assert.ok(calendarSource.includes("function groupAllDayItems(items)"));
-  assert.ok(calendarSource.includes("const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(selectedWeekItems), [selectedWeekItems]);"));
-  assert.ok(calendarSource.includes("selectedWeekItems.filter((item) => !item.allDay)"));
+  assert.ok(calendarSource.includes("const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);"));
+  assert.ok(calendarSource.includes("visibleSelectedWeekItems.filter((item) => !item.allDay)"));
   assert.match(calendarSource, /function formatEditHourLabel\(hour\)\s*\{\s*return `\$\{hour\}`;\s*\}/);
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarAllDayRow"'));
   assert.ok(calendarSource.includes('className="familyCalendarTimeLabel familyCalendarAllDayLabel"'));
@@ -485,7 +485,11 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarSource.includes("이 주의 로운이 시간표."));
   assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("<FamilyCalendarRounyWeekToggle"));
   assert.ok(calendarSource.indexOf("<FamilyCalendarRounyWeekToggle") < calendarSource.indexOf("familyCalendarAllDayRow"));
-  assert.ok(calendarSource.includes("rounyTimetableExpanded ? editSegments.map"));
+  assert.ok(calendarSource.includes('normalizedCalendarItemType(item) !== "rouny"'));
+  assert.ok(calendarSource.includes("const visibleAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);"));
+  assert.ok(calendarSource.includes("const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);"));
+  assert.ok(!calendarSource.includes("rounyTimetableExpanded ? editSegments.map"));
+  assert.ok(!calendarSource.includes("rounyTimetableExpanded && hasAllDayItems"));
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarCaregiverRow"'));
   assert.ok(calendarSource.includes('<span className="familyCalendarTimeLabel familyCalendarCaregiverLabel">•</span>'));
   assert.ok(calendarSource.includes('className="familyCalendarCaregiverReviewGutter"'));
@@ -522,7 +526,7 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarSource.includes("family/calendar/caregiver?month="));
   assert.ok(calendarSource.indexOf("<FamilyCalendarWeatherRows") < calendarSource.indexOf("<FamilyCaregiverHoursRow"));
   assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("familyCalendarAllDayRow"));
-  assert.ok(calendarSource.indexOf('className="familyCalendarTimeRow familyCalendarAllDayRow"') < calendarSource.indexOf("hasSelectedWeekContent ? ("));
+  assert.ok(calendarSource.indexOf('className="familyCalendarTimeRow familyCalendarAllDayRow"') < calendarSource.indexOf("selectedWeekTimedSegments.length ? ("));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverRow {"));
   assert.ok(calendarCss.includes(".familyCalendarCaregiverReviewGutter {"));
   assert.match(calendarCss, /\.familyCalendarCaregiverReviewGutter\s*\{[\s\S]*?background:\s*rgba\(255, 216, 229, 0\.44\);[\s\S]*?color:\s*rgba\(216, 72, 132, 0\.92\);[\s\S]*?box-shadow:\s*inset 0 0 0 1px rgba\(214, 128, 157, 0\.12\);/);
@@ -710,8 +714,8 @@ test("family calendar timed items render by duration across hour boundaries", as
     'className="familyCalendarTimedDayLayer"',
     'className={editable ? "familyCalendarEditItem familyCalendarEditItemInline" : "familyCalendarTimedItem"}',
     "style={itemAxisStyle(item, segment.startMinutes, segment.endMinutes)}",
-    "buildTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay))",
-    "buildEditTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay))",
+    "buildTimedWeekSegments(visibleSelectedWeekItems.filter((item) => !item.allDay))",
+    "buildEditTimedWeekSegments(visibleSelectedWeekItems.filter((item) => !item.allDay))",
   ]) {
     assert.ok(calendarSource.includes(value), `${value} should support duration-spanning timed items`);
   }

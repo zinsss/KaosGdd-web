@@ -760,7 +760,6 @@ function FamilyCalendarTimedArea({
 }
 
 function FamilyCalendarEditWeek({
-  allDayItems,
   activeCaregiverDate,
   caregiverHoursByDate,
   datedItems,
@@ -793,9 +792,14 @@ function FamilyCalendarEditWeek({
   const [pendingSlotKey, setPendingSlotKey] = useState("");
   const [dragState, setDragState] = useState(null);
   const [rounyChoiceItem, setRounyChoiceItem] = useState(null);
+  const visibleSelectedWeekItems = useMemo(
+    () => selectedWeekItems.filter((item) => rounyTimetableExpanded || normalizedCalendarItemType(item) !== "rouny"),
+    [rounyTimetableExpanded, selectedWeekItems],
+  );
+  const visibleAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);
   const editSegments = useMemo(
-    () => buildEditTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay)),
-    [selectedWeekItems],
+    () => buildEditTimedWeekSegments(visibleSelectedWeekItems.filter((item) => !item.allDay)),
+    [visibleSelectedWeekItems],
   );
   const hasWeatherRows = selectedWeekDates.some((date) => {
     const summary = weatherByDate.get(date);
@@ -1060,7 +1064,7 @@ function FamilyCalendarEditWeek({
     router.push("/family/roun");
   }
 
-  const hasAllDayItems = allDayItems.some((items) => items.length);
+  const hasAllDayItems = visibleAllDayItems.some((items) => items.length);
 
   return (
     <div
@@ -1094,10 +1098,10 @@ function FamilyCalendarEditWeek({
         expanded={rounyTimetableExpanded}
         onToggle={onToggleRounyTimetable}
       />
-      {rounyTimetableExpanded && hasAllDayItems ? (
+      {hasAllDayItems ? (
         <div className="familyCalendarTimeRow familyCalendarAllDayRow" key="all-day">
           <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
-          {allDayItems.map((items, dayIndex) => (
+          {visibleAllDayItems.map((items, dayIndex) => (
             <div
               className={`familyCalendarDaySlot familyCalendarAllDaySlot${dragState?.target?.type === "allDay" && dragState.target.dayIndex === dayIndex ? " familyCalendarAllDaySlotDropTarget" : ""}`}
               data-day-index={dayIndex}
@@ -1117,7 +1121,7 @@ function FamilyCalendarEditWeek({
           ))}
         </div>
       ) : null}
-      {rounyTimetableExpanded ? editSegments.map((segment) => (
+      {editSegments.map((segment) => (
         <FamilyCalendarTimedArea
           clearPendingLongPress={clearPendingLongPress}
           deletedRounyOverridesByDate={deletedRounyOverridesByDate}
@@ -1136,7 +1140,7 @@ function FamilyCalendarEditWeek({
           selectedWeekStart={selectedWeekStart}
           startSlotLongPress={startSlotLongPress}
         />
-      )) : null}
+      ))}
       {dragState ? (
         <span className="familyCalendarDragGhost" style={{ left: `${dragState.x}px`, top: `${dragState.y}px` }}>
           {dragState.title}
@@ -1268,10 +1272,14 @@ export default function FamilyCalendarClient() {
     () => buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, rounyOverrides),
     [selectedWeekStart, datedItems, rounState, rounyOverrides],
   );
-  const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(selectedWeekItems), [selectedWeekItems]);
+  const visibleSelectedWeekItems = useMemo(
+    () => selectedWeekItems.filter((item) => rounyTimetableExpanded || normalizedCalendarItemType(item) !== "rouny"),
+    [rounyTimetableExpanded, selectedWeekItems],
+  );
+  const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);
   const selectedWeekTimedSegments = useMemo(
-    () => buildTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay)),
-    [selectedWeekItems],
+    () => buildTimedWeekSegments(visibleSelectedWeekItems.filter((item) => !item.allDay)),
+    [visibleSelectedWeekItems],
   );
   const hasSelectedWeekWeatherRows = useMemo(
     () => selectedWeekDates.some((date) => {
@@ -1627,7 +1635,6 @@ export default function FamilyCalendarClient() {
 
               {!selected ? null : editingCalendar ? (
                 <FamilyCalendarEditWeek
-                  allDayItems={selectedWeekAllDayItems}
                   activeCaregiverDate={activeCaregiverDate}
                   caregiverHoursByDate={caregiverHoursByDate}
                   datedItems={datedItems}
@@ -1671,31 +1678,29 @@ export default function FamilyCalendarClient() {
                     expanded={rounyTimetableExpanded}
                     onToggle={() => setRounyTimetableExpanded((current) => !current)}
                   />
-                  {rounyTimetableExpanded ? (
-                    <>
-                      <div className="familyCalendarTimeRow familyCalendarAllDayRow">
-                        <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
-                        {selectedWeekAllDayItems.map((items, dayIndex) => (
-                          <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
-                            {items.map((item) => (
-                              <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${normalizedCalendarItemType(item)}-${item.id}`} />
-                            ))}
-                          </div>
-                        ))}
-                      </div>
-                      {hasSelectedWeekContent ? (
-                        selectedWeekTimedSegments.map((segment) => (
-                          <FamilyCalendarTimedArea
-                            key={`${segment.startMinutes}-${segment.endMinutes}`}
-                            segment={segment}
-                            selectedWeekStart={selectedWeekStart}
-                          />
-                        ))
-                      ) : (
-                        <p className="familyCalendarEmptyWeek">이번 주에는 아직 적힌 일정이 없어요.</p>
-                      )}
-                    </>
+                  {hasSelectedWeekAllDayItems ? (
+                    <div className="familyCalendarTimeRow familyCalendarAllDayRow">
+                      <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
+                      {selectedWeekAllDayItems.map((items, dayIndex) => (
+                        <div className="familyCalendarDaySlot familyCalendarAllDaySlot" key={`all-day-${dayIndex}`}>
+                          {items.map((item) => (
+                            <CalendarItemLink className="familyCalendarAllDayItem" item={item} key={`${normalizedCalendarItemType(item)}-${item.id}`} />
+                          ))}
+                        </div>
+                      ))}
+                    </div>
                   ) : null}
+                  {selectedWeekTimedSegments.length ? (
+                    selectedWeekTimedSegments.map((segment) => (
+                      <FamilyCalendarTimedArea
+                        key={`${segment.startMinutes}-${segment.endMinutes}`}
+                        segment={segment}
+                        selectedWeekStart={selectedWeekStart}
+                      />
+                    ))
+                  ) : hasSelectedWeekContent ? null : (
+                    <p className="familyCalendarEmptyWeek">이번 주에는 아직 적힌 일정이 없어요.</p>
+                  )}
                 </div>
               )}
             </section>
