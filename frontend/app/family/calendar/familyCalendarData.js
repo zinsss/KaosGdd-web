@@ -158,6 +158,9 @@ export function normalizeFamilyCalendarItem(item) {
     memo: String(item.memo || ""),
     color: normalizeFamilyCalendarColor(item.color),
     allDay,
+    sharedWithSong: item.sharedWithSong === true,
+    mainItemId: String(item.mainItemId || ""),
+    adoptedFromMain: item.adoptedFromMain === true,
   };
 }
 
@@ -610,7 +613,10 @@ export async function fetchFamilyCalendarItems() {
 export async function persistFamilyCalendarItems(items) {
   const normalized = items.map(normalizeFamilyCalendarItem).filter(Boolean);
   saveFamilyCalendarItems(normalized);
-  await persistFamilyRecord(FAMILY_CALENDAR_RECORD_KEY, normalized);
+  const persisted = await persistFamilyRecord(FAMILY_CALENDAR_RECORD_KEY, normalized);
+  const next = Array.isArray(persisted) ? persisted.map(normalizeFamilyCalendarItem).filter(Boolean) : normalized;
+  saveFamilyCalendarItems(next);
+  return next;
 }
 
 export function loadFamilyCaregiverHours() {

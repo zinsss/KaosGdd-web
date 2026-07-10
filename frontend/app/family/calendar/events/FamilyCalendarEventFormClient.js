@@ -56,6 +56,9 @@ function eventToDraft(item) {
     endTime: item.endTime || "09:40",
     memo: item.memo || "",
     color: item.color || "pink",
+    sharedWithSong: item.sharedWithSong === true,
+    mainItemId: item.mainItemId || "",
+    adoptedFromMain: item.adoptedFromMain === true,
   };
 }
 
@@ -109,6 +112,7 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
   const pageTitle = useMemo(() => (editing ? "일정 수정" : "일정 추가"), [editing]);
   const selectedColorClass = familyCalendarColorClassName(draft.color);
   const selectedColorLabel = FAMILY_CALENDAR_COLOR_LABELS[draft.color] || FAMILY_CALENDAR_COLOR_LABELS.pink;
+  const sharedWithSong = draft.sharedWithSong === true;
 
   function updateDraft(field, value) {
     setDraft((current) => ({ ...current, [field]: value }));
@@ -197,6 +201,14 @@ export default function FamilyCalendarEventFormClient({ eventId = "" }) {
                     onChange={(event) => toggleAllDay(event.target.checked)}
                   />
                 </label>
+                <button
+                  aria-pressed={sharedWithSong}
+                  className={`familyTaskSongToggle${sharedWithSong ? " familyTaskSongToggleActive" : ""}`}
+                  type="button"
+                  onClick={() => updateDraft("sharedWithSong", !sharedWithSong)}
+                >
+                  쏭
+                </button>
               </div>
               {colorPickerOpen ? (
                 <div className="familyTimetableColorChips" role="radiogroup" aria-label="색상">

@@ -12,7 +12,8 @@ FAMILY_TASK_DEFAULT_ASSIGNEE = "내 할 일"
 FAMILY_TASK_SHARED_ASSIGNEE = "쏭 할 일"
 FAMILY_TASK_DEFAULT_PRIORITY = "😄 보통"
 FAMILY_TASK_MIRROR_TAG_PREFIX = "family-task:"
-FAMILY_TASK_SONG_TAG = "family-song"
+FAMILY_TASK_SONG_TAG = "family쏭"
+FAMILY_TASK_LEGACY_SONG_TAG = "family-song"
 FAMILY_TASK_PRIORITY_TAG_PREFIX = "family-priority:"
 FAMILY_TASK_PRIORITIES = {"💤 언젠가는", "😄 보통", "⭐️ 중요", "‼️ 꼭 하기"}
 
@@ -75,6 +76,23 @@ def build_family_task_canonical_raw(task: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def build_family_description_from_main_task(memo: str | None, subtasks: list[dict[str, Any]]) -> str:
+    lines: list[str] = []
+    memo_text = str(memo or "").strip()
+    if memo_text:
+        lines.extend(memo_text.splitlines())
+    wrote_checklist = False
+    for subtask in subtasks:
+        content = str(subtask.get("content") or "").strip()
+        if not content:
+            continue
+        if lines and lines[-1].strip() and not wrote_checklist:
+            lines.append("")
+        lines.append(f"{'+ ' if bool(subtask.get('is_done')) else '- '}{content}")
+        wrote_checklist = True
+    return "\n".join(lines).strip()
+
+
 def normalize_family_task(task: dict[str, Any] | None) -> dict[str, Any] | None:
     if not isinstance(task, dict):
         return None
@@ -103,6 +121,8 @@ def normalize_family_task(task: dict[str, Any] | None) -> dict[str, Any] | None:
         "priority": priority,
         "due_date": str(task.get("due_date") or "").strip(),
         "done": bool(task.get("done")),
+        "mainItemId": str(task.get("mainItemId") or ""),
+        "adoptedFromMain": task.get("adoptedFromMain") is True,
     }
 
 
@@ -146,6 +166,60 @@ class FamilyTaskSyncService:
         self._remove_stale_mirrors(active_family_ids)
         return normalized_tasks
 
+    def adopt_main_family_tasks(self, tasks: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], bool]:
+        normalized_tasks = [task for task in (normalize_family_task(task) for task in tasks) if task]
+        existing_main_ids = {str(task.get("mainItemId") or "") for task in normalized_tasks if task.get("mainItemId")}
+        existing_family_ids = {str(task.get("id") or "").lower() for task in normalized_tasks}
+        changed = False
+
+        candidates = [
+            *self.items_repo.list_items_by_tag_prefix(FAMILY_TASK_SONG_TAG),
+            *self.items_repo.list_items_by_tag_prefix(FAMILY_TASK_LEGACY_SONG_TAG),
+        ]
+        seen_rows = set()
+        for row in candidates:
+            if row.get("id") in seen_rows:
+                continue
+            seen_rows.add(row.get("id"))
+            if row.get("item_type") != "task" or row.get("status") == "removed":
+                continue
+            main_id = str(row["id"])
+            tags = self.items_repo.list_item_tags(main_id)
+            if FAMILY_TASK_SONG_TAG not in tags and FAMILY_TASK_LEGACY_SONG_TAG not in tags:
+                continue
+            family_tags = [tag for tag in tags if tag.startswith(FAMILY_TASK_MIRROR_TAG_PREFIX)]
+            if family_tags:
+                continue
+            if main_id in existing_main_ids:
+                continue
+
+            family_id = f"main-task-{main_id}"
+            if family_id.lower() in existing_family_ids:
+                continue
+            detail = self.task_service.get_task(main_id)
+            if not detail:
+                continue
+            due_date = str(detail.get("due_at") or "")[:10] if detail.get("due_at") else ""
+            normalized_tasks.append(
+                {
+                    "id": family_id,
+                    "title": str(detail.get("title") or "").strip() or "할 일",
+                    "description": build_family_description_from_main_task(detail.get("memo"), list(detail.get("subtasks") or [])),
+                    "assignee": FAMILY_TASK_SHARED_ASSIGNEE,
+                    "priority": FAMILY_TASK_DEFAULT_PRIORITY,
+                    "due_date": due_date,
+                    "done": bool(detail.get("is_done")),
+                    "mainItemId": main_id,
+                    "adoptedFromMain": True,
+                }
+            )
+            self.items_repo.replace_item_tags(main_id, [*tags, self._mirror_tag(family_id)])
+            existing_main_ids.add(main_id)
+            existing_family_ids.add(family_id.lower())
+            changed = True
+
+        return normalized_tasks, changed
+
     def reconcile_from_mirrors(self, tasks: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], bool]:
         normalized_tasks = [task for task in (normalize_family_task(task) for task in tasks) if task]
         changed = False
@@ -162,6 +236,15 @@ class FamilyTaskSyncService:
                 continue
 
             mirror_id = mirrors[0]["id"]
+            mirror_tags = self.items_repo.list_item_tags(mirror_id)
+            if FAMILY_TASK_SONG_TAG not in mirror_tags and FAMILY_TASK_LEGACY_SONG_TAG not in mirror_tags:
+                next_task = dict(task)
+                next_task["assignee"] = FAMILY_TASK_DEFAULT_ASSIGNEE
+                next_task["mainItemId"] = ""
+                self.items_repo.soft_delete_item(mirror_id)
+                reconciled.append(next_task)
+                changed = True
+                continue
             detail = self.task_repo.get_task_detail(mirror_id)
             if detail is None:
                 reconciled.append(task)
@@ -177,10 +260,23 @@ class FamilyTaskSyncService:
                     next_task["completed_at"] = ""
                 changed = True
 
-            next_description = self._reconcile_description_subtask_state(
-                str(next_task.get("description") or ""),
-                self.task_repo.list_subtasks(mirror_id),
-            )
+            if str(detail.get("title") or "") and str(next_task.get("title") or "") != str(detail.get("title") or ""):
+                next_task["title"] = str(detail.get("title") or "")
+                changed = True
+            due_date = str(detail.get("due_at") or "")[:10] if detail.get("due_at") else ""
+            if str(next_task.get("due_date") or "") != due_date:
+                next_task["due_date"] = due_date
+                changed = True
+
+            mirror_subtasks = self.task_repo.list_subtasks(mirror_id)
+            extracted = extract_family_task_checklist(next_task.get("description"))
+            if str(detail.get("memo") or "").strip() != str(extracted.get("memo") or "").strip():
+                next_description = build_family_description_from_main_task(detail.get("memo"), mirror_subtasks)
+            else:
+                next_description = self._reconcile_description_subtask_state(
+                    str(next_task.get("description") or ""),
+                    mirror_subtasks,
+                )
             if next_description != next_task.get("description"):
                 next_task["description"] = next_description
                 changed = True
@@ -261,6 +357,7 @@ class FamilyTaskSyncService:
         self.task_repo.update_task_fields(item_id, due_at=due_at, memo=memo, is_done=is_done)
         self.task_repo.replace_subtasks(item_id, list(extracted["subtasks"]))
         self.items_repo.replace_item_tags(item_id, self._mirror_tags_for_task(task))
+        task["mainItemId"] = item_id
         return item_id
 
     def _remove_mirrors(self, family_task_id: str) -> None:

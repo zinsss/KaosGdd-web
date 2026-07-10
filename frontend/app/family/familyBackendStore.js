@@ -22,7 +22,9 @@ export async function persistFamilyRecord(recordKey, payload) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ payload }),
     });
-    return response.ok;
+    if (!response.ok) return false;
+    const parsed = await response.json().catch(() => null);
+    return parsed && Object.prototype.hasOwnProperty.call(parsed, "payload") ? parsed.payload : true;
   } catch {
     return false;
   }

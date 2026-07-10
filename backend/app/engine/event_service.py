@@ -148,9 +148,14 @@ class EventService:
         if not ok:
             return False, "not found"
 
+        hidden_tags = [
+            tag
+            for tag in self.items_repo.list_item_tags(item_id)
+            if str(tag or "").startswith("family-event:")
+        ]
         self.items_repo.replace_item_tags(
             item_id,
-            tags_with_event_repeat(list(parsed.get("tags") or []), parsed.get("repeat_rule")),
+            [*tags_with_event_repeat(list(parsed.get("tags") or []), parsed.get("repeat_rule")), *hidden_tags],
         )
         self.items_repo.replace_item_links(item_id, list(parsed.get("linked_item_ids") or []))
 
@@ -174,7 +179,11 @@ class EventService:
         detail = self.event_repo.get_event_detail(item_id)
         if detail is None:
             return None
-        tags = self.items_repo.list_item_tags(item_id)
+        tags = [
+            tag
+            for tag in self.items_repo.list_item_tags(item_id)
+            if not str(tag or "").startswith("family-event:")
+        ]
         reminder_value = None
         if self.reminder_repo is not None:
             reminders = self.reminder_repo.list_linked_reminders(item_id)
@@ -222,7 +231,12 @@ class EventService:
         item["created_at_display"] = format_dt_for_ui(item.get("created_at"))
         item["updated_at_display"] = format_dt_for_ui(item.get("updated_at"))
         item["removed_at_display"] = format_dt_for_ui(item.get("deleted_at"))
-        item["tags"] = list(tags) if tags is not None else self.items_repo.list_item_tags(item["id"])
+        raw_tags = list(tags) if tags is not None else self.items_repo.list_item_tags(item["id"])
+        item["tags"] = [
+            tag
+            for tag in raw_tags
+            if not str(tag or "").startswith("family-event:")
+        ]
         tags = item["tags"]
         item["repeat_rule"] = repeat_rule_from_tags(tags)
         item["is_recurring_event"] = bool(item["repeat_rule"])

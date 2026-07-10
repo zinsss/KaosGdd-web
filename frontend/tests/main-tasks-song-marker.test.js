@@ -10,7 +10,7 @@ test("main task list renders Family 쏭 marker from task tags as a purple pill",
   const taskSource = await readSource("../components/TasksPageClient.js");
   const listCss = await readSource("../app/styles/lists.css");
 
-  assert.ok(taskSource.includes('const SONG_TASK_TAGS = new Set(["쏭", "song", "ssong", "family-song", "family:song"]);'));
+  assert.ok(taskSource.includes('const SONG_TASK_TAGS = new Set(["쏭", "song", "ssong", "family쏭", "family-song", "family:song"]);'));
   assert.ok(taskSource.includes("function isSongTask(task)"));
   assert.ok(taskSource.includes("{songTask ? <span className=\"taskListSongMarker\">#family쏭</span> : null}"));
   assert.ok(taskSource.includes("const hasNonSongTags = tags.some((tag) => !isSongTaskTag(tag));"));

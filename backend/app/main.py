@@ -50,6 +50,7 @@ from app.engine.note_service import NoteService
 from app.engine.file_service import FileService
 from app.engine.fax_pdf_conversion_service import FaxPdfConversionService
 from app.engine.fax_service import FaxService
+from app.engine.family_event_sync_service import FAMILY_CALENDAR_RECORD_KEY, FamilyEventSyncService
 from app.engine.family_task_sync_service import FamilyTaskSyncService
 from app.engine.task_service import TaskService
 from app.engine.reminder_service import ReminderService
@@ -81,6 +82,12 @@ family_repo = FamilyRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
 family_task_sync_service = FamilyTaskSyncService(items_repo, task_repo, task_service)
 event_service = EventService(items_repo, event_repo, reminder_repo)
+family_event_sync_service = FamilyEventSyncService(
+    items_repo=items_repo,
+    event_repo=event_repo,
+    event_service=event_service,
+    family_repo=family_repo,
+)
 holiday_sync_service = HolidaySyncService(items_repo, event_repo)
 journal_service = JournalService(items_repo, journal_repo)
 note_service = NoteService(items_repo, note_repo)
@@ -436,10 +443,14 @@ def list_family_tasks():
     payload = family_repo.get_record("family", "tasks")
     has_record = isinstance(payload, list)
     if not has_record:
-        return {"ok": True, "tasks": [], "hasRecord": has_record}
-    reconciled_tasks, changed = family_task_sync_service.reconcile_from_mirrors(payload)
-    if changed:
+        payload = []
+    adopted_tasks, adopted_changed = family_task_sync_service.adopt_main_family_tasks(payload)
+    reconciled_tasks, changed = family_task_sync_service.reconcile_from_mirrors(adopted_tasks)
+    if adopted_changed or changed:
         family_repo.put_record("family", "tasks", reconciled_tasks)
+        has_record = True
+    if not has_record:
+        return {"ok": True, "tasks": [], "hasRecord": has_record}
     return {"ok": True, "tasks": reconciled_tasks, "hasRecord": has_record}
 
 
@@ -455,6 +466,8 @@ def save_family_tasks(payload: dict):
 
 @app.get("/family/records/{record_key}")
 def get_family_record(record_key: str):
+    if record_key == FAMILY_CALENDAR_RECORD_KEY:
+        return {"ok": True, "payload": family_event_sync_service.load_calendar_items()}
     payload = family_repo.get_record("family", record_key)
     return {"ok": True, "payload": payload}
 
@@ -462,6 +475,11 @@ def get_family_record(record_key: str):
 @app.put("/family/records/{record_key}")
 def put_family_record(record_key: str, payload: dict):
     value = payload.get("payload") if isinstance(payload, dict) else None
+    if record_key == FAMILY_CALENDAR_RECORD_KEY:
+        if not isinstance(value, list):
+            return {"ok": False, "error": "payload must be a list"}
+        normalized = family_event_sync_service.save_calendar_items(value)
+        return {"ok": True, "payload": normalized}
     family_repo.put_record("family", record_key, value)
     return {"ok": True, "payload": value}
 

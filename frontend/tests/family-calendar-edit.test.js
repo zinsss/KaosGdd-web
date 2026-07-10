@@ -162,6 +162,9 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes("familyCalendarColorPickerSwatch"));
   assert.ok(eventFormSource.includes("familyCalendarFormMetaRow"));
   assert.ok(eventFormSource.includes("familyCalendarFormAllDayInline"));
+  assert.ok(eventFormSource.includes('aria-pressed={sharedWithSong}'));
+  assert.ok(eventFormSource.includes('className={`familyTaskSongToggle${sharedWithSong ? " familyTaskSongToggleActive" : ""}`}'));
+  assert.ok(eventFormSource.includes('onClick={() => updateDraft("sharedWithSong", !sharedWithSong)}'));
   assert.ok(eventFormSource.includes("familyCalendarDateTimeRow"));
   assert.ok(eventFormSource.includes("familyCalendarFormTimeSeparator"));
   assert.ok(eventFormSource.includes("<span>제목</span>"));
@@ -211,7 +214,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarForm label\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?overflow:\s*visible;/);
   assert.match(calendarCss, /\.familyCalendarForm input,\s*\n\.familyCalendarForm select,\s*\n\.familyCalendarForm textarea,\s*\n\.familyCalendarForm button\s*\{[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(calendarCss, /\.familyCalendarForm input,\s*\n\.familyCalendarForm select,\s*\n\.familyCalendarForm textarea\s*\{[\s\S]*?width:\s*100%;[\s\S]*?inline-size:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?max-inline-size:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?min-inline-size:\s*0;/);
-  assert.match(calendarCss, /\.familyCalendarFormMetaRow\s*\{[\s\S]*?display:\s*grid;[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
+  assert.match(calendarCss, /\.familyCalendarFormMetaRow\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
+  assert.match(calendarCss, /\.familyCalendarFormMetaRow > \.familyTimetableColorField\s*\{[\s\S]*?flex:\s*1 1 160px;[\s\S]*?min-width:\s*0;/);
   assert.match(calendarCss, /\.familyCalendarFormToggle\s*\{[\s\S]*?display:\s*inline-flex !important;[\s\S]*?flex-direction:\s*row-reverse;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?gap:\s*8px;[\s\S]*?width:\s*auto !important;[\s\S]*?white-space:\s*nowrap;/);
   assert.match(calendarCss, /\.familyCalendarFormGrid\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\);[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?box-sizing:\s*border-box;/);
   assert.match(calendarCss, /\.familyCalendarFormGrid > label,\s*\n\.familyCalendarFormGrid > \.familyCalendarPickerRow,\s*\n\.familyCalendarFormGrid > \.familyCalendarFormTimeRow,\s*\n\.familyCalendarFormGrid > \.familyCalendarDateTimeSection\s*\{[\s\S]*?width:\s*auto;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;[\s\S]*?box-sizing:\s*border-box;/);

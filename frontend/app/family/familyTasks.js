@@ -136,6 +136,8 @@ export function normalizeFamilyTask(task) {
     priority,
     due_date: String(task.due_date || ""),
     done: Boolean(task.done),
+    mainItemId: String(task.mainItemId || ""),
+    adoptedFromMain: task.adoptedFromMain === true,
     sort_order: sortOrder,
     created_at: String(task.created_at || now),
     updated_at: String(task.updated_at || task.created_at || now),
@@ -207,7 +209,11 @@ export async function persistFamilyTasks(tasks) {
       body: JSON.stringify({ tasks: normalizedTasks }),
     });
     if (!response.ok) throw new Error("family task save failed");
-    saveFamilyTasks(normalizedTasks);
+    const parsed = await response.json().catch(() => null);
+    const savedTasks = Array.isArray(parsed?.tasks)
+      ? parsed.tasks.map(normalizeFamilyTask).filter(Boolean)
+      : normalizedTasks;
+    saveFamilyTasks(savedTasks);
     return true;
   } catch {
     saveFamilyTasks(normalizedTasks);

@@ -7,6 +7,7 @@ from app.db.schema_v0 import init_schema_v0
 from app.engine.family_task_sync_service import (
     FAMILY_TASK_MIRROR_TAG_PREFIX,
     FAMILY_TASK_SHARED_ASSIGNEE,
+    FAMILY_TASK_SONG_TAG,
     FamilyTaskSyncService,
     build_family_task_canonical_raw,
     extract_family_task_checklist,
@@ -97,8 +98,8 @@ def test_shared_family_task_creates_main_task_with_real_subtasks(tmp_path) -> No
     assert detail["due_at"] == "2026-07-10T00:00:00+09:00"
     assert items_repo.list_item_tags(mirror_id) == [
         "family-priority:important",
-        "family-song",
         "family-task:family-1",
+        "family쏭",
     ]
     assert [
         {"content": row["content"], "is_done": bool(row["is_done"]), "position": row["position"]}
@@ -127,10 +128,12 @@ def test_family_mirror_internal_tags_are_hidden_from_main_task_output(tmp_path) 
     mirror_id = mirrored_task_id(items_repo, "family-1")
     assert items_repo.list_item_tags(mirror_id) == [
         "family-priority:important",
-        "family-song",
         "family-task:family-1",
+        "family쏭",
     ]
-    assert task_service.get_task(mirror_id)["tags"] == ["family-song"]
+    assert task_service.get_task(mirror_id)["tags"] == ["family쏭"]
+    assert "family-task:family-1" not in task_service.export_task_raw(mirror_id)
+    assert "family-priority:important" not in task_service.export_task_raw(mirror_id)
 
 
 def test_family_task_repeated_sync_does_not_duplicate_mirror_or_subtasks(tmp_path) -> None:
@@ -238,6 +241,61 @@ def test_missing_family_task_removes_stale_mirror_without_affecting_unrelated_ta
 
     assert task_repo.get_task_detail(mirror_id)["status"] == "removed"
     assert task_repo.get_task_detail(unrelated_id)["status"] == "active"
+
+
+def test_main_family_tagged_task_is_adopted_once(tmp_path) -> None:
+    sync_service, items_repo, _, task_service = make_sync_service(tmp_path)
+    main_id = task_service.create_task("메인 할일", due_at="2026-07-10T00:00:00+09:00", memo="메모")
+    task_repo = sync_service.task_repo
+    task_repo.replace_subtasks(
+        main_id,
+        [
+            {"content": "우유", "is_done": False, "position": 0},
+            {"content": "계란", "is_done": True, "position": 1},
+        ],
+    )
+    items_repo.replace_item_tags(main_id, [FAMILY_TASK_SONG_TAG])
+
+    adopted, changed = sync_service.adopt_main_family_tasks([])
+    adopted_again, changed_again = sync_service.adopt_main_family_tasks(adopted)
+
+    assert changed is True
+    assert changed_again is False
+    assert len(adopted_again) == 1
+    assert adopted[0]["title"] == "메인 할일"
+    assert adopted[0]["description"] == "메모\n\n- 우유\n+ 계란"
+    assert adopted[0]["assignee"] == FAMILY_TASK_SHARED_ASSIGNEE
+    assert adopted[0]["due_date"] == "2026-07-10"
+    assert adopted[0]["mainItemId"] == main_id
+    assert adopted[0]["adoptedFromMain"] is True
+    assert items_repo.list_item_tags(main_id) == [
+        "family-task:main-task-" + main_id,
+        "family쏭",
+    ]
+
+
+def test_removing_family_song_tag_from_adopted_main_task_disconnects_projection(tmp_path) -> None:
+    sync_service, items_repo, task_repo, task_service = make_sync_service(tmp_path)
+    main_id = task_service.create_task("메인 할일")
+    family_id = f"main-task-{main_id}"
+    items_repo.replace_item_tags(main_id, [FAMILY_TASK_SONG_TAG, f"{FAMILY_TASK_MIRROR_TAG_PREFIX}{family_id}"])
+    family_task = {
+        "id": family_id,
+        "title": "메인 할일",
+        "description": "",
+        "assignee": FAMILY_TASK_SHARED_ASSIGNEE,
+        "mainItemId": main_id,
+        "adoptedFromMain": True,
+    }
+    items_repo.replace_item_tags(main_id, [f"{FAMILY_TASK_MIRROR_TAG_PREFIX}{family_id}"])
+
+    reconciled, changed = sync_service.reconcile_from_mirrors([family_task])
+
+    assert changed is True
+    assert reconciled[0]["id"] == family_id
+    assert reconciled[0]["assignee"] == "내 할 일"
+    assert reconciled[0]["mainItemId"] == ""
+    assert task_repo.get_task_detail(main_id)["status"] == "removed"
 
 
 def test_main_mirror_done_state_reconciles_back_to_family_task(tmp_path) -> None:

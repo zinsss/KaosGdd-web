@@ -1557,8 +1557,8 @@ body.kaosDragging {
 }
 
 .familyCalendarFormMetaRow {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 10px;
   width: 100%;
@@ -1566,8 +1566,13 @@ body.kaosDragging {
   min-width: 0;
 }
 
+.familyCalendarFormMetaRow > .familyTimetableColorField {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
 .familyCalendarFormAllDayInline {
-  justify-self: end;
+  flex: 0 0 auto;
 }
 
 .familyCalendarFormToggleControl {
