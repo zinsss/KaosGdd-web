@@ -495,8 +495,8 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarSource.includes("const [rounyTimetableExpanded, setRounyTimetableExpanded] = useState(false);"));
   assert.ok(calendarSource.includes("setRounyTimetableExpanded(false);"));
   assert.ok(calendarSource.includes("이 주의 로운이 시간표."));
-  assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("<FamilyCalendarRounyWeekToggle"));
-  assert.ok(calendarSource.indexOf("<FamilyCalendarRounyWeekToggle") < calendarSource.indexOf("familyCalendarAllDayRow"));
+  assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("familyCalendarAllDayRow"));
+  assert.ok(calendarSource.indexOf("familyCalendarAllDayRow") < calendarSource.indexOf("<FamilyCalendarRounyWeekToggle"));
   assert.ok(calendarSource.includes('normalizedCalendarItemType(item) !== "rouny"'));
   assert.ok(calendarSource.includes("const visibleAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);"));
   assert.ok(calendarSource.includes("const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);"));

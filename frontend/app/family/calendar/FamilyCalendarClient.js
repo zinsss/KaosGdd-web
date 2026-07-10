@@ -1112,10 +1112,6 @@ function FamilyCalendarEditWeek({
         onToggleDate={onToggleCaregiverDate}
         selectedWeekDates={selectedWeekDates}
       />
-      <FamilyCalendarRounyWeekToggle
-        expanded={rounyTimetableExpanded}
-        onToggle={onToggleRounyTimetable}
-      />
       {hasAllDayItems ? (
         <div className="familyCalendarTimeRow familyCalendarAllDayRow" key="all-day">
           <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
@@ -1139,6 +1135,10 @@ function FamilyCalendarEditWeek({
           ))}
         </div>
       ) : null}
+      <FamilyCalendarRounyWeekToggle
+        expanded={rounyTimetableExpanded}
+        onToggle={onToggleRounyTimetable}
+      />
       {editSegments.map((segment) => (
         <FamilyCalendarTimedArea
           clearPendingLongPress={clearPendingLongPress}
@@ -1692,10 +1692,6 @@ export default function FamilyCalendarClient() {
                     onToggleDate={setActiveCaregiverDate}
                     selectedWeekDates={selectedWeekDates}
                   />
-                  <FamilyCalendarRounyWeekToggle
-                    expanded={rounyTimetableExpanded}
-                    onToggle={() => setRounyTimetableExpanded((current) => !current)}
-                  />
                   {hasSelectedWeekAllDayItems ? (
                     <div className="familyCalendarTimeRow familyCalendarAllDayRow">
                       <span className="familyCalendarTimeLabel familyCalendarAllDayLabel">•</span>
@@ -1708,6 +1704,10 @@ export default function FamilyCalendarClient() {
                       ))}
                     </div>
                   ) : null}
+                  <FamilyCalendarRounyWeekToggle
+                    expanded={rounyTimetableExpanded}
+                    onToggle={() => setRounyTimetableExpanded((current) => !current)}
+                  />
                   {selectedWeekTimedSegments.length ? (
                     selectedWeekTimedSegments.map((segment) => (
                       <FamilyCalendarTimedArea
