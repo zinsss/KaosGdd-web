@@ -18,6 +18,7 @@ WEATHER_LOCATIONS = [
 DEFAULT_WEATHER_LOCATION_ID = "pohang"
 OPEN_METEO_URL = "https://api.open-meteo.com/v1/forecast"
 WEATHER_CACHE_TTL_MINUTES = 60
+WEATHER_SHARED_HISTORY_DAYS = 60
 WEATHER_DAYPARTS = [
     ("Morning", range(6, 12)),
     ("Afternoon", range(12, 18)),
@@ -307,7 +308,7 @@ class WeatherService:
             "stale": False,
             "fetched_at": fetched_at,
             "expires_at": expires_at,
-            "weather": payload,
+            "weather": self._payload_with_snapshot_history(location=location, payload=payload),
         }
 
     def _schedule_location_refresh(self, location: dict, background_tasks) -> None:
@@ -347,7 +348,7 @@ class WeatherService:
             "stale": stale,
             "fetched_at": cache.get("fetched_at"),
             "expires_at": cache.get("expires_at"),
-            "weather": payload,
+            "weather": self._payload_with_snapshot_history(location=location, payload=payload),
         }
 
     def _cache_row_is_fresh(self, cache: dict, now: datetime) -> bool:
@@ -479,6 +480,36 @@ class WeatherService:
             "min_c": row.get("min_c"),
             "max_c": row.get("max_c"),
             "fetched_at": row.get("fetched_at"),
+        }
+
+    def _payload_with_snapshot_history(self, *, location: dict, payload: dict) -> dict:
+        daily_items = payload.get("daily") if isinstance(payload.get("daily"), list) else []
+        dayparts = payload.get("dayparts") if isinstance(payload.get("dayparts"), dict) else {}
+        today = self._today()
+        start_date = (today - timedelta(days=WEATHER_SHARED_HISTORY_DAYS)).isoformat()
+        payload_dates = [str(item.get("date")) for item in daily_items if isinstance(item, dict) and item.get("date")]
+        end_date = max(payload_dates) if payload_dates else (today + timedelta(days=10)).isoformat()
+
+        by_date = {
+            item["date"]: item
+            for item in (
+                self._snapshot_to_public(row)
+                for row in self.weather_repo.list_snapshots(
+                    location_id=location["id"],
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+            )
+            if item.get("date")
+        }
+        for item in daily_items:
+            if isinstance(item, dict) and item.get("date"):
+                by_date[str(item["date"])] = item
+
+        return {
+            **payload,
+            "daily": [by_date[key] for key in sorted(by_date)],
+            "dayparts": dayparts,
         }
 
     def _dayparts_unavailable(self, *, location: dict, target_date: str, reason: str) -> dict:
