@@ -18,6 +18,8 @@ test("main task list renders Repeat and Family markers as inline title pills", a
   assert.ok(taskSource.includes("{isRepeating ? <span className=\"taskListRepeatMarker\">Repeat</span> : null}"));
   assert.ok(taskSource.includes("{repeatOccurrenceDate ? <span className=\"taskListRepeatDateMarker\">{repeatOccurrenceDate}</span> : null}"));
   assert.ok(taskSource.includes("{songTask ? <span className=\"taskListSongMarker\">Family</span> : null}"));
+  assert.ok(!taskSource.includes("taskListTitleRepeating"));
+  assert.ok(!listCss.includes("taskListTitleRepeating"));
   assert.ok(taskSource.indexOf("taskListRepeatMarker") < taskSource.indexOf("taskListTitleLink"));
   assert.ok(taskSource.indexOf("taskListSongMarker") < taskSource.indexOf("taskListTitleLink"));
   assert.ok(!taskSource.includes("taskRoutineBox"));

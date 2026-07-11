@@ -109,16 +109,12 @@ function TaskRow({
       ? "overdue"
       : dueTone === "today"
       ? "today"
-      : mode === "active" && isRepeating
-      ? "repeating"
       : "";
   const titleToneClass =
     titleTone === "overdue"
       ? " taskListTitleOverdue"
       : titleTone === "today"
       ? " taskListTitleToday"
-      : titleTone === "repeating"
-      ? " taskListTitleRepeating"
       : "";
 
   return (
