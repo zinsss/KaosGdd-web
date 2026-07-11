@@ -47,6 +47,23 @@ function getTaskDueTone(task) {
   return "";
 }
 
+function ymdFromTaskDateValue(value) {
+  const raw = String(value || "").trim();
+  const match = raw.match(/(\d{4})[-.](\d{1,2})[-.](\d{1,2})/);
+  if (!match) return "";
+  const [, year, month, day] = match;
+  return `${year}.${month.padStart(2, "0")}.${day.padStart(2, "0")}`;
+}
+
+function getTaskRepeatOccurrenceDate(task) {
+  return (
+    ymdFromTaskDateValue(task?.due_at_display) ||
+    ymdFromTaskDateValue(task?.due_at) ||
+    ymdFromTaskDateValue(task?.due_date) ||
+    ymdFromTaskDateValue(task?.due)
+  );
+}
+
 function doneMonthKey(task) {
   const raw = String(task.done_at || "").trim();
   if (!raw) return UI_STRINGS.DONE_UNKNOWN_MONTH;
@@ -85,6 +102,7 @@ function TaskRow({
   const hasSubtasks = Number(task.subtask_total || 0) > 0;
   const showPrefixToggle = mode === "active";
   const isRepeating = Boolean(task.repeat_rule);
+  const repeatOccurrenceDate = isRepeating ? getTaskRepeatOccurrenceDate(task) : "";
   const dueTone = mode === "active" ? getTaskDueTone(task) : "";
   const titleTone =
     dueTone === "overdue"
@@ -126,6 +144,7 @@ function TaskRow({
             {isRepeating || songTask ? (
               <span className="taskListTitlePills" aria-label="Task labels">
                 {isRepeating ? <span className="taskListRepeatMarker">Repeat</span> : null}
+                {repeatOccurrenceDate ? <span className="taskListRepeatDateMarker">{repeatOccurrenceDate}</span> : null}
                 {songTask ? <span className="taskListSongMarker">Family</span> : null}
               </span>
             ) : null}
