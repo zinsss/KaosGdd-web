@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from fastapi import BackgroundTasks
 from sqlalchemy import create_engine, text
 
 from app.db.repo.weather_repo import WeatherRepo
@@ -253,6 +254,33 @@ def test_shared_weather_expired_cache_refreshes(tmp_path) -> None:
     service.get_shared_weather()
     provider.rows = [{"date": "2026-05-31", "weather_code": 61, "min_c": 12, "max_c": 21}]
     service._now = lambda: datetime(2026, 5, 31, 14, 0, tzinfo=timezone.utc)
+
+    result = service.get_shared_weather()
+
+    assert provider.calls == 8
+    assert result["locations"][0]["stale"] is False
+    assert result["locations"][0]["weather"]["daily"][0]["condition"] == "rain"
+
+
+def test_shared_weather_expired_cache_returns_stale_before_background_refresh(tmp_path) -> None:
+    _, _, provider, service = make_weather_service(
+        tmp_path,
+        [{"date": "2026-05-31", "weather_code": 0, "min_c": 10, "max_c": 20}],
+    )
+    service.get_shared_weather()
+    provider.rows = [{"date": "2026-05-31", "weather_code": 61, "min_c": 12, "max_c": 21}]
+    service._now = lambda: datetime(2026, 5, 31, 14, 0, tzinfo=timezone.utc)
+    background_tasks = BackgroundTasks()
+
+    result = service.get_shared_weather(background_tasks=background_tasks)
+
+    assert provider.calls == 4
+    assert result["locations"][0]["stale"] is True
+    assert result["locations"][0]["weather"]["daily"][0]["condition"] == "clear"
+    assert len(background_tasks.tasks) == 4
+
+    for task in background_tasks.tasks:
+        task.func(*task.args, **task.kwargs)
 
     result = service.get_shared_weather()
 

@@ -166,14 +166,15 @@ class WeatherService:
     def __init__(self, weather_repo, provider=None) -> None:
         self.weather_repo = weather_repo
         self.provider = provider or OpenMeteoWeatherProvider()
+        self._refreshing_location_ids: set[str] = set()
 
-    def get_shared_weather(self) -> dict:
+    def get_shared_weather(self, background_tasks=None) -> dict:
         self.weather_repo.ensure_locations(WEATHER_LOCATIONS)
         locations = self.weather_repo.list_locations(enabled_only=True)
         return {
             "ok": True,
             "ttl_seconds": WEATHER_CACHE_TTL_MINUTES * 60,
-            "locations": [self._location_weather(location) for location in locations],
+            "locations": [self._location_weather(location, background_tasks=background_tasks) for location in locations],
         }
 
     def get_daily(self, *, location_id: str | None, start_date: str, end_date: str) -> dict:
@@ -263,11 +264,15 @@ class WeatherService:
             "weather_dayparts": dayparts,
         }
 
-    def _location_weather(self, location: dict) -> dict:
+    def _location_weather(self, location: dict, background_tasks=None) -> dict:
         now = self._now()
         cache = self.weather_repo.get_cache(location_id=location["id"])
         if cache and self._cache_row_is_fresh(cache, now):
             return self._cached_location_response(location=location, cache=cache, stale=False)
+
+        if cache and background_tasks is not None:
+            self._schedule_location_refresh(location, background_tasks)
+            return self._cached_location_response(location=location, cache=cache, stale=True)
 
         try:
             payload, fetched_at = self._fetch_shared_payload(location=location)
@@ -304,6 +309,27 @@ class WeatherService:
             "expires_at": expires_at,
             "weather": payload,
         }
+
+    def _schedule_location_refresh(self, location: dict, background_tasks) -> None:
+        location_id = str(location.get("id") or "")
+        if not location_id or location_id in self._refreshing_location_ids:
+            return
+        self._refreshing_location_ids.add(location_id)
+        background_tasks.add_task(self._refresh_location_cache, dict(location))
+
+    def _refresh_location_cache(self, location: dict) -> None:
+        location_id = str(location.get("id") or "")
+        try:
+            payload, fetched_at = self._fetch_shared_payload(location=location)
+            expires_at = (self._now() + timedelta(minutes=WEATHER_CACHE_TTL_MINUTES)).isoformat(timespec="seconds")
+            self.weather_repo.upsert_cache(
+                location_id=location_id,
+                payload_json=json.dumps(payload, ensure_ascii=False, sort_keys=True),
+                fetched_at=fetched_at,
+                expires_at=expires_at,
+            )
+        finally:
+            self._refreshing_location_ids.discard(location_id)
 
     def _cached_location_response(self, *, location: dict, cache: dict, stale: bool) -> dict:
         try:

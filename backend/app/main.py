@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from urllib.parse import unquote
 from zoneinfo import ZoneInfo
 
-from fastapi import FastAPI, Request
+from fastapi import BackgroundTasks, FastAPI, Request
 from fastapi.responses import FileResponse
 from sqlalchemy import text
 
@@ -636,8 +636,8 @@ def get_weather_dayparts(location: str = DEFAULT_WEATHER_LOCATION_ID, date: str 
 
 
 @app.get("/api/weather")
-def get_shared_weather():
-    return weather_service.get_shared_weather()
+def get_shared_weather(background_tasks: BackgroundTasks):
+    return weather_service.get_shared_weather(background_tasks=background_tasks)
 
 
 @app.get("/events/{event_id}")
