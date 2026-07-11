@@ -1,6 +1,7 @@
 import { UI_STRINGS } from "../../lib/strings";
 import { getApiBase } from "../../lib/api-base";
 import PushControls from "../../components/pwa/PushControls";
+import MainThemeSettings from "../../components/settings/MainThemeSettings";
 import WeatherLocationSettings from "../../components/settings/WeatherLocationSettings";
 
 async function getHealth() {
@@ -32,6 +33,10 @@ export default async function SettingsPage() {
         <div className="row">
           <span>{UI_STRINGS.APP}</span>
           <span>{health.app}</span>
+        </div>
+        <div className="row">
+          <span>Theme</span>
+          <MainThemeSettings />
         </div>
       </section>
 

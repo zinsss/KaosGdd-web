@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import AppHeaderTitle from "./AppHeaderTitle";
 import TopCaptureBar from "./TopCaptureBar";
@@ -7,6 +8,7 @@ import AppShellHeightObserver from "./AppShellHeightObserver";
 import AttentionBox from "./AttentionBox";
 import TopNav from "./TopNav";
 import { UI_STRINGS } from "../lib/strings";
+import { applyMainTheme, getStoredMainTheme, listenMainThemeChange } from "../lib/main-theme";
 
 function isFamilySurface(pathname) {
   return String(pathname || "").startsWith("/family");
@@ -22,6 +24,11 @@ function isFamilyHost(initialHost) {
 export default function AppShellFrame({ children, initialHost = "" }) {
   const pathname = usePathname();
   const familySurface = isFamilySurface(pathname) || isFamilyHost(initialHost);
+
+  useEffect(() => {
+    applyMainTheme(getStoredMainTheme(), !familySurface);
+    return listenMainThemeChange((theme) => applyMainTheme(theme, !familySurface));
+  }, [familySurface]);
 
   return (
     <>

@@ -53,6 +53,58 @@
   --app-card-gap: 8px;
 }
 
+html[data-kaos-theme="nord"] {
+  --ctp-rosewater: #e5e9f0;
+  --ctp-flamingo: #d8dee9;
+  --ctp-pink: #b48ead;
+  --ctp-mauve: #b48ead;
+  --ctp-red: #bf616a;
+  --ctp-maroon: #bf616a;
+  --ctp-peach: #d08770;
+  --ctp-yellow: #ebcb8b;
+  --ctp-green: #a3be8c;
+  --ctp-teal: #8fbcbb;
+  --ctp-sky: #88c0d0;
+  --ctp-sapphire: #81a1c1;
+  --ctp-blue: #5e81ac;
+  --ctp-lavender: #81a1c1;
+  --ctp-text: #eceff4;
+  --ctp-subtext1: #e5e9f0;
+  --ctp-subtext0: #d8dee9;
+  --ctp-overlay2: #aeb7c4;
+  --ctp-overlay1: #8f9aaa;
+  --ctp-overlay0: #6f7d91;
+  --ctp-surface2: #4c566a;
+  --ctp-surface1: #434c5e;
+  --ctp-surface0: #3b4252;
+  --ctp-base: #2e3440;
+  --ctp-mantle: #252b36;
+  --ctp-crust: #1f242e;
+
+  --ui-bg: var(--ctp-crust);
+  --ui-panel: var(--ctp-mantle);
+  --ui-panel-elevated: #303846;
+  --ui-input: var(--ctp-base);
+  --ui-border: var(--ctp-surface0);
+  --ui-border-strong: var(--ctp-surface1);
+
+  --ui-text: var(--ctp-text);
+  --ui-text-dim: var(--ctp-subtext0);
+  --ui-text-dimmer: var(--ctp-overlay1);
+
+  --ui-link: var(--ctp-sky);
+  --ui-link-hover: var(--ctp-lavender);
+
+  --ui-accent: var(--ctp-blue);
+  --ui-accent-soft: rgba(94, 129, 172, 0.14);
+
+  --ui-success: var(--ctp-green);
+  --ui-warn: var(--ctp-yellow);
+  --ui-danger: var(--ctp-red);
+
+  --ui-title: var(--ctp-yellow);
+}
+
 @font-face {
   font-family: "Sarasa Gothic Mono";
   src: url("/fonts/sarasa-mono-k-regular.woff2") format("woff2");
