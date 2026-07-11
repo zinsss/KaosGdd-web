@@ -1359,7 +1359,7 @@ export default function FamilyCalendarClient() {
     let cancelled = false;
     if (!weatherLocation || !weatherStart || !weatherEnd) return () => {};
 
-    fetchSharedWeather()
+    fetchSharedWeather({ startDate: weatherStart, endDate: weatherEnd })
       .then((sharedWeather) => {
         if (cancelled) return;
         const data = sharedWeatherDailyFromPayload(sharedWeather, { location: weatherLocation, startDate: weatherStart, endDate: weatherEnd });
@@ -1382,7 +1382,7 @@ export default function FamilyCalendarClient() {
     let cancelled = false;
     if (!weatherLocation || !selectedWeekDates.length) return () => {};
 
-    fetchSharedWeather()
+    fetchSharedWeather({ startDate: weatherStart, endDate: weatherEnd })
       .then((sharedWeather) => {
         if (cancelled) return;
         const entries = selectedWeekDates.map((date) => {
@@ -1402,7 +1402,7 @@ export default function FamilyCalendarClient() {
     return () => {
       cancelled = true;
     };
-  }, [selectedWeekDates, weatherLocation]);
+  }, [selectedWeekDates, weatherEnd, weatherLocation, weatherStart]);
 
   function changeMonth(offset) {
     setMonthDate((current) => {

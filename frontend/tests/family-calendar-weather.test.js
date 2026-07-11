@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import {
+  clearSharedWeatherRequestCache,
   fetchWeatherDaily,
   fetchWeatherDayparts,
   normalizeSharedWeatherPayload,
@@ -29,7 +30,10 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.match(weatherClient, /sharedWeatherDailyFromPayload/);
   assert.match(weatherClient, /sharedWeatherDaypartsFromPayload/);
   assert.match(weatherClient, /normalizeSharedWeatherPayload/);
-  assert.match(weatherClient, /fetch\("\/api\/weather"\)/);
+  assert.match(weatherClient, /function sharedWeatherRequestUrl\(\{ startDate = "", endDate = "" \} = \{\}\)/);
+  assert.match(weatherClient, /params\.set\("start_date", startDate\)/);
+  assert.match(weatherClient, /params\.set\("end_date", endDate\)/);
+  assert.match(weatherClient, /return query \? `\/api\/weather\?\$\{query\}` : "\/api\/weather";/);
   assert.doesNotMatch(weatherClient, /\/api\/weather\/daily/);
   assert.doesNotMatch(weatherClient, /\/api\/weather\/dayparts/);
   assert.match(weatherClient, /FAMILY_CALENDAR_DAYPART_LABELS\s*=\s*\["오전",\s*"오후",\s*"저녁",\s*"밤"\]/);
@@ -48,7 +52,9 @@ test("family calendar reuses the shared KaosGdd weather helper and settings", as
   assert.doesNotMatch(familyCalendarSource, /fetchWeatherDayparts\(\{ location: weatherLocation/);
   assert.match(familyCalendarSource, /getStoredWeatherLocation/);
   assert.match(familyCalendarSource, /listenWeatherLocationChange/);
-  assert.match(sharedWeatherRoute, /base \+ "\/api\/weather"/);
+  assert.match(sharedWeatherRoute, /url\.searchParams\.get\("start_date"\)/);
+  assert.match(sharedWeatherRoute, /url\.searchParams\.get\("end_date"\)/);
+  assert.match(sharedWeatherRoute, /base \+ "\/api\/weather" \+ suffix/);
 
   assert.match(settingsPage, /날씨 지역/);
   assert.match(settingsPage, /WeatherLocationSettings/);
@@ -83,7 +89,7 @@ test("family calendar slices selected-week weather from one shared cache payload
     ],
   };
 
-  assert.match(calendarSource, /fetchSharedWeather\(\)/);
+  assert.match(calendarSource, /fetchSharedWeather\(\{ startDate: weatherStart, endDate: weatherEnd \}\)/);
   assert.match(calendarSource, /sharedWeatherDailyFromPayload\(sharedWeather, \{ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd \}\)/);
   assert.match(calendarSource, /sharedWeatherDaypartsFromPayload\(sharedWeather, \{ location: weatherLocation, date \}\)/);
 
@@ -158,8 +164,9 @@ test("shared weather helper slices backend cache payload for Family calendar wea
   assert.deepEqual(normalized.locations.map((location) => location.id), ["yeongdeok", "pohang", "daegu", "yeongcheon"]);
 
   const originalFetch = globalThis.fetch;
+  clearSharedWeatherRequestCache();
   globalThis.fetch = async (url) => {
-    assert.equal(url, "/api/weather");
+    assert.equal(url, "/api/weather?start_date=2026-06-22&end_date=2026-06-22");
     return { json: async () => sharedPayload };
   };
 
@@ -178,6 +185,7 @@ test("shared weather helper slices backend cache payload for Family calendar wea
     ]);
   } finally {
     globalThis.fetch = originalFetch;
+    clearSharedWeatherRequestCache();
   }
 });
 

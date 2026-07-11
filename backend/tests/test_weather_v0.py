@@ -360,6 +360,38 @@ def test_shared_weather_response_includes_saved_snapshot_history(tmp_path) -> No
     assert pohang["weather"]["daily"][0]["condition"] == "cloudy"
 
 
+def test_shared_weather_response_can_be_limited_to_requested_range(tmp_path) -> None:
+    _, repo, _, service = make_weather_service(
+        tmp_path,
+        [
+            {"date": "2026-05-31", "weather_code": 0, "min_c": 10, "max_c": 20},
+            {"date": "2026-06-01", "weather_code": 61, "min_c": 15, "max_c": 21},
+        ],
+    )
+    repo.upsert_snapshots(
+        [
+            {
+                "id": "pohang:2026-05-30",
+                "location_id": "pohang",
+                "location_label": "포항",
+                "date": "2026-05-30",
+                "condition_bucket": "cloudy",
+                "weather_glyph": WEATHER_GLYPHS["cloudy"],
+                "weather_code": 3,
+                "min_c": 12,
+                "max_c": 19,
+                "source": "test",
+                "fetched_at": "2026-05-30T00:00:00+00:00",
+            }
+        ]
+    )
+
+    result = service.get_shared_weather(start_date="2026-05-31", end_date="2026-05-31")
+
+    pohang = next(location for location in result["locations"] if location["id"] == "pohang")
+    assert [item["date"] for item in pohang["weather"]["daily"]] == ["2026-05-31"]
+
+
 def test_past_saved_snapshot_can_be_read_back_without_provider_call(tmp_path) -> None:
     _, repo, provider, service = make_weather_service(tmp_path, [])
     repo.upsert_snapshots(

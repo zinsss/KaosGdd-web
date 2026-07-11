@@ -169,13 +169,21 @@ class WeatherService:
         self.provider = provider or OpenMeteoWeatherProvider()
         self._refreshing_location_ids: set[str] = set()
 
-    def get_shared_weather(self, background_tasks=None) -> dict:
+    def get_shared_weather(self, background_tasks=None, start_date: str | None = None, end_date: str | None = None) -> dict:
         self.weather_repo.ensure_locations(WEATHER_LOCATIONS)
         locations = self.weather_repo.list_locations(enabled_only=True)
         return {
             "ok": True,
             "ttl_seconds": WEATHER_CACHE_TTL_MINUTES * 60,
-            "locations": [self._location_weather(location, background_tasks=background_tasks) for location in locations],
+            "locations": [
+                self._location_weather(
+                    location,
+                    background_tasks=background_tasks,
+                    start_date=start_date,
+                    end_date=end_date,
+                )
+                for location in locations
+            ],
         }
 
     def get_daily(self, *, location_id: str | None, start_date: str, end_date: str) -> dict:
@@ -265,21 +273,21 @@ class WeatherService:
             "weather_dayparts": dayparts,
         }
 
-    def _location_weather(self, location: dict, background_tasks=None) -> dict:
+    def _location_weather(self, location: dict, background_tasks=None, start_date: str | None = None, end_date: str | None = None) -> dict:
         now = self._now()
         cache = self.weather_repo.get_cache(location_id=location["id"])
         if cache and self._cache_row_is_fresh(cache, now):
-            return self._cached_location_response(location=location, cache=cache, stale=False)
+            return self._cached_location_response(location=location, cache=cache, stale=False, start_date=start_date, end_date=end_date)
 
         if cache and background_tasks is not None:
             self._schedule_location_refresh(location, background_tasks)
-            return self._cached_location_response(location=location, cache=cache, stale=True)
+            return self._cached_location_response(location=location, cache=cache, stale=True, start_date=start_date, end_date=end_date)
 
         try:
             payload, fetched_at = self._fetch_shared_payload(location=location)
         except Exception:
             if cache:
-                return self._cached_location_response(location=location, cache=cache, stale=True)
+                return self._cached_location_response(location=location, cache=cache, stale=True, start_date=start_date, end_date=end_date)
             return {
                 "id": location["id"],
                 "label": location["label"],
@@ -308,7 +316,7 @@ class WeatherService:
             "stale": False,
             "fetched_at": fetched_at,
             "expires_at": expires_at,
-            "weather": self._payload_with_snapshot_history(location=location, payload=payload),
+            "weather": self._payload_with_snapshot_history(location=location, payload=payload, start_date=start_date, end_date=end_date),
         }
 
     def _schedule_location_refresh(self, location: dict, background_tasks) -> None:
@@ -332,7 +340,15 @@ class WeatherService:
         finally:
             self._refreshing_location_ids.discard(location_id)
 
-    def _cached_location_response(self, *, location: dict, cache: dict, stale: bool) -> dict:
+    def _cached_location_response(
+        self,
+        *,
+        location: dict,
+        cache: dict,
+        stale: bool,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict:
         try:
             payload = json.loads(cache.get("payload_json") or "{}")
         except (TypeError, ValueError):
@@ -348,7 +364,7 @@ class WeatherService:
             "stale": stale,
             "fetched_at": cache.get("fetched_at"),
             "expires_at": cache.get("expires_at"),
-            "weather": self._payload_with_snapshot_history(location=location, payload=payload),
+            "weather": self._payload_with_snapshot_history(location=location, payload=payload, start_date=start_date, end_date=end_date),
         }
 
     def _cache_row_is_fresh(self, cache: dict, now: datetime) -> bool:
@@ -482,13 +498,20 @@ class WeatherService:
             "fetched_at": row.get("fetched_at"),
         }
 
-    def _payload_with_snapshot_history(self, *, location: dict, payload: dict) -> dict:
+    def _payload_with_snapshot_history(
+        self,
+        *,
+        location: dict,
+        payload: dict,
+        start_date: str | None = None,
+        end_date: str | None = None,
+    ) -> dict:
         daily_items = payload.get("daily") if isinstance(payload.get("daily"), list) else []
         dayparts = payload.get("dayparts") if isinstance(payload.get("dayparts"), dict) else {}
         today = self._today()
-        start_date = (today - timedelta(days=WEATHER_SHARED_HISTORY_DAYS)).isoformat()
+        history_start = self._safe_date_string(start_date) or (today - timedelta(days=WEATHER_SHARED_HISTORY_DAYS)).isoformat()
         payload_dates = [str(item.get("date")) for item in daily_items if isinstance(item, dict) and item.get("date")]
-        end_date = max(payload_dates) if payload_dates else (today + timedelta(days=10)).isoformat()
+        history_end = self._safe_date_string(end_date) or (max(payload_dates) if payload_dates else (today + timedelta(days=10)).isoformat())
 
         by_date = {
             item["date"]: item
@@ -496,21 +519,33 @@ class WeatherService:
                 self._snapshot_to_public(row)
                 for row in self.weather_repo.list_snapshots(
                     location_id=location["id"],
-                    start_date=start_date,
-                    end_date=end_date,
+                    start_date=history_start,
+                    end_date=history_end,
                 )
             )
             if item.get("date")
         }
         for item in daily_items:
             if isinstance(item, dict) and item.get("date"):
-                by_date[str(item["date"])] = item
+                item_date = str(item["date"])
+                if item_date >= history_start and item_date <= history_end:
+                    by_date[item_date] = item
 
         return {
             **payload,
             "daily": [by_date[key] for key in sorted(by_date)],
-            "dayparts": dayparts,
+            "dayparts": {
+                key: value
+                for key, value in dayparts.items()
+                if str(key) >= history_start and str(key) <= history_end
+            },
         }
+
+    def _safe_date_string(self, value: str | None) -> str | None:
+        try:
+            return date.fromisoformat(str(value or "")).isoformat()
+        except (TypeError, ValueError):
+            return None
 
     def _dayparts_unavailable(self, *, location: dict, target_date: str, reason: str) -> dict:
         return {

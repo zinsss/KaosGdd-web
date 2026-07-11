@@ -636,8 +636,12 @@ def get_weather_dayparts(location: str = DEFAULT_WEATHER_LOCATION_ID, date: str 
 
 
 @app.get("/api/weather")
-def get_shared_weather(background_tasks: BackgroundTasks):
-    return weather_service.get_shared_weather(background_tasks=background_tasks)
+def get_shared_weather(background_tasks: BackgroundTasks, start_date: str = "", end_date: str = ""):
+    return weather_service.get_shared_weather(
+        background_tasks=background_tasks,
+        start_date=start_date,
+        end_date=end_date,
+    )
 
 
 @app.get("/events/{event_id}")

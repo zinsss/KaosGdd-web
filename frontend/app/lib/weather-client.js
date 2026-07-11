@@ -204,7 +204,7 @@ export function listenWeatherLocationChange(onChange) {
 }
 
 export async function fetchWeatherDaily({ location, startDate, endDate }) {
-  const data = await fetchSharedWeather();
+  const data = await fetchSharedWeather({ startDate, endDate });
   return sharedWeatherDailyFromPayload(data, { location, startDate, endDate });
 }
 
@@ -237,7 +237,7 @@ export function sharedWeatherDailyFromPayload(data, { location, startDate, endDa
 }
 
 export async function fetchWeatherDayparts({ location, date }) {
-  const data = await fetchSharedWeather();
+  const data = await fetchSharedWeather({ startDate: date, endDate: date });
   return sharedWeatherDaypartsFromPayload(data, { location, date });
 }
 
@@ -257,8 +257,35 @@ export function sharedWeatherDaypartsFromPayload(data, { location, date }) {
   };
 }
 
-export async function fetchSharedWeather() {
-  const res = await fetch("/api/weather");
+const sharedWeatherRequestCache = new Map();
+
+function sharedWeatherRequestUrl({ startDate = "", endDate = "" } = {}) {
+  const params = new URLSearchParams();
+  if (startDate) params.set("start_date", startDate);
+  if (endDate) params.set("end_date", endDate);
+  const query = params.toString();
+  return query ? `/api/weather?${query}` : "/api/weather";
+}
+
+export async function fetchSharedWeather(options = {}) {
+  const url = sharedWeatherRequestUrl(options);
+  if (sharedWeatherRequestCache.has(url)) return sharedWeatherRequestCache.get(url);
+  const request = fetch(url)
+    .then((res) => res.json())
+    .then((data) => normalizeSharedWeatherPayload(data))
+    .finally(() => {
+      globalThis.setTimeout?.(() => sharedWeatherRequestCache.delete(url), 30_000);
+    });
+  sharedWeatherRequestCache.set(url, request);
+  return request;
+}
+
+export function clearSharedWeatherRequestCache() {
+  sharedWeatherRequestCache.clear();
+}
+
+export async function fetchSharedWeatherUncached(options = {}) {
+  const res = await fetch(sharedWeatherRequestUrl(options));
   return normalizeSharedWeatherPayload(await res.json());
 }
 

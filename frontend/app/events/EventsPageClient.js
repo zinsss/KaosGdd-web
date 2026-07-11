@@ -129,7 +129,7 @@ export default function EventsPageClient() {
   function loadWeather() {
     if (!weatherStart || !weatherEnd || !weatherLocation) return;
 
-    fetchSharedWeather()
+    fetchSharedWeather({ startDate: weatherStart, endDate: weatherEnd })
       .then((sharedWeather) => {
         const data = sharedWeatherDailyFromPayload(sharedWeather, { location: weatherLocation, startDate: weatherStart, endDate: weatherEnd });
         if (!data?.ok) {
@@ -155,7 +155,7 @@ export default function EventsPageClient() {
   function loadWeatherDayparts() {
     if (!selectedDate || !weatherLocation) return;
 
-    fetchSharedWeather()
+    fetchSharedWeather({ startDate: weatherStart, endDate: weatherEnd })
       .then((sharedWeather) => {
         const data = sharedWeatherDaypartsFromPayload(sharedWeather, { location: weatherLocation, date: selectedDate });
         const available = Boolean(data?.weather_dayparts_available);

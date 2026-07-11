@@ -66,10 +66,10 @@ test("selected-day weather dayparts render available and unavailable states", as
   const source = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
   const weatherClient = await readFile(new URL("../app/lib/weather-client.js", import.meta.url), "utf8");
 
-  assert.match(source, /fetchSharedWeather\(\)/);
+  assert.match(source, /fetchSharedWeather\(\{ startDate: weatherStart, endDate: weatherEnd \}\)/);
   assert.match(source, /sharedWeatherDaypartsFromPayload\(sharedWeather, \{ location: weatherLocation, date: selectedDate \}\)/);
   assert.match(weatherClient, /fetchSharedWeather/);
-  assert.match(weatherClient, /fetch\("\/api\/weather"\)/);
+  assert.match(weatherClient, /function sharedWeatherRequestUrl\(\{ startDate = "", endDate = "" \} = \{\}\)/);
   assert.doesNotMatch(source, /fetchWeatherDayparts\(\{ location: weatherLocation, date: selectedDate \}\)/);
   assert.doesNotMatch(weatherClient, /\/api\/weather\/dayparts\?location=/);
   assert.match(source, /weatherDaypartsAvailable && weatherDayparts\.length > 0/);
@@ -82,10 +82,10 @@ test("daily month-cell weather remains in calendar cell rendering", async () => 
   const source = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
   const weatherClient = await readFile(new URL("../app/lib/weather-client.js", import.meta.url), "utf8");
 
-  assert.match(source, /fetchSharedWeather\(\)/);
+  assert.match(source, /fetchSharedWeather\(\{ startDate: weatherStart, endDate: weatherEnd \}\)/);
   assert.match(source, /sharedWeatherDailyFromPayload\(sharedWeather, \{ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd \}\)/);
   assert.match(weatherClient, /fetchSharedWeather/);
-  assert.match(weatherClient, /fetch\("\/api\/weather"\)/);
+  assert.match(weatherClient, /function sharedWeatherRequestUrl\(\{ startDate = "", endDate = "" \} = \{\}\)/);
   assert.doesNotMatch(source, /fetchWeatherDaily\(\{ location: weatherLocation, startDate: weatherStart, endDate: weatherEnd \}\)/);
   assert.doesNotMatch(weatherClient, /\/api\/weather\/daily\?location=/);
   assert.match(source, /calendarDayWeatherGlyph/);
