@@ -7,7 +7,6 @@ import SubtaskToggleButton from "./SubtaskToggleButton";
 import TaskRestoreButton from "./TaskRestoreButton";
 import { UI_STRINGS } from "../lib/strings";
 import { captureCreatedEventHasType } from "../lib/post-create-navigation";
-import { localYmd, splitActiveTasksForRoutineBox } from "../lib/tasks/routine-grouping";
 
 const TASK_MODES = ["active", "done", "removed", "archived"];
 const SONG_TASK_TAGS = new Set(["쏭", "song", "ssong", "family", "family쏭", "family-song", "family:song"]);
@@ -124,6 +123,13 @@ function TaskRow({
               </span>
             )}
 
+            {isRepeating || songTask ? (
+              <span className="taskListTitlePills" aria-label="Task labels">
+                {isRepeating ? <span className="taskListRepeatMarker">Repeat</span> : null}
+                {songTask ? <span className="taskListSongMarker">Family</span> : null}
+              </span>
+            ) : null}
+
             <Link
               className={
                 "taskLink taskListTitleLink" + titleToneClass + (task.is_done ? " taskLinkDone taskLinkDoneList" : "")
@@ -132,9 +138,6 @@ function TaskRow({
             >
               {task.title}
             </Link>
-
-            {isRepeating ? <span className="taskListRepeatMarker">↻</span> : null}
-            {songTask ? <span className="taskListSongMarker">#family</span> : null}
             {dueMetatag || auxMetatag ? (
               <span className="taskListMetaTag">{dueMetatag}{auxMetatag}</span>
             ) : null}
@@ -419,11 +422,6 @@ export default function TasksPageClient({ initialMode }) {
     [items, mode],
   );
 
-  const { routineTasks, normalTasks } = useMemo(
-    () => splitActiveTasksForRoutineBox(items, localYmd(), mode),
-    [items, mode],
-  );
-
   function renderTaskRows(tasks) {
     return tasks.map((task) => (
       <TaskRow
@@ -483,21 +481,7 @@ export default function TasksPageClient({ initialMode }) {
             ))}
           </div>
         ) : mode === "active" ? (
-          <div className="activeTaskSections">
-            {routineTasks.length > 0 ? (
-              <section className="taskRoutineBox" aria-label={UI_STRINGS.TASK_ROUTINES_TITLE}>
-                <div className="taskListSubsectionTitle taskListSubsectionTitleRoutine">{UI_STRINGS.TASK_ROUTINES_TITLE}</div>
-                <ul className="taskList">{renderTaskRows(routineTasks)}</ul>
-              </section>
-            ) : null}
-
-            {normalTasks.length > 0 ? (
-              <section className="taskNormalSection" aria-label={UI_STRINGS.TASK_ONE_OFF_TITLE}>
-                <div className="taskListSubsectionTitle taskListSubsectionTitleTask">{UI_STRINGS.TASK_ONE_OFF_TITLE}</div>
-                <ul className="taskList">{renderTaskRows(normalTasks)}</ul>
-              </section>
-            ) : null}
-          </div>
+          <ul className="taskList">{renderTaskRows(items)}</ul>
         ) : (
           <ul className="taskList">{renderTaskRows(items)}</ul>
         )}
