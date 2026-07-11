@@ -14,7 +14,7 @@ FAMILY_TASK_SHARED_ASSIGNEE = "쏭 할 일"
 FAMILY_TASK_DEFAULT_PRIORITY = "😄 보통"
 FAMILY_TASK_MIRROR_TAG_PREFIX = "family-task:"
 FAMILY_TASK_SONG_TAG = "family"
-FAMILY_TASK_LEGACY_SONG_TAGS = {"family쏭", "family-song", "family:song"}
+FAMILY_TASK_LEGACY_SONG_TAGS = {"family쏭", "family-song", "family:song", "쏭", "song", "ssong"}
 FAMILY_TASK_PRIORITY_TAG_PREFIX = "family-priority:"
 FAMILY_TASK_PRIORITIES = {"💤 언젠가는", "😄 보통", "⭐️ 중요", "‼️ 꼭 하기"}
 
