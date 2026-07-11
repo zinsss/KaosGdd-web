@@ -126,14 +126,17 @@ class OpenMeteoWeatherProvider:
         return rows
 
     def fetch_hourly(self, location: dict, target_date: str) -> list[dict]:
+        return self.fetch_hourly_range(location, target_date, target_date)
+
+    def fetch_hourly_range(self, location: dict, start_date: str, end_date: str) -> list[dict]:
         query = urlencode(
             {
                 "latitude": location["latitude"],
                 "longitude": location["longitude"],
                 "hourly": "weather_code,temperature_2m",
                 "timezone": SETTINGS.APP_TIMEZONE,
-                "start_date": target_date,
-                "end_date": target_date,
+                "start_date": start_date,
+                "end_date": end_date,
             }
         )
         with urlopen(f"{OPEN_METEO_URL}?{query}", timeout=10) as response:
@@ -336,6 +339,7 @@ class WeatherService:
         daily_items = []
         snapshots = []
         dayparts_by_date = {}
+        fetch_hourly_range = getattr(self.provider, "fetch_hourly_range", None)
         fetch_hourly = getattr(self.provider, "fetch_hourly", None)
 
         for row in self.provider.fetch_daily(location):
@@ -365,11 +369,21 @@ class WeatherService:
                     "fetched_at": fetched_at,
                 }
             )
-            if callable(fetch_hourly):
+
+        if daily_items:
+            daily_dates = [item["date"] for item in daily_items]
+            if callable(fetch_hourly_range):
                 try:
-                    dayparts_by_date[item["date"]] = self._hourly_rows_to_dayparts(fetch_hourly(location, item["date"]))
+                    hourly_rows = fetch_hourly_range(location, daily_dates[0], daily_dates[-1])
+                    dayparts_by_date = self._hourly_rows_to_dayparts_by_date(hourly_rows, daily_dates)
                 except Exception:
-                    dayparts_by_date[item["date"]] = []
+                    dayparts_by_date = {target_date: [] for target_date in daily_dates}
+            elif callable(fetch_hourly):
+                for target_date in daily_dates:
+                    try:
+                        dayparts_by_date[target_date] = self._hourly_rows_to_dayparts(fetch_hourly(location, target_date))
+                    except Exception:
+                        dayparts_by_date[target_date] = []
 
         self.weather_repo.upsert_snapshots(snapshots)
         return {
@@ -486,3 +500,14 @@ class WeatherService:
                 }
             )
         return dayparts
+
+    def _hourly_rows_to_dayparts_by_date(self, hourly_rows: list[dict], target_dates: list[str]) -> dict[str, list[dict]]:
+        grouped: dict[str, list[dict]] = {target_date: [] for target_date in target_dates}
+        wanted_dates = set(grouped)
+        for row in hourly_rows:
+            timestamp = str(row.get("time") or "")
+            row_date = timestamp[:10]
+            if row_date not in wanted_dates:
+                continue
+            grouped[row_date].append(row)
+        return {target_date: self._hourly_rows_to_dayparts(grouped[target_date]) for target_date in target_dates}

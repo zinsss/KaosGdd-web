@@ -45,6 +45,17 @@ class FakeHourlyWeatherProvider(FakeWeatherProvider):
         return self.hourly_rows
 
 
+class FakeHourlyRangeWeatherProvider(FakeWeatherProvider):
+    def __init__(self, rows: list[dict], hourly_rows: list[dict]) -> None:
+        super().__init__(rows)
+        self.hourly_rows = hourly_rows
+        self.hourly_range_calls = []
+
+    def fetch_hourly_range(self, location: dict, start_date: str, end_date: str) -> list[dict]:
+        self.hourly_range_calls.append((location["id"], start_date, end_date))
+        return self.hourly_rows
+
+
 def make_weather_service(tmp_path, rows: list[dict]):
     engine = create_engine(f"sqlite:///{tmp_path / 'weather.db'}")
     init_schema_v0(engine)
@@ -188,6 +199,38 @@ def test_shared_weather_cache_miss_fetches_and_stores_enabled_locations(tmp_path
     with engine.begin() as conn:
         count = conn.execute(text("SELECT COUNT(*) FROM weather_cache")).scalar_one()
     assert count == 4
+
+
+def test_shared_weather_fetches_hourly_dayparts_as_one_range_per_location(tmp_path) -> None:
+    engine = create_engine(f"sqlite:///{tmp_path / 'weather.db'}")
+    init_schema_v0(engine)
+    repo = WeatherRepo(engine)
+    provider = FakeHourlyRangeWeatherProvider(
+        [
+            {"date": "2026-05-31", "weather_code": 0, "min_c": 10, "max_c": 20},
+            {"date": "2026-06-01", "weather_code": 61, "min_c": 11, "max_c": 21},
+        ],
+        [
+            {"time": "2026-05-31T06:00", "weather_code": 0, "temp_c": 10},
+            {"time": "2026-05-31T12:00", "weather_code": 0, "temp_c": 20},
+            {"time": "2026-06-01T06:00", "weather_code": 61, "temp_c": 11},
+            {"time": "2026-06-01T12:00", "weather_code": 61, "temp_c": 21},
+        ],
+    )
+    service = WeatherService(repo, provider=provider)
+    service._now = lambda: datetime(2026, 5, 31, 12, 0, tzinfo=timezone.utc)
+
+    result = service.get_shared_weather()
+
+    assert provider.calls == 4
+    assert provider.hourly_range_calls == [
+        ("yeongdeok", "2026-05-31", "2026-06-01"),
+        ("pohang", "2026-05-31", "2026-06-01"),
+        ("daegu", "2026-05-31", "2026-06-01"),
+        ("yeongcheon", "2026-05-31", "2026-06-01"),
+    ]
+    assert result["locations"][0]["weather"]["dayparts"]["2026-05-31"][0]["temp_min_c"] == 10
+    assert result["locations"][0]["weather"]["dayparts"]["2026-06-01"][0]["weather_code"] == 61
 
 
 def test_shared_weather_fresh_cache_skips_fetch(tmp_path) -> None:
