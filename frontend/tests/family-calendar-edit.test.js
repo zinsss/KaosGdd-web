@@ -204,8 +204,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(dataSource.includes('const allDay = item.allDay === true;'));
 
   assert.ok(calendarSource.includes("function groupAllDayItems(items)"));
-  assert.ok(calendarSource.includes("const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);"));
-  assert.ok(calendarSource.includes("visibleSelectedWeekItems.filter((item) => !item.allDay)"));
+  assert.ok(calendarSource.includes("const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(selectedWeekItems), [selectedWeekItems]);"));
+  assert.ok(calendarSource.includes("rounyTimetableExpanded ? buildTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay)) : []"));
   assert.match(calendarSource, /function formatEditHourLabel\(hour\)\s*\{\s*return `\$\{hour\}`;\s*\}/);
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarAllDayRow"'));
   assert.ok(calendarSource.includes('className="familyCalendarTimeLabel familyCalendarAllDayLabel"'));
@@ -495,13 +495,13 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarRounyWeekToggleRow"'));
   assert.ok(calendarSource.includes("const [rounyTimetableExpanded, setRounyTimetableExpanded] = useState(false);"));
   assert.ok(calendarSource.includes("setRounyTimetableExpanded(false);"));
-  assert.ok(calendarSource.includes("이 주의 로운이 시간표."));
+  assert.ok(calendarSource.includes("이 주의 스케줄."));
   assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("familyCalendarAllDayRow"));
   assert.ok(calendarSource.indexOf("familyCalendarAllDayRow") < calendarSource.indexOf("<FamilyCalendarRounyWeekToggle"));
-  assert.ok(calendarSource.includes('normalizedCalendarItemType(item) !== "rouny"'));
-  assert.ok(calendarSource.includes("const visibleAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);"));
-  assert.ok(calendarSource.includes("const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);"));
-  assert.ok(!calendarSource.includes("rounyTimetableExpanded ? editSegments.map"));
+  assert.ok(calendarSource.includes("const visibleAllDayItems = useMemo(() => groupAllDayItems(selectedWeekItems), [selectedWeekItems]);"));
+  assert.ok(calendarSource.includes("const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(selectedWeekItems), [selectedWeekItems]);"));
+  assert.ok(calendarSource.includes("rounyTimetableExpanded ? buildEditTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay)) : []"));
+  assert.ok(calendarSource.includes("rounyTimetableExpanded ? buildTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay)) : []"));
   assert.ok(!calendarSource.includes("rounyTimetableExpanded && hasAllDayItems"));
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarCaregiverRow"'));
   assert.ok(calendarSource.includes('<span className="familyCalendarTimeLabel familyCalendarCaregiverLabel">•</span>'));
@@ -727,8 +727,8 @@ test("family calendar timed items render by duration across hour boundaries", as
     'className="familyCalendarTimedDayLayer"',
     'className={editable ? "familyCalendarEditItem familyCalendarEditItemInline" : "familyCalendarTimedItem"}',
     "style={itemAxisStyle(item, segment.startMinutes, segment.endMinutes)}",
-    "buildTimedWeekSegments(visibleSelectedWeekItems.filter((item) => !item.allDay))",
-    "buildEditTimedWeekSegments(visibleSelectedWeekItems.filter((item) => !item.allDay))",
+    "buildTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay))",
+    "buildEditTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay))",
   ]) {
     assert.ok(calendarSource.includes(value), `${value} should support duration-spanning timed items`);
   }

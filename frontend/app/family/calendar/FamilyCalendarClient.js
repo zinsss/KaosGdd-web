@@ -635,7 +635,7 @@ function FamilyCalendarRounyWeekToggle({ expanded, onToggle }) {
       aria-expanded={expanded}
     >
       <span className="familyCalendarTimeLabel familyCalendarRounyWeekToggleRail">•</span>
-      <span className="familyCalendarRounyWeekToggleText">이 주의 로운이 시간표.</span>
+      <span className="familyCalendarRounyWeekToggleText">이 주의 스케줄.</span>
     </button>
   );
 }
@@ -799,14 +799,10 @@ function FamilyCalendarEditWeek({
   const [pendingSlotKey, setPendingSlotKey] = useState("");
   const [dragState, setDragState] = useState(null);
   const [rounyChoiceItem, setRounyChoiceItem] = useState(null);
-  const visibleSelectedWeekItems = useMemo(
-    () => selectedWeekItems.filter((item) => rounyTimetableExpanded || normalizedCalendarItemType(item) !== "rouny"),
-    [rounyTimetableExpanded, selectedWeekItems],
-  );
-  const visibleAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);
+  const visibleAllDayItems = useMemo(() => groupAllDayItems(selectedWeekItems), [selectedWeekItems]);
   const editSegments = useMemo(
-    () => buildEditTimedWeekSegments(visibleSelectedWeekItems.filter((item) => !item.allDay)),
-    [visibleSelectedWeekItems],
+    () => (rounyTimetableExpanded ? buildEditTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay)) : []),
+    [rounyTimetableExpanded, selectedWeekItems],
   );
   const hasWeatherRows = selectedWeekDates.some((date) => {
     const summary = weatherByDate.get(date);
@@ -1290,14 +1286,10 @@ export default function FamilyCalendarClient() {
     () => buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, rounyOverrides),
     [selectedWeekStart, datedItems, rounState, rounyOverrides],
   );
-  const visibleSelectedWeekItems = useMemo(
-    () => selectedWeekItems.filter((item) => rounyTimetableExpanded || normalizedCalendarItemType(item) !== "rouny"),
-    [rounyTimetableExpanded, selectedWeekItems],
-  );
-  const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(visibleSelectedWeekItems), [visibleSelectedWeekItems]);
+  const selectedWeekAllDayItems = useMemo(() => groupAllDayItems(selectedWeekItems), [selectedWeekItems]);
   const selectedWeekTimedSegments = useMemo(
-    () => buildTimedWeekSegments(visibleSelectedWeekItems.filter((item) => !item.allDay)),
-    [visibleSelectedWeekItems],
+    () => (rounyTimetableExpanded ? buildTimedWeekSegments(selectedWeekItems.filter((item) => !item.allDay)) : []),
+    [rounyTimetableExpanded, selectedWeekItems],
   );
   const hasSelectedWeekWeatherRows = useMemo(
     () => selectedWeekDates.some((date) => {
@@ -1549,7 +1541,8 @@ export default function FamilyCalendarClient() {
   }
 
   const hasSelectedWeekAllDayItems = selectedWeekAllDayItems.some((items) => items.length);
-  const hasSelectedWeekContent = hasSelectedWeekAllDayItems || selectedWeekTimedSegments.length;
+  const hasSelectedWeekTimedItems = selectedWeekItems.some((item) => !item.allDay);
+  const hasSelectedWeekContent = hasSelectedWeekAllDayItems || hasSelectedWeekTimedItems;
 
   return (
     <main className="familyCalendar" aria-label="달력">
