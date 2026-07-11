@@ -158,6 +158,34 @@ function timedItemRange(item) {
   return { start, end };
 }
 
+function timedRangesOverlap(firstItem, secondItem) {
+  const firstRange = timedItemRange(firstItem);
+  const secondRange = timedItemRange(secondItem);
+  return Boolean(firstRange && secondRange && firstRange.end > secondRange.start && firstRange.start < secondRange.end);
+}
+
+function rounyItemOverlapsDatedItem(rounyItem, datedItem) {
+  if (!isRounyCalendarItem(rounyItem) || normalizedCalendarItemType(datedItem) !== "dated") return false;
+  if (rounyItem.date !== datedItem.date) return false;
+  if (datedItem.allDay) return true;
+  return timedRangesOverlap(rounyItem, datedItem);
+}
+
+function annotateRounyEventOverlaps(items) {
+  const datedItems = items.filter((item) => normalizedCalendarItemType(item) === "dated");
+  if (!datedItems.length) return items;
+  return items.map((item) => {
+    if (!isRounyCalendarItem(item)) return item;
+    const overlappingEvent = datedItems.find((datedItem) => rounyItemOverlapsDatedItem(item, datedItem));
+    if (!overlappingEvent) return item;
+    return {
+      ...item,
+      rounyEventOverlap: true,
+      rounyEventOverlapColor: overlappingEvent.color || "pink",
+    };
+  });
+}
+
 function itemAxisStyle(item, visibleStartMinutes, visibleEndMinutes) {
   const range = timedItemRange(item);
   if (!range) return { top: "0px", height: "18px" };
@@ -294,7 +322,7 @@ function buildSelectedWeekItems(selectedWeekStart, datedItems, rounState, rounyO
   });
   const weekRounyItems = applyRounyOverrides(weekGeneratedRounyItems, rounyOverrides, weekDates);
 
-  return [...weekRounyItems, ...weekDatedItems]
+  return annotateRounyEventOverlaps([...weekRounyItems, ...weekDatedItems])
     .filter((item) => item.dayIndex >= 0 && item.dayIndex <= 6 && (item.allDay || item.startTime))
     .sort((a, b) => {
       if (a.allDay !== b.allDay) return a.allDay ? -1 : 1;
@@ -390,9 +418,17 @@ function CalendarItemLink({
   const suppressRounyNavigation = editableRounyItem && rounyChoiceItemId === item.id;
   const cancelRounyChoice = editableRounyItem && onCancelRounyChoice ? onCancelRounyChoice : undefined;
   const displayTitle = formatTimedCalendarItemTitle(item, itemType);
+  const overlapClass = itemType === "rouny" && item.rounyEventOverlap ? " familyCalendarItemRounyEventOverlap" : "";
+  const overlapStyle = itemType === "rouny" && item.rounyEventOverlapColor
+    ? { "--family-calendar-event-overlap-color": `var(--family-calendar-preset-${item.rounyEventOverlapColor}, #ffc6dc)` }
+    : {};
+  const linkStyle = {
+    ...(style || (editItem ? editItemStyle(item) : {})),
+    ...overlapStyle,
+  };
   return (
     <Link
-      className={`familyCalendarItem familyCalendarItem${itemType === "rouny" ? "Rouny" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${className ? ` ${className}` : ""}${dragging ? " familyCalendarEditItemDragging" : ""}`}
+      className={`familyCalendarItem familyCalendarItem${itemType === "rouny" ? "Rouny" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${overlapClass}${className ? ` ${className}` : ""}${dragging ? " familyCalendarEditItemDragging" : ""}`}
       draggable={dragEnabledItem ? false : undefined}
       href={href}
       key={`${itemType}-${item.id}`}
@@ -408,7 +444,7 @@ function CalendarItemLink({
       } : undefined}
       onPointerLeave={cancelRounyChoice}
       onPointerUp={cancelRounyChoice}
-      style={style ?? (editItem ? editItemStyle(item) : undefined)}
+      style={Object.keys(linkStyle).length ? linkStyle : undefined}
       title={item.allDay ? item.title : `${item.title} ${item.startTime}`}
     >
       <span>{displayTitle}</span>

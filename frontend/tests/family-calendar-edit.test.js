@@ -263,10 +263,17 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.match(calendarCss, /\.familyCalendarFormToggleControl\s*\{[\s\S]*?width:\s*20px !important;[\s\S]*?margin:\s*0;[\s\S]*?flex:\s*0 0 auto;/);
   assert.match(polishCss, /\.familyCalendarForm \.familyTaskSongToggle\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?align-items:\s*center;[\s\S]*?justify-content:\s*center;[\s\S]*?min-height:\s*42px;/);
   assert.doesNotMatch(polishCss, /\.familyCalendarForm \.familyTaskSongField/);
-  assert.match(polishCss, /\.familyCalendarItemRouny\.familyTimetableEntryPink\s*\{\s*background:\s*#ffc6dc;\s*\}/);
+  assert.match(polishCss, /\.familyCalendarItemRouny\.familyTimetableEntryPink\s*\{[\s\S]*?--family-calendar-rouny-color:\s*#ffc6dc;[\s\S]*?background:\s*#ffc6dc;/);
   assert.match(polishCss, /\.familyCalendarItemDated\.familyTimetableEntryPink\s*\{[\s\S]*?--family-calendar-event-outline:\s*#ffc6dc;[\s\S]*?--family-calendar-event-fill-soft:\s*rgba\(255, 198, 220, 0\.28\);/);
   assert.match(polishCss, /\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*#fffafd;[\s\S]*?border:\s*1px solid var\(--family-calendar-event-outline, #ffc6dc\);[\s\S]*?box-shadow:\s*none;/);
   assert.match(polishCss, /\.familyCalendarAllDayItem\.familyCalendarItemDated\s*\{[\s\S]*?background:\s*var\(--family-calendar-event-fill-soft, rgba\(255, 198, 220, 0\.28\)\);[\s\S]*?border:\s*1px solid var\(--family-calendar-event-outline, #ffc6dc\);[\s\S]*?box-shadow:\s*none;/);
+  assert.ok(calendarSource.includes("function rounyItemOverlapsDatedItem(rounyItem, datedItem)"));
+  assert.ok(calendarSource.includes("if (datedItem.allDay) return true;"));
+  assert.ok(calendarSource.includes("return timedRangesOverlap(rounyItem, datedItem);"));
+  assert.ok(calendarSource.includes("rounyEventOverlap: true"));
+  assert.ok(calendarSource.includes("familyCalendarItemRounyEventOverlap"));
+  assert.ok(calendarSource.includes('"--family-calendar-event-overlap-color"'));
+  assert.match(polishCss, /\.familyCalendarItemRounyEventOverlap\s*\{[\s\S]*?repeating-linear-gradient\([\s\S]*?135deg[\s\S]*?var\(--family-calendar-rouny-color[\s\S]*?var\(--family-calendar-event-overlap-color/);
 });
 
 test("family calendar uses one shared 8-column gutter grid with clean weekend text styling", async () => {
