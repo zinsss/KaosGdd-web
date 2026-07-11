@@ -345,7 +345,7 @@ Family backend v2 owns first-class modules:
 - `family_events`: all-day/timed Family events. Timed Family events project into Main Events as all-day events with time preserved in the main memo.
 - `family_timetables`: named 로운이 timetable templates.
 - `family_timetable_entries`: timetable sessions/items for each template.
-- `family_timetable_application_history`: date-based timetable application history.
+- `family_timetable_history`: date-based timetable application history.
 - `family_calendar`: calendar-specific UI/override state, not actual Family events.
 - `family_caregiver_days` and `family_caregiver_sessions`: caregiver daily/monthly calculation inputs.
 - `family_settings`: Family preferences and feature settings.

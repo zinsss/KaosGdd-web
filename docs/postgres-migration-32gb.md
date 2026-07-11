@@ -156,7 +156,7 @@ Review the target host and backup file before restore. Restore is destructive wh
 - Verify row counts and critical records after migration.
 - Run frontend/backend smoke tests against Postgres-backed app data.
 - Define rollback: whether to switch `DATABASE_URL` back to SQLite or restore Postgres backup.
-- Verify Family v2 tables (`family_notes`, `family_tasks`, `family_events`, `family_timetables`, `family_timetable_entries`, `family_timetable_application_history`, `family_caregiver_days`, `family_caregiver_sessions`, `family_settings`, `family_main_links`) during any Postgres cutover.
+- Verify Family v2 tables (`family_notes`, `family_tasks`, `family_events`, `family_timetables`, `family_timetable_entries`, `family_timetable_history`, `family_caregiver_days`, `family_caregiver_sessions`, `family_settings`, `family_main_links`) during any Postgres cutover.
 - Add production backup/restore runbooks and timers once data is actually in Postgres.
 - Keep Orthanc separate from this KaosGdd database.
 

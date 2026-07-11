@@ -146,11 +146,11 @@ class FamilyRepo:
                         """
                         INSERT INTO {table}(
                             id, title, memo, due_date, priority, assignee, is_done, completed_at,
-                            main_item_id, adopted_from_main, payload_json, sort_order, created_at, updated_at, deleted_at
+                            shared_with_main, main_item_id, adopted_from_main, payload_json, sort_order, created_at, updated_at, deleted_at
                         )
                         VALUES (
                             :id, :title, :memo, :due_date, :priority, :assignee, :is_done, :completed_at,
-                            :main_item_id, :adopted_from_main, :payload_json, :sort_order, :created_at, :updated_at, NULL
+                            :shared_with_main, :main_item_id, :adopted_from_main, :payload_json, :sort_order, :created_at, :updated_at, NULL
                         )
                         ON CONFLICT(id) DO UPDATE SET
                             title = excluded.title,
@@ -160,6 +160,7 @@ class FamilyRepo:
                             assignee = excluded.assignee,
                             is_done = excluded.is_done,
                             completed_at = excluded.completed_at,
+                            shared_with_main = excluded.shared_with_main,
                             main_item_id = excluded.main_item_id,
                             adopted_from_main = excluded.adopted_from_main,
                             payload_json = excluded.payload_json,
@@ -177,6 +178,7 @@ class FamilyRepo:
                         "assignee": str(task.get("assignee") or ""),
                         "is_done": _bool_int(task.get("done")),
                         "completed_at": task.get("completed_at"),
+                        "shared_with_main": _bool_int(task.get("sharedWithMain") or task.get("assignee") == "쏭 할 일"),
                         "main_item_id": str(task.get("mainItemId") or "") or None,
                         "adopted_from_main": _bool_int(task.get("adoptedFromMain")),
                         "payload_json": _json_dump(task),
@@ -195,7 +197,7 @@ class FamilyRepo:
                     SELECT payload_json
                     FROM {table}
                     WHERE deleted_at IS NULL
-                    ORDER BY event_date ASC, start_time ASC, created_at ASC
+                    ORDER BY event_date ASC, start_at ASC, created_at ASC
                     """.format(table=DbTables.FAMILY_EVENTS)
                 )
             ).mappings().all()
@@ -212,24 +214,24 @@ class FamilyRepo:
                     text(
                         """
                         INSERT INTO {table}(
-                            id, title, event_date, end_date, all_day, start_time, end_time, memo, color, priority,
-                            shared_with_song, main_item_id, adopted_from_main, payload_json, created_at, updated_at, deleted_at
+                            id, title, event_date, end_date, all_day, start_at, end_at, memo, color, priority,
+                            shared_with_main, main_item_id, adopted_from_main, payload_json, created_at, updated_at, deleted_at
                         )
                         VALUES (
-                            :id, :title, :event_date, :end_date, :all_day, :start_time, :end_time, :memo, :color, :priority,
-                            :shared_with_song, :main_item_id, :adopted_from_main, :payload_json, :created_at, :updated_at, NULL
+                            :id, :title, :event_date, :end_date, :all_day, :start_at, :end_at, :memo, :color, :priority,
+                            :shared_with_main, :main_item_id, :adopted_from_main, :payload_json, :created_at, :updated_at, NULL
                         )
                         ON CONFLICT(id) DO UPDATE SET
                             title = excluded.title,
                             event_date = excluded.event_date,
                             end_date = excluded.end_date,
                             all_day = excluded.all_day,
-                            start_time = excluded.start_time,
-                            end_time = excluded.end_time,
+                            start_at = excluded.start_at,
+                            end_at = excluded.end_at,
                             memo = excluded.memo,
                             color = excluded.color,
                             priority = excluded.priority,
-                            shared_with_song = excluded.shared_with_song,
+                            shared_with_main = excluded.shared_with_main,
                             main_item_id = excluded.main_item_id,
                             adopted_from_main = excluded.adopted_from_main,
                             payload_json = excluded.payload_json,
@@ -243,12 +245,12 @@ class FamilyRepo:
                         "event_date": str(event.get("date") or ""),
                         "end_date": str(event.get("endDate") or "") or None,
                         "all_day": _bool_int(event.get("allDay")),
-                        "start_time": str(event.get("startTime") or ""),
-                        "end_time": str(event.get("endTime") or ""),
+                        "start_at": str(event.get("startTime") or ""),
+                        "end_at": str(event.get("endTime") or ""),
                         "memo": str(event.get("memo") or ""),
                         "color": str(event.get("color") or "pink"),
                         "priority": str(event.get("priority") or ""),
-                        "shared_with_song": _bool_int(event.get("sharedWithSong")),
+                        "shared_with_main": _bool_int(event.get("sharedWithSong") or event.get("sharedWithMain")),
                         "main_item_id": str(event.get("mainItemId") or "") or None,
                         "adopted_from_main": _bool_int(event.get("adoptedFromMain")),
                         "payload_json": _json_dump(event),
@@ -286,8 +288,8 @@ class FamilyRepo:
                     SELECT payload_json
                     FROM {history}
                     WHERE deleted_at IS NULL
-                    ORDER BY start_date ASC, created_at ASC
-                    """.format(history=DbTables.FAMILY_TIMETABLE_APPLICATION_HISTORY)
+                    ORDER BY applied_from ASC, created_at ASC
+                    """.format(history=DbTables.FAMILY_TIMETABLE_HISTORY)
                 )
             ).mappings().all()
         if not plans and not assignments:
@@ -320,7 +322,7 @@ class FamilyRepo:
             self._soft_delete_missing(conn, DbTables.FAMILY_TIMETABLES, {str(plan["id"]) for plan in normalized_plans}, now)
             self._soft_delete_missing(
                 conn,
-                DbTables.FAMILY_TIMETABLE_APPLICATION_HISTORY,
+                DbTables.FAMILY_TIMETABLE_HISTORY,
                 {str(assignment["id"]) for assignment in normalized_assignments},
                 now,
             )
@@ -328,10 +330,11 @@ class FamilyRepo:
                 conn.execute(
                     text(
                         """
-                        INSERT INTO {table}(id, title, payload_json, sort_order, created_at, updated_at, deleted_at)
-                        VALUES (:id, :title, :payload_json, :sort_order, :created_at, :updated_at, NULL)
+                        INSERT INTO {table}(id, title, active, payload_json, sort_order, created_at, updated_at, deleted_at)
+                        VALUES (:id, :title, :active, :payload_json, :sort_order, :created_at, :updated_at, NULL)
                         ON CONFLICT(id) DO UPDATE SET
                             title = excluded.title,
+                            active = excluded.active,
                             payload_json = excluded.payload_json,
                             sort_order = excluded.sort_order,
                             updated_at = excluded.updated_at,
@@ -341,6 +344,7 @@ class FamilyRepo:
                     {
                         "id": str(plan["id"]),
                         "title": str(plan.get("name") or plan.get("title") or "시간표"),
+                        "active": _bool_int(plan.get("active")),
                         "payload_json": _json_dump({**plan, "items": []}),
                         "sort_order": plan_index,
                         "created_at": now,
@@ -354,17 +358,17 @@ class FamilyRepo:
                         text(
                             """
                             INSERT INTO {table}(
-                                id, timetable_id, entry_type, title, day_of_week, start_time, end_time, color,
+                                id, timetable_id, entry_type, title, weekday, start_time, end_time, color,
                                 font_family, memo, payload_json, sort_order, created_at, updated_at, deleted_at
                             )
                             VALUES (
-                                :id, :timetable_id, 'template', :title, :day_of_week, :start_time, :end_time, :color,
+                                :id, :timetable_id, 'template', :title, :weekday, :start_time, :end_time, :color,
                                 :font_family, :memo, :payload_json, :sort_order, :created_at, :updated_at, NULL
                             )
                             ON CONFLICT(id) DO UPDATE SET
                                 timetable_id = excluded.timetable_id,
                                 title = excluded.title,
-                                day_of_week = excluded.day_of_week,
+                                weekday = excluded.weekday,
                                 start_time = excluded.start_time,
                                 end_time = excluded.end_time,
                                 color = excluded.color,
@@ -380,7 +384,7 @@ class FamilyRepo:
                             "id": str(item["id"]),
                             "timetable_id": str(plan["id"]),
                             "title": str(item.get("title") or ""),
-                            "day_of_week": int(item.get("dayOfWeek") or 1),
+                            "weekday": int(item.get("dayOfWeek") or item.get("weekday") or 1),
                             "start_time": str(item.get("startTime") or "09:00"),
                             "end_time": str(item.get("endTime") or "09:40"),
                             "color": str(item.get("color") or "pink"),
@@ -396,20 +400,22 @@ class FamilyRepo:
                 conn.execute(
                     text(
                         """
-                        INSERT INTO {table}(id, timetable_id, start_date, payload_json, created_at, updated_at, deleted_at)
-                        VALUES (:id, :timetable_id, :start_date, :payload_json, :created_at, :updated_at, NULL)
+                        INSERT INTO {table}(id, timetable_id, applied_from, applied_until, payload_json, created_at, updated_at, deleted_at)
+                        VALUES (:id, :timetable_id, :applied_from, :applied_until, :payload_json, :created_at, :updated_at, NULL)
                         ON CONFLICT(id) DO UPDATE SET
                             timetable_id = excluded.timetable_id,
-                            start_date = excluded.start_date,
+                            applied_from = excluded.applied_from,
+                            applied_until = excluded.applied_until,
                             payload_json = excluded.payload_json,
                             updated_at = excluded.updated_at,
                             deleted_at = NULL
-                        """.format(table=DbTables.FAMILY_TIMETABLE_APPLICATION_HISTORY)
+                        """.format(table=DbTables.FAMILY_TIMETABLE_HISTORY)
                     ),
                     {
                         "id": str(assignment["id"]),
                         "timetable_id": str(assignment.get("planId") or ""),
-                        "start_date": str(assignment.get("startDate") or ""),
+                        "applied_from": str(assignment.get("startDate") or assignment.get("appliedFrom") or ""),
+                        "applied_until": str(assignment.get("endDate") or assignment.get("appliedUntil") or "") or None,
                         "payload_json": _json_dump(assignment),
                         "created_at": now,
                         "updated_at": now,
@@ -458,12 +464,12 @@ class FamilyRepo:
         with self.engine.begin() as conn:
             rows = conn.execute(
                 text(
-                    "SELECT date_key, payload_json FROM {table} WHERE deleted_at IS NULL ORDER BY date_key ASC".format(
+                    "SELECT date, payload_json FROM {table} WHERE deleted_at IS NULL ORDER BY date ASC".format(
                         table=DbTables.FAMILY_CAREGIVER_DAYS
                     )
                 )
             ).mappings().all()
-        return {str(row["date_key"]): _json_load(row.get("payload_json"), 0) for row in rows}
+        return {str(row["date"]): _json_load(row.get("payload_json"), 0) for row in rows}
 
     def put_caregiver_days(self, days: dict[str, Any]) -> dict[str, Any]:
         normalized = days if isinstance(days, dict) else {}
@@ -476,7 +482,7 @@ class FamilyRepo:
                         """
                         UPDATE {table}
                         SET deleted_at = :deleted_at, updated_at = :updated_at
-                        WHERE deleted_at IS NULL AND date_key NOT IN :active_dates
+                        WHERE deleted_at IS NULL AND date NOT IN :active_dates
                         """.format(table=DbTables.FAMILY_CAREGIVER_DAYS)
                     ).bindparams(bindparam("active_dates", expanding=True)),
                     {"active_dates": tuple(active_dates), "deleted_at": now, "updated_at": now},
@@ -497,20 +503,27 @@ class FamilyRepo:
                 conn.execute(
                     text(
                         """
-                        INSERT INTO {table}(date_key, total_hours, extra_total, payload_json, created_at, updated_at, deleted_at)
-                        VALUES (:date_key, :total_hours, :extra_total, :payload_json, :created_at, :updated_at, NULL)
-                        ON CONFLICT(date_key) DO UPDATE SET
+                        INSERT INTO {table}(id, date, hourly_rate, transport_fee, extra_amount, memo, total_hours, payload_json, created_at, updated_at, deleted_at)
+                        VALUES (:id, :date, :hourly_rate, :transport_fee, :extra_amount, :memo, :total_hours, :payload_json, :created_at, :updated_at, NULL)
+                        ON CONFLICT(date) DO UPDATE SET
+                            hourly_rate = excluded.hourly_rate,
+                            transport_fee = excluded.transport_fee,
+                            extra_amount = excluded.extra_amount,
+                            memo = excluded.memo,
                             total_hours = excluded.total_hours,
-                            extra_total = excluded.extra_total,
                             payload_json = excluded.payload_json,
                             updated_at = excluded.updated_at,
                             deleted_at = NULL
                         """.format(table=DbTables.FAMILY_CAREGIVER_DAYS)
                     ),
                     {
-                        "date_key": str(date_key),
+                        "id": str(date_key),
+                        "date": str(date_key),
+                        "hourly_rate": int(value.get("hourlyRate") or 0) if isinstance(value, dict) else 0,
+                        "transport_fee": int(value.get("transportFee") or 0) if isinstance(value, dict) else 0,
+                        "extra_amount": int(value.get("extraTotal") or value.get("extraAmount") or 0) if isinstance(value, dict) else 0,
+                        "memo": str(value.get("memo") or "") if isinstance(value, dict) else "",
                         "total_hours": total_hours,
-                        "extra_total": int(value.get("extraTotal") or 0) if isinstance(value, dict) else 0,
                         "payload_json": _json_dump(value),
                         "created_at": now,
                         "updated_at": now,
@@ -557,9 +570,9 @@ class FamilyRepo:
             rows = conn.execute(
                 text(
                     """
-                    SELECT family_item_id, main_item_id, family_module, origin, adopted_from_main, shared_with_main, created_at, updated_at
+                    SELECT id, family_item_id, main_item_id, family_kind, origin, adopted_from_main, shared_with_main, created_at, updated_at
                     FROM {table}
-                    ORDER BY family_module ASC, created_at ASC
+                    ORDER BY family_kind ASC, created_at ASC
                     """.format(table=DbTables.FAMILY_MAIN_LINKS)
                 )
             ).mappings().all()
@@ -567,7 +580,7 @@ class FamilyRepo:
             {
                 "familyItemId": str(row["family_item_id"]),
                 "mainItemId": str(row["main_item_id"]),
-                "familyModule": str(row["family_module"]),
+                "familyKind": str(row["family_kind"]),
                 "origin": str(row["origin"]),
                 "adoptedFromMain": bool(row["adopted_from_main"]),
                 "sharedWithMain": bool(row["shared_with_main"]),
@@ -598,13 +611,12 @@ class FamilyRepo:
                 text(
                     """
                     INSERT INTO {table}(
-                        family_item_id, main_item_id, family_module, origin, adopted_from_main, shared_with_main, created_at, updated_at
+                        id, family_kind, family_item_id, main_item_id, origin, adopted_from_main, shared_with_main, created_at, updated_at
                     )
                     VALUES (
-                        :family_item_id, :main_item_id, :family_module, :origin, :adopted_from_main, :shared_with_main, :created_at, :updated_at
+                        :id, :family_kind, :family_item_id, :main_item_id, :origin, :adopted_from_main, :shared_with_main, :created_at, :updated_at
                     )
-                    ON CONFLICT(family_item_id, main_item_id) DO UPDATE SET
-                        family_module = excluded.family_module,
+                    ON CONFLICT(family_kind, family_item_id, main_item_id) DO UPDATE SET
                         origin = excluded.origin,
                         adopted_from_main = excluded.adopted_from_main,
                         shared_with_main = excluded.shared_with_main,
@@ -614,7 +626,8 @@ class FamilyRepo:
                 {
                     "family_item_id": family_item_id,
                     "main_item_id": main_item_id,
-                    "family_module": family_module,
+                    "id": f"{family_module}:{family_item_id}:{main_item_id}",
+                    "family_kind": family_module,
                     "origin": origin,
                     "adopted_from_main": _bool_int(adopted_from_main),
                     "shared_with_main": _bool_int(shared_with_main),
@@ -634,7 +647,7 @@ class FamilyRepo:
                         """
                         DELETE FROM {table}
                         WHERE family_item_id = :family_item_id
-                          AND family_module = :family_module
+                          AND family_kind = :family_module
                         """.format(table=DbTables.FAMILY_MAIN_LINKS)
                     ),
                     {"family_item_id": family_item_id, "family_module": str(family_module)},
@@ -659,7 +672,7 @@ class FamilyRepo:
                     DbTables.FAMILY_EVENTS,
                     DbTables.FAMILY_TIMETABLES,
                     DbTables.FAMILY_TIMETABLE_ENTRIES,
-                    DbTables.FAMILY_TIMETABLE_APPLICATION_HISTORY,
+                    DbTables.FAMILY_TIMETABLE_HISTORY,
                     DbTables.FAMILY_CAREGIVER_DAYS,
                     DbTables.FAMILY_CAREGIVER_SESSIONS,
                 ]

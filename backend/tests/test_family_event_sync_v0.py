@@ -181,7 +181,7 @@ def test_main_family_tagged_event_is_adopted_once(tmp_path) -> None:
         "family",
         f"family-event:{loaded[0]['id']}",
     ]
-    assert family_repo.get_record("family", FAMILY_CALENDAR_RECORD_KEY) == loaded
+    assert family_repo.list_events() == loaded
     assert event_repo.get_event_detail(main_id)["status"] == "active"
 
 
@@ -241,7 +241,7 @@ def test_main_mirror_edit_reconciles_time_memo_back_to_family_event(tmp_path) ->
     assert loaded[0]["startTime"] == "15:00"
     assert loaded[0]["endTime"] == "16:20"
     assert loaded[0]["memo"] == "다른 메모"
-    assert family_repo.get_record("family", FAMILY_CALENDAR_RECORD_KEY) == loaded
+    assert family_repo.list_events() == loaded
 
 
 def test_main_mirror_reconcile_preserves_family_event_color(tmp_path) -> None:
@@ -277,7 +277,7 @@ def test_main_mirror_reconcile_preserves_family_event_color(tmp_path) -> None:
     assert loaded[0]["startTime"] == "10:20"
     assert loaded[0]["endTime"] == "11:20"
     assert loaded[0]["color"] == "blue"
-    assert family_repo.get_record("family", FAMILY_CALENDAR_RECORD_KEY)[0]["color"] == "blue"
+    assert family_repo.list_events()[0]["color"] == "blue"
 
 
 def test_removing_family_song_tag_from_adopted_main_event_disconnects_projection(tmp_path) -> None:
@@ -298,5 +298,5 @@ def test_removing_family_song_tag_from_adopted_main_event_disconnects_projection
     assert loaded[0]["id"] == family_id
     assert loaded[0]["sharedWithSong"] is False
     assert loaded[0]["mainItemId"] == ""
-    assert family_repo.get_record("family", FAMILY_CALENDAR_RECORD_KEY) == loaded
+    assert family_repo.list_events() == loaded
     assert event_repo.get_event_detail(main_id)["status"] == "removed"

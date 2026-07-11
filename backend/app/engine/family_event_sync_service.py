@@ -101,18 +101,17 @@ class FamilyEventSyncService:
         self.family_repo = family_repo
 
     def load_calendar_items(self) -> list[dict[str, Any]]:
-        payload = self.family_repo.get_record("family", FAMILY_CALENDAR_RECORD_KEY)
-        items = [event for event in (normalize_family_event(item) for item in (payload if isinstance(payload, list) else [])) if event]
+        items = [event for event in (normalize_family_event(item) for item in self.family_repo.list_events()) if event]
         adopted, adopted_changed = self.adopt_main_family_events(items)
         reconciled, reconciled_changed = self.reconcile_from_mirrors(adopted)
         if adopted_changed or reconciled_changed:
-            self.family_repo.put_record("family", FAMILY_CALENDAR_RECORD_KEY, reconciled)
+            self.family_repo.replace_events(reconciled)
         return reconciled
 
     def save_calendar_items(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
         normalized = [event for event in (normalize_family_event(item) for item in items) if event]
         synced = self.sync(normalized)
-        self.family_repo.put_record("family", FAMILY_CALENDAR_RECORD_KEY, synced)
+        self.family_repo.replace_events(synced)
         return synced
 
     def sync(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:

@@ -23,7 +23,7 @@ def test_family_backend_v2_schema_and_repo_round_trip(tmp_path) -> None:
         "family_events",
         "family_timetables",
         "family_timetable_entries",
-        "family_timetable_application_history",
+        "family_timetable_history",
         "family_caregiver_days",
         "family_caregiver_sessions",
         "family_settings",

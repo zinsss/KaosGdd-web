@@ -140,7 +140,7 @@ class DbTables:
     FAMILY_EVENTS = "family_events"
     FAMILY_TIMETABLES = "family_timetables"
     FAMILY_TIMETABLE_ENTRIES = "family_timetable_entries"
-    FAMILY_TIMETABLE_APPLICATION_HISTORY = "family_timetable_application_history"
+    FAMILY_TIMETABLE_HISTORY = "family_timetable_history"
     FAMILY_CALENDAR = "family_calendar"
     FAMILY_CAREGIVER_DAYS = "family_caregiver_days"
     FAMILY_CAREGIVER_SESSIONS = "family_caregiver_sessions"
