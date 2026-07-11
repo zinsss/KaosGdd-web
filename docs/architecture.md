@@ -144,7 +144,7 @@ Frontend input
   -> Frontend updates display
 ```
 
-Exceptions are explicitly local Family features. These live in browser localStorage and are not shared backend truth yet.
+Family is an independent app surface, but its durable entities are backend-owned. Browser storage may be used only as temporary UI state or cache; it is not canonical storage for Family notes, tasks, events, timetables, or caregiver data.
 
 ## Shared Durable Modules
 
@@ -338,15 +338,20 @@ Shared Family UI:
 - Family font handling under `family-fonts.css`
 - `frontend/proxy.js` rewrites `family.kaosgdd.net` short paths to `/family/...`.
 
-Family local features:
+Family backend v2 owns first-class modules:
 
-- Calendar: date/week UI, local events, all-day events, weather display via backend cache, caregiver row.
-- Tasks: Family-specific task UI, local ordering/presentation, and optional memo-as-checklist rendering.
-- 로운이: local timetable templates, assignments, multi-session editor, calendar overrides.
-- Memo: local memo/checklist behavior.
-- Caregiver review: fixed-width monthly report from local caregiver hour data.
+- `family_notes`: 메모장 text/checklist notes.
+- `family_tasks`: Family tasks, memo/checklist extraction, due dates, priority, completion, and explicit 쏭 sharing state.
+- `family_events`: all-day/timed Family events. Timed Family events project into Main Events as all-day events with time preserved in the main memo.
+- `family_timetables`: named 로운이 timetable templates.
+- `family_timetable_entries`: timetable sessions/items for each template.
+- `family_timetable_application_history`: date-based timetable application history.
+- `family_calendar`: calendar-specific UI/override state, not actual Family events.
+- `family_caregiver_days` and `family_caregiver_sessions`: caregiver daily/monthly calculation inputs.
+- `family_settings`: Family preferences and feature settings.
+- `family_main_links`: explicit Family↔Main linkage.
 
-Family localStorage keys remain local contracts. Do not rename or migrate them without compatibility code.
+`family_records` is legacy/miscellaneous only. It must not be canonical storage for Family notes, tasks, events, timetables, or caregiver data.
 
 Family subdomain boundary:
 
@@ -355,6 +360,7 @@ Family subdomain boundary:
 - `/api/*`, `/_next/*`, manifest, icon, and screenshot paths pass through unchanged.
 - Family routes use the Family shell only. The main KaosGdd top navigation, global capture bar, and attention card are not mounted on `/family/*` or the Family subdomain.
 - Allowed bridges between Family and the main app are deliberately small: the shared backend weather cache, explicit Family task sharing to main tasks, and explicit Family event sharing to main events.
+- Family is canonical for shared Family tasks/events. Main Tasks and Main Events are projections linked by `family_main_links`; identity must not be inferred from title/date/memo.
 
 ## Database
 

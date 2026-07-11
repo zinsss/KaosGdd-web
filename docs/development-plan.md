@@ -25,6 +25,7 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 - [x] Shared backend weather cache.
 - [x] Postgres service prepared in Docker Compose.
 - [x] Family UI section.
+- [x] Family backend v2 tables for notes, tasks, events, timetables, caregiver data, settings, and main-link ownership.
 - [x] Family calendar local event model.
 - [x] Family all-day event support.
 - [x] Family weather display using shared backend weather.
@@ -44,7 +45,7 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 - [ ] Keep source tests less brittle by avoiding CSS property-order assertions.
 - [ ] Audit docs after major module changes.
 - [ ] Keep Family UI Korean wording standard, soft, and non-dialect.
-- [ ] Keep Family localStorage compatibility tests for renamed concepts such as `roni` -> `rouny`.
+- [ ] Keep Family backend entity tests current as UI modules move off temporary local browser storage.
 - [ ] Keep selected-file fax grammar separate from File save grammar.
 - [ ] Confirm desktop Firefox date/time picker fallbacks remain usable.
 - [ ] Confirm production `DATABASE_URL` before declaring the app cut over to Postgres.
@@ -75,13 +76,13 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 
 ## Family Plans
 
-- [ ] Preserve Family localStorage keys or provide compatibility migrations.
+- [ ] Keep Family notes/tasks/events/timetables/caregiver data in dedicated backend modules, not generic JSON blobs.
 - [ ] Keep 로운이 timetable templates distinct from calendar overrides.
 - [ ] Keep caregiver monthly review fixed-width and calculation-focused.
 - [ ] Keep Family calendar weather compact and optional in expanded week rows.
 - [ ] Keep drag/drop behavior consistent across Family calendar and 로운이 timetable.
-- [ ] Consider backend migration only with explicit scope, migration, and rollback plan.
-- [ ] Decide whether Family task memo check states should remain local-only or eventually sync through backend task fields.
+- [ ] Remove remaining active `family_records` usage for Family entities as frontend helpers move to dedicated module routes.
+- [ ] Keep Family task/event sharing idempotent through explicit `family_main_links`.
 
 ## Capture Grammar Plans
 

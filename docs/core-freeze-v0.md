@@ -18,7 +18,7 @@ This file records the architectural invariants that should not drift during feat
 - DB > Engine > UI.
 - Backend owns validation, parsing, scheduling, state transitions, sorting, notification dispatch, weather cache, and durable shared records.
 - Frontend is a client surface and must not invent shared business truth.
-- Family localStorage features are allowed only where explicitly scoped as Family-local behavior.
+- Family durable entities are backend-owned. Browser storage is allowed only for temporary UI state or cache.
 
 ## 3. Current Shared Modules
 
@@ -39,7 +39,7 @@ There is no `list` module. Old parser references to `==` are legacy/deprecated a
 
 ## 4. Family Module Boundary
 
-Family UI is intentionally softer and local-first. Current Family features are:
+Family UI is intentionally softer and independent. Current Family features are:
 
 - Calendar
 - Tasks
@@ -47,7 +47,7 @@ Family UI is intentionally softer and local-first. Current Family features are:
 - Memo
 - Caregiver hours/review
 
-Family calendar/timetable/caregiver data is currently localStorage-owned. Do not migrate it into backend storage without an explicit migration PR and compatibility plan.
+Family notes, tasks, events, timetables, and caregiver data are owned by dedicated backend tables. Main KaosGdd may display explicit Family task/event projections, but Family remains canonical.
 
 ## 5. Capture Model
 

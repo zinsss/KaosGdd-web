@@ -155,6 +155,7 @@ class FamilyEventSyncService:
                 continue
             next_items.append(adopted)
             self.items_repo.replace_item_tags(main_id, [*tags, self._mirror_tag(adopted["id"])])
+            self._link_family_main(adopted["id"], main_id, adopted_from_main=True, shared_with_main=True)
             existing_main_ids.add(main_id)
             existing_family_ids.add(adopted["id"].lower())
             changed = True
@@ -223,11 +224,18 @@ class FamilyEventSyncService:
         tags = [FAMILY_EVENT_SONG_TAG, self._mirror_tag(item["id"])]
         self.items_repo.replace_item_tags(main_id, tags)
         item["mainItemId"] = main_id
+        self._link_family_main(
+            item["id"],
+            main_id,
+            adopted_from_main=bool(item.get("adoptedFromMain")),
+            shared_with_main=True,
+        )
         return main_id
 
     def _remove_mirrors(self, family_event_id: str) -> None:
         for mirror in self._find_mirrors(family_event_id):
             self.items_repo.soft_delete_item(mirror["id"])
+        self._unlink_family_main(family_event_id)
 
     def _remove_stale_mirrors(self, active_family_ids: set[str]) -> None:
         for row in self.items_repo.list_items_by_tag_prefix(FAMILY_EVENT_MIRROR_TAG_PREFIX):
@@ -238,3 +246,24 @@ class FamilyEventSyncService:
             family_id = family_tags[0][len(FAMILY_EVENT_MIRROR_TAG_PREFIX):]
             if family_id not in active_family_ids:
                 self.items_repo.soft_delete_item(row["id"])
+                self._unlink_family_main(family_id)
+
+    def _link_family_main(
+        self,
+        family_event_id: str,
+        main_item_id: str,
+        *,
+        adopted_from_main: bool,
+        shared_with_main: bool,
+    ) -> None:
+        self.family_repo.upsert_main_link(
+            family_item_id=family_event_id,
+            main_item_id=main_item_id,
+            family_module="events",
+            origin="main" if adopted_from_main else "family",
+            adopted_from_main=adopted_from_main,
+            shared_with_main=shared_with_main,
+        )
+
+    def _unlink_family_main(self, family_event_id: str) -> None:
+        self.family_repo.remove_main_links_for_family_item(family_event_id, "events")

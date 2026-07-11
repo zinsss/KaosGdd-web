@@ -230,6 +230,156 @@ CREATE TABLE IF NOT EXISTS {family_records} (
     UNIQUE (namespace, record_key)
 );
 
+CREATE TABLE IF NOT EXISTS {family_notes} (
+    id TEXT PRIMARY KEY,
+    note_type TEXT NOT NULL DEFAULT 'message',
+    title TEXT,
+    body TEXT NOT NULL DEFAULT '',
+    checklist_json TEXT NOT NULL DEFAULT '[]',
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT,
+    CHECK (note_type IN ('message', 'checklist'))
+);
+
+CREATE TABLE IF NOT EXISTS {family_tasks} (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    memo TEXT NOT NULL DEFAULT '',
+    due_date TEXT NOT NULL DEFAULT '',
+    priority TEXT NOT NULL DEFAULT '😄 보통',
+    assignee TEXT NOT NULL DEFAULT '내 할 일',
+    is_done INTEGER NOT NULL DEFAULT 0,
+    completed_at TEXT,
+    main_item_id TEXT,
+    adopted_from_main INTEGER NOT NULL DEFAULT 0,
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT,
+    CHECK (is_done IN (0, 1)),
+    CHECK (adopted_from_main IN (0, 1))
+);
+
+CREATE TABLE IF NOT EXISTS {family_events} (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    event_date TEXT NOT NULL,
+    end_date TEXT,
+    all_day INTEGER NOT NULL DEFAULT 1,
+    start_time TEXT NOT NULL DEFAULT '',
+    end_time TEXT NOT NULL DEFAULT '',
+    memo TEXT NOT NULL DEFAULT '',
+    color TEXT NOT NULL DEFAULT 'pink',
+    priority TEXT NOT NULL DEFAULT '',
+    shared_with_song INTEGER NOT NULL DEFAULT 0,
+    main_item_id TEXT,
+    adopted_from_main INTEGER NOT NULL DEFAULT 0,
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT,
+    CHECK (all_day IN (0, 1)),
+    CHECK (shared_with_song IN (0, 1)),
+    CHECK (adopted_from_main IN (0, 1))
+);
+
+CREATE TABLE IF NOT EXISTS {family_timetables} (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS {family_timetable_entries} (
+    id TEXT PRIMARY KEY,
+    timetable_id TEXT NOT NULL,
+    entry_type TEXT NOT NULL DEFAULT 'template',
+    title TEXT NOT NULL,
+    day_of_week INTEGER NOT NULL DEFAULT 1,
+    start_time TEXT NOT NULL DEFAULT '09:00',
+    end_time TEXT NOT NULL DEFAULT '09:40',
+    color TEXT NOT NULL DEFAULT 'pink',
+    font_family TEXT NOT NULL DEFAULT 'system',
+    memo TEXT NOT NULL DEFAULT '',
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT,
+    FOREIGN KEY (timetable_id) REFERENCES {family_timetables}(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS {family_timetable_application_history} (
+    id TEXT PRIMARY KEY,
+    timetable_id TEXT NOT NULL,
+    start_date TEXT NOT NULL,
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT,
+    FOREIGN KEY (timetable_id) REFERENCES {family_timetables}(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS {family_calendar} (
+    id TEXT PRIMARY KEY,
+    state_key TEXT NOT NULL UNIQUE,
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS {family_caregiver_days} (
+    date_key TEXT PRIMARY KEY,
+    total_hours REAL NOT NULL DEFAULT 0,
+    extra_total INTEGER NOT NULL DEFAULT 0,
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS {family_caregiver_sessions} (
+    id TEXT PRIMARY KEY,
+    date_key TEXT NOT NULL,
+    start_time TEXT NOT NULL DEFAULT '',
+    end_time TEXT NOT NULL DEFAULT '',
+    hours REAL NOT NULL DEFAULT 0,
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    deleted_at TEXT,
+    FOREIGN KEY (date_key) REFERENCES {family_caregiver_days}(date_key) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS {family_settings} (
+    setting_key TEXT PRIMARY KEY,
+    payload_json TEXT NOT NULL DEFAULT '{{}}',
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS {family_main_links} (
+    family_item_id TEXT NOT NULL,
+    main_item_id TEXT NOT NULL,
+    family_module TEXT NOT NULL,
+    origin TEXT NOT NULL DEFAULT 'family',
+    adopted_from_main INTEGER NOT NULL DEFAULT 0,
+    shared_with_main INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (family_item_id, main_item_id),
+    CHECK (adopted_from_main IN (0, 1)),
+    CHECK (shared_with_main IN (0, 1))
+);
+
 CREATE TABLE IF NOT EXISTS {weather_daily_snapshots} (
     id TEXT PRIMARY KEY,
     location_id TEXT NOT NULL,
@@ -382,6 +532,33 @@ ON {weather_cache}(expires_at);
 CREATE INDEX IF NOT EXISTS idx_family_records_namespace_key
 ON {family_records}(namespace, record_key);
 
+CREATE INDEX IF NOT EXISTS idx_family_notes_deleted_order
+ON {family_notes}(deleted_at, sort_order, created_at);
+
+CREATE INDEX IF NOT EXISTS idx_family_tasks_done_due
+ON {family_tasks}(deleted_at, is_done, due_date, sort_order);
+
+CREATE INDEX IF NOT EXISTS idx_family_tasks_main_item
+ON {family_tasks}(main_item_id);
+
+CREATE INDEX IF NOT EXISTS idx_family_events_date
+ON {family_events}(deleted_at, event_date, end_date);
+
+CREATE INDEX IF NOT EXISTS idx_family_events_main_item
+ON {family_events}(main_item_id);
+
+CREATE INDEX IF NOT EXISTS idx_family_timetable_entries_plan
+ON {family_timetable_entries}(timetable_id, deleted_at, day_of_week, start_time);
+
+CREATE INDEX IF NOT EXISTS idx_family_timetable_application_start
+ON {family_timetable_application_history}(deleted_at, start_date);
+
+CREATE INDEX IF NOT EXISTS idx_family_caregiver_sessions_day
+ON {family_caregiver_sessions}(date_key, deleted_at, sort_order);
+
+CREATE INDEX IF NOT EXISTS idx_family_main_links_main
+ON {family_main_links}(main_item_id);
+
 CREATE INDEX IF NOT EXISTS idx_weather_daily_snapshots_location_date
 ON {weather_daily_snapshots}(location_id, date);
 
@@ -414,6 +591,17 @@ ON {weather_daily_snapshots}(location_id, fetched_at);
     weather_locations=DbTables.WEATHER_LOCATIONS,
     weather_cache=DbTables.WEATHER_CACHE,
     family_records=DbTables.FAMILY_RECORDS,
+    family_notes=DbTables.FAMILY_NOTES,
+    family_tasks=DbTables.FAMILY_TASKS,
+    family_events=DbTables.FAMILY_EVENTS,
+    family_timetables=DbTables.FAMILY_TIMETABLES,
+    family_timetable_entries=DbTables.FAMILY_TIMETABLE_ENTRIES,
+    family_timetable_application_history=DbTables.FAMILY_TIMETABLE_APPLICATION_HISTORY,
+    family_calendar=DbTables.FAMILY_CALENDAR,
+    family_caregiver_days=DbTables.FAMILY_CAREGIVER_DAYS,
+    family_caregiver_sessions=DbTables.FAMILY_CAREGIVER_SESSIONS,
+    family_settings=DbTables.FAMILY_SETTINGS,
+    family_main_links=DbTables.FAMILY_MAIN_LINKS,
     weather_daily_snapshots=DbTables.WEATHER_DAILY_SNAPSHOTS,
 )
 

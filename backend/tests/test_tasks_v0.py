@@ -73,6 +73,6 @@ def test_health_database_diagnostic_reports_counts_without_secrets(main_module) 
 
     assert diagnostic["dialect"] == "sqlite"
     assert diagnostic["task_count"] == 1
-    assert diagnostic["family_record_count"] == 1
+    assert diagnostic["family_entity_count"] == 1
     assert "password" not in str(diagnostic).lower()
     assert "://" not in str(diagnostic)

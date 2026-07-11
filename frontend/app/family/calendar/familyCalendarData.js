@@ -1,5 +1,5 @@
 import { FAMILY_TIMETABLE_DEFAULT_FONT, normalizeFamilyTimetableFont } from "../familyTimetableFonts.js";
-import { fetchFamilyRecord, persistFamilyRecord } from "../familyBackendStore.js";
+import { fetchFamilyRecord, fetchFamilyModule, persistFamilyModule, persistFamilyRecord } from "../familyBackendStore.js";
 
 export const FAMILY_CALENDAR_STORAGE_KEY = "kaosgdd.family.calendarItems.v1";
 export const FAMILY_ROUNY_STORAGE_KEY = "kaosgdd.family.defaultTimetable.v1";
@@ -559,17 +559,14 @@ export function saveFamilyRounState(state) {
 }
 
 export async function fetchFamilyRounState() {
-  const fallback = loadFamilyRounState();
-  const payload = await fetchFamilyRecord(FAMILY_ROUN_RECORD_KEY, fallback);
+  const payload = await fetchFamilyModule("timetables", "state", { plans: [], assignments: [] });
   const normalized = normalizeFamilyRounState(payload);
-  writeFamilyStorageArray(FAMILY_ROUN_PLAN_STORAGE_KEY, normalized.plans);
-  writeFamilyStorageArray(FAMILY_ROUN_ASSIGNMENT_STORAGE_KEY, normalized.assignments);
   return normalized;
 }
 
 export function persistFamilyRounState(state) {
-  const normalized = saveFamilyRounState(state);
-  persistFamilyRecord(FAMILY_ROUN_RECORD_KEY, normalized);
+  const normalized = normalizeFamilyRounState(state);
+  persistFamilyModule("timetables", "state", "state", normalized);
   return normalized;
 }
 
@@ -603,19 +600,15 @@ export function saveFamilyCalendarItems(items) {
 }
 
 export async function fetchFamilyCalendarItems() {
-  const fallback = loadFamilyCalendarItems();
-  const payload = await fetchFamilyRecord(FAMILY_CALENDAR_RECORD_KEY, fallback);
+  const payload = await fetchFamilyModule("events", "events", []);
   const normalized = Array.isArray(payload) ? payload.map(normalizeFamilyCalendarItem).filter(Boolean) : [];
-  saveFamilyCalendarItems(normalized);
   return normalized;
 }
 
 export async function persistFamilyCalendarItems(items) {
   const normalized = items.map(normalizeFamilyCalendarItem).filter(Boolean);
-  saveFamilyCalendarItems(normalized);
-  const persisted = await persistFamilyRecord(FAMILY_CALENDAR_RECORD_KEY, normalized);
+  const persisted = await persistFamilyModule("events", "events", "events", normalized);
   const next = Array.isArray(persisted) ? persisted.map(normalizeFamilyCalendarItem).filter(Boolean) : normalized;
-  saveFamilyCalendarItems(next);
   return next;
 }
 
@@ -628,16 +621,13 @@ export function saveFamilyCaregiverHours(hoursByDate) {
 }
 
 export async function fetchFamilyCaregiverHours() {
-  const fallback = loadFamilyCaregiverHours();
-  const normalized = normalizeFamilyCaregiverHoursMap(await fetchFamilyRecord(FAMILY_CAREGIVER_HOURS_RECORD_KEY, fallback));
-  saveFamilyCaregiverHours(normalized);
+  const normalized = normalizeFamilyCaregiverHoursMap(await fetchFamilyModule("caregiver/days", "days", {}));
   return normalized;
 }
 
 export async function persistFamilyCaregiverHours(hoursByDate) {
   const normalized = normalizeFamilyCaregiverHoursMap(hoursByDate);
-  saveFamilyCaregiverHours(normalized);
-  await persistFamilyRecord(FAMILY_CAREGIVER_HOURS_RECORD_KEY, normalized);
+  await persistFamilyModule("caregiver/days", "days", "days", normalized);
 }
 
 export function loadFamilyCaregiverHourlyWage() {
@@ -657,16 +647,13 @@ export function saveFamilyCaregiverHourlyWage(value) {
 }
 
 export async function fetchFamilyCaregiverHourlyWage() {
-  const fallback = loadFamilyCaregiverHourlyWage();
-  const normalized = normalizeFamilyCaregiverHourlyWage(await fetchFamilyRecord(FAMILY_CAREGIVER_HOURLY_WAGE_RECORD_KEY, fallback));
-  saveFamilyCaregiverHourlyWage(normalized);
+  const normalized = normalizeFamilyCaregiverHourlyWage(await fetchFamilyModule("settings/caregiver-hourly-wage", "payload", 0));
   return normalized;
 }
 
 export async function persistFamilyCaregiverHourlyWage(value) {
   const normalized = normalizeFamilyCaregiverHourlyWage(value);
-  saveFamilyCaregiverHourlyWage(normalized);
-  await persistFamilyRecord(FAMILY_CAREGIVER_HOURLY_WAGE_RECORD_KEY, normalized);
+  await persistFamilyModule("settings/caregiver-hourly-wage", "payload", "payload", normalized);
 }
 
 export function loadFamilyCaregiverMonthlySettings() {
@@ -678,16 +665,15 @@ export function saveFamilyCaregiverMonthlySettings(settingsMap) {
 }
 
 export async function fetchFamilyCaregiverMonthlySettings() {
-  const fallback = loadFamilyCaregiverMonthlySettings();
-  const normalized = normalizeFamilyCaregiverMonthlySettingsMap(await fetchFamilyRecord(FAMILY_CAREGIVER_MONTHLY_SETTINGS_RECORD_KEY, fallback));
-  saveFamilyCaregiverMonthlySettings(normalized);
+  const normalized = normalizeFamilyCaregiverMonthlySettingsMap(
+    await fetchFamilyModule("settings/caregiver-monthly-settings", "payload", {}),
+  );
   return normalized;
 }
 
 export async function persistFamilyCaregiverMonthlySettings(settingsMap) {
   const normalized = normalizeFamilyCaregiverMonthlySettingsMap(settingsMap);
-  saveFamilyCaregiverMonthlySettings(normalized);
-  await persistFamilyRecord(FAMILY_CAREGIVER_MONTHLY_SETTINGS_RECORD_KEY, normalized);
+  await persistFamilyModule("settings/caregiver-monthly-settings", "payload", "payload", normalized);
 }
 
 export function loadFamilyRounyItemsForDate(dateKey) {
@@ -720,16 +706,13 @@ export function saveFamilyRounyOverrides(overrides) {
 }
 
 export async function fetchFamilyRounyOverrides() {
-  const fallback = loadFamilyRounyOverrides();
-  const payload = await fetchFamilyRecord(FAMILY_ROUNY_OVERRIDE_RECORD_KEY, fallback);
+  const payload = await fetchFamilyRecord(FAMILY_ROUNY_OVERRIDE_RECORD_KEY, []);
   const normalized = Array.isArray(payload) ? payload.map(normalizeFamilyRounyOverride).filter(Boolean) : [];
-  saveFamilyRounyOverrides(normalized);
   return normalized;
 }
 
 export async function persistFamilyRounyOverrides(overrides) {
   const normalized = overrides.map(normalizeFamilyRounyOverride).filter(Boolean);
-  saveFamilyRounyOverrides(normalized);
   await persistFamilyRecord(FAMILY_ROUNY_OVERRIDE_RECORD_KEY, normalized);
 }
 

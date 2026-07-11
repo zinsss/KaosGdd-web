@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 from typing import Any
 
+from app.db.repo.family_repo import FamilyRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.task_repo import TaskRepo
 from app.engine.task_service import TaskService
@@ -148,10 +149,17 @@ def _priority_tag(priority: str) -> str | None:
 
 
 class FamilyTaskSyncService:
-    def __init__(self, items_repo: ItemsRepo, task_repo: TaskRepo, task_service: TaskService) -> None:
+    def __init__(
+        self,
+        items_repo: ItemsRepo,
+        task_repo: TaskRepo,
+        task_service: TaskService,
+        family_repo: FamilyRepo | None = None,
+    ) -> None:
         self.items_repo = items_repo
         self.task_repo = task_repo
         self.task_service = task_service
+        self.family_repo = family_repo
 
     def sync(self, tasks: list[dict[str, Any]]) -> list[dict[str, Any]]:
         normalized_tasks = [task for task in (normalize_family_task(task) for task in tasks) if task]
@@ -214,6 +222,7 @@ class FamilyTaskSyncService:
                 }
             )
             self.items_repo.replace_item_tags(main_id, [*tags, self._mirror_tag(family_id)])
+            self._link_family_main(family_id, main_id, adopted_from_main=True, shared_with_main=True)
             existing_main_ids.add(main_id)
             existing_family_ids.add(family_id.lower())
             changed = True
@@ -358,11 +367,18 @@ class FamilyTaskSyncService:
         self.task_repo.replace_subtasks(item_id, list(extracted["subtasks"]))
         self.items_repo.replace_item_tags(item_id, self._mirror_tags_for_task(task))
         task["mainItemId"] = item_id
+        self._link_family_main(
+            task["id"],
+            item_id,
+            adopted_from_main=bool(task.get("adoptedFromMain")),
+            shared_with_main=True,
+        )
         return item_id
 
     def _remove_mirrors(self, family_task_id: str) -> None:
         for mirror in self._find_mirrors(family_task_id):
             self.items_repo.soft_delete_item(mirror["id"])
+        self._unlink_family_main(family_task_id)
 
     def _remove_stale_mirrors(self, active_family_ids: set[str]) -> None:
         for row in self.items_repo.list_items_by_tag_prefix(FAMILY_TASK_MIRROR_TAG_PREFIX):
@@ -373,3 +389,28 @@ class FamilyTaskSyncService:
             family_id = family_tags[0][len(FAMILY_TASK_MIRROR_TAG_PREFIX):]
             if family_id not in active_family_ids:
                 self.items_repo.soft_delete_item(row["id"])
+                self._unlink_family_main(family_id)
+
+    def _link_family_main(
+        self,
+        family_task_id: str,
+        main_item_id: str,
+        *,
+        adopted_from_main: bool,
+        shared_with_main: bool,
+    ) -> None:
+        if self.family_repo is None:
+            return
+        self.family_repo.upsert_main_link(
+            family_item_id=family_task_id,
+            main_item_id=main_item_id,
+            family_module="tasks",
+            origin="main" if adopted_from_main else "family",
+            adopted_from_main=adopted_from_main,
+            shared_with_main=shared_with_main,
+        )
+
+    def _unlink_family_main(self, family_task_id: str) -> None:
+        if self.family_repo is None:
+            return
+        self.family_repo.remove_main_links_for_family_item(family_task_id, "tasks")

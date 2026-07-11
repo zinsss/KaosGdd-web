@@ -9,7 +9,7 @@ Postgres volume with KaosGdd. Orthanc remains separate on the 64GB host.
 ## Current state
 
 - Backend persistence can run against SQLite or Postgres depending on `DATABASE_URL`.
-- Family UI data is still browser `localStorage`.
+- Family durable data now has dedicated backend tables. Browser storage is not canonical for Family notes, tasks, events, timetables, or caregiver data.
 - Postgres is prepared as a separate Docker service and volume.
 - `.env.example` now shows Postgres as the primary example and keeps SQLite as the documented fallback.
 - `docker-compose.yml` starts the `postgres` service and makes the backend wait for it to be healthy.
@@ -156,7 +156,7 @@ Review the target host and backup file before restore. Restore is destructive wh
 - Verify row counts and critical records after migration.
 - Run frontend/backend smoke tests against Postgres-backed app data.
 - Define rollback: whether to switch `DATABASE_URL` back to SQLite or restore Postgres backup.
-- Migrate Family browser `localStorage` data only after a separate product/data plan.
+- Verify Family v2 tables (`family_notes`, `family_tasks`, `family_events`, `family_timetables`, `family_timetable_entries`, `family_timetable_application_history`, `family_caregiver_days`, `family_caregiver_sessions`, `family_settings`, `family_main_links`) during any Postgres cutover.
 - Add production backup/restore runbooks and timers once data is actually in Postgres.
 - Keep Orthanc separate from this KaosGdd database.
 

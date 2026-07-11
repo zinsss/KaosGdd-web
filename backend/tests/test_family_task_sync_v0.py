@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 
+from app.db.repo.family_repo import FamilyRepo
 from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.task_repo import TaskRepo
@@ -20,9 +21,10 @@ def make_sync_service(tmp_path):
     init_schema_v0(engine)
     items_repo = ItemsRepo(engine)
     task_repo = TaskRepo(engine)
+    family_repo = FamilyRepo(engine)
     reminder_repo = ReminderRepo(engine)
     task_service = TaskService(items_repo, task_repo, reminder_repo)
-    return FamilyTaskSyncService(items_repo, task_repo, task_service), items_repo, task_repo, task_service
+    return FamilyTaskSyncService(items_repo, task_repo, task_service, family_repo), items_repo, task_repo, task_service, family_repo
 
 
 def mirrored_task_id(items_repo: ItemsRepo, family_task_id: str) -> str:
@@ -76,7 +78,7 @@ def test_family_task_canonical_raw_uses_main_task_subtask_grammar() -> None:
 
 
 def test_shared_family_task_creates_main_task_with_real_subtasks(tmp_path) -> None:
-    sync_service, items_repo, task_repo, _ = make_sync_service(tmp_path)
+    sync_service, items_repo, task_repo, _, family_repo = make_sync_service(tmp_path)
 
     sync_service.sync(
         [
@@ -108,10 +110,12 @@ def test_shared_family_task_creates_main_task_with_real_subtasks(tmp_path) -> No
         {"content": "우유", "is_done": False, "position": 0},
         {"content": "계란", "is_done": True, "position": 1},
     ]
+    assert family_repo.list_main_links()[0]["familyItemId"] == "family-1"
+    assert family_repo.list_main_links()[0]["mainItemId"] == mirror_id
 
 
 def test_family_mirror_internal_tags_are_hidden_from_main_task_output(tmp_path) -> None:
-    sync_service, items_repo, _, task_service = make_sync_service(tmp_path)
+    sync_service, items_repo, _, task_service, _ = make_sync_service(tmp_path)
 
     sync_service.sync(
         [
@@ -137,7 +141,7 @@ def test_family_mirror_internal_tags_are_hidden_from_main_task_output(tmp_path) 
 
 
 def test_family_task_repeated_sync_does_not_duplicate_mirror_or_subtasks(tmp_path) -> None:
-    sync_service, items_repo, task_repo, _ = make_sync_service(tmp_path)
+    sync_service, items_repo, task_repo, _, _ = make_sync_service(tmp_path)
     payload = [
         {
             "id": "family-1",
@@ -156,7 +160,7 @@ def test_family_task_repeated_sync_does_not_duplicate_mirror_or_subtasks(tmp_pat
 
 
 def test_family_task_edit_add_delete_reorder_propagates_to_main_subtasks(tmp_path) -> None:
-    sync_service, items_repo, task_repo, _ = make_sync_service(tmp_path)
+    sync_service, items_repo, task_repo, _, _ = make_sync_service(tmp_path)
 
     sync_service.sync(
         [
@@ -191,7 +195,7 @@ def test_family_task_edit_add_delete_reorder_propagates_to_main_subtasks(tmp_pat
 
 
 def test_unshared_family_task_removes_mirror_without_affecting_unrelated_tasks(tmp_path) -> None:
-    sync_service, items_repo, task_repo, task_service = make_sync_service(tmp_path)
+    sync_service, items_repo, task_repo, task_service, _ = make_sync_service(tmp_path)
     unrelated_id = task_service.create_task("main only")
 
     sync_service.sync(
@@ -222,7 +226,7 @@ def test_unshared_family_task_removes_mirror_without_affecting_unrelated_tasks(t
 
 
 def test_missing_family_task_removes_stale_mirror_without_affecting_unrelated_tasks(tmp_path) -> None:
-    sync_service, items_repo, task_repo, task_service = make_sync_service(tmp_path)
+    sync_service, items_repo, task_repo, task_service, _ = make_sync_service(tmp_path)
     unrelated_id = task_service.create_task("main only")
 
     sync_service.sync(
@@ -244,7 +248,7 @@ def test_missing_family_task_removes_stale_mirror_without_affecting_unrelated_ta
 
 
 def test_main_family_tagged_task_is_adopted_once(tmp_path) -> None:
-    sync_service, items_repo, _, task_service = make_sync_service(tmp_path)
+    sync_service, items_repo, _, task_service, _ = make_sync_service(tmp_path)
     main_id = task_service.create_task("메인 할일", due_at="2026-07-10T00:00:00+09:00", memo="메모")
     task_repo = sync_service.task_repo
     task_repo.replace_subtasks(
@@ -275,7 +279,7 @@ def test_main_family_tagged_task_is_adopted_once(tmp_path) -> None:
 
 
 def test_removing_family_song_tag_from_adopted_main_task_disconnects_projection(tmp_path) -> None:
-    sync_service, items_repo, task_repo, task_service = make_sync_service(tmp_path)
+    sync_service, items_repo, task_repo, task_service, _ = make_sync_service(tmp_path)
     main_id = task_service.create_task("메인 할일")
     family_id = f"main-task-{main_id}"
     items_repo.replace_item_tags(main_id, [FAMILY_TASK_SONG_TAG, f"{FAMILY_TASK_MIRROR_TAG_PREFIX}{family_id}"])
@@ -299,7 +303,7 @@ def test_removing_family_song_tag_from_adopted_main_task_disconnects_projection(
 
 
 def test_main_mirror_done_state_reconciles_back_to_family_task(tmp_path) -> None:
-    sync_service, items_repo, _, task_service = make_sync_service(tmp_path)
+    sync_service, items_repo, _, task_service, _ = make_sync_service(tmp_path)
     family_tasks = [
         {
             "id": "family-1",
@@ -321,7 +325,7 @@ def test_main_mirror_done_state_reconciles_back_to_family_task(tmp_path) -> None
 
 
 def test_main_mirror_subtask_done_state_reconciles_back_to_family_markers(tmp_path) -> None:
-    sync_service, items_repo, task_repo, task_service = make_sync_service(tmp_path)
+    sync_service, items_repo, task_repo, task_service, _ = make_sync_service(tmp_path)
     family_tasks = [
         {
             "id": "family-1",

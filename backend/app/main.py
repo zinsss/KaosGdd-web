@@ -80,7 +80,7 @@ scribble_repo = ScribbleRepo(engine)
 weather_repo = WeatherRepo(engine)
 family_repo = FamilyRepo(engine)
 task_service = TaskService(items_repo, task_repo, reminder_repo)
-family_task_sync_service = FamilyTaskSyncService(items_repo, task_repo, task_service)
+family_task_sync_service = FamilyTaskSyncService(items_repo, task_repo, task_service, family_repo)
 event_service = EventService(items_repo, event_repo, reminder_repo)
 family_event_sync_service = FamilyEventSyncService(
     items_repo=items_repo,
@@ -204,13 +204,13 @@ def database_diagnostic() -> dict:
         task_count = conn.execute(
             text("SELECT COUNT(*) FROM items WHERE item_type = 'task'")
         ).scalar_one()
-        family_record_count = conn.execute(text("SELECT COUNT(*) FROM family_records")).scalar_one()
+    family_entity_count = family_repo.count_entity_rows()
     return {
         "dialect": dialect,
         "database": location,
         "schema": DATABASE_SCHEMA if dialect.startswith("postgresql") else "",
         "task_count": int(task_count),
-        "family_record_count": int(family_record_count),
+        "family_entity_count": family_entity_count,
     }
 
 
@@ -440,14 +440,12 @@ def list_tasks(mode: str = "active"):
 
 @app.get("/family/tasks")
 def list_family_tasks():
-    payload = family_repo.get_record("family", "tasks")
-    has_record = isinstance(payload, list)
-    if not has_record:
-        payload = []
+    payload = family_repo.list_tasks()
+    has_record = bool(payload)
     adopted_tasks, adopted_changed = family_task_sync_service.adopt_main_family_tasks(payload)
     reconciled_tasks, changed = family_task_sync_service.reconcile_from_mirrors(adopted_tasks)
     if adopted_changed or changed:
-        family_repo.put_record("family", "tasks", reconciled_tasks)
+        family_repo.replace_tasks(reconciled_tasks)
         has_record = True
     if not has_record:
         return {"ok": True, "tasks": [], "hasRecord": has_record}
@@ -460,8 +458,76 @@ def save_family_tasks(payload: dict):
     if not isinstance(tasks, list):
         return {"ok": False, "error": "tasks must be a list"}
     normalized_tasks = family_task_sync_service.sync(tasks)
-    family_repo.put_record("family", "tasks", normalized_tasks)
+    family_repo.replace_tasks(normalized_tasks)
     return {"ok": True, "tasks": normalized_tasks}
+
+
+@app.get("/family/notes")
+def list_family_notes():
+    return {"ok": True, "notes": family_repo.list_notes()}
+
+
+@app.put("/family/notes")
+def save_family_notes(payload: dict):
+    notes = payload.get("notes") if isinstance(payload, dict) else None
+    if not isinstance(notes, list):
+        return {"ok": False, "error": "notes must be a list"}
+    return {"ok": True, "notes": family_repo.replace_notes(notes)}
+
+
+@app.get("/family/events")
+def list_family_events():
+    return {"ok": True, "events": family_event_sync_service.load_calendar_items()}
+
+
+@app.put("/family/events")
+def save_family_events(payload: dict):
+    events = payload.get("events") if isinstance(payload, dict) else None
+    if not isinstance(events, list):
+        return {"ok": False, "error": "events must be a list"}
+    return {"ok": True, "events": family_event_sync_service.save_calendar_items(events)}
+
+
+@app.get("/family/timetables")
+def list_family_timetables():
+    return {"ok": True, "state": family_repo.get_timetable_state() or {"plans": [], "assignments": []}}
+
+
+@app.put("/family/timetables")
+def save_family_timetables(payload: dict):
+    state = payload.get("state") if isinstance(payload, dict) else None
+    if not isinstance(state, dict):
+        return {"ok": False, "error": "state must be an object"}
+    return {"ok": True, "state": family_repo.put_timetable_state(state)}
+
+
+@app.get("/family/caregiver/days")
+def get_family_caregiver_days():
+    return {"ok": True, "days": family_repo.get_caregiver_days()}
+
+
+@app.put("/family/caregiver/days")
+def save_family_caregiver_days(payload: dict):
+    days = payload.get("days") if isinstance(payload, dict) else None
+    if not isinstance(days, dict):
+        return {"ok": False, "error": "days must be an object"}
+    return {"ok": True, "days": family_repo.put_caregiver_days(days)}
+
+
+@app.get("/family/settings/{setting_key}")
+def get_family_setting(setting_key: str):
+    return {"ok": True, "payload": family_repo.get_setting(setting_key)}
+
+
+@app.put("/family/settings/{setting_key}")
+def put_family_setting(setting_key: str, payload: dict):
+    value = payload.get("payload") if isinstance(payload, dict) else None
+    return {"ok": True, "payload": family_repo.put_setting(setting_key, value)}
+
+
+@app.get("/family/links")
+def list_family_links():
+    return {"ok": True, "links": family_repo.list_main_links()}
 
 
 @app.get("/family/records/{record_key}")

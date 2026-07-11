@@ -6,7 +6,7 @@ async function readSource(path) {
   return readFile(new URL(path, import.meta.url), "utf8");
 }
 
-test("family tasks use backend storage with localStorage as fallback only", async () => {
+test("family tasks use backend storage as canonical storage", async () => {
   const helperSource = await readSource("../app/family/familyTasks.js");
   const dashboardSource = await readSource("../app/family/FamilyDashboardClient.js");
   const formSource = await readSource("../app/family/tasks/FamilyTaskFormClient.js");
@@ -18,11 +18,10 @@ test("family tasks use backend storage with localStorage as fallback only", asyn
   assert.ok(helperSource.includes('fetch("/api/family/tasks"'));
   assert.ok(helperSource.includes("export async function fetchFamilyTasks()"));
   assert.ok(helperSource.includes("export async function persistFamilyTasks(tasks)"));
-  assert.ok(helperSource.includes("return localTasks;"), "localStorage should remain as fallback if backend is unreachable");
-  assert.ok(helperSource.includes("saveFamilyTasks(normalizedTasks);"), "localStorage should mirror successful backend saves");
-  assert.ok(helperSource.includes("const localTasks = loadFamilyTasks();"), "old localStorage tasks should be read before backend migration decisions");
-  assert.ok(helperSource.includes("parsed?.hasRecord === true"), "tasks should distinguish a missing backend record from an intentionally empty one");
-  assert.ok(helperSource.includes("persistFamilyTasks(localTasks);"), "missing backend task records should migrate localStorage tasks once");
+  assert.ok(!helperSource.includes("return localTasks;"), "backend v2 should not use localStorage as canonical fallback");
+  assert.ok(!helperSource.includes("saveFamilyTasks(savedTasks);"), "backend v2 should not mirror successful backend saves into localStorage");
+  assert.ok(!helperSource.includes("const localTasks = loadFamilyTasks();"), "backend v2 should not import old localStorage tasks");
+  assert.ok(!helperSource.includes("persistFamilyTasks(localTasks);"), "backend v2 should not auto-migrate stale localStorage tasks");
 
   for (const source of [dashboardSource, formSource, doneSource]) {
     assert.ok(source.includes("fetchFamilyTasks"));
@@ -35,11 +34,11 @@ test("family tasks use backend storage with localStorage as fallback only", asyn
   assert.ok(routeSource.includes('method: "PUT"'));
   assert.ok(backendSource.includes('@app.get("/family/tasks")'));
   assert.ok(backendSource.includes('@app.put("/family/tasks")'));
-  assert.ok(backendSource.includes('"hasRecord": has_record'), "backend tasks response should expose whether a persisted record exists");
-  assert.ok(schemaSource.includes("CREATE TABLE IF NOT EXISTS {family_records}"));
+  assert.ok(schemaSource.includes("CREATE TABLE IF NOT EXISTS {family_tasks}"));
+  assert.ok(schemaSource.includes("CREATE TABLE IF NOT EXISTS {family_main_links}"));
 });
 
-test("family tasks migrate old localStorage only when backend record is missing", async () => {
+test("family tasks do not rehydrate stale localStorage when backend is empty", async () => {
   const taskModule = await import("../app/family/familyTasks.js");
   const storage = new Map();
   globalThis.window = {
@@ -63,31 +62,19 @@ test("family tasks migrate old localStorage only when backend record is missing"
   };
   storage.set(taskModule.FAMILY_TASKS_STORAGE_KEY, JSON.stringify([localTask]));
 
-  const missingRecordCalls = [];
+  const calls = [];
   globalThis.fetch = async (url, options = {}) => {
-    missingRecordCalls.push({ url, options });
+    calls.push({ url, options });
     if (!options.method) {
-      return Response.json({ ok: true, tasks: [], hasRecord: false });
+      return Response.json({ ok: true, tasks: [] });
     }
     return Response.json({ ok: true, tasks: JSON.parse(options.body).tasks });
   };
 
-  const migratedTasks = await taskModule.fetchFamilyTasks();
-  assert.equal(migratedTasks.length, 1);
-  assert.equal(migratedTasks[0].id, "local-1");
-  assert.ok(missingRecordCalls.some((call) => call.options.method === "PUT"), "missing backend record should trigger a one-time local task migration");
-
-  const existingEmptyCalls = [];
-  storage.set(taskModule.FAMILY_TASKS_STORAGE_KEY, JSON.stringify([localTask]));
-  globalThis.fetch = async (url, options = {}) => {
-    existingEmptyCalls.push({ url, options });
-    return Response.json({ ok: true, tasks: [], hasRecord: true });
-  };
-
   const emptyBackendTasks = await taskModule.fetchFamilyTasks();
   assert.deepEqual(emptyBackendTasks, []);
-  assert.ok(!existingEmptyCalls.some((call) => call.options.method === "PUT"), "intentional empty backend task record should not re-migrate stale local tasks");
-  assert.equal(storage.get(taskModule.FAMILY_TASKS_STORAGE_KEY), "[]");
+  assert.ok(!calls.some((call) => call.options.method === "PUT"), "empty backend should not trigger localStorage migration");
+  assert.ok(storage.get(taskModule.FAMILY_TASKS_STORAGE_KEY)?.includes("local-1"), "stale localStorage should be left untouched but ignored");
 
   delete globalThis.fetch;
   delete globalThis.window;

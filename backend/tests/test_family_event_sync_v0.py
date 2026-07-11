@@ -46,7 +46,7 @@ def active_mirror_count(items_repo: ItemsRepo, family_event_id: str) -> int:
 
 
 def test_shared_family_all_day_event_creates_main_projection(tmp_path) -> None:
-    sync_service, items_repo, event_repo, event_service, _ = make_sync_service(tmp_path)
+    sync_service, items_repo, event_repo, event_service, family_repo = make_sync_service(tmp_path)
 
     synced = sync_service.save_calendar_items(
         [
@@ -74,6 +74,8 @@ def test_shared_family_all_day_event_creates_main_projection(tmp_path) -> None:
     ]
     assert event_service.get_event(mirror_id)["tags"] == ["family"]
     assert "family-event:family-event-1" not in event_service.export_event_raw(mirror_id)
+    assert family_repo.list_main_links()[0]["familyItemId"] == "family-event-1"
+    assert family_repo.list_main_links()[0]["mainItemId"] == mirror_id
 
 
 def test_shared_family_timed_event_projects_as_main_all_day_with_time_in_memo(tmp_path) -> None:

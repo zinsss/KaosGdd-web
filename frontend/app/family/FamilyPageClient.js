@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import FamilyHeader from "./FamilyHeader";
-import { fetchFamilyRecord, persistFamilyRecord } from "./familyBackendStore";
-
-const STORAGE_KEY = "kaosgdd:family-quick-pad-v0";
-const MEMO_RECORD_KEY = "memo-messages";
+import { fetchFamilyModule, persistFamilyModule } from "./familyBackendStore";
 
 const INITIAL_MESSAGES = [
   {
@@ -94,29 +91,13 @@ function formatCreatedAt() {
   }).format(new Date());
 }
 
-function loadMessages() {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = JSON.parse(raw || "[]");
-    return Array.isArray(parsed) && parsed.length ? parsed : INITIAL_MESSAGES;
-  } catch {
-    return INITIAL_MESSAGES;
-  }
-}
-
 async function fetchMessages() {
-  const fallback = loadMessages();
-  const payload = await fetchFamilyRecord(MEMO_RECORD_KEY, fallback);
-  return Array.isArray(payload) && payload.length ? payload : fallback;
+  const payload = await fetchFamilyModule("notes", "notes", []);
+  return Array.isArray(payload) && payload.length ? payload : INITIAL_MESSAGES;
 }
 
 async function persistMessages(messages) {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
-  } catch {
-    // local mirror is best-effort only
-  }
-  await persistFamilyRecord(MEMO_RECORD_KEY, messages);
+  await persistFamilyModule("notes", "notes", "notes", messages);
 }
 
 function MessageBubble({ isEditing, message, onDeleteMessage, onEditMessage, onToggleChecklistItem }) {
