@@ -73,7 +73,11 @@ test("selected-day weather dayparts render available and unavailable states", as
   assert.doesNotMatch(source, /fetchWeatherDayparts\(\{ location: weatherLocation, date: selectedDate \}\)/);
   assert.doesNotMatch(weatherClient, /\/api\/weather\/dayparts\?location=/);
   assert.match(source, /weatherDaypartsAvailable && weatherDayparts\.length > 0/);
+  assert.match(source, /eventSelectedWeatherCard/);
+  assert.match(source, /eventSelectedWeatherLayout/);
+  assert.match(source, /eventSelectedWeatherSummary/);
   assert.match(source, /eventDaypartRow/);
+  assert.match(source, /eventDaypartValue/);
   assert.match(source, /weatherDaypartsReason/);
   assert.match(source, /Weather info not available\./);
 });

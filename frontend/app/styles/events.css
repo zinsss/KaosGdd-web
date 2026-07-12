@@ -234,29 +234,95 @@ body.eventsPageActive .appShellMain {
   gap: 10px;
 }
 
-.eventDaypartWeatherBlock {
+.eventSelectedWeatherCard {
   border: 1px solid rgba(186, 194, 222, 0.14);
   border-radius: var(--group-box-radius);
   background: rgba(30, 30, 46, 0.26);
-  padding: 9px 10px;
+  padding: 12px 14px;
+}
+
+.eventSelectedWeatherLayout {
+  display: grid;
+  grid-template-columns: minmax(124px, 0.9fr) minmax(0, 1.1fr);
+  align-items: stretch;
+  gap: 14px;
+}
+
+.eventSelectedWeatherSummary {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+  border-right: 1px solid rgba(186, 194, 222, 0.16);
+  padding-right: 14px;
+  text-align: center;
+}
+
+.eventSelectedWeatherGlyph {
+  color: var(--ctp-sky);
+  font-size: clamp(2.8rem, 13vw, 4.4rem);
+  line-height: 0.9;
+}
+
+.eventSelectedWeatherRange {
+  color: var(--ctp-lavender);
+  font-size: clamp(1.9rem, 8vw, 3rem);
+  font-weight: 800;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.eventSelectedWeatherMinMax {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  color: var(--ctp-lavender);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.eventSelectedWeatherMinMax span {
+  display: grid;
+  gap: 1px;
+}
+
+.eventSelectedWeatherMinMax small {
+  color: var(--ui-text-dim);
+  font-size: 0.68rem;
+  font-weight: 600;
 }
 
 .eventDaypartGrid {
   display: grid;
-  gap: 6px;
+  align-content: center;
+  gap: 9px;
+  min-width: 0;
 }
 
 .eventDaypartRow {
-  display: grid;
-  grid-template-columns: minmax(88px, 1fr) auto auto;
+  display: flex;
   align-items: center;
-  gap: 9px;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
   color: var(--ui-text);
   font-size: 13px;
 }
 
 .eventDaypartLabel {
   color: var(--ui-text-dim);
+  min-width: 0;
+}
+
+.eventDaypartValue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex: 0 0 auto;
+  min-width: 0;
 }
 
 .eventDaypartGlyph {
@@ -268,6 +334,7 @@ body.eventsPageActive .appShellMain {
 .eventDaypartTemp {
   color: var(--ctp-lavender);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .eventSelectedDayList {
@@ -355,5 +422,19 @@ body.eventsPageActive .appShellMain {
 
   .eventMonthNavButton {
     flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 520px) {
+  .eventSelectedWeatherLayout {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .eventSelectedWeatherSummary {
+    border-right: 0;
+    border-bottom: 1px solid rgba(186, 194, 222, 0.14);
+    padding-right: 0;
+    padding-bottom: 12px;
   }
 }

@@ -236,6 +236,7 @@ export default function EventsPageClient() {
     }
     return map;
   }, [weatherItems]);
+  const selectedDayWeather = selectedDate ? weatherByDate.get(selectedDate) : null;
 
   const selectedDayEvents = useMemo(() => {
     const unique = new Map();
@@ -449,16 +450,36 @@ export default function EventsPageClient() {
 
       <section className="panel eventSelectedDayPanel">
         <div className="sectionTitle">Selected day • {selectedDate || todayYmd || ""}</div>
-        <div className="eventDaypartWeatherBlock">
-          {weatherDaypartsAvailable && weatherDayparts.length > 0 ? (
-            <div className="eventDaypartGrid">
-              {weatherDayparts.map((daypart) => (
-                <div key={daypart.label} className="eventDaypartRow">
-                  <span className="eventDaypartLabel">{daypart.label}</span>
-                  <span className="eventDaypartGlyph" aria-hidden="true">{daypart.glyph}</span>
-                  <span className="eventDaypartTemp">{daypart.temp_min_c}–{daypart.temp_max_c}</span>
-                </div>
-              ))}
+        <div className="eventSelectedWeatherCard">
+          {selectedDayWeather || (weatherDaypartsAvailable && weatherDayparts.length > 0) ? (
+            <div className="eventSelectedWeatherLayout">
+              <div className="eventSelectedWeatherSummary">
+                <span className="eventSelectedWeatherGlyph" aria-hidden="true">{selectedDayWeather?.glyph || "·"}</span>
+                <span className="eventSelectedWeatherRange">
+                  {selectedDayWeather ? `${selectedDayWeather.min_c}–${selectedDayWeather.max_c}°` : "—"}
+                </span>
+                {selectedDayWeather ? (
+                  <span className="eventSelectedWeatherMinMax">
+                    <span>{selectedDayWeather.min_c}°<small>Min</small></span>
+                    <span>{selectedDayWeather.max_c}°<small>Max</small></span>
+                  </span>
+                ) : null}
+              </div>
+              <div className="eventDaypartGrid">
+                {weatherDaypartsAvailable && weatherDayparts.length > 0 ? (
+                  weatherDayparts.map((daypart) => (
+                    <div key={daypart.label} className="eventDaypartRow">
+                      <span className="eventDaypartLabel">{daypart.label}</span>
+                      <span className="eventDaypartValue">
+                        <span className="eventDaypartGlyph" aria-hidden="true">{daypart.glyph}</span>
+                        <span className="eventDaypartTemp">{daypart.temp_min_c}–{daypart.temp_max_c}</span>
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="empty">{weatherDaypartsReason}</div>
+                )}
+              </div>
             </div>
           ) : (
             <div className="empty">{weatherDaypartsReason}</div>
