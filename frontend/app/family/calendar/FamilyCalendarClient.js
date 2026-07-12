@@ -1304,6 +1304,9 @@ export default function FamilyCalendarClient() {
       return counts;
     }, {});
   }, [datedItems]);
+  const publicHolidayDateKeys = useMemo(() => {
+    return new Set(datedItems.filter((item) => item.eventClass === "public-holiday").map((item) => item.date));
+  }, [datedItems]);
   const weatherByDate = useMemo(() => {
     const nextWeather = new Map();
     weatherItems.forEach((item) => {
@@ -1667,9 +1670,10 @@ export default function FamilyCalendarClient() {
                 </button>
                 {week.days.map((day, dayIndex) => {
                   const count = datedItemsByDate[day.dateKey] || 0;
+                  const publicHoliday = publicHolidayDateKeys.has(day.dateKey);
                   return (
                     <button
-                      className={`familyCalendarWeekDay familyCalendarWeekDateButton${day.inMonth ? "" : " familyCalendarDateOutside"}${selected ? "" : " familyCalendarWeekDateButtonCollapsed"}${pressedDateKey === day.dateKey ? " familyCalendarWeekDateButtonPressed" : ""}`}
+                      className={`familyCalendarWeekDay familyCalendarWeekDateButton${day.inMonth ? "" : " familyCalendarDateOutside"}${publicHoliday ? " familyCalendarPublicHolidayDate" : ""}${selected ? "" : " familyCalendarWeekDateButtonCollapsed"}${pressedDateKey === day.dateKey ? " familyCalendarWeekDateButtonPressed" : ""}`}
                       data-day-index={selected && editingCalendar ? dayIndex : undefined}
                       data-family-calendar-drop={selected && editingCalendar ? "date" : undefined}
                       key={day.dateKey}

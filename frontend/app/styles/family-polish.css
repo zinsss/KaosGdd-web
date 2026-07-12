@@ -414,6 +414,11 @@
   color: #d86f98;
 }
 
+.familyCalendarWeekDateButton.familyCalendarPublicHolidayDate {
+  background: transparent;
+  color: #d86f98;
+}
+
 @media (max-width: 640px) {
   .familyPage {
     width: 100%;
