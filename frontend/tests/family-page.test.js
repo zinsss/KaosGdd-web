@@ -22,16 +22,17 @@ test("family shared header uses polished tab wording and routes", async () => {
   assert.ok(!headerSource.includes("<img"), "raw img should not be used in the Family header");
   assert.ok(!headerSource.includes("<h1>가족</h1>"), "old text banner title should not remain");
 
-  for (const label of ["달력", "할일", "로운이", "메모장"]) {
+  for (const label of ["달력", "할일", "로운이", "메모장", "설정"]) {
     assert.ok(headerSource.includes(label), `${label} should be in the Family header`);
   }
   assert.ok(headerSource.indexOf("달력") < headerSource.indexOf("할일"));
   assert.ok(headerSource.indexOf("할일") < headerSource.indexOf("로운이"));
   assert.ok(headerSource.indexOf("로운이") < headerSource.indexOf("메모장"));
-  for (const route of ["/family/calendar", "/family", "/family/roun", "/family/memo"]) {
+  assert.ok(headerSource.indexOf("메모장") < headerSource.indexOf("설정"));
+  for (const route of ["/family/calendar", "/family", "/family/roun", "/family/memo", "/family/settings"]) {
     assert.ok(headerSource.includes(route), `${route} should remain available`);
   }
-  for (const route of ["/calendar", "/tasks", "/roun", "/memo"]) {
+  for (const route of ["/calendar", "/tasks", "/roun", "/memo", "/settings"]) {
     assert.ok(headerSource.includes(route), `${route} should be available on the Family subdomain`);
   }
   for (const oldLabel of ["모하꼬?", "뭐라꼬?", "은제?", "모라노", "대시보드", "로니", "로우니"]) {
@@ -45,6 +46,7 @@ test("family page metadata uses standard Korean titles", async () => {
     await readSource("../app/family/memo/page.js"),
     await readSource("../app/family/timetable/page.js"),
     await readSource("../app/family/calendar/rouny/page.js"),
+    await readSource("../app/family/settings/page.js"),
     await readSource("../app/family/calendar/events/new/page.js"),
     await readSource("../app/family/calendar/events/[id]/edit/page.js"),
   ].join("\n");
@@ -52,6 +54,7 @@ test("family page metadata uses standard Korean titles", async () => {
   for (const title of [
     "로운이와 나 - KaosGdd",
     "메모장 - KaosGdd",
+    "설정 - KaosGdd",
     "로운이 시간표 - KaosGdd",
     "일정 추가 - KaosGdd",
     "일정 수정 - KaosGdd",
@@ -62,6 +65,18 @@ test("family page metadata uses standard Korean titles", async () => {
   for (const oldTitle of ["우짜노우짤꼬", "모라노", "뭔날이고", "로니 - KaosGdd"]) {
     assert.ok(!pageSources.includes(oldTitle), `${oldTitle} should not remain in Family page metadata`);
   }
+});
+
+test("family settings page exposes shared weather setting", async () => {
+  const settingsSource = await readSource("../app/family/settings/page.js");
+  const polishCss = await readSource("../app/styles/family-polish.css");
+
+  assert.ok(settingsSource.includes('aria-label="설정"'));
+  assert.ok(settingsSource.includes('<FamilyHeader active="settings" />'));
+  assert.ok(settingsSource.includes("<h2>설정</h2>"));
+  assert.ok(settingsSource.includes("날씨 지역"));
+  assert.ok(settingsSource.includes("WeatherLocationSettings"));
+  assert.match(polishCss, /\.familySettingsRow select\s*\{[\s\S]*?font-size:\s*16px;/);
 });
 
 test("family memo page uses finalized title and checklist glyph", async () => {

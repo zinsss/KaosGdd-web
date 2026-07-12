@@ -17,9 +17,11 @@ test("family subdomain rewrites to Family routes without touching APIs or assets
   assert.ok(middlewareSource.includes('if (pathname === "/family/calendar") return "/calendar";'));
   assert.ok(middlewareSource.includes('if (pathname === "/family") return "/tasks";'));
 
-  for (const route of ['"/calendar"', '"/tasks"', '"/roun"', '"/memo"']) {
+  for (const route of ['"/calendar"', '"/tasks"', '"/roun"', '"/memo"', '"/settings"']) {
     assert.ok(middlewareSource.includes(route), `${route} should be available as a short Family subdomain path`);
   }
+
+  assert.ok(middlewareSource.includes('if (pathname === "/family/settings") return "/settings";'));
 
   for (const passthrough of ['"/api/"', '"/_next/"', '"/favicon"', '"/manifest"']) {
     assert.ok(middlewareSource.includes(passthrough), `${passthrough} should not be rewritten under the Family subdomain`);

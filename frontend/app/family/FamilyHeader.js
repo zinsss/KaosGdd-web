@@ -8,6 +8,7 @@ const FAMILY_NAV_ITEMS = [
   { key: "home", familyHref: "/tasks", mainHref: "/family", label: "할일" },
   { key: "roun", familyHref: "/roun", mainHref: "/family/roun", label: "로운이" },
   { key: "memo", familyHref: "/memo", mainHref: "/family/memo", label: "메모장" },
+  { key: "settings", familyHref: "/settings", mainHref: "/family/settings", label: "설정" },
 ];
 
 function readFamilyHost() {
