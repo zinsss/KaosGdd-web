@@ -411,6 +411,7 @@ function CalendarItemLink({
   const itemType = normalizedCalendarItemType(item);
   const href = itemType === "rouny" ? "/family/roun" : `/family/calendar/events/${item.id}/edit`;
   const publicHolidayClass = item.eventClass === "public-holiday" ? " familyCalendarPublicHolidayItem" : "";
+  const suppressNavigation = item.readOnly || item.systemEvent;
   const editItem = className.includes("familyCalendarEditItem");
   const allDayEditItem = className.includes("familyCalendarAllDayItemEditable");
   const dragEnabledItem = !item.readOnly && (editItem || allDayEditItem);
@@ -433,7 +434,7 @@ function CalendarItemLink({
       draggable={dragEnabledItem ? false : undefined}
       href={href}
       key={`${itemType}-${item.id}`}
-      onClick={dragging || suppressRounyNavigation ? (event) => event.preventDefault() : undefined}
+      onClick={dragging || suppressRounyNavigation || suppressNavigation ? (event) => event.preventDefault() : undefined}
       onDragStart={dragEnabledItem ? (event) => event.preventDefault() : undefined}
       onPointerCancel={cancelRounyChoice}
       onPointerDown={dragEnabledItem ? (event) => {

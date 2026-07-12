@@ -63,6 +63,8 @@ test("Family modules use backend records instead of browser-only storage", async
   assert.ok(calendarDataSource.includes(".filter((item) => item && !item.readOnly && !item.systemEvent);"));
   assert.ok(calendarSource.includes("fetchFamilyCalendarItems({ startDate: weatherStart, endDate: weatherEnd })"));
   assert.ok(calendarSource.includes("const dragEnabledItem = !item.readOnly && (editItem || allDayEditItem);"));
+  assert.ok(calendarSource.includes("const suppressNavigation = item.readOnly || item.systemEvent;"));
+  assert.ok(calendarSource.includes("dragging || suppressRounyNavigation || suppressNavigation"));
   assert.ok(calendarSource.includes('item.eventClass === "public-holiday" ? " familyCalendarPublicHolidayItem" : ""'));
   assert.match(polishCss, /\.familyCalendarPublicHolidayItem\.familyCalendarItemDated\s*\{[\s\S]*?color:\s*#d86f98;/);
   assert.ok(calendarDataSource.includes('fetchFamilyModule("timetables"'));

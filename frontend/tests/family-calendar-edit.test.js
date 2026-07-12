@@ -636,7 +636,7 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("event.currentTarget.setPointerCapture?.(event.pointerId);"));
   assert.ok(calendarSource.includes("beginFamilyScheduleDragSelectionLock();"));
   assert.ok(calendarSource.includes("endFamilyScheduleDragSelectionLock();"));
-  assert.ok(calendarSource.includes("onClick={dragging || suppressRounyNavigation ? (event) => event.preventDefault() : undefined}"));
+  assert.ok(calendarSource.includes("onClick={dragging || suppressRounyNavigation || suppressNavigation ? (event) => event.preventDefault() : undefined}"));
   assert.ok(calendarSource.includes("pending?.dragElement?.releasePointerCapture?.(event.pointerId);"));
   assert.ok(calendarSource.includes("onMoveDatedItem(pending.item.id, currentDragState.target);"));
   assert.ok(calendarSource.includes("onCreateRounyOverride(pending.item, currentDragState.target);"));
