@@ -207,6 +207,9 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(weatherRowsSource, /FAMILY_CALENDAR_DAYPART_RAIL_LABELS\s*=\s*\["M",\s*"A",\s*"E",\s*"N"\]/);
   assert.match(weatherRowsSource, /\{FAMILY_CALENDAR_DAYPART_RAIL_LABELS\[index\]\}/);
   assert.match(weatherRowsSource, /familyCalendarWeatherSummaryRow/);
+  assert.match(weatherRowsSource, /function DailyWeatherSummary\(\{ label, range \}\)/);
+  assert.match(weatherRowsSource, /familyCalendarWeatherSummaryGlyph/);
+  assert.match(weatherRowsSource, /familyCalendarWeatherSummaryRange/);
   assert.match(weatherRowsSource, /familyCalendarSectionSeparated/);
   assert.match(weatherRowsSource, /\{expanded\s*\?\s*FAMILY_CALENDAR_DAYPART_LABELS\.map/);
 
@@ -223,6 +226,9 @@ test("family calendar expanded week keeps weather compact by default and renders
   assert.match(weatherCss, /\.familyCalendarWeatherToggleLabel/);
   assert.doesNotMatch(weatherCss, /familyCalendarWeatherToggleGlyph/);
   assert.match(weatherCss, /\.familyCalendarWeatherSummary/);
+  assert.match(weatherCss, /\.familyCalendarWeatherSummary\s*\{[\s\S]*?flex-direction:\s*column;[\s\S]*?gap:\s*1px;/);
+  assert.match(weatherCss, /\.familyCalendarWeatherSummaryGlyph\s*\{[\s\S]*?font-size:\s*16px;/);
+  assert.match(weatherCss, /\.familyCalendarWeatherSummaryRange\s*\{[\s\S]*?font-size:\s*10px;/);
   assert.match(weatherCss, /\.familyCalendarWeatherDaypart/);
   assert.match(weatherCss, /\.familyCalendarWeatherLabelText/);
   assert.match(weatherCss, /\.familyCalendarWeatherToggle,\s*\n\.familyCalendarWeatherLabel\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"[\s\S]*?font-size:\s*10px;[\s\S]*?font-variant-numeric:\s*tabular-nums;[\s\S]*?letter-spacing:\s*0;/);

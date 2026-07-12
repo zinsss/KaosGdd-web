@@ -24,6 +24,15 @@ function formatWeatherText(label, range) {
   return `${label} ${range}`;
 }
 
+function DailyWeatherSummary({ label, range }) {
+  return (
+    <span className="familyCalendarWeatherSummary familyCalendarWeatherLabelText">
+      {label ? <span className="familyCalendarWeatherSummaryGlyph">{label}</span> : null}
+      {range ? <span className="familyCalendarWeatherSummaryRange">{range}</span> : null}
+    </span>
+  );
+}
+
 function hasDaypartWeather(item) {
   if (!item) return false;
   return item.temp_min_c !== "" || item.temp_max_c !== "";
@@ -64,9 +73,7 @@ export default function FamilyCalendarWeatherRows({ expanded = false, onToggle =
           return (
             <WeatherCell key={`summary-${date}`}>
               {weather ? (
-                <span className="familyCalendarWeatherSummary familyCalendarWeatherLabelText">
-                  {formatWeatherText(weatherLabel, formatWeatherRange(weather))}
-                </span>
+                <DailyWeatherSummary label={weatherLabel} range={formatWeatherRange(weather)} />
               ) : null}
             </WeatherCell>
           );

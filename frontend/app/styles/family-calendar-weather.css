@@ -100,8 +100,28 @@
 }
 
 .familyCalendarWeatherSummary {
+  flex-direction: column;
+  gap: 1px;
   color: rgba(78, 37, 54, 0.7);
   font-weight: 900;
+  line-height: 1;
+}
+
+.familyCalendarWeatherSummaryGlyph {
+  display: block;
+  color: rgba(78, 37, 54, 0.68);
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.familyCalendarWeatherSummaryRange {
+  display: block;
+  color: rgba(78, 37, 54, 0.62);
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
 }
 
 .familyCalendarWeatherLabelText {
@@ -168,9 +188,16 @@
   .familyCalendarWeekDateMeta,
   .familyCalendarWeatherToggle,
   .familyCalendarWeatherLabel,
-  .familyCalendarWeatherSummary,
   .familyCalendarWeatherDaypart {
     font-size: 10px;
+  }
+
+  .familyCalendarWeatherSummaryGlyph {
+    font-size: 15px;
+  }
+
+  .familyCalendarWeatherSummaryRange {
+    font-size: 9px;
   }
 
   .familyCalendarWeatherDebug {
