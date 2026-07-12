@@ -29,3 +29,12 @@ test("event classification proxy awaits dynamic params", async () => {
   assert.doesNotMatch(routeSource, /context\.params\.id/);
   assert.match(routeSource, /encodeURIComponent\(id\)/);
 });
+
+test("checked public holidays use the Sunday color in the month calendar", async () => {
+  const eventsSource = await readFile(new URL("../app/events/EventsPageClient.js", import.meta.url), "utf8");
+  const eventsCss = await readFile(new URL("../app/styles/events.css", import.meta.url), "utf8");
+
+  assert.match(eventsSource, /const hasPublicHoliday = dayEvents\.some\(\(event\) => event\.event_class === "public-holiday"\);/);
+  assert.match(eventsSource, /hasPublicHoliday\s*\?\s*" eventCalDayPublicHoliday"/);
+  assert.match(eventsCss, /\.eventCalDaySun,\s*\n\.eventCalDayPublicHoliday\s*\{\s*color:\s*var\(--ctp-maroon\);/);
+});

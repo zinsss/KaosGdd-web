@@ -105,7 +105,8 @@ body.eventsPageActive .appShellMain {
   background: var(--ctp-rosewater);
 }
 .eventCalDayNumber { color: var(--ui-text); }
-.eventCalDaySun { color: var(--ctp-maroon); }
+.eventCalDaySun,
+.eventCalDayPublicHoliday { color: var(--ctp-maroon); }
 .eventCalDaySat { color: var(--ctp-blue); }
 
 .calendarDayTop {

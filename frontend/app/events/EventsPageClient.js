@@ -397,8 +397,15 @@ export default function EventsPageClient() {
             const countGlyph = formatEventCountGlyph(count);
             const weather = weatherByDate.get(d);
             const hasRecurringOccurrence = dayEvents.some((event) => event.is_recurring_occurrence);
+            const hasPublicHoliday = dayEvents.some((event) => event.event_class === "public-holiday");
             const dayOfWeek = new Date(`${d}T00:00:00`).getDay();
-            const dayClass = dayOfWeek === 0 ? " eventCalDaySun" : dayOfWeek === 6 ? " eventCalDaySat" : "";
+            const dayClass = hasPublicHoliday
+              ? " eventCalDayPublicHoliday"
+              : dayOfWeek === 0
+              ? " eventCalDaySun"
+              : dayOfWeek === 6
+              ? " eventCalDaySat"
+              : "";
             const isSelected = selectedDate === d;
             const isToday = todayYmd === d;
             return (
