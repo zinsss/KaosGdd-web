@@ -184,18 +184,22 @@ export default function FamilyPageClient() {
   }, [messages, messagesLoaded]);
 
   useEffect(() => {
-    requestAnimationFrame(resetInputHeight);
-  }, [checklistMode]);
+    requestAnimationFrame(() => resizeInputToContent());
+  }, [checklistMode, draft]);
 
   function resetInputHeight() {
     const el = inputRef.current;
     if (!el) return;
-    el.style.height = "";
+    el.style.height = checklistMode ? "" : "40px";
   }
 
   function resizeInputToContent(el = inputRef.current) {
     if (!el) return;
-    el.style.height = "";
+    if (!el.value && !checklistMode) {
+      el.style.height = "40px";
+      return;
+    }
+    el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 148)}px`;
   }
 

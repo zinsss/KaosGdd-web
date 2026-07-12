@@ -70,6 +70,10 @@ test("family memo page uses finalized title and checklist glyph", async () => {
   assert.ok(memoSource.includes('aria-label="메모장"'));
   assert.ok(memoSource.includes("<h2>메모장</h2>"));
   assert.ok(memoSource.includes(""));
+  assert.ok(memoSource.includes("}, [checklistMode, draft]);"));
+  assert.ok(memoSource.includes('el.style.height = checklistMode ? "" : "40px";'));
+  assert.ok(memoSource.includes('if (!el.value && !checklistMode)'));
+  assert.ok(memoSource.includes('el.style.height = "auto";'));
   for (const label of ["수정", "삭제", "저장", "취소"]) {
     assert.ok(memoSource.includes(label), `${label} should be available in memo actions`);
   }
