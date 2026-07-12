@@ -261,13 +261,18 @@ body.eventsPageActive .appShellMain {
 
 .eventSelectedWeatherGlyph {
   color: var(--ctp-sky);
-  font-size: clamp(2.8rem, 13vw, 4.4rem);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-size: clamp(3.4rem, 16vw, 5.2rem);
   line-height: 0.9;
+  text-align: center;
 }
 
 .eventSelectedWeatherRange {
   color: var(--ctp-lavender);
-  font-size: clamp(1.9rem, 8vw, 3rem);
+  font-size: clamp(1.55rem, 6.4vw, 2.45rem);
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
