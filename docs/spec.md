@@ -114,11 +114,13 @@ Fax is a durable backend module with HylaFAX as the transport. Incoming and outg
 
 ## Family Subdomain
 
-`family.kaosgdd.net` is a short Family entry point. The frontend proxy rewrites `/`, `/calendar`, `/tasks`, `/roun`, and `/memo` to the corresponding `/family/...` routes. API and static asset paths pass through unchanged.
+`family.kaosgdd.net` is a short Family entry point. The frontend proxy rewrites `/`, `/calendar`, `/tasks`, `/roun`, `/memo`, and `/settings` to the corresponding `/family/...` routes. API and static asset paths pass through unchanged.
 
 Family is an independent app surface. `/family/*` and the Family subdomain render the Family shell and Family navigation only, not the main KaosGdd top navigation, capture bar, or attention card.
 
 The only intentional bridges between Family and the main app are the shared backend weather cache, explicit Family task sharing to main tasks, and explicit Family event sharing to main events.
+
+Family content access is separate from main KaosGdd access. Family users should not see the main app. Main users should not browse Family content by default. Temporary developer/support access is represented by the Family Settings `지원 모드` flag and `family_support_audit`; Google-login enforcement should use that state as the explicit support-access gate.
 
 ## Explicit Non-Goals
 

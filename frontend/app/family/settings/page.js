@@ -1,5 +1,6 @@
 import WeatherLocationSettings from "../../../components/settings/WeatherLocationSettings";
 import FamilyHeader from "../FamilyHeader";
+import FamilySupportModeSettings from "./FamilySupportModeSettings";
 
 export const metadata = {
   title: "설정 - KaosGdd",
@@ -23,6 +24,10 @@ export default function FamilySettingsPage() {
             </div>
             <WeatherLocationSettings />
           </div>
+        </section>
+
+        <section className="familySettingsSection" aria-label="지원">
+          <FamilySupportModeSettings />
         </section>
       </div>
     </section>

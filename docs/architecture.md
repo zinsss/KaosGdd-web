@@ -350,17 +350,28 @@ Family backend v2 owns first-class modules:
 - `family_caregiver_days` and `family_caregiver_sessions`: caregiver daily/monthly calculation inputs.
 - `family_settings`: Family preferences and feature settings.
 - `family_main_links`: explicit Family↔Main linkage.
+- `family_support_audit`: support-mode enable/disable audit trail.
 
 `family_records` is legacy/miscellaneous only. It must not be canonical storage for Family notes, tasks, events, timetables, or caregiver data.
 
 Family subdomain boundary:
 
 - `family.kaosgdd.net/` rewrites to `/family`.
-- `family.kaosgdd.net/calendar`, `/tasks`, `/roun`, and `/memo` rewrite to the matching `/family/...` routes.
+- `family.kaosgdd.net/calendar`, `/tasks`, `/roun`, `/memo`, and `/settings` rewrite to the matching `/family/...` routes.
 - `/api/*`, `/_next/*`, manifest, icon, and screenshot paths pass through unchanged.
 - Family routes use the Family shell only. The main KaosGdd top navigation, global capture bar, and attention card are not mounted on `/family/*` or the Family subdomain.
 - Allowed bridges between Family and the main app are deliberately small: the shared backend weather cache, explicit Family task sharing to main tasks, and explicit Family event sharing to main events.
 - Family is canonical for shared Family tasks/events. Main Tasks and Main Events are projections linked by `family_main_links`; identity must not be inferred from title/date/memo.
+
+Family access boundary:
+
+- Wife/family login should be scoped to the Family surface only.
+- Main KaosGdd login should not browse Family content by default.
+- Developer/support access is mediated by Family Settings `지원 모드`.
+- `지원 모드` is a family-controlled flag stored in `family_settings` under `support-mode`.
+- Enabling/disabling support mode writes an audit row to `family_support_audit`.
+- Until Google login is fully enforced, support mode is an access-control foundation and UI contract, not a replacement for identity checks.
+- Future Google-login enforcement should check the authenticated account role before allowing main, family, or support-mode access.
 
 ## Database
 

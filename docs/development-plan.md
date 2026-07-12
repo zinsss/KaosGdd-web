@@ -34,6 +34,7 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 - [x] Family local drag/drop for calendar and timetable where implemented.
 - [x] Family subdomain rewrite for `family.kaosgdd.net`.
 - [x] Family task memo-as-checklist option.
+- [x] Family settings page with shared weather region and support-mode foundation.
 - [x] Selected-file transient outgoing fax send path.
 - [x] Fax inbox expandable rows with Open/Download/Delete hidden behind expansion.
 - [x] Outgoing HylaFAX status reconciliation from `doneq`.
@@ -46,6 +47,7 @@ This is the current implementation checklist. It uses checkboxes so PRs can upda
 - [ ] Audit docs after major module changes.
 - [ ] Keep Family UI Korean wording standard, soft, and non-dialect.
 - [ ] Keep Family backend entity tests current as UI modules move off temporary local browser storage.
+- [ ] Enforce Google-login roles for main-only, family-only, and temporary Family support access.
 - [ ] Keep selected-file fax grammar separate from File save grammar.
 - [ ] Confirm desktop Firefox date/time picker fallbacks remain usable.
 - [ ] Confirm production `DATABASE_URL` before declaring the app cut over to Postgres.

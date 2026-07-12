@@ -13,6 +13,7 @@ test("Family modules use backend records instead of browser-only storage", async
   const timetablesRouteSource = await readSource("../app/api/family/timetables/route.js");
   const caregiverRouteSource = await readSource("../app/api/family/caregiver/days/route.js");
   const linksRouteSource = await readSource("../app/api/family/links/route.js");
+  const supportRouteSource = await readSource("../app/api/family/support-mode/route.js");
   const calendarDataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
   const polishCss = await readSource("../app/styles/family-polish.css");
@@ -34,7 +35,8 @@ test("Family modules use backend records instead of browser-only storage", async
   assert.ok(timetablesRouteSource.includes("/family/timetables"));
   assert.ok(caregiverRouteSource.includes("/family/caregiver/days"));
   assert.ok(linksRouteSource.includes("/family/links"));
-  for (const path of ["/family/notes", "/family/events", "/family/timetables", "/family/caregiver/days", "/family/settings/{setting_key}", "/family/links"]) {
+  assert.ok(supportRouteSource.includes("/family/support-mode"));
+  for (const path of ["/family/notes", "/family/events", "/family/timetables", "/family/caregiver/days", "/family/settings/{setting_key}", "/family/support-mode", "/family/links"]) {
     assert.ok(backendSource.includes(path), `${path} backend route should exist`);
   }
 

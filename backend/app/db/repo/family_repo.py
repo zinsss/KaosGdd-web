@@ -5,6 +5,7 @@ from sqlalchemy import bindparam, text
 
 from app.config import DbTables
 from app.utils.clock import now_iso
+from app.utils.ids import new_id
 
 
 FAMILY_RECORD_KEY_MEMO = "memo-messages"
@@ -38,6 +39,17 @@ def _payload(row: dict[str, Any] | None) -> Any:
 
 def _bool_int(value: Any) -> int:
     return 1 if value is True else 0
+
+
+def _support_mode_payload(value: Any) -> dict[str, Any]:
+    payload = value if isinstance(value, dict) else {}
+    return {
+        "enabled": payload.get("enabled") is True,
+        "enabledBy": str(payload.get("enabledBy") or ""),
+        "reason": str(payload.get("reason") or ""),
+        "expiresAt": str(payload.get("expiresAt") or ""),
+        "updatedAt": str(payload.get("updatedAt") or ""),
+    }
 
 
 class FamilyRepo:
@@ -564,6 +576,77 @@ class FamilyRepo:
                 },
             )
         return payload
+
+    def get_support_mode(self) -> dict[str, Any]:
+        return _support_mode_payload(self.get_setting("support-mode"))
+
+    def put_support_mode(self, payload: dict[str, Any], *, actor: str = "family", action: str | None = None) -> dict[str, Any]:
+        normalized = _support_mode_payload({**(payload if isinstance(payload, dict) else {}), "updatedAt": now_iso()})
+        previous = self.get_support_mode()
+        saved = self.put_setting("support-mode", normalized)
+        if previous.get("enabled") != normalized.get("enabled"):
+            self.add_support_audit(
+                action=action or ("enabled" if normalized.get("enabled") else "disabled"),
+                actor=actor,
+                reason=str(normalized.get("reason") or ""),
+                support_enabled=normalized.get("enabled") is True,
+            )
+        return _support_mode_payload(saved)
+
+    def add_support_audit(self, *, action: str, actor: str = "", reason: str = "", support_enabled: bool = False) -> dict[str, Any]:
+        now = now_iso()
+        row = {
+            "id": new_id(),
+            "action": str(action or ""),
+            "actor": str(actor or ""),
+            "reason": str(reason or ""),
+            "supportEnabled": support_enabled is True,
+            "createdAt": now,
+        }
+        with self.engine.begin() as conn:
+            conn.execute(
+                text(
+                    """
+                    INSERT INTO {table}(id, action, actor, reason, support_enabled, created_at)
+                    VALUES (:id, :action, :actor, :reason, :support_enabled, :created_at)
+                    """.format(table=DbTables.FAMILY_SUPPORT_AUDIT)
+                ),
+                {
+                    "id": row["id"],
+                    "action": row["action"],
+                    "actor": row["actor"],
+                    "reason": row["reason"],
+                    "support_enabled": _bool_int(row["supportEnabled"]),
+                    "created_at": row["createdAt"],
+                },
+            )
+        return row
+
+    def list_support_audit(self, limit: int = 50) -> list[dict[str, Any]]:
+        safe_limit = max(1, min(int(limit or 50), 200))
+        with self.engine.begin() as conn:
+            rows = conn.execute(
+                text(
+                    """
+                    SELECT id, action, actor, reason, support_enabled, created_at
+                    FROM {table}
+                    ORDER BY created_at DESC
+                    LIMIT :limit
+                    """.format(table=DbTables.FAMILY_SUPPORT_AUDIT)
+                ),
+                {"limit": safe_limit},
+            ).mappings().all()
+        return [
+            {
+                "id": str(row.get("id") or ""),
+                "action": str(row.get("action") or ""),
+                "actor": str(row.get("actor") or ""),
+                "reason": str(row.get("reason") or ""),
+                "supportEnabled": bool(row.get("support_enabled")),
+                "createdAt": str(row.get("created_at") or ""),
+            }
+            for row in rows
+        ]
 
     def list_main_links(self) -> list[dict[str, Any]]:
         with self.engine.begin() as conn:

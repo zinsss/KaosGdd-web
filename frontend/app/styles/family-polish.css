@@ -342,6 +342,84 @@
   font-weight: 800;
 }
 
+.familySupportModeSettings {
+  display: grid;
+  gap: 10px;
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 250, 253, 0.72);
+  box-shadow: inset 0 0 0 1px rgba(180, 120, 190, 0.14);
+}
+
+.familySupportModeHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.familySupportModeHeader h3 {
+  margin: 0;
+  color: rgba(78, 37, 54, 0.88);
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.familySupportModeHeader p,
+.familySupportAudit p {
+  margin: 4px 0 0;
+  color: rgba(78, 37, 54, 0.56);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.familySupportModeToggle {
+  appearance: none;
+  flex: 0 0 auto;
+  min-height: 36px;
+  border: 0;
+  border-radius: 999px;
+  padding: 0 14px;
+  background: rgba(245, 235, 255, 0.82);
+  color: rgba(110, 75, 145, 0.78);
+  font-size: 16px;
+  font-weight: 900;
+  box-shadow: inset 0 0 0 1px rgba(180, 120, 190, 0.22);
+}
+
+.familySupportModeToggleActive {
+  background: rgba(216, 111, 152, 0.9);
+  color: #fffafd;
+  box-shadow: inset 0 0 0 1px rgba(151, 69, 98, 0.16);
+}
+
+.familySupportReason {
+  display: grid;
+  gap: 5px;
+  color: rgba(78, 37, 54, 0.66);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.familySupportReason input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border: 1px solid rgba(214, 128, 157, 0.22);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: #fff;
+  color: rgba(78, 37, 54, 0.86);
+  font-size: 16px;
+}
+
+.familySupportAudit {
+  border-top: 1px solid rgba(214, 128, 157, 0.12);
+  padding-top: 8px;
+}
+
 .familyPage {
   --family-calendar-preset-pink: #ffc6dc;
   --family-calendar-preset-rose: #ffb6a8;
@@ -524,9 +602,15 @@
     flex-direction: column;
   }
 
-  .familySettingsRow select {
+  .familySettingsRow select,
+  .familySupportModeToggle {
     width: 100%;
     max-width: 100%;
+  }
+
+  .familySupportModeHeader {
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .familyDashboard {

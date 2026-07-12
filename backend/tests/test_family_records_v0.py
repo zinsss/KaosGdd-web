@@ -28,6 +28,7 @@ def test_family_backend_v2_schema_and_repo_round_trip(tmp_path) -> None:
         "family_caregiver_sessions",
         "family_settings",
         "family_main_links",
+        "family_support_audit",
     }.issubset(tables)
 
     repo.replace_notes([{"id": "note-1", "text": "메모"}])
@@ -47,6 +48,7 @@ def test_family_backend_v2_schema_and_repo_round_trip(tmp_path) -> None:
     )
     repo.put_caregiver_days({"2026-07-11": 2.5})
     repo.put_setting("caregiver-hourly-wage", 15000)
+    repo.put_support_mode({"enabled": True, "reason": "debug"}, actor="family")
     repo.upsert_main_link(family_item_id="task-1", main_item_id="main-1", family_module="tasks")
 
     assert repo.list_notes()[0]["id"] == "note-1"
@@ -55,6 +57,8 @@ def test_family_backend_v2_schema_and_repo_round_trip(tmp_path) -> None:
     assert repo.get_timetable_state()["plans"][0]["items"][0]["title"] == "언어"
     assert repo.get_caregiver_days()["2026-07-11"] == 2.5
     assert repo.get_setting("caregiver-hourly-wage") == 15000
+    assert repo.get_support_mode()["enabled"] is True
+    assert repo.list_support_audit()[0]["supportEnabled"] is True
     assert repo.list_main_links()[0]["familyItemId"] == "task-1"
 
     with engine.begin() as conn:

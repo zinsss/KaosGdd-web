@@ -390,6 +390,16 @@ CREATE TABLE IF NOT EXISTS {family_main_links} (
     CHECK (shared_with_main IN (0, 1))
 );
 
+CREATE TABLE IF NOT EXISTS {family_support_audit} (
+    id TEXT PRIMARY KEY,
+    action TEXT NOT NULL,
+    actor TEXT NOT NULL DEFAULT '',
+    reason TEXT NOT NULL DEFAULT '',
+    support_enabled INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL,
+    CHECK (support_enabled IN (0, 1))
+);
+
 CREATE TABLE IF NOT EXISTS {weather_daily_snapshots} (
     id TEXT PRIMARY KEY,
     location_id TEXT NOT NULL,
@@ -569,6 +579,9 @@ ON {family_caregiver_sessions}(caregiver_day_id, deleted_at, sort_order);
 CREATE INDEX IF NOT EXISTS idx_family_main_links_main
 ON {family_main_links}(main_item_id);
 
+CREATE INDEX IF NOT EXISTS idx_family_support_audit_created
+ON {family_support_audit}(created_at);
+
 CREATE INDEX IF NOT EXISTS idx_weather_daily_snapshots_location_date
 ON {weather_daily_snapshots}(location_id, date);
 
@@ -612,6 +625,7 @@ ON {weather_daily_snapshots}(location_id, fetched_at);
     family_caregiver_sessions=DbTables.FAMILY_CAREGIVER_SESSIONS,
     family_settings=DbTables.FAMILY_SETTINGS,
     family_main_links=DbTables.FAMILY_MAIN_LINKS,
+    family_support_audit=DbTables.FAMILY_SUPPORT_AUDIT,
     weather_daily_snapshots=DbTables.WEATHER_DAILY_SNAPSHOTS,
 )
 

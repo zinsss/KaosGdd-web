@@ -146,6 +146,7 @@ class DbTables:
     FAMILY_CAREGIVER_SESSIONS = "family_caregiver_sessions"
     FAMILY_SETTINGS = "family_settings"
     FAMILY_MAIN_LINKS = "family_main_links"
+    FAMILY_SUPPORT_AUDIT = "family_support_audit"
     WEATHER_LOCATIONS = "weather_locations"
     WEATHER_CACHE = "weather_cache"
     WEATHER_DAILY_SNAPSHOTS = "weather_daily_snapshots"

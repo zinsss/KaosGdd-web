@@ -69,6 +69,8 @@ test("family page metadata uses standard Korean titles", async () => {
 
 test("family settings page exposes shared weather setting", async () => {
   const settingsSource = await readSource("../app/family/settings/page.js");
+  const supportSource = await readSource("../app/family/settings/FamilySupportModeSettings.js");
+  const supportRoute = await readSource("../app/api/family/support-mode/route.js");
   const polishCss = await readSource("../app/styles/family-polish.css");
 
   assert.ok(settingsSource.includes('aria-label="설정"'));
@@ -76,7 +78,13 @@ test("family settings page exposes shared weather setting", async () => {
   assert.ok(settingsSource.includes("<h2>설정</h2>"));
   assert.ok(settingsSource.includes("날씨 지역"));
   assert.ok(settingsSource.includes("WeatherLocationSettings"));
+  assert.ok(settingsSource.includes("FamilySupportModeSettings"));
+  assert.ok(supportSource.includes("지원 모드"));
+  assert.ok(supportSource.includes("/api/family/support-mode"));
+  assert.ok(supportSource.includes("audit.slice(0, 3).map"));
+  assert.ok(supportRoute.includes("/family/support-mode"));
   assert.match(polishCss, /\.familySettingsRow select\s*\{[\s\S]*?font-size:\s*16px;/);
+  assert.match(polishCss, /\.familySupportReason input\s*\{[\s\S]*?font-size:\s*16px;/);
 });
 
 test("family memo page uses finalized title and checklist glyph", async () => {

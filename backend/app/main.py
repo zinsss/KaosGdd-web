@@ -545,6 +545,26 @@ def put_family_setting(setting_key: str, payload: dict):
     return {"ok": True, "payload": family_setting_repo.put_setting(setting_key, value)}
 
 
+@app.get("/family/support-mode")
+def get_family_support_mode():
+    return {
+        "ok": True,
+        "supportMode": family_setting_repo.get_support_mode(),
+        "audit": family_setting_repo.list_support_audit(limit=20),
+    }
+
+
+@app.put("/family/support-mode")
+def put_family_support_mode(payload: dict):
+    support_mode = payload.get("supportMode") if isinstance(payload, dict) else {}
+    actor = str(payload.get("actor") or "family") if isinstance(payload, dict) else "family"
+    return {
+        "ok": True,
+        "supportMode": family_setting_repo.put_support_mode(support_mode if isinstance(support_mode, dict) else {}, actor=actor),
+        "audit": family_setting_repo.list_support_audit(limit=20),
+    }
+
+
 @app.get("/family/links")
 def list_family_links():
     return {"ok": True, "links": family_link_repo.list_main_links()}
