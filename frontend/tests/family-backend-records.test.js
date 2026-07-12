@@ -15,6 +15,7 @@ test("Family modules use backend records instead of browser-only storage", async
   const linksRouteSource = await readSource("../app/api/family/links/route.js");
   const calendarDataSource = await readSource("../app/family/calendar/familyCalendarData.js");
   const calendarSource = await readSource("../app/family/calendar/FamilyCalendarClient.js");
+  const polishCss = await readSource("../app/styles/family-polish.css");
   const eventFormSource = await readSource("../app/family/calendar/events/FamilyCalendarEventFormClient.js");
   const rounySource = await readSource("../app/family/calendar/rouny/FamilyRounyClient.js");
   const caregiverSource = await readSource("../app/family/calendar/caregiver/FamilyCaregiverMonthlyReviewClient.js");
@@ -62,6 +63,8 @@ test("Family modules use backend records instead of browser-only storage", async
   assert.ok(calendarDataSource.includes(".filter((item) => item && !item.readOnly && !item.systemEvent);"));
   assert.ok(calendarSource.includes("fetchFamilyCalendarItems({ startDate: weatherStart, endDate: weatherEnd })"));
   assert.ok(calendarSource.includes("const dragEnabledItem = !item.readOnly && (editItem || allDayEditItem);"));
+  assert.ok(calendarSource.includes('item.eventClass === "public-holiday" ? " familyCalendarPublicHolidayItem" : ""'));
+  assert.match(polishCss, /\.familyCalendarPublicHolidayItem\.familyCalendarItemDated\s*\{[\s\S]*?color:\s*#d86f98;/);
   assert.ok(calendarDataSource.includes('fetchFamilyModule("timetables"'));
   assert.ok(calendarDataSource.includes('fetchFamilyModule("caregiver/days"'));
 });

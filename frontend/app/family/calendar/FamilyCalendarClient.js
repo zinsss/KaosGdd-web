@@ -410,6 +410,7 @@ function CalendarItemLink({
 }) {
   const itemType = normalizedCalendarItemType(item);
   const href = itemType === "rouny" ? "/family/roun" : `/family/calendar/events/${item.id}/edit`;
+  const publicHolidayClass = item.eventClass === "public-holiday" ? " familyCalendarPublicHolidayItem" : "";
   const editItem = className.includes("familyCalendarEditItem");
   const allDayEditItem = className.includes("familyCalendarAllDayItemEditable");
   const dragEnabledItem = !item.readOnly && (editItem || allDayEditItem);
@@ -428,7 +429,7 @@ function CalendarItemLink({
   };
   return (
     <Link
-      className={`familyCalendarItem familyCalendarItem${itemType === "rouny" ? "Rouny" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${overlapClass}${className ? ` ${className}` : ""}${dragging ? " familyCalendarEditItemDragging" : ""}`}
+      className={`familyCalendarItem familyCalendarItem${itemType === "rouny" ? "Rouny" : "Dated"} familyTimetableEntry${familyCalendarColorClassName(item.color)}${publicHolidayClass}${overlapClass}${className ? ` ${className}` : ""}${dragging ? " familyCalendarEditItemDragging" : ""}`}
       draggable={dragEnabledItem ? false : undefined}
       href={href}
       key={`${itemType}-${item.id}`}

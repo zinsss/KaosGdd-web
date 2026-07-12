@@ -408,6 +408,12 @@
   box-shadow: none;
 }
 
+.familyCalendarPublicHolidayItem.familyCalendarItemDated {
+  --family-calendar-event-outline: rgba(216, 111, 152, 0.54);
+  --family-calendar-event-fill-soft: rgba(216, 111, 152, 0.16);
+  color: #d86f98;
+}
+
 @media (max-width: 640px) {
   .familyPage {
     width: 100%;
