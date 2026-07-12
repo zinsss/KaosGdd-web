@@ -4,21 +4,45 @@ import { useEffect, useState } from "react";
 
 const EMPTY_SUPPORT_MODE = {
   enabled: false,
+  active: false,
   enabledBy: "",
   reason: "",
   expiresAt: "",
   updatedAt: "",
 };
 
+const SUPPORT_DURATION_OPTIONS = [
+  { label: "30분", minutes: 30 },
+  { label: "1시간", minutes: 60 },
+  { label: "24시간", minutes: 1440 },
+];
+
 function normalizeSupportMode(value) {
   const payload = value && typeof value === "object" ? value : {};
   return {
     enabled: payload.enabled === true,
+    active: payload.active === true,
     enabledBy: String(payload.enabledBy || ""),
     reason: String(payload.reason || ""),
     expiresAt: String(payload.expiresAt || ""),
     updatedAt: String(payload.updatedAt || ""),
   };
+}
+
+function expiresAtFromNow(minutes) {
+  return new Date(Date.now() + Number(minutes || 60) * 60 * 1000).toISOString();
+}
+
+function formatSupportExpiry(value) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("ko-KR", {
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 function normalizeAudit(value) {
@@ -51,6 +75,7 @@ export default function FamilySupportModeSettings() {
   const [supportMode, setSupportMode] = useState(EMPTY_SUPPORT_MODE);
   const [audit, setAudit] = useState([]);
   const [reason, setReason] = useState("");
+  const [durationMinutes, setDurationMinutes] = useState(60);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -69,11 +94,13 @@ export default function FamilySupportModeSettings() {
   async function toggleSupportMode() {
     setSaving(true);
     try {
+      const turningOn = !supportMode.active;
       const next = {
         ...supportMode,
-        enabled: !supportMode.enabled,
+        enabled: turningOn,
         enabledBy: "가족",
         reason: reason.trim(),
+        expiresAt: turningOn ? expiresAtFromNow(durationMinutes) : "",
       };
       const data = await saveSupportMode(next);
       setSupportMode(data.supportMode);
@@ -89,18 +116,31 @@ export default function FamilySupportModeSettings() {
       <div className="familySupportModeHeader">
         <div>
           <h3>지원 모드</h3>
-          <p>문제를 고칠 때만 임시로 켜는 도움 모드예요. 켜고 끈 기록은 남아요.</p>
+          <p>시스템 점검은 가능하지만, 가족 내용 확인은 이 타이머가 켜진 동안만 열려요.</p>
         </div>
         <button
-          className={`familySupportModeToggle${supportMode.enabled ? " familySupportModeToggleActive" : ""}`}
+          className={`familySupportModeToggle${supportMode.active ? " familySupportModeToggleActive" : ""}`}
           type="button"
           onClick={toggleSupportMode}
           disabled={saving}
-          aria-pressed={supportMode.enabled}
+          aria-pressed={supportMode.active}
         >
-          {supportMode.enabled ? "켜짐" : "꺼짐"}
+          {supportMode.active ? "켜짐" : "꺼짐"}
         </button>
       </div>
+
+      <label className="familySupportReason">
+        <span>시간</span>
+        <select
+          value={durationMinutes}
+          onChange={(event) => setDurationMinutes(Number(event.target.value))}
+          disabled={supportMode.active}
+        >
+          {SUPPORT_DURATION_OPTIONS.map((option) => (
+            <option key={option.minutes} value={option.minutes}>{option.label}</option>
+          ))}
+        </select>
+      </label>
 
       <label className="familySupportReason">
         <span>이유</span>
@@ -111,6 +151,10 @@ export default function FamilySupportModeSettings() {
           placeholder="예: 달력 오류 확인"
         />
       </label>
+
+      {supportMode.active && supportMode.expiresAt ? (
+        <p className="familySupportExpiry">만료: {formatSupportExpiry(supportMode.expiresAt)}</p>
+      ) : null}
 
       {audit.length ? (
         <div className="familySupportAudit" aria-label="지원 모드 기록">

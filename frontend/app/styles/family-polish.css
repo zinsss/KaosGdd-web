@@ -403,7 +403,8 @@
   font-weight: 800;
 }
 
-.familySupportReason input {
+.familySupportReason input,
+.familySupportReason select {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
@@ -413,6 +414,13 @@
   background: #fff;
   color: rgba(78, 37, 54, 0.86);
   font-size: 16px;
+}
+
+.familySupportExpiry {
+  margin: 0;
+  color: rgba(216, 111, 152, 0.88);
+  font-size: 14px;
+  font-weight: 900;
 }
 
 .familySupportAudit {

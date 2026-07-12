@@ -367,8 +367,12 @@ Family access boundary:
 
 - Wife/family login should be scoped to the Family surface only.
 - Main KaosGdd login should not browse Family content by default.
-- Developer/support access is mediated by Family Settings `지원 모드`.
+- System-admin access may exist by default for infrastructure, deployment, health checks, logs, schema checks, and redacted diagnostics.
+- System-admin access must not imply default access to Family content.
+- Developer/support access to Family content is mediated by Family Settings `지원 모드`.
 - `지원 모드` is a family-controlled flag stored in `family_settings` under `support-mode`.
+- `support-mode.active` is true only while `enabled` is true and `expiresAt` is still in the future.
+- Family content support tooling should check `support-mode.active`, not only `support-mode.enabled`.
 - Enabling/disabling support mode writes an audit row to `family_support_audit`.
 - Until Google login is fully enforced, support mode is an access-control foundation and UI contract, not a replacement for identity checks.
 - Future Google-login enforcement should check the authenticated account role before allowing main, family, or support-mode access.

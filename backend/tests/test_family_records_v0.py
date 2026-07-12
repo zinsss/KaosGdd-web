@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import create_engine, text
 
 from app.db.repo.family_repo import FamilyRepo
@@ -48,7 +50,7 @@ def test_family_backend_v2_schema_and_repo_round_trip(tmp_path) -> None:
     )
     repo.put_caregiver_days({"2026-07-11": 2.5})
     repo.put_setting("caregiver-hourly-wage", 15000)
-    repo.put_support_mode({"enabled": True, "reason": "debug"}, actor="family")
+    repo.put_support_mode({"enabled": True, "reason": "debug", "expiresAt": (datetime.now(timezone.utc) + timedelta(hours=1)).isoformat()}, actor="family")
     repo.upsert_main_link(family_item_id="task-1", main_item_id="main-1", family_module="tasks")
 
     assert repo.list_notes()[0]["id"] == "note-1"
@@ -58,11 +60,24 @@ def test_family_backend_v2_schema_and_repo_round_trip(tmp_path) -> None:
     assert repo.get_caregiver_days()["2026-07-11"] == 2.5
     assert repo.get_setting("caregiver-hourly-wage") == 15000
     assert repo.get_support_mode()["enabled"] is True
+    assert repo.get_support_mode()["active"] is True
     assert repo.list_support_audit()[0]["supportEnabled"] is True
     assert repo.list_main_links()[0]["familyItemId"] == "task-1"
 
     with engine.begin() as conn:
         assert conn.execute(text("SELECT COUNT(*) FROM family_records")).scalar_one() == 0
+
+
+def test_family_support_mode_active_requires_unexpired_timer(tmp_path) -> None:
+    engine = create_engine(f"sqlite:///{tmp_path / 'family-support.db'}")
+    init_schema_v0(engine)
+    repo = FamilyRepo(engine)
+
+    repo.put_support_mode({"enabled": True, "expiresAt": (datetime.now(timezone.utc) - timedelta(minutes=1)).isoformat()}, actor="family")
+
+    support_mode = repo.get_support_mode()
+    assert support_mode["enabled"] is True
+    assert support_mode["active"] is False
 
 
 def test_family_records_bridge_writes_known_entities_to_dedicated_tables(tmp_path) -> None:

@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import bindparam, text
@@ -43,13 +44,28 @@ def _bool_int(value: Any) -> int:
 
 def _support_mode_payload(value: Any) -> dict[str, Any]:
     payload = value if isinstance(value, dict) else {}
+    expires_at = str(payload.get("expiresAt") or "")
+    active = payload.get("enabled") is True and _support_not_expired(expires_at)
     return {
         "enabled": payload.get("enabled") is True,
+        "active": active,
         "enabledBy": str(payload.get("enabledBy") or ""),
         "reason": str(payload.get("reason") or ""),
         "expiresAt": str(payload.get("expiresAt") or ""),
         "updatedAt": str(payload.get("updatedAt") or ""),
     }
+
+
+def _support_not_expired(expires_at: str) -> bool:
+    if not expires_at:
+        return False
+    try:
+        parsed = datetime.fromisoformat(expires_at.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed > datetime.now(timezone.utc)
 
 
 class FamilyRepo:

@@ -81,10 +81,14 @@ test("family settings page exposes shared weather setting", async () => {
   assert.ok(settingsSource.includes("FamilySupportModeSettings"));
   assert.ok(supportSource.includes("지원 모드"));
   assert.ok(supportSource.includes("/api/family/support-mode"));
+  assert.ok(supportSource.includes("SUPPORT_DURATION_OPTIONS"));
+  assert.ok(supportSource.includes("expiresAtFromNow(durationMinutes)"));
+  assert.ok(supportSource.includes("supportMode.active"));
+  assert.ok(supportSource.includes("가족 내용 확인은 이 타이머가 켜진 동안만 열려요."));
   assert.ok(supportSource.includes("audit.slice(0, 3).map"));
   assert.ok(supportRoute.includes("/family/support-mode"));
   assert.match(polishCss, /\.familySettingsRow select\s*\{[\s\S]*?font-size:\s*16px;/);
-  assert.match(polishCss, /\.familySupportReason input\s*\{[\s\S]*?font-size:\s*16px;/);
+  assert.match(polishCss, /\.familySupportReason input,\s*\n\s*\.familySupportReason select\s*\{[\s\S]*?font-size:\s*16px;/);
 });
 
 test("family memo page uses finalized title and checklist glyph", async () => {
