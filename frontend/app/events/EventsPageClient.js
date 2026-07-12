@@ -458,12 +458,6 @@ export default function EventsPageClient() {
                 <span className="eventSelectedWeatherRange">
                   {selectedDayWeather ? `${selectedDayWeather.min_c}–${selectedDayWeather.max_c}°` : "—"}
                 </span>
-                {selectedDayWeather ? (
-                  <span className="eventSelectedWeatherMinMax">
-                    <span>{selectedDayWeather.min_c}°<small>Min</small></span>
-                    <span>{selectedDayWeather.max_c}°<small>Max</small></span>
-                  </span>
-                ) : null}
               </div>
               <div className="eventDaypartGrid">
                 {weatherDaypartsAvailable && weatherDayparts.length > 0 ? (

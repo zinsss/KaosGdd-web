@@ -273,27 +273,6 @@ body.eventsPageActive .appShellMain {
   font-variant-numeric: tabular-nums;
 }
 
-.eventSelectedWeatherMinMax {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 14px;
-  color: var(--ctp-lavender);
-  font-size: 0.92rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.eventSelectedWeatherMinMax span {
-  display: grid;
-  gap: 1px;
-}
-
-.eventSelectedWeatherMinMax small {
-  color: var(--ui-text-dim);
-  font-size: 0.68rem;
-  font-weight: 600;
-}
-
 .eventDaypartGrid {
   display: grid;
   align-content: center;
@@ -422,19 +401,5 @@ body.eventsPageActive .appShellMain {
 
   .eventMonthNavButton {
     flex: 0 0 auto;
-  }
-}
-
-@media (max-width: 520px) {
-  .eventSelectedWeatherLayout {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .eventSelectedWeatherSummary {
-    border-right: 0;
-    border-bottom: 1px solid rgba(186, 194, 222, 0.14);
-    padding-right: 0;
-    padding-bottom: 12px;
   }
 }

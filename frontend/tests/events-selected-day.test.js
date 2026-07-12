@@ -76,6 +76,7 @@ test("selected-day weather dayparts render available and unavailable states", as
   assert.match(source, /eventSelectedWeatherCard/);
   assert.match(source, /eventSelectedWeatherLayout/);
   assert.match(source, /eventSelectedWeatherSummary/);
+  assert.doesNotMatch(source, /eventSelectedWeatherMinMax/);
   assert.match(source, /eventDaypartRow/);
   assert.match(source, /eventDaypartValue/);
   assert.match(source, /weatherDaypartsReason/);
