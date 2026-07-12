@@ -273,7 +273,7 @@ body.eventsPageActive .appShellMain {
 
 .eventSelectedWeatherRange {
   color: var(--ctp-lavender);
-  font-size: clamp(1.55rem, 6.4vw, 2.45rem);
+  font-size: clamp(1.05rem, 4.4vw, 1.55rem);
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
