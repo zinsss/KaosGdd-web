@@ -1,5 +1,5 @@
 import { FAMILY_TIMETABLE_DEFAULT_FONT, normalizeFamilyTimetableFont } from "../familyTimetableFonts.js";
-import { fetchFamilyRecord, fetchFamilyModule, persistFamilyModule, persistFamilyRecord } from "../familyBackendStore.js";
+import { fetchFamilyRecord, fetchFamilyModule, fetchFamilyModuleWithQuery, persistFamilyModule, persistFamilyRecord } from "../familyBackendStore.js";
 
 export const FAMILY_CALENDAR_STORAGE_KEY = "kaosgdd.family.calendarItems.v1";
 export const FAMILY_ROUNY_STORAGE_KEY = "kaosgdd.family.defaultTimetable.v1";
@@ -161,6 +161,11 @@ export function normalizeFamilyCalendarItem(item) {
     sharedWithSong: item.sharedWithSong === true,
     mainItemId: String(item.mainItemId || ""),
     adoptedFromMain: item.adoptedFromMain === true,
+    readOnly: item.readOnly === true,
+    systemEvent: item.systemEvent === true,
+    isImportedCalendarEvent: item.isImportedCalendarEvent === true,
+    eventClass: String(item.eventClass || ""),
+    classificationSource: String(item.classificationSource || ""),
   };
 }
 
@@ -599,14 +604,16 @@ export function saveFamilyCalendarItems(items) {
   writeFamilyStorageArray(FAMILY_CALENDAR_STORAGE_KEY, items.map(normalizeFamilyCalendarItem).filter(Boolean));
 }
 
-export async function fetchFamilyCalendarItems() {
-  const payload = await fetchFamilyModule("events", "events", []);
+export async function fetchFamilyCalendarItems({ startDate = "", endDate = "" } = {}) {
+  const payload = await fetchFamilyModuleWithQuery("events", "events", { start_date: startDate, end_date: endDate }, []);
   const normalized = Array.isArray(payload) ? payload.map(normalizeFamilyCalendarItem).filter(Boolean) : [];
   return normalized;
 }
 
 export async function persistFamilyCalendarItems(items) {
-  const normalized = items.map(normalizeFamilyCalendarItem).filter(Boolean);
+  const normalized = items
+    .map(normalizeFamilyCalendarItem)
+    .filter((item) => item && !item.readOnly && !item.systemEvent);
   const persisted = await persistFamilyModule("events", "events", "events", normalized);
   const next = Array.isArray(persisted) ? persisted.map(normalizeFamilyCalendarItem).filter(Boolean) : normalized;
   return next;

@@ -204,6 +204,82 @@ def test_main_family_tagged_event_reads_time_from_memo_with_spaced_dash(tmp_path
     assert loaded[0]["memo"] == "메모"
 
 
+def test_synced_korean_holidays_are_shared_to_family_calendar_range(tmp_path) -> None:
+    sync_service, items_repo, event_repo, event_service, family_repo = make_sync_service(tmp_path)
+    holiday_id = event_service.create_event(title="한글날", start_date="2026-10-09", end_date="2026-10-09", memo="synced")
+    items_repo.replace_item_tags(
+        holiday_id,
+        [
+            "system:kr-calendar",
+            "readonly",
+            "kr-holiday:test-hangul",
+            "event-class:public-holiday",
+            "classification-source:manual",
+        ],
+    )
+
+    loaded = sync_service.load_calendar_items(start_date="2026-10-01", end_date="2026-10-31")
+
+    assert len(loaded) == 1
+    assert loaded[0]["id"] == f"system-holiday-{holiday_id}"
+    assert loaded[0]["title"] == "한글날"
+    assert loaded[0]["date"] == "2026-10-09"
+    assert loaded[0]["allDay"] is True
+    assert loaded[0]["readOnly"] is True
+    assert loaded[0]["systemEvent"] is True
+    assert loaded[0]["isImportedCalendarEvent"] is True
+    assert loaded[0]["eventClass"] == "public-holiday"
+    assert loaded[0]["classificationSource"] == "manual"
+    assert loaded[0]["color"] == "pink"
+    assert family_repo.list_events() == []
+
+
+def test_observance_korean_holidays_are_shared_without_public_holiday_color(tmp_path) -> None:
+    sync_service, items_repo, _, event_service, _ = make_sync_service(tmp_path)
+    holiday_id = event_service.create_event(title="기념일", start_date="2026-10-10", end_date="2026-10-10", memo="")
+    items_repo.replace_item_tags(
+        holiday_id,
+        [
+            "system:kr-calendar",
+            "readonly",
+            "kr-holiday:test-observance",
+            "event-class:observance",
+            "classification-source:auto",
+        ],
+    )
+
+    loaded = sync_service.load_calendar_items(start_date="2026-10-01", end_date="2026-10-31")
+
+    assert loaded[0]["eventClass"] == "observance"
+    assert loaded[0]["color"] == "gray"
+
+
+def test_family_event_save_ignores_readonly_system_holidays(tmp_path) -> None:
+    sync_service, _, _, _, family_repo = make_sync_service(tmp_path)
+
+    saved = sync_service.save_calendar_items(
+        [
+            {
+                "id": "system-holiday-main",
+                "title": "한글날",
+                "date": "2026-10-09",
+                "allDay": True,
+                "readOnly": True,
+                "systemEvent": True,
+            },
+            {
+                "id": "family-event-1",
+                "title": "가족 일정",
+                "date": "2026-10-09",
+                "allDay": True,
+            },
+        ]
+    )
+
+    assert [item["id"] for item in saved] == ["family-event-1"]
+    assert [item["id"] for item in family_repo.list_events()] == ["family-event-1"]
+
+
 def test_main_mirror_edit_reconciles_time_memo_back_to_family_event(tmp_path) -> None:
     sync_service, items_repo, event_repo, event_service, family_repo = make_sync_service(tmp_path)
     synced = sync_service.save_calendar_items(

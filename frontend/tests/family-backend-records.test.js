@@ -23,10 +23,13 @@ test("Family modules use backend records instead of browser-only storage", async
   const backendSource = await readSource("../../backend/app/main.py");
 
   assert.ok(storeSource.includes("fetchFamilyModule"));
+  assert.ok(storeSource.includes("fetchFamilyModuleWithQuery"));
   assert.ok(storeSource.includes("persistFamilyModule"));
   assert.ok(!storeSource.includes("persistFamilyRecord(recordKey, fallbackValue);"));
   assert.ok(notesRouteSource.includes("/family/notes"));
   assert.ok(eventsRouteSource.includes("/family/events"));
+  assert.ok(eventsRouteSource.includes('url.searchParams.get("start_date")'));
+  assert.ok(eventsRouteSource.includes('url.searchParams.get("end_date")'));
   assert.ok(timetablesRouteSource.includes("/family/timetables"));
   assert.ok(caregiverRouteSource.includes("/family/caregiver/days"));
   assert.ok(linksRouteSource.includes("/family/links"));
@@ -55,7 +58,10 @@ test("Family modules use backend records instead of browser-only storage", async
     assert.ok(source.includes("persistFamily") || source.includes("persistMessages") || source.includes("persistTimetableEntries"));
   }
 
-  assert.ok(calendarDataSource.includes('fetchFamilyModule("events"'));
+  assert.ok(calendarDataSource.includes('fetchFamilyModuleWithQuery("events", "events", { start_date: startDate, end_date: endDate }, [])'));
+  assert.ok(calendarDataSource.includes(".filter((item) => item && !item.readOnly && !item.systemEvent);"));
+  assert.ok(calendarSource.includes("fetchFamilyCalendarItems({ startDate: weatherStart, endDate: weatherEnd })"));
+  assert.ok(calendarSource.includes("const dragEnabledItem = !item.readOnly && (editItem || allDayEditItem);"));
   assert.ok(calendarDataSource.includes('fetchFamilyModule("timetables"'));
   assert.ok(calendarDataSource.includes('fetchFamilyModule("caregiver/days"'));
 });

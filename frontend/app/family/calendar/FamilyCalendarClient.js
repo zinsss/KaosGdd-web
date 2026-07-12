@@ -412,7 +412,7 @@ function CalendarItemLink({
   const href = itemType === "rouny" ? "/family/roun" : `/family/calendar/events/${item.id}/edit`;
   const editItem = className.includes("familyCalendarEditItem");
   const allDayEditItem = className.includes("familyCalendarAllDayItemEditable");
-  const dragEnabledItem = editItem || allDayEditItem;
+  const dragEnabledItem = !item.readOnly && (editItem || allDayEditItem);
   const editableDatedItem = dragEnabledItem && itemType === "dated";
   const editableRounyItem = dragEnabledItem && itemType === "rouny";
   const suppressRounyNavigation = editableRounyItem && rounyChoiceItemId === item.id;
@@ -1256,13 +1256,11 @@ export default function FamilyCalendarClient() {
   useEffect(() => {
     let cancelled = false;
     Promise.all([
-      fetchFamilyCalendarItems(),
       fetchFamilyRounState(),
       fetchFamilyRounyOverrides(),
       fetchFamilyCaregiverHours(),
-    ]).then(([loadedDatedItems, loadedRounState, loadedOverrides, loadedCaregiverHours]) => {
+    ]).then(([loadedRounState, loadedOverrides, loadedCaregiverHours]) => {
       if (cancelled) return;
-      setDatedItems(loadedDatedItems);
       setRounState(loadedRounState);
       setRounyOverrides(loadedOverrides);
       setCaregiverHoursByDate(loadedCaregiverHours);
@@ -1286,6 +1284,17 @@ export default function FamilyCalendarClient() {
   const monthDateKeys = useMemo(() => weeks.flatMap((week) => week.days.map((day) => day.dateKey)), [weeks]);
   const weatherStart = monthDateKeys[0] || "";
   const weatherEnd = monthDateKeys[monthDateKeys.length - 1] || "";
+  useEffect(() => {
+    let cancelled = false;
+    if (!weatherStart || !weatherEnd) return () => {};
+    fetchFamilyCalendarItems({ startDate: weatherStart, endDate: weatherEnd }).then((loadedDatedItems) => {
+      if (!cancelled) setDatedItems(loadedDatedItems);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [weatherEnd, weatherStart]);
+
   const selectedWeekDates = useMemo(() => buildWeekDateKeys(selectedWeekStart), [selectedWeekStart]);
   const datedItemsByDate = useMemo(() => {
     return datedItems.reduce((counts, item) => {

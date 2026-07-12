@@ -490,8 +490,14 @@ def save_family_notes(payload: dict):
 
 
 @app.get("/family/events")
-def list_family_events():
-    return {"ok": True, "events": family_event_sync_service.load_calendar_items()}
+def list_family_events(start_date: str = "", end_date: str = ""):
+    return {
+        "ok": True,
+        "events": family_event_sync_service.load_calendar_items(
+            start_date=start_date,
+            end_date=end_date,
+        ),
+    }
 
 
 @app.put("/family/events")

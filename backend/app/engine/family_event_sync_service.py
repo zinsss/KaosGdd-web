@@ -86,6 +86,31 @@ def _event_from_main(detail: dict[str, Any]) -> dict[str, Any]:
     )
 
 
+def _system_holiday_from_main(detail: dict[str, Any]) -> dict[str, Any] | None:
+    if not detail.get("is_imported_calendar_event"):
+        return None
+    event_class = _clean(detail.get("event_class")) or "observance"
+    return normalize_family_event(
+        {
+            "id": f"system-holiday-{_clean(detail.get('canonical_event_id') or detail.get('id'))}",
+            "title": detail.get("title"),
+            "date": detail.get("start_date"),
+            "endDate": detail.get("end_date") if detail.get("end_date") != detail.get("start_date") else "",
+            "allDay": True,
+            "memo": detail.get("memo") or "",
+            "color": "pink" if event_class == "public-holiday" else "gray",
+            "sharedWithSong": False,
+            "mainItemId": _clean(detail.get("canonical_event_id") or detail.get("id")),
+            "adoptedFromMain": False,
+            "readOnly": True,
+            "systemEvent": True,
+            "isImportedCalendarEvent": True,
+            "eventClass": event_class,
+            "classificationSource": _clean(detail.get("classification_source")),
+        }
+    )
+
+
 class FamilyEventSyncService:
     def __init__(
         self,
@@ -100,16 +125,24 @@ class FamilyEventSyncService:
         self.event_service = event_service
         self.family_repo = family_repo
 
-    def load_calendar_items(self) -> list[dict[str, Any]]:
+    def load_calendar_items(self, *, start_date: str | None = None, end_date: str | None = None) -> list[dict[str, Any]]:
         items = [event for event in (normalize_family_event(item) for item in self.family_repo.list_events()) if event]
         adopted, adopted_changed = self.adopt_main_family_events(items)
         reconciled, reconciled_changed = self.reconcile_from_mirrors(adopted)
         if adopted_changed or reconciled_changed:
             self.family_repo.replace_events(reconciled)
-        return reconciled
+        return [*reconciled, *self._system_holidays(start_date=start_date, end_date=end_date)]
 
     def save_calendar_items(self, items: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        normalized = [event for event in (normalize_family_event(item) for item in items) if event]
+        normalized = [
+            event
+            for event in (
+                normalize_family_event(item)
+                for item in items
+                if isinstance(item, dict) and not item.get("readOnly") and not item.get("systemEvent")
+            )
+            if event
+        ]
         synced = self.sync(normalized)
         self.family_repo.replace_events(synced)
         return synced
@@ -266,3 +299,10 @@ class FamilyEventSyncService:
 
     def _unlink_family_main(self, family_event_id: str) -> None:
         self.family_repo.remove_main_links_for_family_item(family_event_id, "events")
+
+    def _system_holidays(self, *, start_date: str | None, end_date: str | None) -> list[dict[str, Any]]:
+        if not start_date or not end_date:
+            return []
+        events = self.event_service.list_events_in_range(start_date=start_date, end_date=end_date, mode="active")
+        holidays = [_system_holiday_from_main(event) for event in events]
+        return [holiday for holiday in holidays if holiday]

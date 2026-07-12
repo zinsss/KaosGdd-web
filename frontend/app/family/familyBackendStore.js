@@ -37,6 +37,23 @@ export async function fetchFamilyModule(path, payloadKey, fallbackValue = null) 
   }
 }
 
+export async function fetchFamilyModuleWithQuery(path, payloadKey, query = {}, fallbackValue = null) {
+  try {
+    const params = new URLSearchParams();
+    Object.entries(query || {}).forEach(([key, value]) => {
+      if (value) params.set(key, value);
+    });
+    const suffix = params.toString() ? `?${params.toString()}` : "";
+    const response = await fetch(`/api/family/${path}${suffix}`, { cache: "no-store" });
+    if (!response.ok) throw new Error("family module fetch failed");
+    const parsed = await response.json();
+    if (Object.prototype.hasOwnProperty.call(parsed || {}, payloadKey)) return parsed[payloadKey];
+    return fallbackValue;
+  } catch {
+    return fallbackValue;
+  }
+}
+
 export async function persistFamilyModule(path, requestKey, responseKey, payload) {
   try {
     const response = await fetch(`/api/family/${path}`, {
