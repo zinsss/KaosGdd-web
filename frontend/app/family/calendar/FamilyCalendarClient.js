@@ -1760,9 +1760,7 @@ export default function FamilyCalendarClient() {
                         selectedWeekStart={selectedWeekStart}
                       />
                     ))
-                  ) : hasSelectedWeekContent ? null : (
-                    <p className="familyCalendarEmptyWeek">이번 주에는 아직 적힌 일정이 없어요.</p>
-                  )}
+                  ) : null}
                 </div>
               )}
             </section>
