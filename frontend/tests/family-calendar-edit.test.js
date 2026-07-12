@@ -500,8 +500,8 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.ok(calendarSource.includes('{displayValue || "이모"}'));
   assert.ok(calendarSource.includes("function FamilyCalendarRounyWeekToggle("));
   assert.ok(calendarSource.includes('className="familyCalendarTimeRow familyCalendarRounyWeekToggleRow"'));
-  assert.ok(calendarSource.includes("const [rounyTimetableExpanded, setRounyTimetableExpanded] = useState(false);"));
-  assert.ok(calendarSource.includes("setRounyTimetableExpanded(false);"));
+  assert.ok(calendarSource.includes("const [rounyTimetableExpanded, setRounyTimetableExpanded] = useState(true);"));
+  assert.ok(calendarSource.includes("setRounyTimetableExpanded(true);"));
   assert.ok(calendarSource.includes("이 주의 스케줄."));
   assert.ok(calendarSource.indexOf("<FamilyCaregiverHoursRow") < calendarSource.indexOf("familyCalendarAllDayRow"));
   assert.ok(calendarSource.indexOf("familyCalendarAllDayRow") < calendarSource.indexOf("<FamilyCalendarRounyWeekToggle"));

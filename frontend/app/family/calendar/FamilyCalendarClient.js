@@ -1250,7 +1250,7 @@ export default function FamilyCalendarClient() {
   const [weatherItems, setWeatherItems] = useState([]);
   const [selectedWeekWeatherDayparts, setSelectedWeekWeatherDayparts] = useState({});
   const [weatherExpanded, setWeatherExpanded] = useState(false);
-  const [rounyTimetableExpanded, setRounyTimetableExpanded] = useState(false);
+  const [rounyTimetableExpanded, setRounyTimetableExpanded] = useState(true);
   const [caregiverHoursByDate, setCaregiverHoursByDate] = useState({});
   const [activeCaregiverDate, setActiveCaregiverDate] = useState("");
   const [pressedDateKey, setPressedDateKey] = useState("");
@@ -1352,7 +1352,7 @@ export default function FamilyCalendarClient() {
 
   useEffect(() => {
     setWeatherExpanded(false);
-    setRounyTimetableExpanded(false);
+    setRounyTimetableExpanded(true);
     setActiveCaregiverDate("");
   }, [selectedWeekKey, calendarMode, monthDate]);
 
