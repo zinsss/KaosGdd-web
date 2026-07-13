@@ -277,6 +277,7 @@ body.eventsPageActive .appShellMain {
   font-weight: 800;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  transform: translateX(0.35em);
 }
 
 .eventDaypartGrid {
