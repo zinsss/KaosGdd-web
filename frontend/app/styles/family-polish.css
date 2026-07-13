@@ -42,6 +42,9 @@
 }
 
 .familyHeader {
+  position: sticky;
+  top: 0;
+  z-index: 40;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -50,6 +53,9 @@
   min-height: 72px;
   padding: 6px 14px;
   overflow: hidden;
+  border-bottom: 1px solid rgba(214, 128, 157, 0.12);
+  background: rgba(255, 250, 253, 0.96);
+  backdrop-filter: blur(10px);
 }
 
 .familyLogoLink {
@@ -126,6 +132,24 @@
   padding: 8px 16px 4px;
   border-bottom: 1px solid rgba(214, 128, 157, 0.1);
   background: #fff8fb;
+}
+
+.familyMemoCard {
+  display: flex;
+  flex-direction: column;
+}
+
+.familyMemoCard .familyStream {
+  padding-bottom: calc(16px + var(--family-safe-bottom));
+}
+
+.familyMemoCard .familyComposer {
+  position: sticky;
+  bottom: 0;
+  z-index: 35;
+  padding-bottom: calc(12px + var(--family-safe-bottom));
+  background: rgba(255, 250, 253, 0.97);
+  backdrop-filter: blur(10px);
 }
 
 .familyQuickPadTitle h2 {

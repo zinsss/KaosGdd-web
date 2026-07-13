@@ -316,7 +316,7 @@ export default function FamilyPageClient() {
 
   return (
     <section className="familyPage" aria-label="메모장">
-      <div className="familyCard">
+      <div className="familyCard familyMemoCard">
         <FamilyHeader active="memo" />
 
         <div className="familyQuickPadTitle">

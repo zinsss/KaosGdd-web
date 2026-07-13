@@ -95,6 +95,7 @@ test("family memo page uses finalized title and checklist glyph", async () => {
   const memoSource = await readSource("../app/family/FamilyPageClient.js");
 
   assert.ok(memoSource.includes('aria-label="메모장"'));
+  assert.ok(memoSource.includes('className="familyCard familyMemoCard"'));
   assert.ok(memoSource.includes("<h2>메모장</h2>"));
   assert.ok(memoSource.includes(""));
   assert.ok(memoSource.includes("}, [checklistMode, draft]);"));
@@ -155,13 +156,15 @@ test("family polish keeps the baseline compact and overflow-safe", async () => {
   assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?--family-page-max:\s*var\(--app-column-max-width\);[\s\S]*?--family-safe-top:\s*env\(safe-area-inset-top, 0px\);[\s\S]*?--family-safe-bottom:\s*env\(safe-area-inset-bottom, 0px\);[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*none;[\s\S]*?min-height:\s*100dvh;[\s\S]*?padding-top:\s*var\(--family-safe-top\);[\s\S]*?background:\s*#fff8fb;[\s\S]*?font-size:\s*14px;/);
   assert.match(polishCss, /\.familyCard\s*\{[\s\S]*?width:\s*min\(calc\(100% - \(var\(--app-column-edge-padding\) \* 2\)\), var\(--family-page-max\)\);[\s\S]*?max-width:\s*var\(--family-page-max\);[\s\S]*?min-height:\s*calc\(100dvh - var\(--family-safe-top\)\);[\s\S]*?margin:\s*0 auto;[\s\S]*?border:\s*0;[\s\S]*?background:\s*transparent;[\s\S]*?box-shadow:\s*none;/);
   assert.match(polishCss, /\.familyCard,[\s\S]*?\.familyDashboard,[\s\S]*?\.familyCalendar,[\s\S]*?\.familyCalendarFormPage,[\s\S]*?\.familyTimetable,[\s\S]*?\.familyStream,[\s\S]*?\.familyTaskForm,[\s\S]*?\.familyDoneTasks\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
-  assert.match(polishCss, /\.familyHeader\s*\{[\s\S]*?justify-content:\s*space-between;[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?min-height:\s*72px;[\s\S]*?overflow:\s*hidden;/);
+  assert.match(polishCss, /\.familyHeader\s*\{[\s\S]*?position:\s*sticky;[\s\S]*?top:\s*0;[\s\S]*?z-index:\s*40;[\s\S]*?justify-content:\s*space-between;[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?min-height:\s*72px;[\s\S]*?overflow:\s*hidden;/);
   assert.match(polishCss, /\.familyLogoLink\s*\{[\s\S]*?width:\s*auto;[\s\S]*?background:\s*transparent;[\s\S]*?text-decoration:\s*none;/);
   assert.match(polishCss, /\.familyTextLogo\s*\{[\s\S]*?font-family:\s*"Lotteria"[\s\S]*?color:\s*var\(--family-highlight, #d86f98\);[\s\S]*?font-size:\s*22px;/);
   assert.ok(!polishCss.includes("familyHeaderLogo"));
   assert.match(polishCss, /\.familyHomeNav\s*\{[\s\S]*?justify-content:\s*flex-end;[\s\S]*?margin-left:\s*auto;[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?overflow:\s*hidden;/);
   assert.match(polishCss, /\.familyHomeNavLink\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?white-space:\s*nowrap;/);
   assert.match(polishCss, /\.familyHomeNavLinkActive::after\s*\{[\s\S]*?height:\s*2px;[\s\S]*?background:\s*rgba\(216, 111, 152, 0\.72\);/);
+  assert.match(polishCss, /\.familyMemoCard\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-direction:\s*column;/);
+  assert.match(polishCss, /\.familyMemoCard \.familyComposer\s*\{[\s\S]*?position:\s*sticky;[\s\S]*?bottom:\s*0;[\s\S]*?z-index:\s*35;[\s\S]*?padding-bottom:\s*calc\(12px \+ var\(--family-safe-bottom\)\);/);
   assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyPage\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*none;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyCard\s*\{[\s\S]*?width:\s*min\(calc\(100% - 16px\), var\(--family-page-max\)\);[\s\S]*?max-width:\s*var\(--family-page-max\);/);
   assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyHomeNav\s*\{[\s\S]*?justify-content:\s*flex-end;[\s\S]*?margin-left:\s*auto;/);
