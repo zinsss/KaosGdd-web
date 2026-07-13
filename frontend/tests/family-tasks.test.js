@@ -92,7 +92,7 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(formSource.includes('className="familyTaskDateField"'), "date input should have a clearable field wrapper");
   assert.ok(formSource.includes("draft.due_date ? ("), "date clear control should only show after a date is set");
   assert.ok(formSource.includes('onClick={() => updateDraft("due_date", "")}'), "date clear control should reset due_date");
-  assert.ok(formSource.includes("날짜 지우기"), "date clear action should be visible in Korean");
+  assert.ok(formSource.includes("날짜 초기화"), "date clear action should be visible in Korean");
   assert.ok(formSource.includes("priority: FAMILY_TASK_DEFAULT_PRIORITY"), "new task default priority should be 보통");
   assert.ok(taskCss.includes(".familyTaskRowToggle"));
   assert.ok(!taskCss.includes(".familyTaskTitleToggle"));

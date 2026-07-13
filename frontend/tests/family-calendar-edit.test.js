@@ -59,7 +59,7 @@ ${rounySource}`;
     "일정",
     "일정 옵션",
     "이번 주만 변경",
-    "이번 주만 일정 취소",
+    "이번 주 취소",
     "로운이 시간표 변경",
     "되돌리기",
     "+ 일정",
@@ -646,7 +646,7 @@ test("family calendar edit mode drag moves dated items and creates Roun override
   assert.ok(calendarSource.includes("if (dragging || suppressRounyNavigation || suppressNavigation || opensRounyDetail)"));
   assert.ok(calendarSource.includes("onOpenRounyDetail(item);"));
   assert.ok(calendarSource.includes("function FamilyCalendarRounyDetailSheet"));
-  assert.ok(calendarSource.includes("이번 주만 빼기"));
+  assert.ok(calendarSource.includes("이번 주 취소"));
   assert.ok(calendarSource.includes("onDeleteThisWeek={deleteRounyThisWeek}"));
   assert.ok(calendarSource.includes("pending?.dragElement?.releasePointerCapture?.(event.pointerId);"));
   assert.ok(calendarSource.includes("onMoveDatedItem(pending.item.id, currentDragState.target);"));

@@ -488,7 +488,7 @@ function FamilyCalendarRounyDetailSheet({ item, onClose, onDeleteThisWeek }) {
         {item.overridden ? <p className="familyCalendarRounyDetailNote">이 일정은 이번 주에만 바뀐 일정이에요.</p> : null}
         <div className="familyCalendarRounyDetailActions">
           <button className="familyCalendarRounyDetailDelete" type="button" onClick={() => onDeleteThisWeek(item)}>
-            이번 주만 빼기
+            이번 주 취소
           </button>
           <button type="button" onClick={onClose}>
             닫기
@@ -1274,7 +1274,7 @@ function FamilyCalendarEditWeek({
         <div className="familyCalendarRounyChoiceSheet" role="dialog" aria-label="일정 옵션">
           <p>일정 옵션</p>
           <button type="button" onClick={chooseThisWeekOnly}>이번 주만 변경</button>
-          <button type="button" onClick={chooseDeleteThisWeek}>이번 주만 일정 취소</button>
+          <button type="button" onClick={chooseDeleteThisWeek}>이번 주 취소</button>
           <button type="button" onClick={chooseRounyTemplate}>로운이 시간표 변경</button>
           <button type="button" onClick={closeRounyChoiceSheet}>취소</button>
         </div>

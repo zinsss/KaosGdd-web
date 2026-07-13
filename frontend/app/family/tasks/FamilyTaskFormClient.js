@@ -193,7 +193,7 @@ export default function FamilyTaskFormClient({ taskId = null }) {
                 />
                 {draft.due_date ? (
                   <button className="familyTaskDateClear" type="button" onClick={() => updateDraft("due_date", "")}>
-                    날짜 지우기
+                    날짜 초기화
                   </button>
                 ) : null}
               </span>
