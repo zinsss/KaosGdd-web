@@ -248,6 +248,22 @@ test("family Roun timetable uses template library plus date-based assignments", 
   }
 });
 
+test("family Roun assignment resolver ignores future assignments until their start date", async () => {
+  const { resolveFamilyRounPlanForDate } = await import("../app/family/calendar/familyCalendarData.js");
+  const currentPlan = { id: "school", name: "학교", items: [] };
+  const futurePlan = { id: "vacation", name: "방학", items: [] };
+  const rounState = {
+    plans: [currentPlan, futurePlan],
+    assignments: [
+      { id: "current", planId: "school", startDate: "2026-03-01" },
+      { id: "future", planId: "vacation", startDate: "2026-07-20" },
+    ],
+  };
+
+  assert.equal(resolveFamilyRounPlanForDate("2026-07-19", rounState)?.id, "school");
+  assert.equal(resolveFamilyRounPlanForDate("2026-07-20", rounState)?.id, "vacation");
+});
+
 test("family Roun weekly grid editor supports add edit copy delete and drag", async () => {
   const rounySource = await readSource("../app/family/calendar/rouny/FamilyRounyClient.js");
   const rounyCss = await readSource("../app/styles/family-rouny-templates.css");
