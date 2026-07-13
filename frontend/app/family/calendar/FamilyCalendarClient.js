@@ -400,6 +400,7 @@ function CalendarItemLink({
   item,
   className = "",
   onCancelRounyChoice = null,
+  onOpenRounyDetail = null,
   onStartDatedDrag = null,
   onStartRounyChoice = null,
   onStartRounyDrag = null,
@@ -415,6 +416,7 @@ function CalendarItemLink({
   const dragEnabledItem = !item.readOnly && (editItem || allDayEditItem);
   const editableDatedItem = dragEnabledItem && itemType === "dated";
   const editableRounyItem = dragEnabledItem && itemType === "rouny";
+  const opensRounyDetail = itemType === "rouny" && typeof onOpenRounyDetail === "function";
   const suppressRounyNavigation = editableRounyItem && rounyChoiceItemId === item.id;
   const cancelRounyChoice = editableRounyItem && onCancelRounyChoice ? onCancelRounyChoice : undefined;
   const displayTitle = formatTimedCalendarItemTitle(item, itemType);
@@ -432,7 +434,14 @@ function CalendarItemLink({
       draggable={dragEnabledItem ? false : undefined}
       href={href}
       key={`${itemType}-${item.id}`}
-      onClick={dragging || suppressRounyNavigation || suppressNavigation ? (event) => event.preventDefault() : undefined}
+      onClick={(event) => {
+        if (dragging || suppressRounyNavigation || suppressNavigation || opensRounyDetail) {
+          event.preventDefault();
+        }
+        if (!dragging && !suppressRounyNavigation && opensRounyDetail) {
+          onOpenRounyDetail(item);
+        }
+      }}
       onDragStart={dragEnabledItem ? (event) => event.preventDefault() : undefined}
       onPointerCancel={cancelRounyChoice}
       onPointerDown={dragEnabledItem ? (event) => {
@@ -450,6 +459,43 @@ function CalendarItemLink({
       <span>{displayTitle}</span>
       {item.overridden ? <span className="familyCalendarRounyOverrideBadge">예외</span> : null}
     </Link>
+  );
+}
+
+function FamilyCalendarRounyDetailSheet({ item, onClose, onDeleteThisWeek }) {
+  if (!item) return null;
+  const displayTitle = formatTimedCalendarItemTitle(item, "rouny");
+  return (
+    <div className="familyCalendarRounyDetailBackdrop" role="presentation" onClick={onClose}>
+      <section
+        aria-label="로운이 일정 자세히"
+        className="familyCalendarRounyDetailSheet"
+        role="dialog"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <p className="familyCalendarRounyDetailEyebrow">로운이 시간표</p>
+        <h3>{displayTitle}</h3>
+        <dl>
+          <div>
+            <dt>날짜</dt>
+            <dd>{item.date}</dd>
+          </div>
+          <div>
+            <dt>시간</dt>
+            <dd>{item.startTime} ~ {item.endTime}</dd>
+          </div>
+        </dl>
+        {item.overridden ? <p className="familyCalendarRounyDetailNote">이 일정은 이번 주에만 바뀐 일정이에요.</p> : null}
+        <div className="familyCalendarRounyDetailActions">
+          <button className="familyCalendarRounyDetailDelete" type="button" onClick={() => onDeleteThisWeek(item)}>
+            이번 주만 빼기
+          </button>
+          <button type="button" onClick={onClose}>
+            닫기
+          </button>
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -681,6 +727,7 @@ function FamilyCalendarTimedArea({
   dragState = null,
   editable = false,
   onCancelRounyChoice = null,
+  onOpenRounyDetail = null,
   onRestoreRounyOverride = null,
   onStartDatedDrag = null,
   onStartRounyChoice = null,
@@ -788,6 +835,7 @@ function FamilyCalendarTimedArea({
                 item={item}
                 key={`${normalizedCalendarItemType(item)}-${item.id}`}
                 onCancelRounyChoice={onCancelRounyChoice}
+                onOpenRounyDetail={onOpenRounyDetail}
                 onStartDatedDrag={onStartDatedDrag}
                 onStartRounyChoice={onStartRounyChoice}
                 onStartRounyDrag={onStartRounyDrag}
@@ -811,6 +859,7 @@ function FamilyCalendarEditWeek({
   onCreateRounyOverride,
   onDeleteRounyThisWeek,
   onMoveDatedItem,
+  onOpenRounyDetail,
   onRestoreRounyOverride,
   onSelectDragWeek,
   onToggleRounyTimetable,
@@ -1180,6 +1229,7 @@ function FamilyCalendarEditWeek({
           key={`${segment.startMinutes}-${segment.endMinutes}`}
           moveSlotLongPress={moveSlotLongPress}
           onCancelRounyChoice={clearRounyChoiceTimer}
+          onOpenRounyDetail={onOpenRounyDetail}
           onRestoreRounyOverride={onRestoreRounyOverride}
           onStartDatedDrag={startDatedDrag}
           onStartRounyChoice={startRounyChoice}
@@ -1252,6 +1302,7 @@ export default function FamilyCalendarClient() {
   const [caregiverHoursByDate, setCaregiverHoursByDate] = useState({});
   const [activeCaregiverDate, setActiveCaregiverDate] = useState("");
   const [pressedDateKey, setPressedDateKey] = useState("");
+  const [rounyDetailItem, setRounyDetailItem] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -1560,6 +1611,7 @@ export default function FamilyCalendarClient() {
       endTime: rounyItem.endTime,
       deleted: true,
     });
+    setRounyDetailItem(null);
   }
 
   function restoreRounyOverride(overrideId) {
@@ -1703,6 +1755,7 @@ export default function FamilyCalendarClient() {
                   onCreateRounyOverride={createRounyOverride}
                   onDeleteRounyThisWeek={deleteRounyThisWeek}
                   onMoveDatedItem={moveDatedItem}
+                  onOpenRounyDetail={setRounyDetailItem}
                   onRestoreRounyOverride={restoreRounyOverride}
                   onSelectDragWeek={selectDragWeek}
                   onToggleRounyTimetable={() => setRounyTimetableExpanded((current) => !current)}
@@ -1756,6 +1809,7 @@ export default function FamilyCalendarClient() {
                         key={`${segment.startMinutes}-${segment.endMinutes}`}
                         segment={segment}
                         selectedWeekStart={selectedWeekStart}
+                        onOpenRounyDetail={setRounyDetailItem}
                       />
                     ))
                   ) : null}
@@ -1765,6 +1819,11 @@ export default function FamilyCalendarClient() {
           );
         })}
       </div>
+      <FamilyCalendarRounyDetailSheet
+        item={rounyDetailItem}
+        onClose={() => setRounyDetailItem(null)}
+        onDeleteThisWeek={deleteRounyThisWeek}
+      />
     </main>
   );
 }
