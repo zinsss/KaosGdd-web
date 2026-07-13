@@ -1,8 +1,11 @@
 .familyPage {
   --family-page-max: var(--app-column-max-width);
+  --family-safe-top: env(safe-area-inset-top, 0px);
+  --family-safe-bottom: env(safe-area-inset-bottom, 0px);
   width: 100%;
   max-width: none;
   min-height: 100dvh;
+  padding-top: var(--family-safe-top);
   box-sizing: border-box;
   overflow-x: hidden;
   background: #fff8fb;
@@ -12,7 +15,7 @@
 .familyCard {
   width: min(calc(100% - (var(--app-column-edge-padding) * 2)), var(--family-page-max));
   max-width: var(--family-page-max);
-  min-height: 100dvh;
+  min-height: calc(100dvh - var(--family-safe-top));
   margin: 0 auto;
   border: 0;
   border-radius: 0;
