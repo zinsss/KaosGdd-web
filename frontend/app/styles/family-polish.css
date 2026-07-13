@@ -13,6 +13,18 @@
   font-size: 14px;
 }
 
+.familyPage::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  height: var(--family-safe-top);
+  pointer-events: none;
+  background: #fff8fb;
+}
+
 .familyCard {
   width: min(calc(100% - (var(--app-column-edge-padding) * 2)), var(--family-page-max));
   max-width: var(--family-page-max);
