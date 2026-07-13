@@ -216,6 +216,9 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(calendarCss.includes(".familyCalendarAllDayLabel {"));
   assert.ok(calendarCss.includes(".familyCalendarAllDaySlot {"));
   assert.ok(calendarCss.includes(".familyCalendarAllDayItem {"));
+  assert.match(calendarCss, /\.familyCalendarAllDayRow\s*\{[\s\S]*?margin-bottom:\s*0;/);
+  assert.match(calendarCss, /\.familyCalendarAllDaySlot\s*\{[\s\S]*?min-height:\s*20px;[\s\S]*?padding-top:\s*0;/);
+  assert.match(calendarCss, /\.familyCalendarAllDayItem\s*\{[\s\S]*?min-height:\s*18px;/);
   assert.ok(calendarCss.includes(".familyCalendarFormToggle {"));
   assert.ok(calendarCss.includes(".familyCalendarFormToggleControl {"));
   assert.ok(calendarCss.includes(".familyCalendarFormGridAllDay {"));
@@ -745,6 +748,7 @@ test("family calendar timed items render by duration across hour boundaries", as
   assert.ok(!calendarSource.includes("editItemStyleForHour"));
   assert.ok(calendarCss.includes(".familyCalendarTimedArea {"));
   assert.ok(calendarCss.includes("min-height: var(--family-calendar-timed-area-height);"));
+  assert.match(calendarCss, /\.familyCalendarWeekSelected \.familyCalendarTimedArea\s*\{[\s\S]*?margin-bottom:\s*6px;/);
   assert.ok(calendarCss.includes(".familyCalendarTimedItemsLayer {"));
   assert.ok(calendarCss.includes("position: absolute;"));
   assert.ok(calendarCss.includes("inset: 0;"));

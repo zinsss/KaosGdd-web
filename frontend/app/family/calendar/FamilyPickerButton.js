@@ -57,6 +57,28 @@ function FamilyPickerButton({ ariaLabel, children, className, onChange, options 
     );
   }
 
+  if (type === "select") {
+    return (
+      <span className={`${className} familyCalendarPickerSelectHost`}>
+        <span className="familyCalendarPickerButtonControl" aria-hidden="true">
+          {children}
+        </span>
+        <select
+          aria-label={ariaLabel}
+          className="familyCalendarPickerNativeSelect"
+          onChange={(event) => onChange(event.target.value)}
+          value={String(value)}
+        >
+          {options.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </span>
+    );
+  }
+
   return (
     <span className={`${className} familyCalendarPickerFallbackHost`} onKeyDown={closeOnEscape}>
       <button

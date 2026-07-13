@@ -85,7 +85,7 @@ test("family timetable keeps local schedule editor foundations", async () => {
   assert.ok(rounySource.includes("if (!current || (current.sessions || []).length <= 1) return current;"));
   assert.ok(rounySource.includes("function shortWeekdayLabel(dayOfWeek)"));
   assert.ok(rounySource.includes('className="familyCalendarPickerButton familyRounyWeekdayPickerButton"'));
-  assert.ok(rounySource.includes("FamilySelectPickerButton"), "Rouny weekday control should use shared fallback picker");
+  assert.ok(rounySource.includes("FamilySelectPickerButton"), "Rouny weekday control should use shared picker");
   assert.ok(rounySource.includes("FamilyTimePickerButton"), "Rouny time controls should use shared fallback picker");
   assert.ok(rounySource.includes('ariaLabel="로운이 일정 요일 선택"'));
   assert.ok(!rounySource.includes('<span className="familyCalendarDateTimeDivider" aria-hidden="true">,</span>'));
@@ -97,6 +97,8 @@ test("family timetable keeps local schedule editor foundations", async () => {
   assert.ok(!rounySource.includes('<input type="time" value={draft.endTime}'));
   assert.ok(!rounySource.includes('<select value={draft.dayOfWeek}'));
   assert.ok(!rounySource.includes("familyCalendarNativePickerInput"));
+  assert.ok(pickerSource.includes('if (type === "select")'), "select picker should open directly from the visible pill");
+  assert.ok(pickerSource.includes("familyCalendarPickerNativeSelect"), "select picker should use a native select hit target");
   assert.ok(pickerSource.includes("buildFamilyTimeOptions"));
   assert.ok(pickerSource.includes("familyCalendarPickerFallbackSelect"));
   assert.ok(!rounySource.includes("FAMILY_TIMETABLE_FONT_PRESETS"));
