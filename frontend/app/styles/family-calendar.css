@@ -302,8 +302,9 @@
 }
 
 .familyCalendarAllDayRow {
-  align-items: start;
+  align-items: center;
   margin-bottom: 0;
+  min-height: 0;
 }
 
 .familyCalendarSectionSeparated,
@@ -448,10 +449,14 @@
 }
 
 .familyCalendarAllDaySlot {
-  align-content: start;
+  align-content: center;
   gap: 1px;
-  min-height: 20px;
+  min-height: 18px;
   padding-top: 0;
+}
+
+.familyCalendarAllDayRow .familyCalendarDaySlot {
+  min-height: 18px;
 }
 
 .familyCalendarWeekSelected .familyCalendarAllDaySlot {
