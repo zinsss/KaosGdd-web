@@ -14,6 +14,7 @@ function isPassthroughPath(pathname) {
     pathname.startsWith("/_next/") ||
     pathname.startsWith("/favicon") ||
     pathname.startsWith("/manifest") ||
+    (pathname.startsWith("/family/") && /\.[a-z0-9]+$/i.test(pathname)) ||
     pathname.startsWith("/icons/") ||
     pathname.startsWith("/screenshots/")
   );

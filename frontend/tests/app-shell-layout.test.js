@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
 
 function cssBlock(source, selector) {
   const escapedSelector = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -38,6 +38,37 @@ test("service worker bumps app-shell cache and checks for updates", async () => 
   assert.doesNotMatch(serviceWorkerSource, /"\/tasks"/);
   assert.doesNotMatch(serviceWorkerSource, /"\/reminders"/);
   assert.match(bootstrapSource, /registration\.update\(\)/);
+});
+
+test("Family PWA uses explicit pink Family icons and manifest", async () => {
+  const bootstrapSource = await readFile(
+    new URL("../components/pwa/PwaBootstrap.js", import.meta.url),
+    "utf8",
+  );
+  const familyManifest = await readFile(new URL("../public/family/manifest.webmanifest", import.meta.url), "utf8");
+  const familyManifestJson = JSON.parse(familyManifest);
+
+  assert.match(bootstrapSource, /family\.kaosgdd\.net/);
+  assert.match(bootstrapSource, /String\(pathname \|\| ""\)\.startsWith\("\/family"\)/);
+  assert.match(bootstrapSource, /ensureHeadLink\("manifest", "\/family\/manifest\.webmanifest"\)/);
+  assert.match(bootstrapSource, /ensureHeadLink\("icon", "\/family\/favicon\.svg", \{ type: "image\/svg\+xml" \}\)/);
+  assert.match(bootstrapSource, /ensureHeadLink\("apple-touch-icon", "\/family\/family-apple-touch-icon\.png"\)/);
+  assert.equal(familyManifestJson.name, "로운이와 나");
+  assert.equal(familyManifestJson.theme_color, "#d86f98");
+  assert.equal(familyManifestJson.background_color, "#fff8fb");
+  assert.deepEqual(
+    familyManifestJson.icons.map((icon) => icon.src),
+    ["/family/family-icon-192.png", "/family/family-icon-512.png"],
+  );
+  for (const asset of [
+    "../public/family/favicon.svg",
+    "../public/family/family-icon-192.png",
+    "../public/family/family-icon-512.png",
+    "../public/family/family-apple-touch-icon.png",
+  ]) {
+    const result = await stat(new URL(asset, import.meta.url));
+    assert.ok(result.size > 0, `${asset} should exist`);
+  }
 });
 
 test("debug tap panel is gated by debugTap query parameter", async () => {

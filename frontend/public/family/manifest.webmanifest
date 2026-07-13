@@ -1,0 +1,25 @@
+{
+  "name": "로운이와 나",
+  "short_name": "로운이와 나",
+  "description": "Family calendar, tasks, memo, and Rouny timetable.",
+  "start_url": "/tasks",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fff8fb",
+  "theme_color": "#d86f98",
+  "icons": [
+    {
+      "src": "/family/family-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/family/family-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

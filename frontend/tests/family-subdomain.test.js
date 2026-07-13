@@ -26,6 +26,7 @@ test("family subdomain rewrites to Family routes without touching APIs or assets
   for (const passthrough of ['"/api/"', '"/_next/"', '"/favicon"', '"/manifest"']) {
     assert.ok(middlewareSource.includes(passthrough), `${passthrough} should not be rewritten under the Family subdomain`);
   }
+  assert.ok(middlewareSource.includes('(pathname.startsWith("/family/") && /\\.[a-z0-9]+$/i.test(pathname))'));
 
   assert.ok(middlewareSource.includes('url.pathname === "/family" || url.pathname.startsWith("/family/")'));
   assert.ok(middlewareSource.includes("NextResponse.redirect(url)"), "Family host should canonicalize prefixed Family paths");
