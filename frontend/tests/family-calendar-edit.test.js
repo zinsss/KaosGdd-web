@@ -172,8 +172,8 @@ test("family calendar all-day marker defaults the form and renders a top all-day
   assert.ok(eventFormSource.includes("await persistFamilyCalendarItems(nextItems);"));
   assert.ok(eventFormSource.includes('{saving ? "저장 중" : "저장"}'));
   assert.ok(calendarSource.includes("function formatTimedCalendarItemTitle(item, itemType)"));
-  assert.ok(calendarSource.includes('if (itemType === "rouny" || item.allDay || !item.startTime) return title;'));
-  assert.ok(calendarSource.includes('return `${item.startTime} ${title}`;'));
+  assert.ok(calendarSource.includes('return itemType === "rouny" && item.overridden ? `!${item.title}` : item.title;'));
+  assert.ok(!calendarSource.includes('return `${item.startTime} ${title}`;'));
   assert.ok(calendarSource.includes("const displayTitle = formatTimedCalendarItemTitle(item, itemType);"));
   assert.ok(calendarSource.includes("<span>{displayTitle}</span>"));
   assert.ok(eventFormSource.includes("familyCalendarDateTimeRow"));

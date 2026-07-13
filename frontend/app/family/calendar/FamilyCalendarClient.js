@@ -101,9 +101,7 @@ function normalizedCalendarItemType(item) {
 }
 
 function formatTimedCalendarItemTitle(item, itemType) {
-  const title = itemType === "rouny" && item.overridden ? `!${item.title}` : item.title;
-  if (itemType === "rouny" || item.allDay || !item.startTime) return title;
-  return `${item.startTime} ${title}`;
+  return itemType === "rouny" && item.overridden ? `!${item.title}` : item.title;
 }
 
 function eventDurationMinutes(item) {
