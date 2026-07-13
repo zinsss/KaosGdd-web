@@ -2,10 +2,11 @@
   --family-page-max: var(--app-column-max-width);
   --family-safe-top: env(safe-area-inset-top, 0px);
   --family-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --family-header-height: 72px;
   width: 100%;
   max-width: none;
   min-height: 100dvh;
-  padding-top: var(--family-safe-top);
+  padding-top: calc(var(--family-safe-top) + var(--family-header-height));
   box-sizing: border-box;
   overflow-x: hidden;
   background: #fff8fb;
@@ -15,12 +16,13 @@
 .familyCard {
   width: min(calc(100% - (var(--app-column-edge-padding) * 2)), var(--family-page-max));
   max-width: var(--family-page-max);
-  min-height: calc(100dvh - var(--family-safe-top));
+  min-height: calc(100dvh - var(--family-safe-top) - var(--family-header-height));
   margin: 0 auto;
   border: 0;
   border-radius: 0;
   background: transparent;
   box-shadow: none;
+  overflow: visible;
 }
 
 .familyCard,
@@ -42,15 +44,19 @@
 }
 
 .familyHeader {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  top: var(--family-safe-top);
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 40;
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-wrap: nowrap;
   gap: 14px;
+  width: min(calc(100% - (var(--app-column-edge-padding) * 2)), var(--family-page-max));
   min-height: 72px;
+  height: var(--family-header-height);
   padding: 6px 14px;
   overflow: hidden;
   border-bottom: 1px solid rgba(214, 128, 157, 0.12);
@@ -140,13 +146,16 @@
 }
 
 .familyMemoCard .familyStream {
-  padding-bottom: calc(16px + var(--family-safe-bottom));
+  padding-bottom: calc(88px + var(--family-safe-bottom));
 }
 
 .familyMemoCard .familyComposer {
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
   z-index: 35;
+  width: min(calc(100% - (var(--app-column-edge-padding) * 2)), var(--family-page-max));
   padding-bottom: calc(12px + var(--family-safe-bottom));
   background: rgba(255, 250, 253, 0.97);
   backdrop-filter: blur(10px);
@@ -698,6 +707,10 @@
 }
 
 @media (max-width: 360px) {
+  .familyPage {
+    --family-header-height: 68px;
+  }
+
   .familyHeader {
     gap: 8px;
     min-height: 68px;
