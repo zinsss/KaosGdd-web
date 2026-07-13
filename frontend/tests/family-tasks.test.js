@@ -89,6 +89,10 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.ok(formSource.includes('className={`familyTaskSongToggle${sharedWithSong ? " familyTaskSongToggleActive" : ""}`}'), "task form should render the 쏭 toggle button");
   assert.ok(formSource.includes("aria-pressed={sharedWithSong}"), "쏭 toggle should expose pressed state");
   assert.ok(formSource.includes("onClick={() => updateSongShared(!sharedWithSong)}"), "쏭 toggle should flip the same shared assignee state");
+  assert.ok(formSource.includes('className="familyTaskDateField"'), "date input should have a clearable field wrapper");
+  assert.ok(formSource.includes("draft.due_date ? ("), "date clear control should only show after a date is set");
+  assert.ok(formSource.includes('onClick={() => updateDraft("due_date", "")}'), "date clear control should reset due_date");
+  assert.ok(formSource.includes("날짜 지우기"), "date clear action should be visible in Korean");
   assert.ok(formSource.includes("priority: FAMILY_TASK_DEFAULT_PRIORITY"), "new task default priority should be 보통");
   assert.ok(taskCss.includes(".familyTaskRowToggle"));
   assert.ok(!taskCss.includes(".familyTaskTitleToggle"));
@@ -113,6 +117,8 @@ test("family tasks use finalized standard Korean labels", async () => {
   assert.match(taskCss, /\.familyTaskCardExpanded \.familyTaskCardBody::after\s*\{[\s\S]*?height:\s*1px;[\s\S]*?background:\s*rgba\(180, 120, 190, 0\.22\);/);
   assert.match(taskCss, /\.familyTaskActionButtonSong\s*\{[\s\S]*?background:\s*rgba\(245,\s*235,\s*255,\s*0\.68\);[\s\S]*?color:\s*rgba\(120,\s*84,\s*166,\s*0\.88\);/);
   assert.match(taskCss, /\.familyTaskActionButtonSongActive\s*\{[\s\S]*?background:\s*rgba\(224,\s*207,\s*255,\s*0\.9\);[\s\S]*?color:\s*rgba\(91,\s*56,\s*142,\s*0\.98\);/);
+  assert.match(taskCss, /\.familyTaskDateField\s*\{[\s\S]*?display:\s*flex;[\s\S]*?flex-wrap:\s*wrap;/);
+  assert.match(taskCss, /\.familyTaskDateClear\s*\{[\s\S]*?min-height:\s*42px;[\s\S]*?white-space:\s*nowrap;/);
   assert.ok(!taskCss.includes(".familyTaskBadgeSong"), "쏭 list display should not have badge styling");
   assert.ok(!taskCss.includes(".familyTaskBadgePriority"), "priority list display should not have badge styling");
   assert.match(taskCss, /\.familyTaskPriorityShareRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;[\s\S]*?align-items:\s*end;/);

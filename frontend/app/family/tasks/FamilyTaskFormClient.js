@@ -184,12 +184,19 @@ export default function FamilyTaskFormClient({ taskId = null }) {
 
             <label>
               <span>날짜</span>
-              <input
-                className="familyTaskDateInput"
-                type="date"
-                value={draft.due_date}
-                onChange={(event) => updateDraft("due_date", event.target.value)}
-              />
+              <span className="familyTaskDateField">
+                <input
+                  className="familyTaskDateInput"
+                  type="date"
+                  value={draft.due_date}
+                  onChange={(event) => updateDraft("due_date", event.target.value)}
+                />
+                {draft.due_date ? (
+                  <button className="familyTaskDateClear" type="button" onClick={() => updateDraft("due_date", "")}>
+                    날짜 지우기
+                  </button>
+                ) : null}
+              </span>
             </label>
           </div>
 
