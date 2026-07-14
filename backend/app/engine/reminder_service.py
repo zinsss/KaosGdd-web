@@ -19,7 +19,7 @@ from app.db.repo.items_repo import ItemsRepo
 from app.db.repo.reminder_repo import ReminderRepo
 from app.db.repo.supply_repo import SupplyRepo
 from app.db.repo.task_repo import TaskRepo
-from app.integrations import pushover_client
+from app.integrations import ntfy_client, pushover_client
 from app.integrations.push_format import build_push_body, build_push_title
 from app.strings import ApiText, FaxNotificationText, PushText, ReminderStatusText
 from app.utils.clock import now_iso
@@ -619,6 +619,40 @@ class ReminderService:
                 message=pushover_message,
                 url=push_payload.get("url"),
             )
+        self._send_ntfy(
+            channel=channel,
+            title=pushover_title,
+            message=pushover_message,
+            url=push_payload.get("url"),
+        )
+
+    def _send_ntfy(self, *, channel: str, title: str, message: str, url: str | None = None) -> None:
+        topic = self._ntfy_topic_for_channel(channel)
+        if not topic:
+            return
+        priority = 4 if channel in {NOTIFICATION_CHANNEL_URGENT, NOTIFICATION_CHANNEL_SYSTEM} else 3
+        try:
+            result = ntfy_client.send_ntfy(
+                topic=topic,
+                title=title,
+                message=message,
+                url=url,
+                priority=priority,
+            )
+        except Exception as exc:
+            logger.warning("ntfy send exception: %s", exc)
+            return
+        if result.get("attempted") and not result.get("succeeded"):
+            logger.warning("ntfy send failed: reason=%s", result.get("reason"))
+
+    def _ntfy_topic_for_channel(self, channel: str) -> str:
+        if channel == NOTIFICATION_CHANNEL_NORMAL:
+            return SETTINGS.NTFY_TOPIC_NORMAL
+        if channel == NOTIFICATION_CHANNEL_SYSTEM:
+            return SETTINGS.NTFY_TOPIC_SYSTEM
+        if channel == NOTIFICATION_CHANNEL_URGENT:
+            return SETTINGS.NTFY_TOPIC_URGENT
+        return SETTINGS.NTFY_TOPIC_NORMAL
 
     def _resolve_notification_target_context(self, reminder: dict) -> dict:
         parent_item_id = reminder.get("parent_item_id")

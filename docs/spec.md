@@ -96,6 +96,7 @@ For full grammar details and examples, see [Capture Grammar](capture-grammar.md)
 
 - Web Push handles ordinary app workflow events: reminders, missed reminders, overdue tasks, received faxes, failed fax sends, and status attention.
 - Pushover is reserved for admin/system/out-of-band alarms and configured escalation paths.
+- ntfy is supported as an optional self-hosted notification channel. When enabled, regular reminders/events publish to the normal topic and urgent/system events publish to the urgent topic.
 - The backend scheduler/systemd timers trigger due reminder scans, missed reminder scans, daily summaries, lifecycle maintenance, and claim-day task creation.
 
 ## Weather

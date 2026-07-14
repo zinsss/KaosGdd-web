@@ -426,6 +426,12 @@ Timers/services cover:
 - claim-day task creation
 - lifecycle maintenance
 
+Self-hosted ntfy is an optional delivery channel controlled by `NTFY_ENABLED`,
+`NTFY_BASE_URL`, `NTFY_TOKEN`, and topic settings. It is additive to the
+existing notification preference mode: normal notifications publish to
+`NTFY_TOPIC_NORMAL`, while urgent/system notifications publish to
+`NTFY_TOPIC_URGENT` or `NTFY_TOPIC_SYSTEM`.
+
 Fax hooks live under `ops/hylafax/`.
 
 Backup scripts live under `ops/backup/` and `scripts/`.

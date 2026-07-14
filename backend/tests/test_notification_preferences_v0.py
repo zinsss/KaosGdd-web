@@ -81,6 +81,23 @@ def _record_pushover(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
     return calls
 
 
+def _record_ntfy(monkeypatch: pytest.MonkeyPatch) -> list[dict]:
+    calls: list[dict] = []
+
+    def fake_ntfy(**kwargs):
+        calls.append(kwargs)
+        return {"attempted": True, "succeeded": True, "reason": None}
+
+    monkeypatch.setattr("app.config.SETTINGS.NTFY_ENABLED", True)
+    monkeypatch.setattr("app.config.SETTINGS.NTFY_BASE_URL", "https://ntfy.test")
+    monkeypatch.setattr("app.config.SETTINGS.NTFY_TOKEN", "ntfy-token")
+    monkeypatch.setattr("app.config.SETTINGS.NTFY_TOPIC_NORMAL", "kaosgdd")
+    monkeypatch.setattr("app.config.SETTINGS.NTFY_TOPIC_URGENT", "kaosgdd-urgent")
+    monkeypatch.setattr("app.config.SETTINGS.NTFY_TOPIC_SYSTEM", "kaosgdd-urgent")
+    monkeypatch.setattr("app.integrations.ntfy_client.send_ntfy", fake_ntfy)
+    return calls
+
+
 def test_notification_preferences_default_and_update(main_module) -> None:
     initial = main_module.get_notification_preferences()
     assert initial["ok"] is True
@@ -191,6 +208,39 @@ def test_overdue_task_uses_pushover_in_pushover_primary(main_module, monkeypatch
     assert web_push.payloads == []
     assert len(pushover_calls) == 1
     assert pushover_calls[0]["title"] == "KaosGdd task overdue"
+
+
+def test_normal_reminder_sends_ntfy_to_default_topic(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    main_module.update_notification_preferences({"mode": "pushover_primary"})
+    ok, _status, _reminder_id = main_module.reminder_service.create_standalone_reminder(
+        title="normal reminder",
+        remind_at="2020-01-01T00:00:00+00:00",
+    )
+    assert ok is True
+    ntfy_calls = _record_ntfy(monkeypatch)
+    _record_pushover(monkeypatch)
+
+    fired = main_module.fire_due_reminders()
+
+    assert fired["ok"] is True
+    assert len(ntfy_calls) == 1
+    assert ntfy_calls[0]["topic"] == "kaosgdd"
+    assert ntfy_calls[0]["priority"] == 3
+
+
+def test_urgent_overdue_task_sends_ntfy_to_urgent_topic(main_module, monkeypatch: pytest.MonkeyPatch) -> None:
+    main_module.update_notification_preferences({"mode": "pushover_primary"})
+    task = main_module.create_task({"title": "Submit overdue form", "due_at": "2020-01-01T00:00:00+00:00"})
+    assert task["ok"] is True
+    ntfy_calls = _record_ntfy(monkeypatch)
+    _record_pushover(monkeypatch)
+
+    scanned = main_module.scan_overdue_pushes()
+
+    assert scanned["ok"] is True
+    assert len(ntfy_calls) == 1
+    assert ntfy_calls[0]["topic"] == "kaosgdd-urgent"
+    assert ntfy_calls[0]["priority"] == 4
 
 
 @pytest.mark.parametrize(
