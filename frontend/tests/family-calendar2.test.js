@@ -30,14 +30,19 @@ test("family calendar2 is a separate main-events-style Family month view", async
   assert.match(cssSource, /\.familyCalendar2WeatherGlyph\s*\{[\s\S]*?margin-right:\s*2px;/);
   assert.match(cssSource, /\.familyCalendar2CaregiverGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
   assert.match(cssSource, /\.familyCalendar2CaregiverCard\s*\{/);
-  assert.match(cssSource, /\.familyCalendar2CaregiverPicker\s*\{/);
+  assert.match(cssSource, /\.familyCalendar2CaregiverEditorGrid\s*\{/);
+  assert.match(cssSource, /\.familyCalendar2DaypartRow > span:last-child\s*\{[\s\S]*?gap:\s*8px;/);
+  assert.match(cssSource, /\.familyCalendar2DaypartRow > span:last-child > span:first-child\s*\{[\s\S]*?font-size:\s*1\.35em;/);
   assert.match(cssSource, /\.familyCalendar2SelectedWeatherGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
 
   assert.ok(clientSource.includes("fetchFamilyCalendarItems"));
   assert.ok(clientSource.includes("fetchFamilyTasks"));
   assert.ok(clientSource.includes("fetchFamilyCaregiverHours"));
   assert.ok(clientSource.includes("persistFamilyCaregiverHours"));
-  assert.ok(clientSource.includes("FAMILY_CAREGIVER_HOUR_VALUES.map"));
+  assert.ok(clientSource.includes("FamilyCalendar2CaregiverEditor"));
+  assert.ok(clientSource.includes("normalizeFamilyCaregiverSessions"));
+  assert.ok(clientSource.includes("normalizeFamilyCaregiverExtras"));
+  assert.ok(clientSource.includes("draftMemo"));
   assert.ok(clientSource.includes("fetchSharedWeather"));
   assert.ok(clientSource.includes("sharedWeatherDailyFromPayload"));
   assert.ok(clientSource.includes("sharedWeatherDaypartsFromPayload"));

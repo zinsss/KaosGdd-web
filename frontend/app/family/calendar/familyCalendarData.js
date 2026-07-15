@@ -224,7 +224,7 @@ export function normalizeFamilyCaregiverExtras(value) {
 export function normalizeFamilyCaregiverDayRecord(value) {
   const legacyHours = normalizeFamilyCaregiverHour(value);
   if (legacyHours !== null) {
-    return { legacyHours, sessions: [], extras: [] };
+    return { legacyHours, sessions: [], extras: [], memo: "" };
   }
 
   if (Array.isArray(value)) {
@@ -232,17 +232,19 @@ export function normalizeFamilyCaregiverDayRecord(value) {
       legacyHours: null,
       sessions: normalizeFamilyCaregiverSessions(value),
       extras: [],
+      memo: "",
     };
   }
 
   if (!value || typeof value !== "object") {
-    return { legacyHours: null, sessions: [], extras: [] };
+    return { legacyHours: null, sessions: [], extras: [], memo: "" };
   }
 
   return {
     legacyHours: normalizeFamilyCaregiverHour(value.legacyHours),
     sessions: normalizeFamilyCaregiverSessions(value.sessions),
     extras: normalizeFamilyCaregiverExtras(value.extras),
+    memo: String(value.memo || "").trim(),
   };
 }
 
@@ -284,10 +286,11 @@ export function normalizeFamilyCaregiverHoursMap(value) {
     if (normalizedSessions.length) next[normalizedDate] = normalizedSessions;
     if (!Array.isArray(hours) && hours && typeof hours === "object") {
       const normalizedRecord = normalizeFamilyCaregiverDayRecord(hours);
-      if (normalizedRecord.sessions.length || normalizedRecord.extras.length) {
+      if (normalizedRecord.sessions.length || normalizedRecord.extras.length || normalizedRecord.memo) {
         next[normalizedDate] = {
           sessions: normalizedRecord.sessions,
           extras: normalizedRecord.extras,
+          memo: normalizedRecord.memo,
         };
       }
     }

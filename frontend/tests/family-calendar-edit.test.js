@@ -458,20 +458,24 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
   assert.deepEqual(normalizeFamilyCaregiverDayRecord({
     sessions: [{ start: "12:00", end: "15:30" }],
     extras: [{ label: "식사", amount: 7000 }],
+    memo: "저녁 챙김",
   }), {
     legacyHours: null,
     sessions: [{ start: "12:00", end: "15:30" }],
     extras: [{ label: "식사", amount: 7000 }],
+    memo: "저녁 챙김",
   });
   assert.deepEqual(normalizeFamilyCaregiverDayRecord([{ start: "12:00", end: "15:30" }]), {
     legacyHours: null,
     sessions: [{ start: "12:00", end: "15:30" }],
     extras: [],
+    memo: "",
   });
   assert.deepEqual(normalizeFamilyCaregiverDayRecord(2), {
     legacyHours: 2,
     sessions: [],
     extras: [],
+    memo: "",
   });
   assert.equal(calculateFamilyCaregiverExtraTotal({
     sessions: [{ start: "12:00", end: "15:30" }],
@@ -483,6 +487,7 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
     "2026-06-11": {
       sessions: [{ start: "18:00", end: "20:00" }],
       extras: [{ label: "야간", amount: 5000 }],
+      memo: "늦게 끝남",
     },
     "2026-06-10": 0,
     bad: 4,
@@ -492,6 +497,7 @@ test("family calendar caregiver hours row stores date-specific session ranges", 
     "2026-06-11": {
       sessions: [{ start: "18:00", end: "20:00" }],
       extras: [{ label: "야간", amount: 5000 }],
+      memo: "늦게 끝남",
     },
   });
 
