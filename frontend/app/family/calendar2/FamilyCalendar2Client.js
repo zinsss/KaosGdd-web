@@ -17,9 +17,12 @@ import {
 } from "../../lib/weather-client";
 import {
   calculateFamilyCaregiverHours,
+  FAMILY_CAREGIVER_HOUR_VALUES,
   fetchFamilyCalendarItems,
   fetchFamilyCaregiverHours,
   formatFamilyCaregiverHours,
+  normalizeFamilyCaregiverDayRecord,
+  persistFamilyCaregiverHours,
 } from "../calendar/familyCalendarData";
 import { fetchFamilyTasks, formatFamilyTaskDueDate } from "../familyTasks";
 
@@ -84,7 +87,7 @@ function eventTimeLabel(event) {
 }
 
 function selectedDayItemSort(a, b) {
-  const kindOrder = { caregiver: 0, event: 1, task: 2 };
+  const kindOrder = { event: 0, task: 1 };
   const kindDiff = (kindOrder[a.kind] ?? 9) - (kindOrder[b.kind] ?? 9);
   if (kindDiff) return kindDiff;
   return String(a.time || "").localeCompare(String(b.time || ""));
@@ -217,13 +220,10 @@ export default function FamilyCalendar2Client() {
   }, [weatherItems]);
 
   const selectedDayWeather = selectedDate ? weatherByDate.get(selectedDate) : null;
+  const selectedCaregiverHours = selectedDate ? calculateFamilyCaregiverHours(caregiverHoursByDate[selectedDate]) : 0;
 
   const selectedDayItems = useMemo(() => {
     if (!selectedDate) return [];
-    const caregiverHours = calculateFamilyCaregiverHours(caregiverHoursByDate[selectedDate]);
-    const caregiverItem = caregiverHours > 0
-      ? [{ kind: "caregiver", id: `caregiver-${selectedDate}`, title: `이모 ${formatFamilyCaregiverHours(caregiverHoursByDate[selectedDate])}시간`, time: "" }]
-      : [];
     const eventItems = (eventsByDate.get(selectedDate) || []).map((event) => ({
       kind: "event",
       id: event.id,
@@ -238,8 +238,30 @@ export default function FamilyCalendar2Client() {
       time: formatFamilyTaskDueDate(task.due_date),
       href: `/family/tasks/${task.id}/edit`,
     }));
-    return [...caregiverItem, ...eventItems, ...taskItems].sort(selectedDayItemSort);
-  }, [caregiverHoursByDate, eventsByDate, selectedDate, tasksByDate]);
+    return [...eventItems, ...taskItems].sort(selectedDayItemSort);
+  }, [eventsByDate, selectedDate, tasksByDate]);
+
+  async function updateSelectedCaregiverHours(nextValue) {
+    if (!selectedDate) return;
+    const normalizedValue = Number(nextValue);
+    const nextHours = { ...caregiverHoursByDate };
+    const currentRecord = normalizeFamilyCaregiverDayRecord(nextHours[selectedDate]);
+    if (!normalizedValue) {
+      if (currentRecord.extras.length) {
+        nextHours[selectedDate] = { ...currentRecord, legacyHours: null, sessions: [] };
+      } else {
+        delete nextHours[selectedDate];
+      }
+    } else {
+      nextHours[selectedDate] = { ...currentRecord, legacyHours: normalizedValue, sessions: [] };
+    }
+    setCaregiverHoursByDate(nextHours);
+    try {
+      await persistFamilyCaregiverHours(nextHours);
+    } catch {
+      setCaregiverHoursByDate(caregiverHoursByDate);
+    }
+  }
 
   function updateSelectedDate(nextDate, options = {}) {
     if (!isValidYmd(nextDate)) return;
@@ -389,9 +411,6 @@ export default function FamilyCalendar2Client() {
                   <span className={"familyCalendar2DayNumber" + dayClass}>{Number(dateKey.slice(-2))}</span>
                   {weather ? <span className="familyCalendar2WeatherGlyph" aria-hidden="true">{weather.glyph}</span> : null}
                 </span>
-                <span className="familyCalendar2WeatherLine">
-                  {weather ? <span>{weather.min_c}–{weather.max_c}</span> : null}
-                </span>
                 <span className="familyCalendar2Footer">
                   {hasCaregiverHours ? <span className="familyCalendar2CaregiverGlyph" aria-label="이모 있음">󱁷</span> : null}
                   {countGlyph ? <span className="familyCalendar2Count">{countGlyph}</span> : null}
@@ -434,6 +453,25 @@ export default function FamilyCalendar2Client() {
           )}
         </div>
 
+        <div className="familyCalendar2CaregiverCard" aria-label="이모 시간">
+          <div className="familyCalendar2CaregiverHeader">
+            <span>이모</span>
+            <strong>{formatFamilyCaregiverHours(selectedCaregiverHours) || "0"}시간</strong>
+          </div>
+          <div className="familyCalendar2CaregiverPicker">
+            {FAMILY_CAREGIVER_HOUR_VALUES.map((value) => (
+              <button
+                type="button"
+                className={"familyCalendar2CaregiverOption" + (selectedCaregiverHours === value ? " familyCalendar2CaregiverOptionActive" : "")}
+                key={value}
+                onClick={() => updateSelectedCaregiverHours(value)}
+              >
+                {value === 0 ? "0" : formatFamilyCaregiverHours(value)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {selectedDayItems.length === 0 ? (
           <div className="familyCalendar2Empty">이 날에는 아직 적힌 일정이 없어요.</div>
         ) : (
@@ -441,7 +479,7 @@ export default function FamilyCalendar2Client() {
             {selectedDayItems.map((item) => (
               <li className={`familyCalendar2SelectedItem familyCalendar2SelectedItem-${item.kind}`} key={`${item.kind}-${item.id}`}>
                 <span className="familyCalendar2SelectedKind">
-                  {item.kind === "task" ? "할일" : item.kind === "caregiver" ? "이모" : "일정"}
+                  {item.kind === "task" ? "할일" : "일정"}
                 </span>
                 {item.href ? (
                   <Link href={item.href}>{item.title}</Link>

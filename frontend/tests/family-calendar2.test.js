@@ -26,14 +26,18 @@ test("family calendar2 is a separate main-events-style Family month view", async
   assert.ok(cssSource.includes(".familyCalendar2Grid"));
   assert.ok(cssSource.includes("grid-template-columns: repeat(7, minmax(0, 1fr));"));
   assert.match(cssSource, /\.familyCalendar2Grid,[\s\S]*?\.familyCalendar2SelectedDayPanel\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
-  assert.match(cssSource, /\.familyCalendar2WeatherGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"[\s\S]*?font-size:\s*1\.34rem;/);
+  assert.match(cssSource, /\.familyCalendar2WeatherGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"[\s\S]*?font-size:\s*1\.62rem;/);
   assert.match(cssSource, /\.familyCalendar2WeatherGlyph\s*\{[\s\S]*?margin-right:\s*2px;/);
   assert.match(cssSource, /\.familyCalendar2CaregiverGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
+  assert.match(cssSource, /\.familyCalendar2CaregiverCard\s*\{/);
+  assert.match(cssSource, /\.familyCalendar2CaregiverPicker\s*\{/);
   assert.match(cssSource, /\.familyCalendar2SelectedWeatherGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
 
   assert.ok(clientSource.includes("fetchFamilyCalendarItems"));
   assert.ok(clientSource.includes("fetchFamilyTasks"));
   assert.ok(clientSource.includes("fetchFamilyCaregiverHours"));
+  assert.ok(clientSource.includes("persistFamilyCaregiverHours"));
+  assert.ok(clientSource.includes("FAMILY_CAREGIVER_HOUR_VALUES.map"));
   assert.ok(clientSource.includes("fetchSharedWeather"));
   assert.ok(clientSource.includes("sharedWeatherDailyFromPayload"));
   assert.ok(clientSource.includes("sharedWeatherDaypartsFromPayload"));
@@ -44,6 +48,8 @@ test("family calendar2 is a separate main-events-style Family month view", async
   assert.ok(clientSource.includes("calculateFamilyCaregiverHours(caregiverHoursByDate[dateKey]) > 0"));
   assert.ok(clientSource.includes("familyCalendar2CaregiverGlyph"));
   assert.ok(clientSource.includes("󱁷"));
+  assert.ok(!clientSource.includes("familyCalendar2WeatherLine"));
+  assert.ok(!cssSource.includes(".familyCalendar2WeatherLine"));
   assert.ok(clientSource.includes("이모"));
   assert.ok(!clientSource.includes("familyCalendar2CaregiverLine"));
   assert.ok(!cssSource.includes(".familyCalendar2CaregiverLine"));
