@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 
 const FAMILY_NAV_ITEMS = [
   { key: "calendar", familyHref: "/calendar", mainHref: "/family/calendar", label: "달력" },
+  { key: "calendar2", familyHref: "/calendar2", mainHref: "/family/calendar2", label: "달력2" },
   { key: "home", familyHref: "/tasks", mainHref: "/family", label: "할일" },
   { key: "roun", familyHref: "/roun", mainHref: "/family/roun", label: "로운이" },
   { key: "memo", familyHref: "/memo", mainHref: "/family/memo", label: "메모장" },

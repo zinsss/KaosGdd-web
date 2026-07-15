@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 const FAMILY_HOST = "family.kaosgdd.net";
-const FAMILY_ROUTE_PREFIXES = ["/calendar", "/tasks", "/roun", "/memo", "/settings"];
+const FAMILY_ROUTE_PREFIXES = ["/calendar", "/calendar2", "/tasks", "/roun", "/memo", "/settings"];
 
 function isFamilyHost(request) {
   const host = request.headers.get("host") || "";
@@ -34,6 +34,8 @@ function toFamilyPublicPath(pathname) {
   if (pathname === "/family") return "/tasks";
   if (pathname === "/family/calendar") return "/calendar";
   if (pathname.startsWith("/family/calendar/")) return pathname.slice("/family".length);
+  if (pathname === "/family/calendar2") return "/calendar2";
+  if (pathname.startsWith("/family/calendar2/")) return pathname.slice("/family".length);
   if (pathname === "/family/roun") return "/roun";
   if (pathname.startsWith("/family/roun/")) return pathname.slice("/family".length);
   if (pathname === "/family/memo") return "/memo";
