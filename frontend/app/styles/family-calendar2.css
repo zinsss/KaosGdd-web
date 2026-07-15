@@ -134,7 +134,7 @@
   min-width: 0;
   min-height: 70px;
   display: grid;
-  grid-template-rows: 1fr 15px 16px 16px;
+  grid-template-rows: 1fr 15px 16px;
   align-items: stretch;
   gap: 2px;
   padding: 7px;
@@ -193,7 +193,6 @@
 }
 
 .familyCalendar2WeatherLine,
-.familyCalendar2CaregiverLine,
 .familyCalendar2Footer {
   min-width: 0;
   display: flex;
@@ -207,12 +206,6 @@
   color: rgba(93, 77, 111, 0.72);
   font-size: 0.72rem;
   font-weight: 800;
-}
-
-.familyCalendar2CaregiverLine {
-  color: rgba(139, 87, 135, 0.74);
-  font-size: 0.7rem;
-  font-weight: 850;
 }
 
 .familyCalendar2Count {
@@ -423,8 +416,7 @@
     font-size: 1.18rem;
   }
 
-  .familyCalendar2WeatherLine,
-  .familyCalendar2CaregiverLine {
+  .familyCalendar2WeatherLine {
     font-size: 0.66rem;
   }
 
@@ -452,6 +444,6 @@
 
   .familyCalendar2Cell {
     min-height: 60px;
-    grid-template-rows: 1fr 13px 14px 14px;
+    grid-template-rows: 1fr 13px 14px;
   }
 }

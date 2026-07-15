@@ -40,6 +40,8 @@ test("family calendar2 is a separate main-events-style Family month view", async
   assert.ok(clientSource.includes("formatFamilyTaskDueDate"));
   assert.ok(clientSource.includes("formatFamilyCaregiverHours"));
   assert.ok(clientSource.includes("이모"));
+  assert.ok(!clientSource.includes("familyCalendar2CaregiverLine"));
+  assert.ok(!cssSource.includes(".familyCalendar2CaregiverLine"));
   assert.ok(clientSource.includes("할일"));
   assert.ok(clientSource.includes("일정"));
   assert.ok(!clientSource.includes("fetchFamilyRounState"));
