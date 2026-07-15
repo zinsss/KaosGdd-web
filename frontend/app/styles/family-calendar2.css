@@ -185,6 +185,7 @@
 
 .familyCalendar2WeatherGlyph {
   flex: 0 0 auto;
+  margin-right: 2px;
   color: #5a94ba;
   font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
     "SFMono-Regular", "Menlo", "Consolas", monospace;
@@ -208,7 +209,23 @@
   font-weight: 800;
 }
 
+.familyCalendar2Footer {
+  gap: 4px;
+  justify-content: space-between;
+}
+
+.familyCalendar2CaregiverGlyph {
+  flex: 0 0 auto;
+  color: rgba(171, 84, 139, 0.82);
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
+    "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1;
+}
+
 .familyCalendar2Count {
+  margin-left: auto;
   color: #d8a33f;
   font-size: 19px;
   font-weight: 900;

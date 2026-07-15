@@ -27,6 +27,8 @@ test("family calendar2 is a separate main-events-style Family month view", async
   assert.ok(cssSource.includes("grid-template-columns: repeat(7, minmax(0, 1fr));"));
   assert.match(cssSource, /\.familyCalendar2Grid,[\s\S]*?\.familyCalendar2SelectedDayPanel\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
   assert.match(cssSource, /\.familyCalendar2WeatherGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"[\s\S]*?font-size:\s*1\.34rem;/);
+  assert.match(cssSource, /\.familyCalendar2WeatherGlyph\s*\{[\s\S]*?margin-right:\s*2px;/);
+  assert.match(cssSource, /\.familyCalendar2CaregiverGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
   assert.match(cssSource, /\.familyCalendar2SelectedWeatherGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
 
   assert.ok(clientSource.includes("fetchFamilyCalendarItems"));
@@ -39,6 +41,9 @@ test("family calendar2 is a separate main-events-style Family month view", async
   assert.ok(clientSource.includes("taskMatchesDate"));
   assert.ok(clientSource.includes("formatFamilyTaskDueDate"));
   assert.ok(clientSource.includes("formatFamilyCaregiverHours"));
+  assert.ok(clientSource.includes("calculateFamilyCaregiverHours(caregiverHoursByDate[dateKey]) > 0"));
+  assert.ok(clientSource.includes("familyCalendar2CaregiverGlyph"));
+  assert.ok(clientSource.includes("󱁷"));
   assert.ok(clientSource.includes("이모"));
   assert.ok(!clientSource.includes("familyCalendar2CaregiverLine"));
   assert.ok(!cssSource.includes(".familyCalendar2CaregiverLine"));

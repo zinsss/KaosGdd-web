@@ -362,6 +362,7 @@ export default function FamilyCalendar2Client() {
             const inMonth = month && dateKey.startsWith(month);
             const dayEvents = eventsByDate.get(dateKey) || [];
             const dayTasks = tasksByDate.get(dateKey) || [];
+            const hasCaregiverHours = calculateFamilyCaregiverHours(caregiverHoursByDate[dateKey]) > 0;
             const count = dayEvents.length + dayTasks.length;
             const countGlyph = formatEventCountGlyph(count);
             const weather = weatherByDate.get(dateKey);
@@ -392,6 +393,7 @@ export default function FamilyCalendar2Client() {
                   {weather ? <span>{weather.min_c}–{weather.max_c}</span> : null}
                 </span>
                 <span className="familyCalendar2Footer">
+                  {hasCaregiverHours ? <span className="familyCalendar2CaregiverGlyph" aria-label="이모 있음">󱁷</span> : null}
                   {countGlyph ? <span className="familyCalendar2Count">{countGlyph}</span> : null}
                 </span>
               </button>
