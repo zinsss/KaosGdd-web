@@ -25,6 +25,9 @@ test("family calendar2 is a separate main-events-style Family month view", async
   assert.ok(globalsSource.includes('@import "./styles/family-calendar2.css";'));
   assert.ok(cssSource.includes(".familyCalendar2Grid"));
   assert.ok(cssSource.includes("grid-template-columns: repeat(7, minmax(0, 1fr));"));
+  assert.match(cssSource, /\.familyCalendar2Grid,[\s\S]*?\.familyCalendar2SelectedDayPanel\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
+  assert.match(cssSource, /\.familyCalendar2WeatherGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"[\s\S]*?font-size:\s*1\.34rem;/);
+  assert.match(cssSource, /\.familyCalendar2SelectedWeatherGlyph\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
 
   assert.ok(clientSource.includes("fetchFamilyCalendarItems"));
   assert.ok(clientSource.includes("fetchFamilyTasks"));

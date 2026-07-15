@@ -9,6 +9,13 @@
   color: #4e2536;
 }
 
+.familyCalendar2Grid,
+.familyCalendar2SelectedDayPanel {
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
+    "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-variant-numeric: tabular-nums;
+}
+
 .familyCalendar2Panel {
   border: 1px solid rgba(214, 128, 157, 0.18);
   border-radius: 8px;
@@ -179,7 +186,9 @@
 .familyCalendar2WeatherGlyph {
   flex: 0 0 auto;
   color: #5a94ba;
-  font-size: 1.12rem;
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
+    "SFMono-Regular", "Menlo", "Consolas", monospace;
+  font-size: 1.34rem;
   line-height: 1;
 }
 
@@ -250,8 +259,16 @@
 
 .familyCalendar2SelectedWeatherGlyph {
   color: #62a9c8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
+    "SFMono-Regular", "Menlo", "Consolas", monospace;
   font-size: 3.2rem;
   line-height: 1;
+  text-align: center;
+  transform: translateX(-0.08em);
 }
 
 .familyCalendar2SelectedWeatherRange {
@@ -284,6 +301,11 @@
   justify-content: flex-end;
   gap: 4px;
   color: #6b84a8;
+}
+
+.familyCalendar2DaypartRow > span:last-child > span:first-child {
+  font-family: "Sarasa Gothic Mono", "Noto Sans Mono CJK KR", "D2Coding",
+    "SFMono-Regular", "Menlo", "Consolas", monospace;
 }
 
 .familyCalendar2SelectedList {
@@ -398,7 +420,7 @@
   }
 
   .familyCalendar2WeatherGlyph {
-    font-size: 1rem;
+    font-size: 1.18rem;
   }
 
   .familyCalendar2WeatherLine,
