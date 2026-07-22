@@ -45,6 +45,7 @@ class ReminderService:
         push_subscription_repo=None,
         web_push_client=None,
         push_policy_repo=None,
+        ntfy_client=None,
     ) -> None:
         self.reminder_repo = reminder_repo
         self.task_repo = task_repo
@@ -54,6 +55,7 @@ class ReminderService:
         self.push_subscription_repo = push_subscription_repo
         self.web_push_client = web_push_client
         self.push_policy_repo = push_policy_repo
+        self.ntfy_client = ntfy_client
 
     def create_task_reminder(
         self,
@@ -532,7 +534,27 @@ class ReminderService:
             pushover_title=pushover_title or f"KaosGdd {push_title.lower()}",
             pushover_message=pushover_message or display_title,
         )
+        self._send_ntfy(
+            title=push_title,
+            message=display_title,
+            url=push_payload.get("url"),
+        )
         return True
+
+    def _send_ntfy(self, *, title: str, message: str, url: str | None = None) -> None:
+        if self.ntfy_client is None:
+            return
+        topic = SETTINGS.NTFY_TOPIC
+        if not topic:
+            topic = f"kaosgdd-{SETTINGS.APP_NAME.lower().replace(' ', '-') or 'fax'}"
+            topic = "".join(ch for ch in topic if (ch.isalnum() or ch in {"-", "_"}))
+        try:
+            result = self.ntfy_client(title=title, message=message, topic=topic, url=url)
+        except Exception as exc:
+            logger.warning("ntfy send exception: %s", exc)
+            return
+        if result.get("attempted") and not result.get("succeeded"):
+            logger.warning("ntfy send failed: reason=%s", result.get("reason"))
 
     def _build_missed_reminder_pushover_message(self, reminder: dict, *, open_url: str | None = None) -> str:
         context = self._resolve_notification_target_context(reminder)

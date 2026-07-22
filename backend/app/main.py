@@ -54,6 +54,7 @@ from app.engine.reminder_service import ReminderService
 from app.engine.supply_service import SupplyService
 from app.engine.weather_service import DEFAULT_WEATHER_LOCATION_ID, WeatherService
 from app.integrations import pushover_client
+from app.integrations.ntfy_client import send_ntfy as send_ntfy_message
 from app.integrations.web_push_client import WebPushClient
 from app.schemas.reminders import normalize_minutes
 from app.strings import ApiText, DailySummaryText, PushText, PushoverText
@@ -97,6 +98,7 @@ reminder_service = ReminderService(
     push_subscription_repo,
     web_push_client,
     push_policy_repo,
+    ntfy_client=send_ntfy_message,
 )
 fax_service = FaxService(
     items_repo=items_repo,
@@ -507,8 +509,8 @@ def get_weather_dayparts(location: str = DEFAULT_WEATHER_LOCATION_ID, date: str 
 
 
 @app.get("/api/weather")
-def get_shared_weather():
-    return weather_service.get_shared_weather()
+def get_shared_weather(start_date: str = "", end_date: str = ""):
+    return weather_service.get_shared_weather(start_date=start_date, end_date=end_date)
 
 
 @app.get("/events/{event_id}")
