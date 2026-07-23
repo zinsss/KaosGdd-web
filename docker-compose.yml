@@ -31,6 +31,7 @@ services:
       FAXSERVER: ${FAXSERVER:-host.docker.internal}
       FAX_SEND_TIMEOUT_SECONDS: ${FAX_SEND_TIMEOUT_SECONDS:-30}
       FAX_DONEQ_DIR: ${FAX_DONEQ_DIR:-/var/spool/hylafax/doneq}
+      SUPPLIES_API_BASE: ${SUPPLIES_API_BASE:-http://host.docker.internal:8008}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
@@ -49,7 +50,10 @@ services:
     environment:
       TZ: ${APP_TIMEZONE:-Asia/Seoul}
       NEXT_PUBLIC_API_BASE: ${NEXT_PUBLIC_API_BASE:-http://127.0.0.1:8000}
+      SUPPLIES_API_BASE: ${SUPPLIES_API_BASE:-http://host.docker.internal:8008}
       NEXT_PUBLIC_APP_TIMEZONE: ${NEXT_PUBLIC_APP_TIMEZONE:-Asia/Seoul}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - backend
     ports:

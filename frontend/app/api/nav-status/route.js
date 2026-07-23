@@ -3,6 +3,14 @@ import { NextResponse } from "next/server.js";
 import { APP_TIMEZONE } from "../../../lib/config.js";
 import { DEFAULT_MODULE_NAV_STATUS } from "../../../lib/module-nav-status.js";
 
+function getMainApiBase() {
+  return process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
+}
+
+function getSuppliesApiBase() {
+  return process.env.SUPPLIES_API_BASE || "http://127.0.0.1:8008";
+}
+
 const ATTENTION_REMINDER_STATES = new Set(["fired", "missed"]);
 const ATTENTION_OUTGOING_FAX_STATUSES = new Set(["failed", "conversion_failed"]);
 const INACTIVE_TASK_STATUSES = new Set(["archived", "removed"]);
@@ -161,7 +169,8 @@ function getTodayYmdInAppTimezone() {
 }
 
 export async function GET() {
-  const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
+  const base = getMainApiBase();
+  const suppliesBase = getSuppliesApiBase();
   const today = getTodayYmdInAppTimezone();
 
   try {
@@ -170,7 +179,7 @@ export async function GET() {
       fetch(base + `/events?start_date=${today}&end_date=${today}&mode=active`, { cache: "no-store" }),
       fetch(base + "/reminders?mode=active", { cache: "no-store" }),
       fetch(base + "/reminders?mode=fired", { cache: "no-store" }),
-      fetch(base + "/supplies?mode=active", { cache: "no-store" }),
+      fetch(suppliesBase + "/supplies?mode=active", { cache: "no-store" }),
       fetch(base + "/fax?mode=active", { cache: "no-store" }),
     ]);
 

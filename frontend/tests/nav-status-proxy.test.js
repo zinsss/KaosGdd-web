@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 
 import {
   GET,
@@ -81,16 +82,18 @@ test("nav status summarizes attention reminders and faxes for the shell box", ()
 
 test("nav status proxy returns strong attention for fired unacked reminders", async () => {
   const originalBase = process.env.NEXT_PUBLIC_API_BASE;
+  const originalSuppliesBase = process.env.SUPPLIES_API_BASE;
   const originalFetch = globalThis.fetch;
   const calls = [];
 
   process.env.NEXT_PUBLIC_API_BASE = "http://backend.test";
+  process.env.SUPPLIES_API_BASE = "http://supplies.test";
   globalThis.fetch = async (url, options) => {
     calls.push([url, options]);
 
     const payloadByUrl = {
       "http://backend.test/tasks": { items: [] },
-      "http://backend.test/supplies?mode=active": { items: [] },
+      "http://supplies.test/supplies?mode=active": { items: [] },
       "http://backend.test/reminders?mode=active": { items: [] },
       "http://backend.test/reminders?mode=fired": {
         items: [{ id: "r1", title: "Wake up", state: "fired", remind_at_display: "Today 07:00" }],
@@ -124,6 +127,7 @@ test("nav status proxy returns strong attention for fired unacked reminders", as
       },
     ]);
     assert.ok(calls.some(([url]) => url === "http://backend.test/reminders?mode=fired"));
+    assert.ok(calls.some(([url]) => url === "http://supplies.test/supplies?mode=active"));
   } finally {
     globalThis.fetch = originalFetch;
     if (originalBase === undefined) {
@@ -131,18 +135,25 @@ test("nav status proxy returns strong attention for fired unacked reminders", as
     } else {
       process.env.NEXT_PUBLIC_API_BASE = originalBase;
     }
+    if (originalSuppliesBase === undefined) {
+      delete process.env.SUPPLIES_API_BASE;
+    } else {
+      process.env.SUPPLIES_API_BASE = originalSuppliesBase;
+    }
   }
 });
 
 test("nav status proxy includes active fax attention in strong count", async () => {
   const originalBase = process.env.NEXT_PUBLIC_API_BASE;
+  const originalSuppliesBase = process.env.SUPPLIES_API_BASE;
   const originalFetch = globalThis.fetch;
 
   process.env.NEXT_PUBLIC_API_BASE = "http://backend.test";
+  process.env.SUPPLIES_API_BASE = "http://supplies.test";
   globalThis.fetch = async (url) => {
     const payloadByUrl = {
       "http://backend.test/tasks": { items: [] },
-      "http://backend.test/supplies?mode=active": { items: [] },
+      "http://supplies.test/supplies?mode=active": { items: [] },
       "http://backend.test/reminders?mode=active": { items: [] },
       "http://backend.test/reminders?mode=fired": { items: [] },
       "http://backend.test/fax?mode=active": {
@@ -185,5 +196,19 @@ test("nav status proxy includes active fax attention in strong count", async () 
     } else {
       process.env.NEXT_PUBLIC_API_BASE = originalBase;
     }
+    if (originalSuppliesBase === undefined) {
+      delete process.env.SUPPLIES_API_BASE;
+    } else {
+      process.env.SUPPLIES_API_BASE = originalSuppliesBase;
+    }
   }
+});
+
+test("nav status proxy splits supplies from the main KaosGdd backend", async () => {
+  const source = await readFile(new URL("../app/api/nav-status/route.js", import.meta.url), "utf8");
+
+  assert.match(source, /function getMainApiBase\(\)/);
+  assert.match(source, /function getSuppliesApiBase\(\)/);
+  assert.match(source, /SUPPLIES_API_BASE/);
+  assert.match(source, /suppliesBase \+ ["']\/supplies\?mode=active["']/);
 });

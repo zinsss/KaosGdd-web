@@ -55,6 +55,7 @@ from app.engine.supply_service import SupplyService
 from app.engine.weather_service import DEFAULT_WEATHER_LOCATION_ID, WeatherService
 from app.integrations import pushover_client
 from app.integrations.ntfy_client import send_ntfy as send_ntfy_message
+from app.integrations.supplies_client import capture_supply as capture_supply_external
 from app.integrations.web_push_client import WebPushClient
 from app.schemas.reminders import normalize_minutes
 from app.strings import ApiText, DailySummaryText, PushText, PushoverText
@@ -1108,6 +1109,12 @@ def capture_item(payload: dict):
         return {"ok": True, "kind": kind, "id": journal_id}
 
     if kind == "supply":
+        if SETTINGS.SUPPLIES_API_BASE:
+            delegated = capture_supply_external(raw_text, timezone_name=timezone_name)
+            if delegated.get("attempted"):
+                delegated.pop("attempted", None)
+                return delegated
+
         title = str(parsed["parsed"].get("title") or "").strip()
         if not title:
             return {"ok": False, "error": ApiText.TITLE_REQUIRED}

@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
 
+import { getSuppliesApiBase } from "../../supplies-api-base.js";
+
 export async function POST(request) {
   const payload = await request.json();
-  const base = process.env.NEXT_PUBLIC_API_BASE || "http://127.0.0.1:8000";
+  const base = getSuppliesApiBase();
   const res = await fetch(base + "/supplies/presets/use", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

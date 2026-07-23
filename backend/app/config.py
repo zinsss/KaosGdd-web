@@ -77,6 +77,9 @@ class Settings:
     FAX_DONEQ_DIR = _env_str("FAX_DONEQ_DIR", "/var/spool/hylafax/doneq")
     FAX_INBOX_RETENTION_DAYS = _env_int("FAX_INBOX_RETENTION_DAYS", 90, min_value=1)
 
+    # Standalone KaosSupplies service. When configured, $$ captures delegate here.
+    SUPPLIES_API_BASE = _env_str("SUPPLIES_API_BASE", "")
+
     # Push / Web Push
     WEB_PUSH_VAPID_PUBLIC_KEY = _env_str("WEB_PUSH_VAPID_PUBLIC_KEY", "")
     WEB_PUSH_VAPID_PRIVATE_KEY = _env_str("WEB_PUSH_VAPID_PRIVATE_KEY", "")

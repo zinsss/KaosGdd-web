@@ -13,10 +13,13 @@ from sqlalchemy import text
 def main_module(tmp_path: Path):
     db_path = tmp_path / "supplies-v0-test.db"
     os.environ["DATABASE_URL"] = f"sqlite:///{db_path}"
+    os.environ.pop("SUPPLIES_API_BASE", None)
 
+    import app.config as config_module
     import app.core.db as db_module
     import app.main as main_module
 
+    importlib.reload(config_module)
     importlib.reload(db_module)
     importlib.reload(main_module)
     main_module.init_schema_v0(main_module.engine)
@@ -34,6 +37,47 @@ def test_capture_supply_creates_item(main_module) -> None:
     active = main_module.list_supplies(mode="active")
     assert len(active["items"]) == 1
     assert active["items"][0]["title"] == "gauze"
+
+
+def test_capture_supply_delegates_to_kaos_supplies_when_configured(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    db_path = tmp_path / "supplies-delegation-test.db"
+    monkeypatch.setenv("DATABASE_URL", f"sqlite:///{db_path}")
+    monkeypatch.setenv("SUPPLIES_API_BASE", "http://kaos-supplies.test")
+
+    import app.config as config_module
+    import app.core.db as db_module
+    import app.main as main_module
+
+    importlib.reload(config_module)
+    importlib.reload(db_module)
+    importlib.reload(main_module)
+    main_module.init_schema_v0(main_module.engine)
+
+    calls: list[dict] = []
+
+    def fake_capture_supply(raw_text: str, *, timezone_name: str | None = None) -> dict:
+        calls.append({"raw": raw_text, "timezone": timezone_name})
+        return {
+            "attempted": True,
+            "ok": True,
+            "kind": "supply",
+            "id": "supply-external-1",
+            "created": True,
+            "created_types": ["supply"],
+        }
+
+    main_module.capture_supply_external = fake_capture_supply
+    payload = main_module.capture_item({"raw": "$$ gauze", "timezone": "Asia/Seoul"})
+
+    assert payload == {
+        "ok": True,
+        "kind": "supply",
+        "id": "supply-external-1",
+        "created": True,
+        "created_types": ["supply"],
+    }
+    assert calls == [{"raw": "$$ gauze", "timezone": "Asia/Seoul"}]
+    assert main_module.list_supplies(mode="active")["items"] == []
 
 
 def test_capture_supply_empty_fails(main_module) -> None:
