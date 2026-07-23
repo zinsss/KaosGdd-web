@@ -35,7 +35,7 @@ test("supplies proxy routes use the standalone KaosSupplies base", async () => {
   const baseSource = await readFile(new URL("../app/api/supplies/supplies-api-base.js", import.meta.url), "utf8");
 
   assert.match(baseSource, /SUPPLIES_API_BASE/);
-  assert.match(baseSource, /kaossupplies-api:8000/);
+  assert.match(baseSource, /100\.94\.208\.16:8008/);
   for (const source of sources) {
     assert.match(source, /getSuppliesApiBase/);
     assert.doesNotMatch(source, /process\.env\.NEXT_PUBLIC_API_BASE/);
