@@ -8,7 +8,7 @@ function getMainApiBase() {
 }
 
 function getSuppliesApiBase() {
-  return process.env.SUPPLIES_API_BASE || "http://127.0.0.1:8008";
+  return process.env.SUPPLIES_API_BASE || "http://kaossupplies-api:8000";
 }
 
 const ATTENTION_REMINDER_STATES = new Set(["fired", "missed"]);
