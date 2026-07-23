@@ -1,0 +1,593 @@
+.familyAnalogueTileIcon {
+  position: relative;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  border: 3px solid rgba(177, 126, 210, 0.44);
+  border-radius: 999px;
+  background:
+    radial-gradient(circle at 50% 68%, #fff4b8 0 5px, transparent 6px),
+    conic-gradient(from 230deg, #55e6ff, #9be36f, #ffd65a, #ff6c7b, #132030 0);
+  box-shadow: inset 0 0 0 10px #101525;
+}
+
+.familyAnalogueTileNeedle {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  width: 3px;
+  height: 22px;
+  border-radius: 999px;
+  background: #ffedf4;
+  transform: translateX(-50%) rotate(44deg);
+  transform-origin: bottom center;
+}
+
+.analogueDashboardPage {
+  min-height: calc(100dvh - var(--app-shell-safe-top));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(255, 220, 116, 0.12), transparent 34%),
+    linear-gradient(180deg, #0b0e16 0%, #020308 100%);
+  color: #f9fbff;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+body:has(.analogueDashboardPage) .appShellTop,
+body:has(.analogueDashboardPage) .appShellAttentionSlot {
+  display: none !important;
+}
+
+body:has(.analogueDashboardPage) .appShellMain {
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  padding-top: var(--app-shell-safe-top) !important;
+  padding-bottom: 0 !important;
+  background: #020308 !important;
+}
+
+.analogueCluster {
+  width: min(100%, 1180px);
+  min-height: 0;
+  margin: 0 auto;
+  padding: 14px;
+  border: 1px solid rgba(255, 245, 210, 0.18);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent),
+    #070b13;
+  box-shadow:
+    inset 0 0 70px rgba(255, 223, 124, 0.08),
+    0 18px 52px rgba(0, 0, 0, 0.44);
+}
+
+.analogueIndicatorRow,
+.analogueWarningRow,
+.analogueControls {
+  display: grid;
+  gap: 10px;
+}
+
+.analogueIndicatorRow {
+  grid-template-columns: minmax(130px, 1fr) minmax(170px, 0.8fr) minmax(130px, 1fr);
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.analogueCenterBadge {
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  min-height: 76px;
+  border: 1px solid rgba(255, 245, 210, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.analogueCenterBadge span,
+.analogueGauge h2,
+.analogueSmallGauge strong {
+  color: rgba(249, 251, 255, 0.74);
+  font-weight: 1000;
+}
+
+.analogueCenterBadge strong {
+  color: #fff6c7;
+  font-size: 26px;
+  font-weight: 1000;
+}
+
+.analogueMainGauges {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.analogueGauge {
+  min-width: 0;
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  border: 1px solid rgba(111, 207, 255, 0.2);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 58%, rgba(255, 246, 199, 0.08), transparent 24%),
+    #090f19;
+  touch-action: none;
+}
+
+.analogueGaugeArc {
+  position: relative;
+  width: min(78vw, 330px);
+  aspect-ratio: 1;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, #070b13 0 47%, transparent 48%),
+    conic-gradient(from 218deg, #57dbff 0 27%, #8ee36a 27% 58%, #ffd95e 58% 78%, #ff6576 78% 92%, transparent 92% 100%);
+  box-shadow:
+    inset 0 0 0 10px #151b26,
+    inset 0 0 0 14px rgba(255, 255, 255, 0.06),
+    0 0 28px rgba(87, 219, 255, 0.1);
+}
+
+.analogueGaugeArc::after {
+  content: "";
+  position: absolute;
+  inset: 24px;
+  border-radius: inherit;
+  background:
+    repeating-conic-gradient(from 220deg, rgba(255, 255, 255, 0.5) 0 1deg, transparent 1deg 10deg),
+    radial-gradient(circle, #080d15 0 63%, transparent 64%);
+}
+
+.analogueNeedle {
+  position: absolute;
+  left: 50%;
+  bottom: 50%;
+  z-index: 2;
+  width: 5px;
+  height: 38%;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #fff9d6, #ff5f70);
+  transform-origin: bottom center;
+  box-shadow: 0 0 16px rgba(255, 111, 132, 0.42);
+}
+
+.analogueNeedleHub {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  background: #f8f2d8;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 20px rgba(255, 246, 199, 0.35);
+}
+
+.analogueTick {
+  position: absolute;
+  z-index: 4;
+  bottom: 22%;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 16px;
+  font-weight: 1000;
+}
+
+.analogueTickStart {
+  left: 18%;
+}
+
+.analogueTickEnd {
+  right: 14%;
+}
+
+.analogueGaugeReadout {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.analogueGaugeReadout strong {
+  color: #ffffff;
+  font-size: 52px;
+  font-weight: 1000;
+  line-height: 1;
+}
+
+.analogueGaugeReadout span {
+  color: rgba(249, 251, 255, 0.72);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.analogueGauge h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.analogueSmallGaugeRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.analogueSmallGauge {
+  position: relative;
+  min-height: 150px;
+  display: grid;
+  place-items: center;
+  align-content: end;
+  gap: 4px;
+  padding: 18px 12px 14px;
+  border: 1px solid rgba(255, 245, 210, 0.16);
+  border-radius: 8px;
+  background:
+    radial-gradient(circle at 50% 64%, #0a101a 0 33%, transparent 34%),
+    conic-gradient(from 230deg, #58d8ff, #76df71, #ffd65a, #ff6576, transparent 0),
+    #090f19;
+  color: #f9fbff;
+  overflow: hidden;
+  touch-action: none;
+}
+
+.analogueSmallNeedle {
+  position: absolute;
+  left: 50%;
+  top: 28%;
+  width: 4px;
+  height: 52px;
+  border-radius: 999px;
+  background: #fff6c7;
+  transform-origin: bottom center;
+}
+
+.analogueSmallGauge em {
+  color: #ffffff;
+  font-style: normal;
+  font-size: 30px;
+  font-weight: 1000;
+}
+
+.analogueWarningRow,
+.analogueControls {
+  grid-template-columns: repeat(2, minmax(130px, 1fr));
+  margin-top: 12px;
+}
+
+.analogueSymbolStrip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(68px, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid rgba(255, 245, 210, 0.14);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.26);
+}
+
+.analogueSymbol {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  gap: 4px;
+  color: rgba(136, 150, 159, 0.62);
+  text-align: center;
+}
+
+.analogueSymbol svg {
+  width: clamp(34px, 5vw, 52px);
+  height: clamp(34px, 5vw, 52px);
+  fill: currentColor;
+  filter: drop-shadow(0 0 0 transparent);
+}
+
+.analogueSymbol em {
+  max-width: 100%;
+  color: currentColor;
+  font-size: 12px;
+  font-style: normal;
+  font-weight: 1000;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+.analogueSymbolActive {
+  filter: saturate(1.18);
+}
+
+.analogueSymbolgreen.analogueSymbolActive {
+  color: #8dff9f;
+}
+
+.analogueSymbolamber.analogueSymbolActive {
+  color: #ffd85a;
+}
+
+.analogueSymbolred.analogueSymbolActive {
+  color: #ff5369;
+}
+
+.analogueSymbolActive svg {
+  filter: drop-shadow(0 0 12px currentColor);
+}
+
+.analogueSymbolToggle {
+  min-height: 74px;
+  border: 1px solid rgba(255, 245, 210, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  font-family: inherit;
+}
+
+.analogueSymbolToggleActive {
+  background: rgba(113, 77, 12, 0.92);
+  border-color: rgba(255, 218, 91, 0.82);
+  animation: analogueBlink 820ms steps(2, start) infinite;
+}
+
+.analogueControls {
+  width: min(100%, 1180px);
+  grid-template-columns: repeat(5, minmax(110px, 1fr));
+  margin: 0 auto;
+}
+
+.analogueToggle,
+.analogueControls button {
+  min-height: 58px;
+  border: 1px solid rgba(255, 245, 210, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: #f9fbff;
+  font-size: 17px;
+  font-weight: 1000;
+  font-family: inherit;
+}
+
+.analogueIndicatorButton {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+}
+
+.analogueIndicatorButton .analogueSymbol svg {
+  width: clamp(54px, 9vw, 82px);
+  height: clamp(54px, 9vw, 82px);
+}
+
+.analogueIndicatorButton .analogueSymbol em {
+  font-size: 18px;
+}
+
+.analogueToggleActive {
+  background: rgba(25, 94, 48, 0.9);
+  border-color: rgba(90, 255, 142, 0.78);
+  animation: analogueBlink 820ms steps(2, start) infinite;
+}
+
+.analogueTyreButton.analogueToggleActive {
+  color: #fff4b8;
+  background: rgba(113, 77, 12, 0.92);
+  border-color: rgba(255, 218, 91, 0.82);
+}
+
+.analogueEngineButton.analogueToggleActive {
+  color: #ffe2e7;
+  background: rgba(108, 15, 28, 0.94);
+  border-color: rgba(255, 99, 119, 0.84);
+}
+
+@keyframes analogueBlink {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (max-width: 820px) {
+  .analogueDashboardPage {
+    height: calc(100dvh - var(--app-shell-safe-top));
+    min-height: calc(100dvh - var(--app-shell-safe-top));
+    gap: 6px;
+    padding: 6px;
+    overflow: hidden;
+  }
+
+  .analogueCluster {
+    padding: 7px;
+  }
+
+  .analogueIndicatorRow {
+    grid-template-columns: minmax(74px, 1fr) minmax(112px, 0.9fr) minmax(74px, 1fr);
+    gap: 6px;
+    margin-bottom: 6px;
+  }
+
+  .analogueCenterBadge {
+    min-height: 48px;
+  }
+
+  .analogueCenterBadge strong {
+    font-size: 18px;
+  }
+
+  .analogueMainGauges {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .analogueGauge {
+    min-height: clamp(142px, 27dvh, 220px);
+    gap: 4px;
+  }
+
+  .analogueGaugeArc {
+    width: min(40vw, 148px);
+    box-shadow:
+      inset 0 0 0 6px #151b26,
+      inset 0 0 0 9px rgba(255, 255, 255, 0.06),
+      0 0 20px rgba(87, 219, 255, 0.1);
+  }
+
+  .analogueGaugeArc::after {
+    inset: 14px;
+  }
+
+  .analogueNeedle {
+    width: 3px;
+  }
+
+  .analogueNeedleHub {
+    width: 18px;
+    height: 18px;
+  }
+
+  .analogueTick {
+    font-size: 11px;
+  }
+
+  .analogueGaugeReadout {
+    gap: 4px;
+  }
+
+  .analogueGaugeReadout strong {
+    font-size: 24px;
+  }
+
+  .analogueGaugeReadout span {
+    font-size: 11px;
+  }
+
+  .analogueGauge h2 {
+    font-size: 14px;
+  }
+
+  .analogueSmallGaugeRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .analogueSmallGauge {
+    min-height: 74px;
+    padding: 10px 6px 6px;
+  }
+
+  .analogueSmallNeedle {
+    top: 17%;
+    width: 3px;
+    height: 34px;
+  }
+
+  .analogueSmallGauge strong {
+    font-size: 13px;
+  }
+
+  .analogueSmallGauge em {
+    font-size: 18px;
+  }
+
+  .analogueSymbolStrip {
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 3px;
+    margin-top: 6px;
+    padding: 5px;
+  }
+
+  .analogueSymbol {
+    gap: 2px;
+  }
+
+  .analogueSymbol svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .analogueSymbol em {
+    font-size: 9px;
+  }
+
+  .analogueWarningRow {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  .analogueSymbolToggle {
+    min-height: 48px;
+  }
+
+  .analogueControls {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .analogueToggle,
+  .analogueControls button {
+    min-height: 42px;
+    padding: 4px;
+    font-size: 12px;
+  }
+
+  .analogueIndicatorButton {
+    min-height: 48px;
+    padding: 4px;
+  }
+
+  .analogueIndicatorButton .analogueSymbol svg {
+    width: 34px;
+    height: 34px;
+  }
+
+  .analogueIndicatorButton .analogueSymbol em {
+    font-size: 12px;
+  }
+}
+
+@media (orientation: landscape) and (max-height: 680px) {
+  .analogueDashboardPage {
+    padding: 8px;
+  }
+
+  .analogueCluster {
+    padding: 10px;
+  }
+
+  .analogueMainGauges {
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+  }
+
+  .analogueGauge {
+    min-height: 250px;
+  }
+
+  .analogueGaugeArc {
+    width: min(34vw, 250px);
+  }
+
+  .analogueGaugeReadout strong {
+    font-size: 38px;
+  }
+
+  .analogueSmallGauge {
+    min-height: 112px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .analogueDashboardPage *,
+  .analogueDashboardPage *::before,
+  .analogueDashboardPage *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

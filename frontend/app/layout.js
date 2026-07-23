@@ -1,4 +1,5 @@
 import "./globals.css";
+import { headers } from "next/headers";
 import AppShellFrame from "../components/AppShellFrame";
 import DebugTapPanel from "../components/DebugTapPanel";
 import PwaBootstrap from "../components/pwa/PwaBootstrap";
@@ -10,7 +11,7 @@ export const metadata = {
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
-    statusBarStyle: "black-translucent",
+    statusBarStyle: "black",
     title: UI_STRINGS.APP_TITLE_WEB,
   },
   icons: {
@@ -29,13 +30,19 @@ export const viewport = {
   themeColor: "#11111b",
 };
 
-export default function RootLayout({ children }) {
+const FAMILY_HOST = "family.kaosgdd.net";
+
+export default async function RootLayout({ children }) {
+  const requestHeaders = await headers();
+  const host = (requestHeaders.get("host") || "").split(":")[0].toLowerCase();
+  const initialFamilyHost = host === FAMILY_HOST;
+
   return (
     <html lang="en">
       <body>
         <PwaBootstrap />
         <DebugTapPanel />
-        <AppShellFrame>{children}</AppShellFrame>
+        <AppShellFrame initialFamilyHost={initialFamilyHost}>{children}</AppShellFrame>
       </body>
     </html>
   );

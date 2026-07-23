@@ -12,9 +12,9 @@ function isFamilySurface(pathname) {
   return String(pathname || "").startsWith("/family");
 }
 
-export default function AppShellFrame({ children }) {
+export default function AppShellFrame({ children, initialFamilyHost = false }) {
   const pathname = usePathname();
-  const familySurface = isFamilySurface(pathname);
+  const familySurface = initialFamilyHost || isFamilySurface(pathname);
 
   return (
     <>

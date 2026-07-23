@@ -61,7 +61,8 @@
 }
 
 .familyCard {
-  min-height: calc(100dvh - var(--app-shell-content-offset) - var(--app-shell-bottom-reserve) - var(--app-card-gap));
+  flex: 1 1 auto;
+  min-height: calc(100dvh - var(--app-shell-safe-top));
   display: flex;
   flex-direction: column;
   overflow: hidden;

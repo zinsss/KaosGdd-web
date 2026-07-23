@@ -21,15 +21,20 @@ test("family shared header uses polished tab wording and routes", async () => {
   assert.ok(!headerSource.includes("<img"), "raw img should not be used in the Family header");
   assert.ok(!headerSource.includes("<h1>가족</h1>"), "old text banner title should not remain");
 
-  for (const label of ["달력", "할일", "로운이", "메모장"]) {
+  for (const label of ["달력", "할일", "로운이", "메모장", "설정"]) {
     assert.ok(headerSource.includes(label), `${label} should be in the Family header`);
   }
   assert.ok(headerSource.indexOf("달력") < headerSource.indexOf("할일"));
   assert.ok(headerSource.indexOf("할일") < headerSource.indexOf("로운이"));
   assert.ok(headerSource.indexOf("로운이") < headerSource.indexOf("메모장"));
-  for (const route of ["/family/calendar", "/family", "/family/roun", "/family/memo"]) {
+  assert.ok(headerSource.indexOf("메모장") < headerSource.indexOf("설정"));
+  for (const route of ["/family/calendar2", "/family", "/family/roun", "/family/memo", "/family/settings"]) {
     assert.ok(headerSource.includes(route), `${route} should remain available`);
   }
+  for (const route of ["/calendar", "/roun", "/memo", "/settings"]) {
+    assert.ok(headerSource.includes(route), `${route} should remain available on the Family subdomain`);
+  }
+  assert.ok(!headerSource.includes('label: "시간표"'), "standalone timetable nav item should not duplicate 로운이");
   for (const oldLabel of ["모하꼬?", "뭐라꼬?", "은제?", "모라노", "대시보드", "로니", "로우니"]) {
     assert.ok(!headerSource.includes(oldLabel), `${oldLabel} should not remain in the Family header`);
   }
@@ -39,6 +44,7 @@ test("family page metadata uses standard Korean titles", async () => {
   const pageSources = [
     await readSource("../app/family/page.js"),
     await readSource("../app/family/memo/page.js"),
+    await readSource("../app/family/settings/page.js"),
     await readSource("../app/family/timetable/page.js"),
     await readSource("../app/family/calendar/rouny/page.js"),
     await readSource("../app/family/calendar/events/new/page.js"),
@@ -48,6 +54,7 @@ test("family page metadata uses standard Korean titles", async () => {
   for (const title of [
     "로운이와 나 - KaosGdd",
     "메모장 - KaosGdd",
+    "가족 설정 - KaosGdd",
     "로운이 시간표 - KaosGdd",
     "일정 추가 - KaosGdd",
     "일정 수정 - KaosGdd",
@@ -58,6 +65,27 @@ test("family page metadata uses standard Korean titles", async () => {
   for (const oldTitle of ["우짜노우짤꼬", "모라노", "뭔날이고", "로니 - KaosGdd"]) {
     assert.ok(!pageSources.includes(oldTitle), `${oldTitle} should not remain in Family page metadata`);
   }
+});
+
+test("family settings page is Family-scoped", async () => {
+  const settingsPage = await readSource("../app/family/settings/page.js");
+  const settingsClient = await readSource("../app/family/settings/FamilySettingsClient.js");
+  const mainSettingsPage = await readSource("../app/settings/page.js");
+  const headerSource = await readSource("../app/family/FamilyHeader.js");
+  const polishCss = await readSource("../app/styles/family-polish.css");
+
+  assert.ok(settingsPage.includes('<FamilyHeader active="settings" />'));
+  assert.ok(settingsPage.includes('aria-label="가족 설정"'));
+  assert.ok(settingsClient.includes("WeatherLocationSettings"));
+  assert.ok(settingsClient.includes("가족 화면에서 쓰는 설정이에요"));
+  assert.ok(settingsClient.includes("달력에 보이는 날씨를 바꿔요"));
+  assert.ok(!settingsClient.includes("PushControls"));
+  assert.ok(!settingsClient.includes("getHealth"));
+  assert.ok(!settingsClient.includes("System diagnostics"));
+  assert.ok(mainSettingsPage.includes("PushControls"));
+  assert.ok(headerSource.includes('mainHref: "/family/settings"'));
+  assert.ok(headerSource.includes('familyHref: "/settings"'));
+  assert.match(polishCss, /\.familySettingsRow\s*\{/);
 });
 
 test("family memo page uses finalized title and checklist glyph", async () => {
@@ -117,21 +145,24 @@ test("family polish keeps the baseline compact and overflow-safe", async () => {
   const polishCss = await readSource("../app/styles/family-polish.css");
   const rounyCss = await readSource("../app/styles/family-rouny-templates.css");
 
-  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?--family-page-max:\s*var\(--app-column-max-width\);[\s\S]*?width:\s*min\(calc\(100% - \(var\(--app-column-edge-padding\) \* 2\)\), var\(--family-page-max\)\);[\s\S]*?max-width:\s*var\(--family-page-max\);[\s\S]*?box-sizing:\s*border-box;[\s\S]*?font-size:\s*14px;/);
+  assert.match(polishCss, /\.familyPage\s*\{[\s\S]*?--family-page-max:\s*var\(--app-column-max-width\);[\s\S]*?width:\s*min\(calc\(100% - \(var\(--app-column-edge-padding\) \* 2\)\), var\(--family-page-max\)\);[\s\S]*?max-width:\s*var\(--family-page-max\);[\s\S]*?min-height:\s*calc\(100dvh - var\(--app-shell-safe-top\)\);[\s\S]*?display:\s*flex;[\s\S]*?flex-direction:\s*column;[\s\S]*?box-sizing:\s*border-box;[\s\S]*?font-size:\s*14px;/);
   assert.match(polishCss, /\.familyCard,[\s\S]*?\.familyDashboard,[\s\S]*?\.familyCalendar,[\s\S]*?\.familyCalendarFormPage,[\s\S]*?\.familyTimetable,[\s\S]*?\.familyStream,[\s\S]*?\.familyTaskForm,[\s\S]*?\.familyDoneTasks\s*\{[\s\S]*?width:\s*100%;[\s\S]*?max-width:\s*100%;[\s\S]*?min-width:\s*0;/);
   assert.match(polishCss, /\.familyHeader\s*\{[\s\S]*?justify-content:\s*space-between;[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?min-height:\s*72px;[\s\S]*?overflow:\s*hidden;/);
   assert.match(polishCss, /\.familyLogoLink\s*\{[\s\S]*?width:\s*auto;[\s\S]*?background:\s*transparent;[\s\S]*?text-decoration:\s*none;/);
   assert.match(polishCss, /\.familyTextLogo\s*\{[\s\S]*?font-family:\s*"Lotteria"[\s\S]*?color:\s*var\(--family-highlight, #d86f98\);[\s\S]*?font-size:\s*22px;/);
   assert.ok(!polishCss.includes("familyHeaderLogo"));
-  assert.match(polishCss, /\.familyHomeNav\s*\{[\s\S]*?justify-content:\s*flex-end;[\s\S]*?margin-left:\s*auto;[\s\S]*?flex-wrap:\s*nowrap;[\s\S]*?overflow:\s*hidden;/);
-  assert.match(polishCss, /\.familyHomeNavLink\s*\{[\s\S]*?background:\s*transparent;[\s\S]*?white-space:\s*nowrap;/);
+  assert.match(polishCss, /\.familyHomeNav\s*\{[\s\S]*?justify-content:\s*flex-end;[\s\S]*?margin-left:\s*auto;[\s\S]*?overflow-x:\s*auto;[\s\S]*?scrollbar-width:\s*none;/);
+  assert.match(polishCss, /\.familyHomeNav::-webkit-scrollbar\s*\{[\s\S]*?display:\s*none;/);
+  assert.match(polishCss, /\.familyHomeNavLink\s*\{[\s\S]*?flex:\s*0 0 auto;[\s\S]*?background:\s*transparent;[\s\S]*?white-space:\s*nowrap;/);
   assert.match(polishCss, /\.familyHomeNavLinkActive::after\s*\{[\s\S]*?height:\s*2px;[\s\S]*?background:\s*rgba\(216, 111, 152, 0\.72\);/);
   assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyPage\s*\{[\s\S]*?width:\s*min\(calc\(100% - 16px\), var\(--family-page-max\)\);[\s\S]*?max-width:\s*var\(--family-page-max\);/);
-  assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyHomeNav\s*\{[\s\S]*?justify-content:\s*flex-end;[\s\S]*?margin-left:\s*auto;/);
+  assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyHomeNav\s*\{[\s\S]*?justify-content:\s*flex-end;[\s\S]*?margin-left:\s*auto;[\s\S]*?overflow-x:\s*auto;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*640px\)\s*\{[\s\S]*?\.familyTextLogo\s*\{[\s\S]*?font-size:\s*20px;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*?\.familyTextLogo\s*\{[\s\S]*?font-size:\s*18px;/);
   assert.match(polishCss, /@media\s*\(max-width:\s*360px\)\s*\{[\s\S]*?\.familyHomeNavLink\s*\{[\s\S]*?font-size:\s*13px;/);
   assert.match(rounyCss, /\.familyRounyTemplateRow\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto;/);
   assert.match(rounyCss, /\.familyRounyTemplateActions[\s\S]*?\{[\s\S]*?flex-wrap:\s*wrap;/);
   assert.match(rounyCss, /overflow-wrap:\s*anywhere;/);
+  assert.match(rounyCss, /\.familyRounWeeklyGrid\s*\{[\s\S]*?overflow:\s*visible;[\s\S]*?touch-action:\s*manipulation;/);
+  assert.doesNotMatch(rounyCss, /\.familyRounWeeklyGrid\s*\{[\s\S]*?overflow-y:\s*auto;/);
 });

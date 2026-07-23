@@ -306,8 +306,9 @@ test("family Roun weekly grid editor supports add edit copy delete and drag", as
 
   assert.ok(rounyCss.includes(".familyRounWeeklyGrid"));
   assert.ok(rounyCss.includes("grid-template-columns: 30px repeat(7, minmax(0, 1fr));"));
-  assert.ok(rounyCss.includes("overflow-y: auto;"));
-  assert.ok(rounyCss.includes("overflow-x: hidden;"));
+  assert.ok(rounyCss.includes("overflow: visible;"));
+  assert.ok(!rounyCss.includes("overflow-y: auto;"));
+  assert.ok(!rounyCss.includes("overflow-x: hidden;"));
   assert.ok(rounyCss.includes("grid-template-columns: 24px repeat(7, minmax(0, 1fr));"));
   assert.ok(rounyCss.includes(".familyRounHour span:nth-child(5) { top: 40px; }"));
   assert.ok(rounyCss.includes(".familyRounBlock"));

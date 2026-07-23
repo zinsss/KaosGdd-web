@@ -239,12 +239,11 @@
   grid-template-rows: 30px var(--family-roun-body-height);
   min-width: 0;
   max-width: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: visible;
   border: 1px solid rgba(214, 128, 157, 0.2);
   border-radius: 8px;
   background: #fffdf7;
-  touch-action: pan-y;
+  touch-action: manipulation;
 }
 
 .familyRounGridCorner,

@@ -3,6 +3,7 @@
   --app-column-edge-padding: 8px;
   --app-shell-safe-top: env(safe-area-inset-top, 0px);
   --app-shell-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --app-shell-status-bar-bg: #11111b;
   --app-shell-bottom-bar-bg: var(--ui-bg);
   --app-shell-bottom-reserve: calc(var(--app-shell-safe-bottom) + 12px);
   --app-shell-header-base-height: 168px;
@@ -17,6 +18,18 @@
   --app-shell-content-offset: calc(
     var(--app-shell-layout-height) + var(--app-shell-content-gap)
   );
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: var(--app-shell-safe-top);
+  background: var(--app-shell-status-bar-bg);
+  pointer-events: none;
 }
 
 .appShellTop {
@@ -119,10 +132,12 @@
 }
 
 .appShellMainFamily {
-  height: auto;
+  height: 100dvh;
   min-height: 100dvh;
-  overflow-y: visible;
+  overflow-y: auto;
   overscroll-behavior: auto;
+  padding-top: var(--app-shell-safe-top);
+  padding-bottom: 0;
 }
 
 .appShellMain::-webkit-scrollbar {

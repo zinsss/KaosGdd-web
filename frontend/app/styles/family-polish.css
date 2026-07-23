@@ -2,6 +2,9 @@
   --family-page-max: var(--app-column-max-width);
   width: min(calc(100% - (var(--app-column-edge-padding) * 2)), var(--family-page-max));
   max-width: var(--family-page-max);
+  min-height: calc(100dvh - var(--app-shell-safe-top));
+  display: flex;
+  flex-direction: column;
   box-sizing: border-box;
   overflow-x: hidden;
   font-size: 14px;
@@ -70,12 +73,19 @@
   flex-wrap: nowrap;
   gap: clamp(10px, 4vw, 22px);
   margin-left: auto;
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.familyHomeNav::-webkit-scrollbar {
+  display: none;
 }
 
 .familyHomeNavLink {
   position: relative;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
   border: 0;
   border-radius: 0;
@@ -389,7 +399,8 @@
     flex-wrap: nowrap;
     gap: clamp(8px, 3vw, 14px);
     margin-left: auto;
-    overflow: hidden;
+    overflow-x: auto;
+    overflow-y: hidden;
   }
 
   .familyHomeNavLink {
@@ -486,6 +497,57 @@
 
 .familyTaskHeaderActions {
   justify-content: flex-start;
+}
+
+.familySettingsList {
+  display: grid;
+  gap: 12px;
+}
+
+.familySettingsRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(130px, 190px);
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid rgba(214, 128, 157, 0.18);
+  border-radius: 14px;
+  background: rgba(255, 248, 251, 0.74);
+  color: rgba(78, 37, 54, 0.84);
+}
+
+.familySettingsRow span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.familySettingsRow strong {
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.familySettingsRow small {
+  color: rgba(78, 37, 54, 0.56);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.familySettingsRow select {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(214, 128, 157, 0.26);
+  border-radius: 12px;
+  background: #fff;
+  color: rgba(78, 37, 54, 0.88);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+@media (max-width: 520px) {
+  .familySettingsRow {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .familyTaskRowActions,

@@ -1,0 +1,781 @@
+.familyPlayTiles {
+  display: grid;
+  gap: 10px;
+  padding: 16px 16px 0;
+}
+
+.familyPlayTile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 86px;
+  padding: 14px;
+  border: 1px solid rgba(120, 188, 210, 0.24);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f4fcff, #fff6fa);
+  color: #4e2536;
+  text-decoration: none;
+  box-shadow: 0 10px 22px rgba(112, 54, 80, 0.11);
+}
+
+.familyPlayTile:focus-visible,
+.familyPlayTile:hover {
+  outline: 2px solid rgba(93, 190, 220, 0.48);
+  outline-offset: 2px;
+}
+
+.familyPlayTileText {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.familyPlayTileText strong {
+  color: #4e2536;
+  font-size: 18px;
+  font-weight: 1000;
+  line-height: 1.15;
+}
+
+.familyPlayTileText span {
+  color: rgba(78, 37, 54, 0.58);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.familyIoniqTileIcon {
+  position: relative;
+  flex: 0 0 auto;
+  width: 54px;
+  height: 54px;
+  border: 3px solid rgba(24, 140, 178, 0.38);
+  border-bottom-width: 8px;
+  border-radius: 999px 999px 14px 14px;
+  background:
+    radial-gradient(circle at 50% 64%, #1e9bc4 0 5px, transparent 6px),
+    linear-gradient(180deg, #123347, #071927);
+  box-shadow: inset 0 0 16px rgba(89, 221, 255, 0.18);
+}
+
+.familyIoniqTileIcon::before,
+.familyIoniqTileIcon::after {
+  content: "";
+  position: absolute;
+  bottom: 10px;
+  width: 10px;
+  height: 5px;
+  border-radius: 999px;
+  background: #67e7ff;
+  box-shadow: 0 0 10px rgba(85, 221, 255, 0.58);
+}
+
+.familyIoniqTileIcon::before {
+  left: 10px;
+}
+
+.familyIoniqTileIcon::after {
+  right: 10px;
+}
+
+.familyIoniqTileNeedle {
+  position: absolute;
+  left: 50%;
+  bottom: 17px;
+  width: 3px;
+  height: 20px;
+  border-radius: 999px;
+  background: #ff6f86;
+  transform: translateX(-50%) rotate(34deg);
+  transform-origin: bottom center;
+}
+
+.ioniqDashboardPage {
+  min-height: calc(100dvh - var(--app-shell-safe-top));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(27, 115, 166, 0.24), transparent 32%),
+    linear-gradient(180deg, #06111b 0%, #02060b 100%);
+  color: #f7fbff;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+body:has(.ioniqDashboardPage) .appShellTop,
+body:has(.ioniqDashboardPage) .appShellAttentionSlot {
+  display: none !important;
+}
+
+body:has(.ioniqDashboardPage) .appShellMain {
+  height: 100dvh !important;
+  min-height: 100dvh !important;
+  padding-top: var(--app-shell-safe-top) !important;
+  padding-bottom: 0 !important;
+  background: #02060b !important;
+}
+
+.ioniqDashboardPage button,
+.ioniqDashboardPage a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.ioniqControlButton,
+.ioniqGearButton,
+.ioniqSignalButton,
+.ioniqBatteryCard {
+  min-height: 48px;
+  border: 1px solid rgba(118, 214, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(8, 24, 38, 0.88);
+  color: #f7fbff;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
+.ioniqClusterShell {
+  flex: 1 1 auto;
+  width: min(100%, 1280px);
+  min-height: 440px;
+  display: grid;
+  grid-template-columns: minmax(220px, 0.78fr) minmax(320px, 1.28fr) minmax(220px, 0.78fr);
+  gap: 12px;
+  margin: 0 auto;
+  padding: 12px;
+  border: 1px solid rgba(118, 214, 255, 0.2);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04), transparent 18%, transparent 82%, rgba(255, 255, 255, 0.04)),
+    #030912;
+  box-shadow:
+    inset 0 0 60px rgba(62, 173, 255, 0.08),
+    0 18px 50px rgba(0, 0, 0, 0.42);
+}
+
+.ioniqClusterPanel {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(120, 214, 255, 0.16);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(14, 36, 54, 0.92), rgba(4, 13, 22, 0.96)),
+    #07111d;
+}
+
+.ioniqSignalButton {
+  display: grid;
+  place-items: center;
+  gap: 2px;
+  padding: 8px 10px;
+  color: rgba(169, 255, 203, 0.9);
+  font-size: 40px;
+  font-weight: 1000;
+  line-height: 0.9;
+}
+
+.ioniqSignalButton span {
+  display: block;
+  color: rgba(237, 255, 245, 0.78);
+  font-size: 14px;
+  line-height: 1;
+}
+
+.ioniqSignalActive {
+  border-color: rgba(73, 255, 145, 0.78);
+  background: rgba(7, 55, 31, 0.92);
+  animation: ioniqBlink 760ms steps(2, start) infinite;
+}
+
+.ioniqCamera {
+  position: relative;
+  flex: 1 1 150px;
+  min-height: 154px;
+  overflow: hidden;
+  border: 1px solid rgba(118, 214, 255, 0.18);
+  border-radius: 8px;
+  background: #050b12;
+  opacity: 0.42;
+  transform: scale(0.97);
+  transition: opacity 180ms ease, transform 180ms ease, border-color 180ms ease;
+}
+
+.ioniqCameraActive {
+  opacity: 1;
+  transform: scale(1);
+  border-color: rgba(118, 214, 255, 0.7);
+  box-shadow: 0 0 22px rgba(40, 178, 255, 0.2);
+}
+
+.ioniqCameraLens {
+  position: absolute;
+  inset: 8px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #16212e 0 33%, #222a31 34% 100%);
+  clip-path: ellipse(72% 58% at 50% 50%);
+}
+
+.ioniqCameraLeft .ioniqCameraLens {
+  transform: scaleX(-1);
+}
+
+.ioniqCameraSky {
+  position: absolute;
+  inset: 0 0 54%;
+  background: linear-gradient(180deg, rgba(41, 75, 98, 0.88), rgba(18, 31, 42, 0.92));
+}
+
+.ioniqCameraRoad {
+  position: absolute;
+  inset: 35% -12% -10%;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(180deg, transparent 0 22px, rgba(255, 255, 255, 0.65) 22px 36px, transparent 36px 70px),
+    linear-gradient(90deg, #10161d, #343a42 48%, #151a21);
+  animation: ioniqRoadFlow var(--ioniq-road-speed, 2s) linear infinite;
+}
+
+.ioniqCameraRoadLit {
+  box-shadow: inset 0 38px 60px rgba(126, 225, 255, 0.22);
+}
+
+.ioniqCameraCarEdge {
+  position: absolute;
+  top: 10%;
+  bottom: -4%;
+  width: 26%;
+  border-radius: 50% 0 0 20%;
+  background: linear-gradient(90deg, rgba(230, 240, 246, 0.84), rgba(88, 105, 118, 0.86));
+  right: -4%;
+}
+
+.ioniqCameraLaneLine,
+.ioniqCameraLaneLineSecond {
+  position: absolute;
+  left: 42%;
+  top: -20%;
+  width: 4px;
+  height: 140%;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  transform: rotate(10deg);
+}
+
+.ioniqCameraLaneLineSecond {
+  left: 22%;
+  opacity: 0.35;
+}
+
+.ioniqFollowingCar {
+  position: absolute;
+  left: 18%;
+  bottom: 22%;
+  width: 34px;
+  height: 20px;
+  border-radius: 7px 7px 4px 4px;
+  background: #738493;
+  box-shadow: 0 0 12px rgba(255, 72, 72, 0.42);
+}
+
+.ioniqCameraLabel {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  color: rgba(246, 252, 255, 0.9);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.ioniqBatteryCard {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 7px 10px;
+  padding: 12px;
+  text-align: left;
+}
+
+.ioniqBatteryCard strong {
+  color: #f7fbff;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.ioniqBatteryBar {
+  grid-column: 1 / -1;
+  height: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.ioniqBatteryBar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #2ad5ff, #57fbff);
+  transition: width 180ms ease, background 180ms ease;
+}
+
+.ioniqBatteryyellow .ioniqBatteryBar span {
+  background: linear-gradient(90deg, #ffd84b, #ffef9a);
+}
+
+.ioniqBatteryred .ioniqBatteryBar span {
+  background: linear-gradient(90deg, #ff4d5f, #ff9c8e);
+}
+
+.ioniqSmallLabel,
+.ioniqBatteryCard span,
+.ioniqPowerCard span,
+.ioniqModeCard span {
+  color: rgba(227, 246, 255, 0.72);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.ioniqReadyStatus,
+.ioniqModeCard,
+.ioniqPowerCard {
+  display: grid;
+  gap: 5px;
+  padding: 12px;
+  border: 1px solid rgba(118, 214, 255, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+.ioniqReadyStatus span,
+.ioniqModeCard strong,
+.ioniqPowerCard strong {
+  color: #f7fbff;
+  font-size: 20px;
+  font-weight: 1000;
+}
+
+.ioniqReadyStatus em {
+  color: rgba(80, 255, 151, 0.86);
+  font-style: normal;
+  font-weight: 900;
+}
+
+.ioniqReadyStatus strong,
+.ioniqWarningText {
+  color: #ff7785;
+}
+
+.ioniqCenterPanel {
+  align-items: center;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.ioniqGearDisplay {
+  width: 108px;
+  height: 80px;
+  border: 1px solid rgba(118, 214, 255, 0.28);
+  border-radius: 8px;
+  background: rgba(4, 15, 26, 0.95);
+  color: #ffffff;
+  font-size: 52px;
+  font-weight: 1000;
+  line-height: 1;
+  box-shadow: 0 0 24px rgba(38, 185, 255, 0.16);
+}
+
+.ioniqGearPulse {
+  animation: ioniqGearPulse 220ms ease;
+}
+
+.ioniqSpeedReadout {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 12px;
+}
+
+.ioniqSpeedReadout strong {
+  min-width: 190px;
+  color: #ffffff;
+  font-size: clamp(82px, 13vw, 150px);
+  font-weight: 1000;
+  line-height: 0.9;
+  text-align: right;
+}
+
+.ioniqSpeedReadout span {
+  color: rgba(232, 248, 255, 0.74);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.ioniqRoadScene {
+  position: relative;
+  width: min(100%, 430px);
+  height: 178px;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(42, 192, 255, 0.12), transparent 54%),
+    linear-gradient(180deg, #07131f 0%, #151d28 100%);
+}
+
+.ioniqRoadSceneLit {
+  box-shadow: inset 0 -52px 80px rgba(105, 220, 255, 0.2);
+}
+
+.ioniqLane {
+  position: absolute;
+  top: -25%;
+  bottom: -25%;
+  width: 4px;
+  border-radius: 999px;
+  background: repeating-linear-gradient(180deg, rgba(180, 239, 255, 0.88) 0 32px, transparent 32px 70px);
+  animation: ioniqLaneFlow var(--ioniq-lane-speed, 2s) linear infinite;
+}
+
+.ioniqLaneLeft {
+  left: 34%;
+  transform: rotate(7deg);
+}
+
+.ioniqLaneRight {
+  right: 34%;
+  transform: rotate(-7deg);
+}
+
+.ioniqReverseGrid {
+  position: absolute;
+  inset: 18px 54px 20px;
+  border: 2px solid rgba(74, 255, 153, 0.7);
+  border-top: 0;
+  transform: perspective(220px) rotateX(46deg);
+}
+
+.ioniqReverseGrid span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: rgba(255, 228, 88, 0.72);
+}
+
+.ioniqReverseGrid span:nth-child(1) {
+  top: 25%;
+}
+
+.ioniqReverseGrid span:nth-child(2) {
+  top: 55%;
+}
+
+.ioniqReverseGrid span:nth-child(3) {
+  top: 86%;
+  background: rgba(255, 82, 82, 0.74);
+}
+
+.ioniqVehicle {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  width: 82px;
+  height: 104px;
+  transform: translateX(-50%);
+  transition: transform 160ms ease;
+  animation: ioniqVehicleIdle 1100ms ease-in-out infinite;
+}
+
+.ioniqVehicleHorn {
+  animation: ioniqHornPulse 130ms ease-in-out 2;
+}
+
+.ioniqVehicleCabin,
+.ioniqVehicleBody {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 8px;
+}
+
+.ioniqVehicleCabin {
+  top: 10px;
+  width: 42px;
+  height: 34px;
+  background: linear-gradient(180deg, #dce7ed, #657b8d);
+}
+
+.ioniqVehicleBody {
+  top: 34px;
+  width: 72px;
+  height: 58px;
+  background: linear-gradient(180deg, #f7fbff, #788998);
+  box-shadow: 0 0 24px rgba(82, 206, 255, 0.18);
+}
+
+.ioniqVehicleLight {
+  position: absolute;
+  bottom: 10px;
+  width: 16px;
+  height: 6px;
+  border-radius: 999px;
+  background: #c7f3ff;
+  box-shadow: 0 0 12px rgba(128, 230, 255, 0.6);
+}
+
+.ioniqVehicleLightLeft {
+  left: 14px;
+}
+
+.ioniqVehicleLightRight {
+  right: 14px;
+}
+
+.ioniqIconRow {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ioniqIconRow span {
+  padding: 7px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.055);
+  color: rgba(232, 248, 255, 0.78);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.ioniqIconRow .ioniqIconActive {
+  border-color: rgba(118, 214, 255, 0.46);
+  color: #8be6ff;
+}
+
+.ioniqIconRow .ioniqIconDanger {
+  border-color: rgba(255, 83, 103, 0.56);
+  color: #ff8a98;
+}
+
+.ioniqPowerCard {
+  grid-template-columns: 1fr auto;
+  align-items: end;
+}
+
+.ioniqPowerGauge {
+  grid-row: span 3;
+  justify-self: end;
+  width: 34px;
+  height: 128px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  border: 1px solid rgba(118, 214, 255, 0.24);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.ioniqPowerGauge span {
+  width: 100%;
+  background: linear-gradient(180deg, #4effb4, #20c9ff);
+  transition: height 180ms ease;
+}
+
+.ioniqModeCard strong {
+  color: #92e9ff;
+}
+
+.ioniqControls {
+  width: min(100%, 1280px);
+  display: grid;
+  gap: 10px;
+  margin: 0 auto;
+}
+
+.ioniqGearControls {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(68px, 1fr));
+  gap: 10px;
+}
+
+.ioniqGearButton {
+  min-height: 62px;
+  font-size: 30px;
+  font-weight: 1000;
+}
+
+.ioniqGearButtonActive,
+.ioniqControlButtonActive {
+  border-color: rgba(92, 226, 255, 0.82);
+  background: linear-gradient(180deg, rgba(17, 92, 130, 0.95), rgba(10, 48, 76, 0.98));
+  color: #ffffff;
+  box-shadow: 0 0 22px rgba(37, 185, 255, 0.22);
+}
+
+.ioniqControlGrid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(106px, 1fr));
+  gap: 10px;
+}
+
+.ioniqControlButton {
+  min-height: 56px;
+  padding: 0 12px;
+  font-size: 16px;
+  font-weight: 1000;
+}
+
+.ioniqControlButton:disabled {
+  opacity: 0.48;
+  color: rgba(232, 248, 255, 0.62);
+  box-shadow: none;
+}
+
+.ioniqHazardButton {
+  border-color: rgba(255, 84, 103, 0.42);
+  color: #ff98a4;
+}
+
+.ioniqHazardButton.ioniqControlButtonActive {
+  border-color: rgba(255, 68, 89, 0.9);
+  background: rgba(92, 7, 19, 0.94);
+  color: #fff3f5;
+  animation: ioniqBlink 760ms steps(2, start) infinite;
+}
+
+.ioniqHornButton {
+  color: #fff4b8;
+}
+
+@keyframes ioniqBlink {
+  50% {
+    opacity: 0.32;
+  }
+}
+
+@keyframes ioniqRoadFlow {
+  from {
+    background-position: 0 0, 0 0;
+  }
+  to {
+    background-position: 0 70px, 0 0;
+  }
+}
+
+@keyframes ioniqLaneFlow {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 70px;
+  }
+}
+
+@keyframes ioniqVehicleIdle {
+  50% {
+    transform: translateX(-50%) translateY(-2px);
+  }
+}
+
+@keyframes ioniqHornPulse {
+  50% {
+    transform: translateX(-50%) scale(1.06);
+  }
+}
+
+@keyframes ioniqGearPulse {
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 0 36px rgba(90, 222, 255, 0.34);
+  }
+}
+
+@media (max-width: 980px) {
+  .ioniqClusterShell {
+    grid-template-columns: minmax(170px, 0.72fr) minmax(280px, 1.18fr) minmax(170px, 0.72fr);
+  }
+
+  .ioniqControlGrid {
+    grid-template-columns: repeat(4, minmax(104px, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .ioniqDashboardPage {
+    padding: 8px;
+  }
+
+  .ioniqClusterShell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .ioniqClusterPanel {
+    min-height: 220px;
+  }
+
+  .ioniqCenterPanel {
+    order: -1;
+  }
+
+  .ioniqControlGrid {
+    grid-template-columns: repeat(2, minmax(130px, 1fr));
+  }
+}
+
+@media (orientation: landscape) and (max-height: 680px) {
+  .ioniqDashboardPage {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .ioniqClusterShell {
+    min-height: 330px;
+    padding: 8px;
+  }
+
+  .ioniqClusterPanel {
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .ioniqCamera {
+    min-height: 116px;
+  }
+
+  .ioniqSpeedReadout strong {
+    font-size: clamp(64px, 10vw, 112px);
+  }
+
+  .ioniqRoadScene {
+    height: 126px;
+  }
+
+  .ioniqControlButton,
+  .ioniqGearButton {
+    min-height: 48px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ioniqDashboardPage *,
+  .ioniqDashboardPage *::before,
+  .ioniqDashboardPage *::after {
+    animation: none !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

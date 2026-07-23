@@ -11,8 +11,22 @@ test("family subdomain rewrites to Family routes without touching APIs or assets
 
   assert.ok(middlewareSource.includes('const FAMILY_HOST = "family.kaosgdd.net";'));
   assert.ok(middlewareSource.includes('url.pathname = url.pathname === "/" ? "/family" : `/family${url.pathname}`;'));
+  assert.ok(middlewareSource.includes('url.pathname = url.pathname.replace(/^\\/calendar/, "/family/calendar2");'));
+  assert.ok(middlewareSource.includes('url.pathname = url.pathname.replace(/^\\/tasks/, "/family");'));
+  assert.ok(middlewareSource.includes('url.pathname = "/family/settings";'));
 
-  for (const route of ['"/calendar"', '"/tasks"', '"/roun"', '"/memo"']) {
+  for (const route of [
+    '"/calendar"',
+    '"/calendar2"',
+    '"/tasks"',
+    '"/roun"',
+    '"/timetable"',
+    '"/memo"',
+    '"/settings"',
+    '"/dashboards"',
+    '"/ioniq-dashboard"',
+    '"/analogue-dashboard"',
+  ]) {
     assert.ok(middlewareSource.includes(route), `${route} should be available as a short Family subdomain path`);
   }
 

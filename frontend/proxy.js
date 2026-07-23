@@ -1,7 +1,18 @@
 import { NextResponse } from "next/server";
 
 const FAMILY_HOST = "family.kaosgdd.net";
-const FAMILY_ROUTE_PREFIXES = ["/calendar", "/tasks", "/roun", "/memo"];
+const FAMILY_ROUTE_PREFIXES = [
+  "/calendar",
+  "/calendar2",
+  "/tasks",
+  "/roun",
+  "/timetable",
+  "/memo",
+  "/settings",
+  "/dashboards",
+  "/ioniq-dashboard",
+  "/analogue-dashboard",
+];
 
 function isFamilyHost(request) {
   const host = request.headers.get("host") || "";
@@ -33,6 +44,26 @@ export function proxy(request) {
 
   if (!shouldRewriteToFamily(url.pathname)) {
     return NextResponse.next();
+  }
+
+  if (url.pathname === "/calendar" || url.pathname.startsWith("/calendar/")) {
+    url.pathname = url.pathname.replace(/^\/calendar/, "/family/calendar2");
+    return NextResponse.rewrite(url);
+  }
+
+  if (url.pathname === "/calendar2") {
+    url.pathname = "/family/calendar2";
+    return NextResponse.rewrite(url);
+  }
+
+  if (url.pathname === "/tasks" || url.pathname.startsWith("/tasks/")) {
+    url.pathname = url.pathname.replace(/^\/tasks/, "/family");
+    return NextResponse.rewrite(url);
+  }
+
+  if (url.pathname === "/settings") {
+    url.pathname = "/family/settings";
+    return NextResponse.rewrite(url);
   }
 
   url.pathname = url.pathname === "/" ? "/family" : `/family${url.pathname}`;

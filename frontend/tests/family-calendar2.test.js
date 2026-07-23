@@ -1,0 +1,88 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { test } from "node:test";
+
+async function readSource(path) {
+  return readFile(new URL(path, import.meta.url), "utf8");
+}
+
+test("family calendar2 is a separate main-events-style Family month view", async () => {
+  const pageSource = await readSource("../app/family/calendar2/page.js");
+  const clientSource = await readSource("../app/family/calendar2/FamilyCalendar2Client.js");
+  const headerSource = await readSource("../app/family/FamilyHeader.js");
+  const proxySource = await readSource("../proxy.js");
+  const globalsSource = await readSource("../app/globals.css");
+  const cssSource = await readSource("../app/styles/family-calendar2.css");
+
+  assert.ok(pageSource.includes("FamilyCalendar2Client"));
+  assert.ok(pageSource.includes("달력 - KaosGdd"));
+  assert.ok(pageSource.includes('<FamilyHeader active="calendar" />'));
+  assert.ok(pageSource.includes('import { Suspense } from "react";'));
+  assert.ok(pageSource.includes("<Suspense fallback={null}>"));
+  assert.ok(headerSource.includes('label: "달력"'));
+  assert.ok(headerSource.includes('familyHref: "/calendar"'));
+  assert.ok(headerSource.includes('mainHref: "/family/calendar2"'));
+  assert.ok(!headerSource.includes('label: "달력2"'));
+  assert.ok(proxySource.includes('"/calendar2"'));
+  assert.ok(proxySource.includes('url.pathname = "/family/calendar2";'));
+  assert.ok(proxySource.includes("url.pathname = url.pathname === \"/\" ? \"/family\" : `/family${url.pathname}`;"));
+  assert.ok(globalsSource.includes('@import "./styles/family-calendar2.css";'));
+  assert.ok(cssSource.includes(".familyCalendar2Grid"));
+  assert.ok(cssSource.includes("grid-template-columns: repeat(7, minmax(0, 1fr));"));
+  assert.match(cssSource, /\.familyCalendar2Cell\s*\{[\s\S]*?grid-template-rows:\s*1fr 22px;/);
+  assert.match(cssSource, /\.familyCalendar2Footer\s*\{[\s\S]*?min-height:\s*22px;/);
+  assert.match(cssSource, /\.familyCalendar2Grid,[\s\S]*?\.familyCalendar2SelectedDayPanel\s*\{[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
+  assert.match(cssSource, /\.familyCalendar2DayNumber\s*\{[\s\S]*?color:\s*rgba\(184, 79, 120, 0\.82\);[\s\S]*?font-size:\s*15px;/);
+  assert.match(cssSource, /\.familyCalendar2WeatherGlyph\s*\{[\s\S]*?margin-right:\s*7px;[\s\S]*?color:\s*#8a6aa0;[\s\S]*?font-family:\s*"Sarasa Gothic Mono"[\s\S]*?font-size:\s*1\.62rem;/);
+  assert.match(cssSource, /\.familyCalendar2Count\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?align-items:\s*center;[\s\S]*?color:\s*rgba\(184, 79, 120, 0\.78\);[\s\S]*?font-size:\s*16px;[\s\S]*?line-height:\s*1\.18;/);
+  assert.match(cssSource, /\.familyCalendar2CellToday::after\s*\{[\s\S]*?content:\s*none;/);
+  assert.match(cssSource, /\.familyCalendar2CellToday\s*\{[\s\S]*?border-color:\s*rgba\(166, 130, 214, 0\.68\);[\s\S]*?box-shadow:\s*inset 0 0 0 2px rgba\(166, 130, 214, 0\.18\);/);
+  assert.match(cssSource, /\.familyCalendar2CaregiverGlyph\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?min-width:\s*12px;[\s\S]*?color:\s*#b497d6;[\s\S]*?font-family:\s*"Sarasa Gothic Mono"[\s\S]*?font-size:\s*22px;/);
+  assert.match(cssSource, /\.familyCalendar2CaregiverCard\s*\{/);
+  assert.match(cssSource, /\.familyCalendar2CaregiverHeader\[aria-expanded="true"\]::before\s*\{/);
+  assert.match(cssSource, /\.familyCalendar2CaregiverEditorBody\s*\{/);
+  assert.match(cssSource, /\.familyCalendar2CaregiverEditorGrid\s*\{/);
+  assert.match(cssSource, /\.familyCalendar2CaregiverEmpty\s*\{/);
+  assert.match(cssSource, /\.familyCalendar2DaypartRow > span:last-child\s*\{[\s\S]*?gap:\s*8px;[\s\S]*?color:\s*#8a6aa0;/);
+  assert.match(cssSource, /\.familyCalendar2DaypartRow > span:last-child > span:first-child\s*\{[\s\S]*?font-size:\s*1\.35em;/);
+  assert.match(cssSource, /\.familyCalendar2SelectedWeatherGlyph\s*\{[\s\S]*?color:\s*#8a6aa0;[\s\S]*?font-family:\s*"Sarasa Gothic Mono"/);
+  assert.match(cssSource, /\.familyCalendar2SelectedWeatherRange\s*\{[\s\S]*?color:\s*#8a6aa0;/);
+
+  assert.ok(clientSource.includes("fetchFamilyCalendarItems"));
+  assert.ok(clientSource.includes("fetchFamilyTasks"));
+  assert.ok(clientSource.includes("fetchFamilyCaregiverHours"));
+  assert.ok(clientSource.includes("persistFamilyCaregiverHours"));
+  assert.ok(clientSource.includes("FamilyCalendar2CaregiverEditor"));
+  assert.ok(clientSource.includes("const [caregiverExpanded, setCaregiverExpanded] = useState(false);"));
+  assert.ok(clientSource.includes("aria-expanded={caregiverExpanded}"));
+  assert.ok(clientSource.includes("setCaregiverExpanded(false);"));
+  assert.ok(clientSource.includes("caregiverExpanded ? ("));
+  assert.ok(clientSource.includes("setDraftSessions(legacyHours > 0 ? [{ start: \"09:00\", end: legacyEnd }] : []);"));
+  assert.ok(clientSource.includes("시간 추가를 누르면 입력할 수 있어요."));
+  assert.ok(clientSource.includes("저장하지 못했어요. 다시 눌러 주세요."));
+  assert.ok(clientSource.includes("초기화하지 못했어요. 다시 눌러 주세요."));
+  assert.ok(clientSource.includes("normalizeFamilyCaregiverSessions"));
+  assert.ok(clientSource.includes("normalizeFamilyCaregiverExtras"));
+  assert.ok(clientSource.includes("draftMemo"));
+  assert.ok(clientSource.includes("fetchSharedWeather"));
+  assert.ok(clientSource.includes("sharedWeatherDailyFromPayload"));
+  assert.ok(clientSource.includes("sharedWeatherDaypartsFromPayload"));
+  assert.ok(clientSource.includes("formatEventCountGlyph"));
+  assert.ok(clientSource.includes("taskMatchesDate"));
+  assert.ok(clientSource.includes("formatFamilyTaskDueDate"));
+  assert.ok(clientSource.includes("formatFamilyCaregiverHours"));
+  assert.ok(clientSource.includes("function hasFamilyCalendar2CaregiverRecord(value)"));
+  assert.ok(clientSource.includes("calculateFamilyCaregiverHours(record) > 0 || record.extras.length > 0 || Boolean(record.memo)"));
+  assert.ok(clientSource.includes("familyCalendar2CaregiverGlyph"));
+  assert.ok(clientSource.includes('aria-label="이모 있음">•</span>'));
+  assert.ok(!clientSource.includes("familyCalendar2WeatherLine"));
+  assert.ok(!cssSource.includes(".familyCalendar2WeatherLine"));
+  assert.ok(clientSource.includes("이모"));
+  assert.ok(!clientSource.includes("familyCalendar2CaregiverLine"));
+  assert.ok(!cssSource.includes(".familyCalendar2CaregiverLine"));
+  assert.ok(clientSource.includes("할일"));
+  assert.ok(clientSource.includes("일정"));
+  assert.ok(!clientSource.includes("fetchFamilyRounState"));
+  assert.ok(!clientSource.includes("resolveFamilyRounPlanForDate"));
+  assert.ok(!clientSource.includes("FamilyCalendarWeatherRows"));
+});

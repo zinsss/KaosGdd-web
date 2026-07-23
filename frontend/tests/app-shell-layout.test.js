@@ -16,10 +16,14 @@ test("top shell stays in flow so page controls are not covered", async () => {
   const mainCss = cssBlock(shellCss, ".appShellMain");
   const modeNavCss = cssBlock(shellCss, ".modeTextLinks");
 
+  assert.match(layoutSource, /statusBarStyle:\s*"black"/);
+  assert.doesNotMatch(layoutSource, /statusBarStyle:\s*"black-translucent"/);
   assert.doesNotMatch(layoutSource, /appShellTopSpacer/);
-  assert.match(layoutSource, /<AppShellFrame>\{children\}<\/AppShellFrame>/);
+  assert.match(layoutSource, /<AppShellFrame initialFamilyHost=\{initialFamilyHost\}>\{children\}<\/AppShellFrame>/);
   assert.match(shellFrameSource, /<header className="appShellTop">/);
   assert.match(topShellCss, /position:\s*sticky;/);
+  assert.match(shellCss, /--app-shell-status-bar-bg:\s*#11111b;/);
+  assert.match(shellCss, /body::before\s*\{[\s\S]*?height:\s*var\(--app-shell-safe-top\);[\s\S]*?background:\s*var\(--app-shell-status-bar-bg\);/);
   assert.doesNotMatch(mainCss, /position:\s*fixed;/);
   assert.doesNotMatch(mainCss, /padding-top:\s*var\(--app-shell-content-offset\);/);
   assert.match(modeNavCss, /pointer-events:\s*auto;/);
@@ -78,17 +82,21 @@ test("attention box is mounted as a standalone card below capture shell", async 
 });
 
 test("Family surface uses independent shell without main navigation", async () => {
+  const layoutSource = await readFile(new URL("../app/layout.js", import.meta.url), "utf8");
   const shellFrameSource = await readFile(new URL("../components/AppShellFrame.js", import.meta.url), "utf8");
   const familyHeaderSource = await readFile(new URL("../app/family/FamilyHeader.js", import.meta.url), "utf8");
   const shellCss = await readFile(new URL("../app/styles/shell.css", import.meta.url), "utf8");
 
   assert.match(shellFrameSource, /String\(pathname \|\| ""\)\.startsWith\("\/family"\)/);
+  assert.match(layoutSource, /const FAMILY_HOST = "family\.kaosgdd\.net";/);
+  assert.match(layoutSource, /initialFamilyHost = host === FAMILY_HOST;/);
+  assert.match(shellFrameSource, /initialFamilyHost \|\| isFamilySurface\(pathname\)/);
   assert.match(shellFrameSource, /familySurface \? null :/);
   assert.match(shellFrameSource, /<TopNav \/>/);
   assert.match(shellFrameSource, /<TopCaptureBar \/>/);
   assert.match(shellFrameSource, /<AttentionBox \/>/);
   assert.match(shellFrameSource, /appShellMainFamily/);
-  assert.match(shellCss, /\.appShellMainFamily\s*\{[\s\S]*?height:\s*auto;[\s\S]*?overflow-y:\s*visible;/);
+  assert.match(shellCss, /\.appShellMainFamily\s*\{[\s\S]*?height:\s*100dvh;[\s\S]*?min-height:\s*100dvh;[\s\S]*?overflow-y:\s*auto;[\s\S]*?padding-top:\s*var\(--app-shell-safe-top\);[\s\S]*?padding-bottom:\s*0;/);
 
   for (const label of ["달력", "할일", "로운이", "메모장"]) {
     assert.ok(familyHeaderSource.includes(label), `${label} should remain in the Family shell`);
