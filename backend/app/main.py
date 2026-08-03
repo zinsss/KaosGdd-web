@@ -819,6 +819,29 @@ def receive_incoming_fax(payload: dict):
     return {"ok": ok, "status": status, "id": fax_id, "kind": "fax"}
 
 
+@app.post("/fax/incoming-upload")
+async def receive_incoming_fax_upload(request: Request):
+    content = await request.body()
+    if not content:
+        return {"ok": False, "error": ApiText.FILE_BODY_EMPTY}
+
+    original_filename = resolve_upload_filename(request.headers)
+    mime_type = str(request.headers.get("x-file-type") or request.headers.get("content-type") or "").strip()
+    source_path = fax_service.create_temp_fax_source(
+        content=content,
+        original_filename=original_filename,
+        mime_type=mime_type or "image/tiff",
+    )
+    ok, status, fax_id = fax_service.receive_incoming_raw(
+        source_file_path=source_path,
+        remote_number=str(request.headers.get("x-fax-remote-number") or "").strip() or None,
+        local_device=str(request.headers.get("x-fax-local-device") or "").strip() or None,
+        original_filename=original_filename,
+        original_mime_type=mime_type or "image/tiff",
+    )
+    return {"ok": ok, "status": status, "id": fax_id, "kind": "fax"}
+
+
 @app.delete("/files/{file_id}/hard")
 def remove_file_hard(file_id: str):
     ok = file_service.remove_file_hard(file_id)

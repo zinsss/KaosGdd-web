@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import asyncio
 import os
 import subprocess
 import zlib
@@ -414,6 +415,40 @@ def test_incoming_raw_fax_converts_to_pdf_before_alert(main_module, tmp_path: Pa
     fax = fax_service.get_fax(fax_id)
     assert fax["pdf_file_path"] == str(pdf)
     assert fax["pdf_available"] is True
+
+
+def test_incoming_upload_stores_body_before_receive(main_module, tmp_path: Path, monkeypatch) -> None:
+    captured = {}
+
+    class FakeRequest:
+        headers = {
+            "content-type": "image/tiff",
+            "x-file-name-url": "received%20fax.tif",
+            "x-fax-remote-number": "0541234567",
+            "x-fax-local-device": "ttyACM0",
+        }
+
+        async def body(self):
+            return b"II*\x00received fax"
+
+    def fake_receive(**kwargs):
+        captured.update(kwargs)
+        return True, "received", "fax-upload-test"
+
+    monkeypatch.setattr(main_module.fax_service, "receive_incoming_raw", fake_receive)
+
+    result = asyncio.run(main_module.receive_incoming_fax_upload(FakeRequest()))
+
+    assert result == {
+        "ok": True,
+        "status": "received",
+        "id": "fax-upload-test",
+        "kind": "fax",
+    }
+    assert captured["remote_number"] == "0541234567"
+    assert captured["local_device"] == "ttyACM0"
+    assert captured["original_filename"] == "received fax.tif"
+    assert Path(captured["source_file_path"]).read_bytes() == b"II*\x00received fax"
 
 
 def test_received_fax_appears_in_inbox(main_module, tmp_path: Path) -> None:

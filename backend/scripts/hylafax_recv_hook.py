@@ -6,9 +6,10 @@ fax file exists. Example:
 
     /srv/KaosGdd-web/backend/scripts/hylafax_recv_hook.py "$FILE" "$SENDER" "$DEVICE"
 
-The hook calls the KaosGdd incoming fax API. The backend converts the raw fax to
-PDF first, then creates the Fax item and sends the alert. This script does not
-delete the raw source file.
+The default path mode preserves the original same-host integration. Set
+KAOSGDD_FAX_TRANSFER_MODE=upload when HylaFAX and KaosGdd run on different
+hosts; upload mode transfers the TIFF bytes to the backend before conversion.
+This script does not delete the raw source file.
 """
 
 from __future__ import annotations
@@ -18,6 +19,42 @@ import os
 import sys
 import urllib.error
 import urllib.request
+from urllib.parse import quote
+
+
+def build_request(source_file_path: str, remote_number: str, local_device: str) -> urllib.request.Request:
+    api_base = os.environ.get("KAOSGDD_API_BASE", "http://127.0.0.1:8000").rstrip("/")
+    transfer_mode = os.environ.get("KAOSGDD_FAX_TRANSFER_MODE", "path").strip().lower()
+    original_filename = os.path.basename(source_file_path)
+
+    if transfer_mode == "upload":
+        with open(source_file_path, "rb") as source_file:
+            content = source_file.read()
+        return urllib.request.Request(
+            f"{api_base}/fax/incoming-upload",
+            data=content,
+            headers={
+                "Content-Type": "image/tiff",
+                "X-File-Name-Url": quote(original_filename, safe=""),
+                "X-Fax-Remote-Number": remote_number,
+                "X-Fax-Local-Device": local_device,
+            },
+            method="POST",
+        )
+
+    payload = {
+        "source_file_path": source_file_path,
+        "remote_number": remote_number,
+        "local_device": local_device,
+        "original_filename": original_filename,
+        "original_mime_type": "image/tiff",
+    }
+    return urllib.request.Request(
+        f"{api_base}/fax/incoming",
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
 
 
 def main(argv: list[str]) -> int:
@@ -26,20 +63,13 @@ def main(argv: list[str]) -> int:
         return 2
 
     source_file_path = argv[1]
-    payload = {
-        "source_file_path": source_file_path,
-        "remote_number": argv[2] if len(argv) > 2 else "",
-        "local_device": argv[3] if len(argv) > 3 else "",
-        "original_filename": os.path.basename(source_file_path),
-        "original_mime_type": "image/tiff",
-    }
-    api_base = os.environ.get("KAOSGDD_API_BASE", "http://127.0.0.1:8000").rstrip("/")
-    request = urllib.request.Request(
-        f"{api_base}/fax/incoming",
-        data=json.dumps(payload).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
-        method="POST",
-    )
+    remote_number = argv[2] if len(argv) > 2 else ""
+    local_device = argv[3] if len(argv) > 3 else ""
+    try:
+        request = build_request(source_file_path, remote_number, local_device)
+    except OSError as exc:
+        print(f"KaosGdd incoming fax hook could not read source file: {exc}", file=sys.stderr)
+        return 1
 
     try:
         with urllib.request.urlopen(request, timeout=30) as response:
